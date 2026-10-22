@@ -1,0 +1,180 @@
+{
+  "version": 1,
+  "templates": [
+    {
+      "id": "hdfc_upi_debit",
+      "senderSuffixes": ["HDFCBK", "HDFCBK-S"],
+      "priority": 100,
+      "bodyRegex": "inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) debited from a/c \\*{0,2}(?<last4>[0-9]{4}).*?to vpa (?<merchant>[^\\s(]+)",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "UPI",
+      "instrument": "SAVINGS"
+    },
+    {
+      "id": "hdfc_upi_credit",
+      "senderSuffixes": ["HDFCBK", "HDFCBK-S"],
+      "priority": 95,
+      "bodyRegex": "inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) credited to a/c",
+      "transactionType": "INCOME",
+      "paymentChannel": "UPI",
+      "instrument": "SAVINGS",
+      "merchantGroup": ""
+    },
+    {
+      "id": "hdfc_cc_spend",
+      "senderSuffixes": ["HDFCBK", "HDFCBK-S"],
+      "priority": 90,
+      "bodyRegex": "spent inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) on hdfc bank credit card (?:xx|x)?(?<last4>[0-9]{4}) at (?<merchant>.+?) on ",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "CARD",
+      "instrument": "CREDIT_CARD"
+    },
+    {
+      "id": "bobcard_spend",
+      "senderSuffixes": ["BOBCRD", "BOBCRD-S", "BOBCRD-T"],
+      "priority": 100,
+      "bodyRegex": "inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) is spent on your bobcard ending (?<last4>[0-9]{4}) at (?<merchant>.+?) on ",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "CARD",
+      "instrument": "CREDIT_CARD"
+    },
+    {
+      "id": "axis_paytm_money_debit",
+      "senderSuffixes": ["AXISBK", "AXISBK-S"],
+      "priority": 85,
+      "bodyRegex": "your a/c has been debited towards paytm money limited for inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "WALLET",
+      "instrument": "SAVINGS",
+      "merchantGroup": ""
+    },
+    {
+      "id": "boi_upi_credit",
+      "senderSuffixes": ["BOIIND", "BOIIND-S"],
+      "priority": 80,
+      "bodyRegex": "inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) credited to your ac xx[0-9]+ on .*? by upi ref no\\.?(?<ref>[0-9]+)",
+      "transactionType": "INCOME",
+      "paymentChannel": "UPI",
+      "instrument": "SAVINGS",
+      "merchantGroup": ""
+    },
+    {
+      "id": "pluxee_meal_spend",
+      "senderSuffixes": ["PLUXEE", "PLUXEE-S"],
+      "priority": 100,
+      "bodyRegex": "inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) spent from pluxee meal card wallet.*? at (?<merchant>.+?) \\.",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "WALLET",
+      "instrument": "MEAL_WALLET"
+    },
+    {
+      "id": "hp_pay_petrol",
+      "senderSuffixes": ["HPPAYS", "HPPAYS-S"],
+      "priority": 90,
+      "bodyRegex": "transaction of inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) for purchase of petrol",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "WALLET",
+      "instrument": "FUEL_WALLET",
+      "merchantGroup": ""
+    },
+    {
+      "id": "kotak_nach_emi",
+      "senderSuffixes": ["KOTAKB", "KOTAKB-S"],
+      "priority": 85,
+      "bodyRegex": "inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) is debited to your account .*? towards nach",
+      "transactionType": "LOAN_PAYMENT",
+      "paymentChannel": "NACH",
+      "instrument": "SAVINGS",
+      "merchantGroup": ""
+    },
+    {
+      "id": "icici_upi_debit",
+      "senderSuffixes": ["ICICIB", "ICICIT", "ICICIT-S"],
+      "priority": 75,
+      "bodyRegex": "inr\\.? (?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?).*?(?:debited|spent).*?vpa (?<merchant>[^\\s(]+)",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "UPI",
+      "instrument": "SAVINGS"
+    },
+    {
+      "id": "yes_bank_upi_debit",
+      "senderSuffixes": ["YESBNK", "YESBNK-S"],
+      "priority": 70,
+      "bodyRegex": "inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) debited.*?a/c.*?upi",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "UPI",
+      "instrument": "SAVINGS",
+      "merchantGroup": ""
+    },
+    {
+      "id": "generic_upi_debit",
+      "senderSuffixes": [],
+      "priority": 40,
+      "bodyRegex": "inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) debited.*?to vpa (?<merchant>[^\\s(]+)",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "UPI",
+      "instrument": "SAVINGS"
+    },
+    {
+      "id": "generic_cc_spent_inr",
+      "senderSuffixes": [],
+      "priority": 35,
+      "bodyRegex": "inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) is spent on your .*?card ending (?<last4>[0-9]{4}) at (?<merchant>.+?) on ",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "CARD",
+      "instrument": "CREDIT_CARD"
+    },
+    {
+      "id": "generic_hp_petrol",
+      "senderSuffixes": [],
+      "priority": 30,
+      "bodyRegex": "transaction of inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) for purchase of petrol",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "WALLET",
+      "instrument": "FUEL_WALLET",
+      "merchantGroup": ""
+    },
+    {
+      "id": "axis_upcoming_mandate",
+      "senderSuffixes": ["AXISBK", "AXISBK-S"],
+      "priority": 110,
+      "bodyRegex": "for the upcoming mandate set for .*? inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) will be debited",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "NACH",
+      "instrument": "SAVINGS",
+      "intent": "MANDATE",
+      "merchantGroup": ""
+    },
+    {
+      "id": "cc_statement_due",
+      "senderSuffixes": ["SBICRD", "SBICRD-S", "HDFCBK", "HDFCBK-S"],
+      "priority": 105,
+      "bodyRegex": "e-statement of .*? total amt due rs\\.?\\s*(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "CARD",
+      "instrument": "CREDIT_CARD",
+      "intent": "STATEMENT",
+      "merchantGroup": ""
+    },
+    {
+      "id": "mf_sip_success",
+      "senderSuffixes": ["HDFCMF", "HDFCMF-S", "NAVAMC", "NAVAMC-S", "IPRUMF", "IPRUMF-S"],
+      "priority": 100,
+      "bodyRegex": "sip purchase of inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) in folio",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "UNKNOWN",
+      "instrument": "UNKNOWN",
+      "merchantGroup": ""
+    },
+    {
+      "id": "ipo_debit_settlement",
+      "senderSuffixes": [],
+      "priority": 88,
+      "bodyRegex": "(?:ipo|asba).*?(?:inr\\s+)?(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?).*?(?:debited|has been debited)",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "NET_BANKING",
+      "instrument": "SAVINGS",
+      "merchantGroup": ""
+    }
+  ]
+}
