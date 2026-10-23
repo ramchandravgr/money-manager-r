@@ -12,17 +12,17 @@ data class RecurringRuleWithDetails(
     val rule: RecurringRuleEntity,
     @Relation(
         parentColumn = "categoryId",
-        entityColumn = "id"
+        entityColumn = "id",
     )
     val category: CategoryEntity?,
     @Relation(
         parentColumn = "subcategoryId",
-        entityColumn = "id"
+        entityColumn = "id",
     )
     val subcategory: SubcategoryEntity?,
     @Relation(
         parentColumn = "accountId",
-        entityColumn = "id"
+        entityColumn = "id",
     )
-    val account: AccountEntity?
+    val account: AccountEntity?,
 )

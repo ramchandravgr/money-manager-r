@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SmsMessageRecordDao {
-
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(record: SmsMessageRecordEntity): Long
 
@@ -24,4 +23,33 @@ interface SmsMessageRecordDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM sms_message_records WHERE messageBodyHash = :hash)")
     suspend fun isDuplicateHash(hash: String): Boolean
+
+    @Query(
+        """
+        SELECT * FROM sms_message_records
+        WHERE matchedTransactionId = :transactionId
+        ORDER BY receivedTime DESC
+        """,
+    )
+    fun getByMatchedTransactionId(transactionId: Long): Flow<List<SmsMessageRecordEntity>>
+
+    @Query(
+        """
+        SELECT COUNT(*) FROM sms_message_records
+        WHERE matchedTransactionId = :transactionId
+        """,
+    )
+    suspend fun countByMatchedTransactionId(transactionId: Long): Int
+
+    @Query(
+        """
+        UPDATE sms_message_records
+        SET matchedTransactionId = :newId
+        WHERE matchedTransactionId IN (:oldIds)
+        """,
+    )
+    suspend fun reassignMatchedTransactions(
+        oldIds: List<Long>,
+        newId: Long,
+    )
 }

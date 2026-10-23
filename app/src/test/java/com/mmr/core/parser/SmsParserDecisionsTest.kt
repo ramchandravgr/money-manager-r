@@ -14,7 +14,6 @@ import org.junit.Before
 import org.junit.Test
 
 class SmsParserDecisionsTest {
-
     private lateinit var engine: SmsParserEngine
 
     @Before
@@ -24,12 +23,13 @@ class SmsParserDecisionsTest {
 
     @Test
     fun ipoBlock_isInformational_notTransaction() {
-        val raw = RawSmsMessage(
-            id = "1",
-            sender = "VM-HDFCBK",
-            body = "IPO application: amount blocked Rs 15000 for ASBA. Funds will be released if not allotted.",
-            timestamp = 1_700_000_000_000L
-        )
+        val raw =
+            RawSmsMessage(
+                id = "1",
+                sender = "VM-HDFCBK",
+                body = "IPO application: amount blocked Rs 15000 for ASBA. Funds will be released if not allotted.",
+                timestamp = 1_700_000_000_000L,
+            )
         val result = engine.parseResult(raw)
         assertTrue(result is SmsParseResult.Informational)
         assertEquals(SmsParseIntent.INVESTMENT, (result as SmsParseResult.Informational).intent)
@@ -37,12 +37,13 @@ class SmsParserDecisionsTest {
 
     @Test
     fun sipSuccess_isPendingTransaction() {
-        val raw = RawSmsMessage(
-            id = "2",
-            sender = "VM-HDFCMF",
-            body = "Dear investor, your SIP purchase of Rs.5000 in folio 123 in fund abc has been processed for nav of Rs.100",
-            timestamp = 1_700_000_000_000L
-        )
+        val raw =
+            RawSmsMessage(
+                id = "2",
+                sender = "VM-HDFCMF",
+                body = "Dear investor, your SIP purchase of Rs.5000 in folio 123 in fund abc has been processed for nav of Rs.100",
+                timestamp = 1_700_000_000_000L,
+            )
         val result = engine.parseResult(raw)
         assertTrue(result is SmsParseResult.Transaction)
         assertEquals("mf_sip_success", (result as SmsParseResult.Transaction).candidate.templateId)
@@ -50,12 +51,13 @@ class SmsParserDecisionsTest {
 
     @Test
     fun cashbackReview_isLowConfidenceIncome() {
-        val raw = RawSmsMessage(
-            id = "3",
-            sender = "VM-HDFCBK",
-            body = "Rs 75 cashback has been credited to your account **1234",
-            timestamp = 1_700_000_000_000L
-        )
+        val raw =
+            RawSmsMessage(
+                id = "3",
+                sender = "VM-HDFCBK",
+                body = "Rs 75 cashback has been credited to your account **1234",
+                timestamp = 1_700_000_000_000L,
+            )
         val result = engine.parseResult(raw)
         assertTrue(result is SmsParseResult.Transaction)
         val txn = (result as SmsParseResult.Transaction).candidate

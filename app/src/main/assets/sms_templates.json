@@ -2,6 +2,25 @@
   "version": 1,
   "templates": [
     {
+      "id": "hdfc_upi_sent",
+      "senderSuffixes": ["HDFCBK", "HDFCBK-S", "HDFCBN", "HDFCBN-S"],
+      "priority": 104,
+      "bodyRegex": "sent inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)\\s+from hdfc bank a/c \\*(?<last4>[0-9]{4})\\s+to (?<merchant>.+?)\\s+on ",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "UPI",
+      "instrument": "SAVINGS"
+    },
+    {
+      "id": "hdfc_upi_debit_p2p",
+      "senderSuffixes": ["HDFCBK", "HDFCBK-S"],
+      "priority": 101,
+      "bodyRegex": "hdfc bank:inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)\\s+debited from a/c \\*(?<last4>[0-9]{4}) on .*?to a/c",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "UPI",
+      "instrument": "SAVINGS",
+      "merchantGroup": ""
+    },
+    {
       "id": "hdfc_upi_debit",
       "senderSuffixes": ["HDFCBK", "HDFCBK-S"],
       "priority": 100,
@@ -11,10 +30,19 @@
       "instrument": "SAVINGS"
     },
     {
+      "id": "hdfc_credit_alert_vpa",
+      "senderSuffixes": ["HDFCBK", "HDFCBK-S"],
+      "priority": 98,
+      "bodyRegex": "credit alert! inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) credited to hdfc bank a/c xx(?<last4>[0-9]{4}).*?from vpa (?<merchant>[^\\s(]+)",
+      "transactionType": "INCOME",
+      "paymentChannel": "UPI",
+      "instrument": "SAVINGS"
+    },
+    {
       "id": "hdfc_upi_credit",
       "senderSuffixes": ["HDFCBK", "HDFCBK-S"],
       "priority": 95,
-      "bodyRegex": "inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) credited to a/c",
+      "bodyRegex": "inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) credited to (?:hdfc bank )?a/c",
       "transactionType": "INCOME",
       "paymentChannel": "UPI",
       "instrument": "SAVINGS",
@@ -23,11 +51,47 @@
     {
       "id": "hdfc_cc_spend",
       "senderSuffixes": ["HDFCBK", "HDFCBK-S"],
-      "priority": 90,
-      "bodyRegex": "spent inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) on hdfc bank credit card (?:xx|x)?(?<last4>[0-9]{4}) at (?<merchant>.+?) on ",
+      "priority": 92,
+      "bodyRegex": "spent inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) on hdfc bank (?:credit )?card (?:xx|x)?(?<last4>[0-9]{4}) at (?<merchant>.+?) on ",
       "transactionType": "EXPENSE",
       "paymentChannel": "CARD",
       "instrument": "CREDIT_CARD"
+    },
+    {
+      "id": "axis_cc_spent",
+      "senderSuffixes": ["AXISBK", "AXISBK-S"],
+      "priority": 91,
+      "bodyRegex": "spent inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) axis bank card no\\. xx(?<last4>[0-9]{4}).*?ist (?<merchant>[^.]+?) avl limit",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "CARD",
+      "instrument": "CREDIT_CARD"
+    },
+    {
+      "id": "icici_cc_spent",
+      "senderSuffixes": ["ICICIB", "ICICIT", "ICICIT-S"],
+      "priority": 88,
+      "bodyRegex": "inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) spent using icici bank card xx(?<last4>[0-9]{4}) on [0-9]{2}-[a-z]{3}-[0-9]{2} on (?<merchant>.+?)\\. avl limit",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "CARD",
+      "instrument": "CREDIT_CARD"
+    },
+    {
+      "id": "icici_cc_upi_debit",
+      "senderSuffixes": ["ICICIB", "ICICIT", "ICICIT-S"],
+      "priority": 87,
+      "bodyRegex": "icici bank credit card xx(?<last4>[0-9]{4}) debited for inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) on .*?for upi-[0-9]+-(?<merchant>[^.]+)",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "UPI",
+      "instrument": "CREDIT_CARD"
+    },
+    {
+      "id": "hdfc_atm_withdrawal",
+      "senderSuffixes": ["HDFCBK", "HDFCBK-S"],
+      "priority": 86,
+      "bodyRegex": "withdrawn inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) from hdfc bank card x(?<last4>[0-9]{4}) at (?<merchant>.+?) on ",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "UNKNOWN",
+      "instrument": "SAVINGS"
     },
     {
       "id": "bobcard_spend",
@@ -49,6 +113,26 @@
       "merchantGroup": ""
     },
     {
+      "id": "union_mob_bk_debit",
+      "senderSuffixes": ["UNIONB", "UNIONB-S"],
+      "priority": 82,
+      "bodyRegex": "a/c \\*(?<last4>[0-9]{4}) debited(?: for)? inr[:.]?\\s*(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) on ",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "UPI",
+      "instrument": "SAVINGS",
+      "merchantGroup": ""
+    },
+    {
+      "id": "union_mob_bk_credit",
+      "senderSuffixes": ["UNIONB", "UNIONB-S"],
+      "priority": 81,
+      "bodyRegex": "a/c \\*(?<last4>[0-9]{4}) credited for inr[:.]?\\s*(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) on ",
+      "transactionType": "INCOME",
+      "paymentChannel": "UPI",
+      "instrument": "SAVINGS",
+      "merchantGroup": ""
+    },
+    {
       "id": "boi_upi_credit",
       "senderSuffixes": ["BOIIND", "BOIIND-S"],
       "priority": 80,
@@ -56,6 +140,54 @@
       "transactionType": "INCOME",
       "paymentChannel": "UPI",
       "instrument": "SAVINGS",
+      "merchantGroup": ""
+    },
+    {
+      "id": "canara_upi_credit",
+      "senderSuffixes": ["CANBNK", "CANBNK-S"],
+      "priority": 79,
+      "bodyRegex": "your a/c no\\. xx(?<last4>[0-9]{4}) has been credited with inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) on .*?\\(upi ref",
+      "transactionType": "INCOME",
+      "paymentChannel": "UPI",
+      "instrument": "SAVINGS",
+      "merchantGroup": ""
+    },
+    {
+      "id": "canara_acct_upi_credit",
+      "senderSuffixes": ["CANBNK", "CANBNK-S"],
+      "priority": 78,
+      "bodyRegex": "acct xxx(?<last4>[0-9]{3,4}) credited with inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) on .*?from (?<merchant>[^;]+)",
+      "transactionType": "INCOME",
+      "paymentChannel": "UPI",
+      "instrument": "SAVINGS"
+    },
+    {
+      "id": "hsbc_cc_spent",
+      "senderSuffixes": ["HSBCIN", "HSBCIN-S", "HSBCIM", "HSBCIM-S"],
+      "priority": 78,
+      "bodyRegex": "hsbc creditcard .*?used at (?<merchant>.+?) for inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) on ",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "CARD",
+      "instrument": "CREDIT_CARD"
+    },
+    {
+      "id": "icici_cc_upi_refund",
+      "senderSuffixes": ["ICICIB", "ICICIT", "ICICIT-S"],
+      "priority": 77,
+      "bodyRegex": "online refund for upi ecom trxn refund of inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) credited to icici bank credit card xx(?<last4>[0-9]{4})",
+      "transactionType": "INCOME",
+      "paymentChannel": "UPI",
+      "instrument": "CREDIT_CARD",
+      "merchantGroup": ""
+    },
+    {
+      "id": "axis_cc_cashback",
+      "senderSuffixes": ["AXISBK", "AXISBK-S"],
+      "priority": 76,
+      "bodyRegex": "cashback of inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) has been credited to your axis bank",
+      "transactionType": "INCOME",
+      "paymentChannel": "CARD",
+      "instrument": "CREDIT_CARD",
       "merchantGroup": ""
     },
     {
@@ -75,6 +207,35 @@
       "transactionType": "EXPENSE",
       "paymentChannel": "WALLET",
       "instrument": "FUEL_WALLET",
+      "merchantGroup": ""
+    },
+    {
+      "id": "sbi_upi_credit",
+      "senderSuffixes": ["SBIUPI", "SBIUPI-S", "SBIPSG", "SBIPSG-S"],
+      "priority": 73,
+      "bodyRegex": "your a/c x[0-9]+-credited by inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) on .*?transfer from (?<merchant>[^.]+)",
+      "transactionType": "INCOME",
+      "paymentChannel": "UPI",
+      "instrument": "SAVINGS"
+    },
+    {
+      "id": "paytm_money_settlement",
+      "senderSuffixes": ["PAYTMM", "PAYTMM-S"],
+      "priority": 71,
+      "bodyRegex": "inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) successfully transferred on .*?monthly settlement via paytm money",
+      "transactionType": "INCOME",
+      "paymentChannel": "NET_BANKING",
+      "instrument": "SAVINGS",
+      "merchantGroup": ""
+    },
+    {
+      "id": "bsnl_prepaid_recharge",
+      "senderSuffixes": ["BSPRTL", "BSPRTL-S", "CTOPUP", "CTOPUP-S"],
+      "priority": 72,
+      "bodyRegex": "(?:recharge for the prepaid|recharge with denomination) .*?inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "UNKNOWN",
+      "instrument": "UNKNOWN",
       "merchantGroup": ""
     },
     {
@@ -135,6 +296,94 @@
       "merchantGroup": ""
     },
     {
+      "id": "hdfc_cc_bill_payment_received",
+      "senderSuffixes": ["HDFCBK", "HDFCBK-S"],
+      "priority": 109,
+      "bodyRegex": "payment of inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)\\s+received towards your credit card ending with (?<last4>[0-9]{4})",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "CARD",
+      "instrument": "CREDIT_CARD",
+      "intent": "CARD_PAYMENT",
+      "merchantGroup": ""
+    },
+    {
+      "id": "hdfc_cc_bill_payment_credited",
+      "senderSuffixes": ["HDFCBK", "HDFCBK-S"],
+      "priority": 109,
+      "bodyRegex": "(?:payment|online payment) of inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?).*?credited to your card ending (?<last4>[0-9]{4})",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "CARD",
+      "instrument": "CREDIT_CARD",
+      "intent": "CARD_PAYMENT",
+      "merchantGroup": ""
+    },
+    {
+      "id": "axis_cc_bill_payment",
+      "senderSuffixes": ["AXISBK", "AXISBK-S"],
+      "priority": 108,
+      "bodyRegex": "payment of inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) has been received towards your axis bank credit card xx(?<last4>[0-9]{4})",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "CARD",
+      "instrument": "CREDIT_CARD",
+      "intent": "CARD_PAYMENT",
+      "merchantGroup": ""
+    },
+    {
+      "id": "icici_cc_bbps_payment",
+      "senderSuffixes": ["ICICIB", "ICICIT", "ICICIT-S"],
+      "priority": 108,
+      "bodyRegex": "payment of inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) has been received on your icici bank credit card xx(?<last4>[0-9]{4}) through bharat bill payment",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "NET_BANKING",
+      "instrument": "CREDIT_CARD",
+      "intent": "CARD_PAYMENT",
+      "merchantGroup": ""
+    },
+    {
+      "id": "hsbc_cc_bill_payment",
+      "senderSuffixes": ["HSBCIN", "HSBCIN-S", "HSBCIM", "HSBCIM-S"],
+      "priority": 108,
+      "bodyRegex": "received a payment of inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) for credit card ending (?<last4>[0-9]{4})",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "CARD",
+      "instrument": "CREDIT_CARD",
+      "intent": "CARD_PAYMENT",
+      "merchantGroup": ""
+    },
+    {
+      "id": "nps_contribution",
+      "senderSuffixes": ["KFNCRA", "KFNCRA-S"],
+      "priority": 74,
+      "bodyRegex": "your contribution of inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) has been credited to your nps tier-i",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "UNKNOWN",
+      "instrument": "UNKNOWN",
+      "intent": "INVESTMENT",
+      "merchantGroup": ""
+    },
+    {
+      "id": "nps_fund_confirmation",
+      "senderSuffixes": ["KFNCRA", "KFNCRA-S"],
+      "priority": 73,
+      "bodyRegex": "received fund confirmation of inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) for investment in pran",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "UNKNOWN",
+      "instrument": "UNKNOWN",
+      "intent": "INVESTMENT",
+      "merchantGroup": ""
+    },
+    {
+      "id": "epfo_interest_credit",
+      "senderSuffixes": ["EPFOHO", "EPFOHO-S"],
+      "priority": 72,
+      "bodyRegex": "pf interest of (?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) for",
+      "transactionType": "INCOME",
+      "paymentChannel": "UNKNOWN",
+      "instrument": "UNKNOWN",
+      "intent": "INVESTMENT",
+      "merchantGroup": ""
+    },
+    {
       "id": "axis_upcoming_mandate",
       "senderSuffixes": ["AXISBK", "AXISBK-S"],
       "priority": 110,
@@ -175,6 +424,24 @@
       "paymentChannel": "NET_BANKING",
       "instrument": "SAVINGS",
       "merchantGroup": ""
+    },
+    {
+      "id": "generic_sent_inr_on_date_to_merchant",
+      "senderSuffixes": [],
+      "priority": 73,
+      "bodyRegex": "sent inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)\\s+from .*?a/c \\*{0,2}(?<last4>[0-9]{4}).*?on \\d{1,2}[-/]\\d{1,2}[-/]\\d{2,4}\\s+to (?<merchant>.+?)(?:\\.|\\s+upi|\\s+ref)",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "UPI",
+      "instrument": "SAVINGS"
+    },
+    {
+      "id": "generic_debited_on_date_to_vpa",
+      "senderSuffixes": ["SBI", "SBIPSG", "PNBSMS", "UNIONB"],
+      "priority": 71,
+      "bodyRegex": "inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)\\s+debited.*?on \\d{1,2}[-/]\\d{1,2}[-/]\\d{2,4}.*?to vpa (?<merchant>[^\\s(]+)",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "UPI",
+      "instrument": "SAVINGS"
     }
   ]
 }

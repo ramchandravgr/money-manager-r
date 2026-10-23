@@ -7,9 +7,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 
 @Composable
-fun MmrNavHost(
-    navController: NavHostController
-) {
+fun MmrNavHost(navController: NavHostController) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val showMainNav = isMmrMainTabRoute(currentRoute)
@@ -27,7 +25,7 @@ fun MmrNavHost(
     if (showMainNav) {
         MmrMainNavigationScaffold(
             currentRoute = currentRoute,
-            onDestinationSelected = onMainDestinationSelected
+            onDestinationSelected = onMainDestinationSelected,
         ) { contentModifier ->
             MmrNavGraph(navController = navController, modifier = contentModifier)
         }

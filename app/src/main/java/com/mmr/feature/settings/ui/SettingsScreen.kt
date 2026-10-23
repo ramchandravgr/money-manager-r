@@ -1,131 +1,109 @@
 package com.mmr.feature.settings.ui
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mmr.app.testing.MmrTestTags
+import com.mmr.app.ui.components.MmrMmHeaderBar
+import com.mmr.app.ui.components.MmrMmLightNavRow
+import com.mmr.app.ui.theme.MmrMmColors
 import com.mmr.feature.settings.viewmodel.SettingsViewModel
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToConfiguration: () -> Unit,
     onNavigateToBackup: () -> Unit,
+    onNavigateToLanSync: () -> Unit,
     onNavigateToCategories: () -> Unit,
+    onNavigateToAccounts: () -> Unit,
     showBackNavigation: Boolean = true,
-    viewModel: SettingsViewModel = hiltViewModel()
+    viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val smsScanMonths by viewModel.smsScanMonths.collectAsState()
+
     Scaffold(
+        containerColor = MmrMmColors.ListBackground,
+        contentWindowInsets = com.mmr.app.ui.components.MmrNestedScaffoldInsets,
         topBar = {
-            TopAppBar(
-                title = { Text("Settings", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    if (showBackNavigation) {
-                        TextButton(onClick = onNavigateBack) {
-                            Text("Back")
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+            MmrMmHeaderBar(
+                title = "Configuration",
+                showBack = showBackNavigation,
+                onBack = onNavigateBack,
             )
-        }
+        },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
         ) {
-            Text(
-                text = "Categories",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onNavigateToCategories),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState()),
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Manage categories",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            text = "Add, edit, or remove categories and subcategories",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Text(
-                        text = "›",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.outline
-                    )
-                }
-            }
+                MmrMmLightNavRow(
+                    label = "Display & periods",
+                    value = "Open",
+                    onClick = onNavigateToConfiguration,
+                )
+                MmrMmLightNavRow(
+                    label = "Manage accounts",
+                    onClick = onNavigateToAccounts,
+                    testTag = MmrTestTags.settingsNavAccounts,
+                )
+                MmrMmLightNavRow(
+                    label = "Manage categories",
+                    onClick = onNavigateToCategories,
+                    testTag = MmrTestTags.settingsNavCategories,
+                )
+                MmrMmLightNavRow(
+                    label = "Backup & restore",
+                    onClick = onNavigateToBackup,
+                    testTag = MmrTestTags.settingsNavBackup,
+                )
+                MmrMmLightNavRow(
+                    label = "Wi‑Fi sync",
+                    value = "Devices",
+                    onClick = onNavigateToLanSync,
+                )
 
-            Text(
-                text = "SMS approvals",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
                 Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(MmrMmColors.SurfaceWhite)
+                            .padding(horizontal = 18.dp, vertical = 14.dp),
                 ) {
                     Text(
-                        text = "Inbox scan period",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
+                        text = "SMS approvals",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MmrMmColors.Reversal,
                     )
                     Text(
-                        text = "Approval Center → Scan SMS reads messages from the last:",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = "$smsScanMonths month${if (smsScanMonths == 1) "" else "s"}",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        text = "Inbox scan period: $smsScanMonths month${if (smsScanMonths == 1) "" else "s"}",
+                        color = MmrMmColors.TextMedium,
+                        modifier = Modifier.padding(top = 6.dp, bottom = 8.dp),
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                     Slider(
                         value = smsScanMonths.toFloat(),
@@ -133,53 +111,7 @@ fun SettingsScreen(
                             viewModel.setSmsScanMonths(value.roundToInt())
                         },
                         valueRange = viewModel.minScanMonths.toFloat()..viewModel.maxScanMonths.toFloat(),
-                        steps = viewModel.maxScanMonths - viewModel.minScanMonths - 1
-                    )
-                    Text(
-                        text = "Requires READ_SMS permission when scanning.",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            }
-
-            Text(
-                text = "Data & storage",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
-            )
-
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onNavigateToBackup),
-                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Backup & Restore",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            text = "Export or import offline JSON backups",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Text(
-                        text = "›",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.outline
+                        steps = viewModel.maxScanMonths - viewModel.minScanMonths - 1,
                     )
                 }
             }

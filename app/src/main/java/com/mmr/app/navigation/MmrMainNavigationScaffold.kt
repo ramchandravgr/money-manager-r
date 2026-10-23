@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -16,49 +17,56 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.ui.adaptive.currentMmrWidthSizeClass
 import com.mmr.app.ui.adaptive.isCompactWidth
+import com.mmr.app.ui.components.MmrDimens
 
 @Composable
 fun MmrMainNavigationScaffold(
     currentRoute: String?,
     onDestinationSelected: (String) -> Unit,
     modifier: Modifier = Modifier,
-    content: @Composable (Modifier) -> Unit
+    content: @Composable (Modifier) -> Unit,
 ) {
     val useNavigationRail = !currentMmrWidthSizeClass().isCompactWidth()
 
     if (useNavigationRail) {
         Row(
-            modifier = modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.safeDrawing)
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.safeDrawing),
         ) {
             NavigationRail {
                 MmrMainDestinations.forEach { destination ->
                     val selected = currentRoute == destination.route
                     NavigationRailItem(
+                        modifier = Modifier.testTag(MmrTestTags.navTab(destination.route)),
                         selected = selected,
                         onClick = { onDestinationSelected(destination.route) },
                         icon = {
                             Icon(
                                 imageVector = destination.icon,
-                                contentDescription = destination.label
+                                contentDescription = destination.label,
+                                modifier = Modifier.size(MmrDimens.iconMd),
                             )
                         },
                         label = {
                             Text(
                                 text = destination.label,
-                                style = MaterialTheme.typography.labelSmall
+                                style = MaterialTheme.typography.labelSmall,
                             )
-                        }
+                        },
                     )
                 }
             }
             Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .fillMaxHeight(),
             ) {
                 content(Modifier.fillMaxSize())
             }
@@ -66,14 +74,14 @@ fun MmrMainNavigationScaffold(
     } else {
         Scaffold(
             modifier = modifier,
-            contentWindowInsets = WindowInsets.safeDrawing,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0),
             bottomBar = {
                 MmrScrollableBottomBar(
                     destinations = MmrMainDestinations,
                     currentRoute = currentRoute,
-                    onDestinationSelected = onDestinationSelected
+                    onDestinationSelected = onDestinationSelected,
                 )
-            }
+            },
         ) { innerPadding ->
             content(Modifier.padding(innerPadding))
         }
@@ -83,11 +91,11 @@ fun MmrMainNavigationScaffold(
 @Composable
 fun MmrSecondaryScaffold(
     modifier: Modifier = Modifier,
-    content: @Composable (Modifier) -> Unit
+    content: @Composable (Modifier) -> Unit,
 ) {
     Scaffold(
         modifier = modifier,
-        contentWindowInsets = WindowInsets.safeDrawing
+        contentWindowInsets = WindowInsets.safeDrawing,
     ) { innerPadding ->
         content(Modifier.padding(innerPadding))
     }

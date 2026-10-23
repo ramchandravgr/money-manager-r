@@ -7,5 +7,5 @@ data class UpcomingReminder(
     val message: String,
     val scheduleTime: Long,
     val formattedScheduleDate: String,
-    val amountFormatted: String?
+    val amountFormatted: String?,
 )

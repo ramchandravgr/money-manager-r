@@ -10,7 +10,7 @@ enum class SmsPaymentChannel {
     NACH,
     WALLET,
     NET_BANKING,
-    UNKNOWN
+    UNKNOWN,
 }
 
 enum class SmsInstrument {
@@ -18,14 +18,17 @@ enum class SmsInstrument {
     CREDIT_CARD,
     MEAL_WALLET,
     FUEL_WALLET,
-    UNKNOWN
+    UNKNOWN,
 }
 
 enum class SmsParseIntent {
     SETTLED,
     MANDATE,
     STATEMENT,
-    INVESTMENT
+    INVESTMENT,
+
+    /** Credit card bill payment (already counted when spent on the card). */
+    CARD_PAYMENT,
 }
 
 data class SmsTemplate(
@@ -41,7 +44,7 @@ data class SmsTemplate(
     val merchantGroup: String? = "merchant",
     val last4Group: String? = "last4",
     val refGroup: String? = "ref",
-    val balanceGroup: String? = "balance"
+    val balanceGroup: String? = "balance",
 )
 
 data class SmsTemplateMatch(
@@ -50,5 +53,5 @@ data class SmsTemplateMatch(
     val merchant: String?,
     val accountLastDigits: String?,
     val referenceNumber: String?,
-    val balanceAfter: Double?
+    val balanceAfter: Double?,
 )

@@ -1,42 +1,83 @@
 package com.mmr.feature.search.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mmr.app.testing.MmrTestTags
+import com.mmr.app.ui.components.MmrDimens
+import com.mmr.app.ui.components.MmrMmHeaderBar
+import com.mmr.app.ui.components.MmrMmPeriodChip
+import com.mmr.app.ui.components.MmrMmSearchField
+import com.mmr.app.ui.components.MmrMmSearchFilterRow
 import com.mmr.app.ui.state.MmrEmptyState
 import com.mmr.app.ui.state.MmrErrorState
 import com.mmr.app.ui.state.MmrLoadingState
+import com.mmr.app.ui.theme.MmrMmColors
 import com.mmr.feature.home.HomePeriodUtils
-import com.mmr.feature.home.model.TransactionGroupUi
-import com.mmr.feature.home.model.TransactionRowUi
+import com.mmr.feature.home.model.HomeSummaryUi
+import com.mmr.feature.home.ui.HomePeriodSummaryStrip
+import com.mmr.feature.home.ui.TransactionCompactRow
+import com.mmr.feature.home.ui.TransactionDayHeaderRow
+import com.mmr.feature.search.SearchHeaderPeriodMode
 import com.mmr.feature.search.model.TransactionSearchUiEvent
 import com.mmr.feature.search.viewmodel.TransactionSearchViewModel
+import com.mmr.feature.transaction.model.toAccountUi
+import com.mmr.feature.transaction.ui.AccountPickerSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionSearchScreen(
     onNavigateBack: () -> Unit,
     onNavigateToEditTransaction: (Long) -> Unit,
-    viewModel: TransactionSearchViewModel = hiltViewModel()
+    viewModel: TransactionSearchViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
     val categorySheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var periodMenuExpanded by remember { mutableStateOf(false) }
 
     if (state.showDateRangePicker) {
         SearchDateRangeDialog(
@@ -45,7 +86,7 @@ fun TransactionSearchScreen(
             onConfirm = { start, end ->
                 viewModel.onEvent(TransactionSearchUiEvent.OnDateRangeSelected(start, end))
             },
-            onDismiss = { viewModel.onEvent(TransactionSearchUiEvent.OnDismissDateRangePicker) }
+            onDismiss = { viewModel.onEvent(TransactionSearchUiEvent.OnDismissDateRangePicker) },
         )
     }
 
@@ -54,148 +95,237 @@ fun TransactionSearchScreen(
             state = state,
             onEvent = viewModel::onEvent,
             sheetState = categorySheetState,
-            onDismiss = { viewModel.onEvent(TransactionSearchUiEvent.OnDismissCategoryPicker) }
+            onDismiss = { viewModel.onEvent(TransactionSearchUiEvent.OnDismissCategoryPicker) },
         )
     }
 
     Scaffold(
+        containerColor = MmrMmColors.ListBackground,
         topBar = {
-            TopAppBar(
-                title = { Text("Search", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            MmrMmHeaderBar(
+                title = "Search",
+                showBack = true,
+                onBack = onNavigateBack,
+                trailing = {
+                    Box {
+                        MmrMmPeriodChip(
+                            label = state.headerPeriodMode.label,
+                            onClick = { periodMenuExpanded = true },
+                            modifier = Modifier.testTag(MmrTestTags.searchPeriodChip),
+                        )
+                        androidx.compose.material3.DropdownMenu(
+                            expanded = periodMenuExpanded,
+                            onDismissRequest = { periodMenuExpanded = false },
+                        ) {
+                            SearchHeaderPeriodMode.entries.forEach { mode ->
+                                androidx.compose.material3.DropdownMenuItem(
+                                    text = { Text(mode.label) },
+                                    onClick = {
+                                        periodMenuExpanded = false
+                                        viewModel.onEvent(
+                                            TransactionSearchUiEvent.OnHeaderPeriodModeSelected(mode),
+                                        )
+                                    },
+                                )
+                            }
+                        }
                     }
                 },
-                actions = {
-                    TextButton(onClick = { viewModel.onEvent(TransactionSearchUiEvent.OnClearFilters) }) {
-                        Text("Reset")
-                    }
-                }
             )
-        }
+        },
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(padding),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 380.dp)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                OutlinedTextField(
-                    value = state.noteQuery,
-                    onValueChange = { viewModel.onEvent(TransactionSearchUiEvent.OnNoteQueryChanged(it)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Search in notes") },
-                    leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                    singleLine = true
-                )
-
-                SearchFilterRow(
-                    label = "Period",
-                    value = periodLabel(state.periodStart, state.periodEnd),
-                    onClick = { viewModel.onEvent(TransactionSearchUiEvent.OnPeriodClick) },
-                    onClear = if (state.periodStart != null) {
-                        { viewModel.onEvent(TransactionSearchUiEvent.OnClearPeriod) }
-                    } else {
-                        null
-                    }
-                )
-
-                var accountExpanded by remember { mutableStateOf(false) }
-                val selectedAccountName = state.accounts
-                    .firstOrNull { it.id == state.selectedAccountId }
-                    ?.name ?: "All accounts"
-                SearchFilterRow(
-                    label = "Account",
-                    value = selectedAccountName,
-                    onClick = { accountExpanded = true }
-                )
-                DropdownMenu(
-                    expanded = accountExpanded,
-                    onDismissRequest = { accountExpanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("All accounts") },
-                        onClick = {
-                            viewModel.onEvent(TransactionSearchUiEvent.OnAccountSelected(null))
-                            accountExpanded = false
-                        }
-                    )
-                    state.accounts.forEach { account ->
-                        DropdownMenuItem(
-                            text = { Text(account.name) },
-                            onClick = {
-                                viewModel.onEvent(TransactionSearchUiEvent.OnAccountSelected(account.id))
-                                accountExpanded = false
-                            }
-                        )
-                    }
-                }
-
-                SearchFilterRow(
-                    label = "Category",
-                    value = categoryLabel(state),
-                    onClick = { viewModel.onEvent(TransactionSearchUiEvent.OnCategoryRowClick) },
-                    onClear = if (state.selectedCategoryId != null) {
-                        { viewModel.onEvent(TransactionSearchUiEvent.OnClearCategory) }
-                    } else {
-                        null
-                    }
-                )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Amount",
-                        style = MaterialTheme.typography.bodyLarge,
-                        modifier = Modifier.width(100.dp)
-                    )
-                    OutlinedTextField(
-                        value = state.amountMin,
-                        onValueChange = { viewModel.onEvent(TransactionSearchUiEvent.OnAmountMinChanged(it)) },
-                        modifier = Modifier.weight(1f),
-                        placeholder = { Text("Min.") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true
-                    )
-                    Text("~", modifier = Modifier.padding(horizontal = 8.dp))
-                    OutlinedTextField(
-                        value = state.amountMax,
-                        onValueChange = { viewModel.onEvent(TransactionSearchUiEvent.OnAmountMaxChanged(it)) },
-                        modifier = Modifier.weight(1f),
-                        placeholder = { Text("Max.") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true
-                    )
-                }
-            }
-
-            HorizontalDivider()
-
-            Box(modifier = Modifier.weight(1f)) {
-                when {
-                    state.isLoading -> MmrLoadingState()
-                    state.errorMessage != null -> MmrErrorState(
+            when {
+                state.isLoading -> MmrLoadingState(modifier = Modifier.fillMaxSize())
+                state.errorMessage != null ->
+                    MmrErrorState(
                         message = state.errorMessage ?: "Something went wrong.",
-                        onRetry = { viewModel.onEvent(TransactionSearchUiEvent.OnClearFilters) }
+                        onRetry = { viewModel.onEvent(TransactionSearchUiEvent.OnClearFilters) },
                     )
-                    state.isEmpty -> MmrEmptyState(message = "No transactions match your filters.")
-                    else -> SearchGroupedResults(
-                        groups = state.groupedResults,
-                        onItemClick = onNavigateToEditTransaction,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                else -> {
+                    var accountPickerVisible by remember { mutableStateOf(false) }
+                    val accountSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+                    val selectedAccountName =
+                        state.accounts
+                            .firstOrNull { it.id == state.selectedAccountId }
+                            ?.name ?: "All"
+
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Column(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .background(MmrMmColors.Header),
+                        ) {
+                            MmrMmSearchField(
+                                value = state.noteQuery,
+                                onValueChange = {
+                                    viewModel.onEvent(TransactionSearchUiEvent.OnNoteQueryChanged(it))
+                                },
+                                onClear = {
+                                    viewModel.onEvent(TransactionSearchUiEvent.OnNoteQueryChanged(""))
+                                },
+                                placeholder = "Search",
+                            )
+                        }
+
+                        Column(modifier = Modifier.fillMaxWidth().background(MmrMmColors.SurfaceWhite)) {
+                            if (state.filtersExpanded) {
+                                MmrMmSearchFilterRow(
+                                    label = "Period",
+                                    value = periodLabel(state.periodStart, state.periodEnd),
+                                    onClick = { viewModel.onEvent(TransactionSearchUiEvent.OnPeriodClick) },
+                                    onClear =
+                                        if (state.periodStart != null) {
+                                            { viewModel.onEvent(TransactionSearchUiEvent.OnClearPeriod) }
+                                        } else {
+                                            null
+                                        },
+                                )
+                                MmrMmSearchFilterRow(
+                                    label = "Account",
+                                    value = selectedAccountName,
+                                    onClick = { accountPickerVisible = true },
+                                    onClear =
+                                        if (state.selectedAccountId != null) {
+                                            {
+                                                viewModel.onEvent(TransactionSearchUiEvent.OnAccountSelected(null))
+                                            }
+                                        } else {
+                                            null
+                                        },
+                                )
+                                if (accountPickerVisible) {
+                                    AccountPickerSheet(
+                                        title = "Account",
+                                        accounts = state.accounts.map { it.toAccountUi() },
+                                        selectedAccountId = state.selectedAccountId,
+                                        onAccountSelected = { id ->
+                                            viewModel.onEvent(TransactionSearchUiEvent.OnAccountSelected(id))
+                                            accountPickerVisible = false
+                                        },
+                                        sheetState = accountSheetState,
+                                        onDismiss = { accountPickerVisible = false },
+                                        showAllOption = true,
+                                        allOptionSelected = state.selectedAccountId == null,
+                                        onAllSelected = {
+                                            viewModel.onEvent(TransactionSearchUiEvent.OnAccountSelected(null))
+                                            accountPickerVisible = false
+                                        },
+                                    )
+                                }
+                                MmrMmSearchFilterRow(
+                                    label = "Category",
+                                    value = categoryLabel(state),
+                                    onClick = { viewModel.onEvent(TransactionSearchUiEvent.OnCategoryRowClick) },
+                                    onClear =
+                                        if (state.selectedCategoryId != null) {
+                                            { viewModel.onEvent(TransactionSearchUiEvent.OnClearCategory) }
+                                        } else {
+                                            null
+                                        },
+                                )
+                                SearchAmountMmRow(
+                                    amountMin = state.amountMin,
+                                    amountMax = state.amountMax,
+                                    onMinChange = {
+                                        viewModel.onEvent(TransactionSearchUiEvent.OnAmountMinChanged(it))
+                                    },
+                                    onMaxChange = {
+                                        viewModel.onEvent(TransactionSearchUiEvent.OnAmountMaxChanged(it))
+                                    },
+                                    onClear =
+                                        if (state.amountMin.isNotBlank() || state.amountMax.isNotBlank()) {
+                                            {
+                                                viewModel.onEvent(TransactionSearchUiEvent.OnAmountMinChanged(""))
+                                                viewModel.onEvent(TransactionSearchUiEvent.OnAmountMaxChanged(""))
+                                            }
+                                        } else {
+                                            null
+                                        },
+                                )
+                            }
+
+                            Row(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            viewModel.onEvent(TransactionSearchUiEvent.OnToggleFiltersExpanded)
+                                        }.padding(vertical = 10.dp, horizontal = MmrDimens.spaceLg),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    imageVector =
+                                        if (state.filtersExpanded) {
+                                            Icons.Filled.KeyboardArrowUp
+                                        } else {
+                                            Icons.Filled.KeyboardArrowDown
+                                        },
+                                    contentDescription = null,
+                                    tint = MmrMmColors.TextLight,
+                                    modifier = Modifier.size(20.dp),
+                                )
+                                Text(
+                                    text =
+                                        if (state.filtersExpanded) {
+                                            "Hide filters · ${filterSummary(state)}"
+                                        } else {
+                                            "Show filters · ${filterSummary(state)}"
+                                        },
+                                    modifier = Modifier.padding(start = MmrDimens.spaceSm),
+                                    color = MmrMmColors.TextMedium,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                            HorizontalDivider(color = MmrMmColors.BorderMain, thickness = 0.5.dp)
+                        }
+
+                        HomePeriodSummaryStrip(
+                            summary =
+                                HomeSummaryUi(
+                                    totalIncome = state.totalIncome,
+                                    totalExpense = state.totalExpense,
+                                    netBalance = state.totalIncome - state.totalExpense,
+                                ),
+                            amountColorScheme = state.amountColorScheme,
+                        )
+
+                        LazyColumn(
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth()
+                                    .background(MmrMmColors.ListBackground),
+                            contentPadding = PaddingValues(bottom = MmrDimens.space2xl),
+                        ) {
+                            if (state.isEmpty) {
+                                item(key = "empty") {
+                                    MmrEmptyState(message = "No transactions match your filters.")
+                                }
+                            } else {
+                                state.groupedResults.forEach { group ->
+                                    item(key = "header-${group.dateKey}") {
+                                        TransactionDayHeaderRow(group = group)
+                                    }
+                                    items(group.items, key = { it.id }) { item ->
+                                        TransactionCompactRow(
+                                            item = item,
+                                            onClick = { onNavigateToEditTransaction(item.id) },
+                                            onLongClick = { onNavigateToEditTransaction(item.id) },
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -203,115 +333,107 @@ fun TransactionSearchScreen(
 }
 
 @Composable
-private fun SearchFilterRow(
-    label: String,
-    value: String,
-    onClick: () -> Unit,
-    onClear: (() -> Unit)? = null
+private fun SearchAmountMmRow(
+    amountMin: String,
+    amountMax: String,
+    onMinChange: (String) -> Unit,
+    onMaxChange: (String) -> Unit,
+    onClear: (() -> Unit)?,
 ) {
+    val valueInset = MmrDimens.spaceLg + MmrDimens.searchFilterLabelWidth
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(MmrMmColors.SurfaceWhite)
+                .heightIn(min = 44.dp)
+                .padding(horizontal = MmrDimens.spaceLg, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = label,
-            style = MaterialTheme.typography.bodyLarge,
-            modifier = Modifier.width(100.dp)
+            text = "Amount",
+            modifier = Modifier.width(MmrDimens.searchFilterLabelWidth),
+            color = MmrMmColors.TextMedium,
+            textAlign = TextAlign.Start,
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 1,
+        )
+        SearchAmountCompactField(
+            value = amountMin,
+            onValueChange = onMinChange,
+            placeholder = "Min",
+            modifier = Modifier.weight(1f),
         )
         Text(
-            text = value,
+            text = "~",
+            modifier = Modifier.padding(horizontal = 4.dp),
+            color = MmrMmColors.TextLight,
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f)
+        )
+        SearchAmountCompactField(
+            value = amountMax,
+            onValueChange = onMaxChange,
+            placeholder = "Max",
+            modifier = Modifier.weight(1f),
         )
         if (onClear != null) {
-            TextButton(onClick = onClear) {
-                Text("Clear")
+            IconButton(onClick = onClear, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Filled.Clear, contentDescription = "Clear amount", tint = MmrMmColors.NavIcon)
             }
         }
     }
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+    HorizontalDivider(
+        modifier = Modifier.padding(start = valueInset),
+        color = MmrMmColors.BorderMain,
+        thickness = 0.5.dp,
+    )
 }
 
 @Composable
-private fun SearchGroupedResults(
-    groups: List<TransactionGroupUi>,
-    onItemClick: (Long) -> Unit,
-    modifier: Modifier = Modifier
+private fun SearchAmountCompactField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-        contentPadding = PaddingValues(bottom = 24.dp, top = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        groups.forEach { group ->
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier =
+            modifier
+                .height(36.dp)
+                .border(1.dp, MmrMmColors.BorderMain, RoundedCornerShape(4.dp))
+                .padding(horizontal = 8.dp),
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        textStyle =
+            MaterialTheme.typography.bodyMedium.copy(
+                fontSize = 14.sp,
+                color = MmrMmColors.Reversal,
+            ),
+        cursorBrush = SolidColor(MmrMmColors.Active),
+        decorationBox = { inner ->
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.CenterStart,
+            ) {
+                if (value.isEmpty()) {
                     Text(
-                        text = group.dateLabel,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    val dayNet =
-                        "${if (group.dayTotal >= 0) "+₹" else "-₹"}${"%.2f".format(kotlin.math.abs(group.dayTotal))}"
-                    Text(
-                        text = dayNet,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.outline
+                        text = placeholder,
+                        color = MmrMmColors.TextLight,
+                        fontSize = 13.sp,
                     )
                 }
+                inner()
             }
-            items(group.items, key = { it.id }) { item ->
-                SearchTransactionRowCard(item = item, onClick = { onItemClick(item.id) })
-            }
-        }
-    }
+        },
+    )
 }
 
-@Composable
-private fun SearchTransactionRowCard(item: TransactionRowUi, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = item.title, fontWeight = FontWeight.SemiBold)
-                Text(
-                    text = "${item.subtitle} • ${item.timeLabel}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
-            }
-            Text(
-                text = item.amountFormatted,
-                fontWeight = FontWeight.Bold,
-                color = if (item.isIncome) Color(0xFF10B981) else Color(0xFFEF4444)
-            )
-        }
-    }
-}
-
-private fun periodLabel(start: java.time.LocalDate?, end: java.time.LocalDate?): String {
+private fun periodLabel(
+    start: java.time.LocalDate?,
+    end: java.time.LocalDate?,
+): String {
     if (start == null || end == null) return "Any time"
     val s = HomePeriodUtils.formatShortDate(minOf(start, end))
     val e = HomePeriodUtils.formatShortDate(maxOf(start, end))
@@ -320,7 +442,19 @@ private fun periodLabel(start: java.time.LocalDate?, end: java.time.LocalDate?):
 
 private fun categoryLabel(state: com.mmr.feature.search.model.TransactionSearchUiState): String {
     val category = state.categories.firstOrNull { it.id == state.selectedCategoryId }
-    if (category == null) return "All categories"
+    if (category == null) return "All"
     val sub = category.subcategories.firstOrNull { it.id == state.selectedSubcategoryId }
     return if (sub != null) "${category.name} › ${sub.name}" else category.name
+}
+
+private fun filterSummary(state: com.mmr.feature.search.model.TransactionSearchUiState): String {
+    val parts =
+        buildList {
+            if (state.noteQuery.isNotBlank()) add("Note")
+            if (state.periodStart != null) add("Period")
+            if (state.selectedAccountId != null) add("Account")
+            if (state.selectedCategoryId != null) add("Category")
+            if (state.amountMin.isNotBlank() || state.amountMax.isNotBlank()) add("Amount")
+        }
+    return if (parts.isEmpty()) "All transactions" else parts.joinToString(" · ")
 }

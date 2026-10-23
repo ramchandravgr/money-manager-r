@@ -6,14 +6,13 @@ import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 
 object SmsPermissionHelper {
+    val REQUIRED_PERMISSIONS =
+        arrayOf(
+            Manifest.permission.READ_SMS,
+        )
 
-    val REQUIRED_PERMISSIONS = arrayOf(
-        Manifest.permission.READ_SMS
-    )
-
-    fun hasSmsPermission(context: Context): Boolean {
-        return REQUIRED_PERMISSIONS.all {
+    fun hasSmsPermission(context: Context): Boolean =
+        REQUIRED_PERMISSIONS.all {
             ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
         }
-    }
 }

@@ -1,0 +1,38 @@
+#!/bin/sh
+# MMR pre-commit: compile app + androidTest sources (no device required).
+# Bypass: git commit --no-verify  OR  SKIP_HOOK=1 git commit
+
+set -e
+
+if [ "${SKIP_HOOK}" = "1" ]; then
+  exit 0
+fi
+
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+
+STAGED="$(git diff --cached --name-only --diff-filter=ACM)"
+if [ -z "$STAGED" ]; then
+  exit 0
+fi
+
+if ! echo "$STAGED" | grep -qE '\.(kt|kts)$|gradle/|\.gradle$|AndroidManifest\.xml'; then
+  exit 0
+fi
+
+if [ -x "./gradlew" ] || [ -f "./gradlew" ]; then
+  GRADLE="./gradlew"
+elif [ -f "./gradlew.bat" ]; then
+  GRADLE="./gradlew.bat"
+else
+  echo "pre-commit: gradlew not found" >&2
+  exit 1
+fi
+
+echo "pre-commit: ktlint + detekt..."
+"$GRADLE" :app:ktlintCheck :app:detekt --no-daemon -q
+
+echo "pre-commit: compiling debug sources (app + androidTest)..."
+"$GRADLE" :app:compileDebugKotlin :app:compileDebugAndroidTestKotlin --no-daemon -q
+
+echo "pre-commit: OK"

@@ -10,7 +10,7 @@ data class LoanWithPayments(
     val loan: LoanEntity,
     @Relation(
         parentColumn = "id",
-        entityColumn = "loanId"
+        entityColumn = "loanId",
     )
-    val payments: List<LoanPaymentEntity>
+    val payments: List<LoanPaymentEntity>,
 )

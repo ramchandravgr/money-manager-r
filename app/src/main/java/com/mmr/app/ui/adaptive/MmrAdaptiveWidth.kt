@@ -23,15 +23,15 @@ fun Modifier.mmrAdaptiveContentWidth(): Modifier {
 @Composable
 fun MmrAdaptiveWidthBox(
     modifier: Modifier = Modifier,
-    content: @Composable BoxScope.() -> Unit
+    content: @Composable BoxScope.() -> Unit,
 ) {
     Box(
         modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter
+        contentAlignment = Alignment.TopCenter,
     ) {
         Box(
             modifier = Modifier.mmrAdaptiveContentWidth(),
-            content = content
+            content = content,
         )
     }
 }

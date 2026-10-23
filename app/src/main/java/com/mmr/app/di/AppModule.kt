@@ -1,6 +1,5 @@
 package com.mmr.app.di
 
-import android.content.Context
 import com.mmr.core.common.dispatcher.DefaultDispatcher
 import com.mmr.core.common.dispatcher.DefaultDispatcherProvider
 import com.mmr.core.common.dispatcher.DispatcherProvider
@@ -9,7 +8,6 @@ import com.mmr.core.common.dispatcher.MainDispatcher
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
@@ -25,7 +23,6 @@ annotation class ApplicationScope
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
-
     @Provides
     @Singleton
     fun provideDispatcherProvider(): DispatcherProvider = DefaultDispatcherProvider()
@@ -46,6 +43,6 @@ object AppModule {
     @Singleton
     @ApplicationScope
     fun provideApplicationScope(
-        @DefaultDispatcher defaultDispatcher: CoroutineDispatcher
+        @DefaultDispatcher defaultDispatcher: CoroutineDispatcher,
     ): CoroutineScope = CoroutineScope(SupervisorJob() + defaultDispatcher)
 }

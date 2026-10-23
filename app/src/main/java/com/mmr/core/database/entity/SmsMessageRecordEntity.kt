@@ -9,8 +9,9 @@ import com.mmr.core.model.enums.*
         Index(value = ["sender"]),
         Index(value = ["receivedTime"]),
         Index(value = ["approvalState"]),
-        Index(value = ["messageBodyHash"], unique = true)
-    ]
+        Index(value = ["messageBodyHash"], unique = true),
+        Index(value = ["matchedTransactionId"]),
+    ],
 )
 data class SmsMessageRecordEntity(
     @PrimaryKey(autoGenerate = true)
@@ -27,5 +28,5 @@ data class SmsMessageRecordEntity(
     val matchedTransactionId: Long? = null,
     val approvalState: SmsApprovalState = SmsApprovalState.PENDING,
     val rawMessageId: String? = null,
-    val processedAt: Long? = System.currentTimeMillis()
+    val processedAt: Long? = System.currentTimeMillis(),
 )

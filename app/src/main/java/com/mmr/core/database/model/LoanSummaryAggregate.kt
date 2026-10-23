@@ -5,5 +5,5 @@ data class LoanSummaryAggregate(
     val totalBorrowedOutstanding: Double,
     val totalLentPrincipal: Double,
     val totalLentOutstanding: Double,
-    val activeLoansCount: Int
+    val activeLoansCount: Int,
 )

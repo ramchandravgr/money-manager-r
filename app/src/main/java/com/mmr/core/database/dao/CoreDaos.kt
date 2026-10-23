@@ -25,12 +25,31 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): TransactionEntity?
 
+    @Query("SELECT * FROM transactions WHERE syncId = :syncId LIMIT 1")
+    suspend fun getBySyncId(syncId: String): TransactionEntity?
+
+    @Query("SELECT * FROM transactions WHERE status = 'APPROVED'")
+    suspend fun getAllApprovedTransactions(): List<TransactionEntity>
+
     @Transaction
     @Query("SELECT * FROM transactions WHERE status = 'APPROVED' ORDER BY dateTime DESC")
     fun getApprovedTransactionsDetailed(): Flow<List<TransactionWithDetails>>
 
+    @Query(
+        """
+        SELECT note FROM transactions
+        WHERE status = 'APPROVED'
+        AND note IS NOT NULL
+        AND TRIM(note) != ''
+        ORDER BY dateTime DESC
+        LIMIT :limit
+        """,
+    )
+    suspend fun recentTransactionNotes(limit: Int = 250): List<String>
+
     @Transaction
-    @Query("""
+    @Query(
+        """
         SELECT * FROM transactions 
         WHERE status = 'APPROVED' 
         AND (:accountId IS NULL OR accountId = :accountId) 
@@ -39,23 +58,26 @@ interface TransactionDao {
         AND (:type IS NULL OR type = :type) 
         AND dateTime BETWEEN :startDate AND :endDate 
         ORDER BY dateTime DESC
-    """)
+    """,
+    )
     fun getFilteredTransactions(
         startDate: Long,
         endDate: Long,
         accountId: Long?,
         categoryId: Long?,
         subcategoryId: Long?,
-        type: TransactionType?
+        type: TransactionType?,
     ): Flow<List<TransactionWithDetails>>
 
     @Transaction
-    @Query("""
+    @Query(
+        """
         SELECT * FROM transactions 
         WHERE status = 'APPROVED' 
         AND (note LIKE '%' || :query || '%' OR sourceReferenceId LIKE '%' || :query || '%') 
         ORDER BY dateTime DESC
-    """)
+    """,
+    )
     fun searchTransactions(query: String): Flow<List<TransactionWithDetails>>
 
     @Transaction
@@ -65,19 +87,119 @@ interface TransactionDao {
     @Query("SELECT * FROM transactions WHERE loanId = :loanId ORDER BY dateTime DESC")
     fun getTransactionsForLoan(loanId: Long): Flow<List<TransactionEntity>>
 
-    @Query("SELECT SUM(amount) FROM transactions WHERE type = 'EXPENSE' AND status = 'APPROVED'")
+    @Query(
+        """
+        SELECT COUNT(*) FROM transactions
+        WHERE accountId = :accountId OR relatedAccountId = :accountId
+        """,
+    )
+    suspend fun countInvolvingAccount(accountId: Long): Int
+
+    @Query("SELECT id FROM transactions WHERE sourceReferenceId = :ref LIMIT 1")
+    suspend fun findIdBySourceReference(ref: String): Long?
+
+    @Query(
+        """
+        SELECT * FROM transactions
+        WHERE status = 'APPROVED'
+        AND type = :type
+        AND accountId = :accountId
+        AND dateTime BETWEEN :startMillis AND :endMillis
+        AND (loanId IS NULL OR loanId = 0)
+        ORDER BY ABS(amount - :amount) ASC, dateTime DESC
+        LIMIT 5
+        """,
+    )
+    suspend fun findSmsMergeCandidates(
+        type: TransactionType,
+        accountId: Long,
+        amount: Double,
+        startMillis: Long,
+        endMillis: Long,
+    ): List<TransactionEntity>
+
+    @Query(
+        """
+        SELECT SUM(t.amount) FROM transactions t
+        LEFT JOIN loans l ON l.id = t.loanId
+        WHERE t.status = 'APPROVED'
+        AND (
+            t.type = 'EXPENSE'
+            OR (
+                t.type = 'TRANSFER'
+                AND t.loanId IS NOT NULL AND t.loanId > 0
+                AND l.loanType = 'BORROWED'
+                AND (t.sourceReferenceId IS NULL OR t.sourceReferenceId NOT LIKE 'loan_topup:%')
+            )
+        )
+        """,
+    )
     fun getTotalExpense(): Flow<Double?>
 
-    @Query("SELECT SUM(amount) FROM transactions WHERE type = 'INCOME' AND status = 'APPROVED'")
+    @Query(
+        """
+        SELECT SUM(t.amount) FROM transactions t
+        LEFT JOIN loans l ON l.id = t.loanId
+        WHERE t.status = 'APPROVED'
+        AND (
+            t.type = 'INCOME'
+            OR (
+                t.type = 'TRANSFER'
+                AND t.loanId IS NOT NULL AND t.loanId > 0
+                AND l.loanType = 'LENT'
+                AND (t.sourceReferenceId IS NULL OR t.sourceReferenceId NOT LIKE 'loan_topup:%')
+            )
+        )
+        """,
+    )
     fun getTotalIncome(): Flow<Double?>
 
-    @Query("SELECT SUM(amount) FROM transactions WHERE type = 'EXPENSE' AND status = 'APPROVED' AND dateTime BETWEEN :startDate AND :endDate")
-    fun getTotalExpenseBetween(startDate: Long, endDate: Long): Flow<Double?>
+    @Query(
+        """
+        SELECT SUM(t.amount) FROM transactions t
+        LEFT JOIN loans l ON l.id = t.loanId
+        WHERE t.status = 'APPROVED'
+        AND t.dateTime BETWEEN :startDate AND :endDate
+        AND (
+            t.type = 'EXPENSE'
+            OR (
+                t.type = 'TRANSFER'
+                AND t.loanId IS NOT NULL AND t.loanId > 0
+                AND l.loanType = 'BORROWED'
+                AND (t.sourceReferenceId IS NULL OR t.sourceReferenceId NOT LIKE 'loan_topup:%')
+            )
+        )
+        """,
+    )
+    fun getTotalExpenseBetween(
+        startDate: Long,
+        endDate: Long,
+    ): Flow<Double?>
 
-    @Query("SELECT SUM(amount) FROM transactions WHERE type = 'INCOME' AND status = 'APPROVED' AND dateTime BETWEEN :startDate AND :endDate")
-    fun getTotalIncomeBetween(startDate: Long, endDate: Long): Flow<Double?>
+    @Query(
+        """
+        SELECT SUM(t.amount) FROM transactions t
+        LEFT JOIN loans l ON l.id = t.loanId
+        WHERE t.status = 'APPROVED'
+        AND t.dateTime BETWEEN :startDate AND :endDate
+        AND (
+            t.type = 'INCOME'
+            OR (
+                t.type = 'TRANSFER'
+                AND t.loanId IS NOT NULL AND t.loanId > 0
+                AND l.loanType = 'LENT'
+                AND (t.sourceReferenceId IS NULL OR t.sourceReferenceId NOT LIKE 'loan_topup:%')
+            )
+        )
+        """,
+    )
+    fun getTotalIncomeBetween(
+        startDate: Long,
+        endDate: Long,
+    ): Flow<Double?>
 
-    @Query("""
+    @Query(
+        """
         SELECT 
             t.categoryId AS categoryId,
             c.name AS categoryName,
@@ -91,8 +213,79 @@ interface TransactionDao {
           AND t.dateTime BETWEEN :startDate AND :endDate
         GROUP BY t.categoryId
         ORDER BY totalAmount DESC
-    """)
-    fun getCategorySpendingBetween(startDate: Long, endDate: Long): Flow<List<com.mmr.core.database.model.CategorySpending>>
+    """,
+    )
+    fun getCategorySpendingBetween(
+        startDate: Long,
+        endDate: Long,
+    ): Flow<List<com.mmr.core.database.model.CategorySpending>>
+
+    @Query(
+        """
+        SELECT 
+            t.categoryId AS categoryId,
+            c.name AS categoryName,
+            c.colorHex AS colorHex,
+            SUM(t.amount) AS totalAmount,
+            COUNT(t.id) AS transactionCount
+        FROM transactions t
+        LEFT JOIN categories c ON t.categoryId = c.id
+        WHERE t.type = 'INCOME' 
+          AND t.status = 'APPROVED' 
+          AND t.dateTime BETWEEN :startDate AND :endDate
+        GROUP BY t.categoryId
+        ORDER BY totalAmount DESC
+    """,
+    )
+    fun getCategoryIncomeBetween(
+        startDate: Long,
+        endDate: Long,
+    ): Flow<List<com.mmr.core.database.model.CategorySpending>>
+
+    @Query(
+        """
+        SELECT 
+            t.subcategoryId AS subcategoryId,
+            s.name AS subcategoryName,
+            SUM(t.amount) AS totalAmount,
+            COUNT(t.id) AS transactionCount
+        FROM transactions t
+        LEFT JOIN subcategories s ON t.subcategoryId = s.id
+        WHERE t.categoryId = :categoryId
+          AND t.type = :type
+          AND t.status = 'APPROVED'
+          AND t.dateTime BETWEEN :startDate AND :endDate
+        GROUP BY t.subcategoryId
+        ORDER BY totalAmount DESC
+    """,
+    )
+    fun getSubcategorySpendingForCategory(
+        categoryId: Long,
+        type: TransactionType,
+        startDate: Long,
+        endDate: Long,
+    ): Flow<List<com.mmr.core.database.model.SubcategorySpending>>
+
+    @Query(
+        """
+        SELECT 
+            strftime('%Y-%m', datetime(dateTime / 1000, 'unixepoch', 'localtime')) AS yearMonth,
+            SUM(amount) AS totalAmount
+        FROM transactions
+        WHERE categoryId = :categoryId
+          AND type = :type
+          AND status = 'APPROVED'
+          AND dateTime BETWEEN :startDate AND :endDate
+        GROUP BY yearMonth
+        ORDER BY yearMonth ASC
+    """,
+    )
+    fun getCategoryMonthlyTotals(
+        categoryId: Long,
+        type: TransactionType,
+        startDate: Long,
+        endDate: Long,
+    ): Flow<List<com.mmr.core.database.model.MonthTotalRow>>
 }
 
 @Dao
@@ -124,18 +317,27 @@ interface CategoryDao {
     @Query("SELECT * FROM categories WHERE id = :id LIMIT 1")
     suspend fun getCategoryById(id: Long): CategoryEntity?
 
+    @Query("SELECT * FROM categories WHERE syncId = :syncId LIMIT 1")
+    suspend fun getCategoryBySyncId(syncId: String): CategoryEntity?
+
     @Query("SELECT * FROM subcategories WHERE id = :id LIMIT 1")
     suspend fun getSubcategoryById(id: Long): SubcategoryEntity?
 
+    @Query("SELECT * FROM subcategories WHERE syncId = :syncId LIMIT 1")
+    suspend fun getSubcategoryBySyncId(syncId: String): SubcategoryEntity?
+
     @Query("SELECT * FROM categories WHERE isActive = 1 ORDER BY orderIndex, name")
     fun getActiveCategories(): Flow<List<CategoryEntity>>
+
+    @Query("SELECT * FROM categories WHERE isActive = 1 ORDER BY orderIndex, name")
+    suspend fun getActiveCategoriesOnce(): List<CategoryEntity>
 
     @Query(
         """
         SELECT * FROM categories
         WHERE isActive = 1 AND type = :type
         ORDER BY orderIndex, name
-        """
+        """,
     )
     fun getActiveCategoriesByType(type: CategoryType): Flow<List<CategoryEntity>>
 
@@ -149,7 +351,7 @@ interface CategoryDao {
         SELECT * FROM categories
         WHERE isActive = 1 AND type = :type
         ORDER BY orderIndex, name
-        """
+        """,
     )
     fun getActiveCategoriesWithSubcategoriesByType(type: CategoryType): Flow<List<CategoryWithSubcategories>>
 
@@ -162,16 +364,25 @@ interface CategoryDao {
         SELECT * FROM subcategories
         WHERE categoryId = :categoryId AND isActive = 1
         ORDER BY orderIndex, name
-        """
+        """,
     )
     fun getSubcategoriesForCategory(categoryId: Long): Flow<List<SubcategoryEntity>>
 
     @Query(
         """
         SELECT * FROM subcategories
+        WHERE categoryId = :categoryId AND isActive = 1
+        ORDER BY orderIndex, name
+        """,
+    )
+    suspend fun getSubcategoriesForCategoryOnce(categoryId: Long): List<SubcategoryEntity>
+
+    @Query(
+        """
+        SELECT * FROM subcategories
         WHERE categoryId = :categoryId
         ORDER BY orderIndex, name
-        """
+        """,
     )
     fun getAllSubcategoriesForCategory(categoryId: Long): Flow<List<SubcategoryEntity>>
 }
@@ -193,6 +404,18 @@ interface AccountDao {
     @Query("SELECT * FROM accounts WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): AccountEntity?
 
+    @Query("SELECT * FROM accounts WHERE syncId = :syncId LIMIT 1")
+    suspend fun getBySyncId(syncId: String): AccountEntity?
+
     @Query("SELECT * FROM accounts WHERE isActive = 1 ORDER BY name")
     suspend fun getActiveAccountsOnce(): List<AccountEntity>
+
+    @Query("SELECT * FROM accounts WHERE isDefault = 1 AND isActive = 1 LIMIT 1")
+    suspend fun getDefaultAccount(): AccountEntity?
+
+    @Query("UPDATE accounts SET isDefault = 0")
+    suspend fun clearDefaultFlags()
+
+    @Query("SELECT * FROM accounts WHERE isActive = 1 ORDER BY name")
+    suspend fun getAccountsOnce(): List<AccountEntity>
 }

@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="utf-8"?>
+<baseline version="1.0">
+    <file name="src/androidTest/java/com/mmr/app/ExampleInstrumentedTest.kt">
+        <error line="5" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/app/testing/MmrTestTags.kt">
+        <error line="20" column="15" source="standard:property-naming" />
+        <error line="21" column="15" source="standard:property-naming" />
+        <error line="22" column="15" source="standard:property-naming" />
+        <error line="23" column="15" source="standard:property-naming" />
+        <error line="24" column="15" source="standard:property-naming" />
+        <error line="25" column="15" source="standard:property-naming" />
+        <error line="26" column="15" source="standard:property-naming" />
+        <error line="30" column="15" source="standard:property-naming" />
+        <error line="31" column="15" source="standard:property-naming" />
+        <error line="32" column="15" source="standard:property-naming" />
+        <error line="34" column="15" source="standard:property-naming" />
+        <error line="35" column="15" source="standard:property-naming" />
+        <error line="39" column="15" source="standard:property-naming" />
+        <error line="40" column="15" source="standard:property-naming" />
+        <error line="41" column="15" source="standard:property-naming" />
+        <error line="43" column="15" source="standard:property-naming" />
+        <error line="45" column="15" source="standard:property-naming" />
+        <error line="53" column="15" source="standard:property-naming" />
+        <error line="55" column="15" source="standard:property-naming" />
+        <error line="56" column="15" source="standard:property-naming" />
+        <error line="57" column="15" source="standard:property-naming" />
+        <error line="59" column="15" source="standard:property-naming" />
+        <error line="61" column="15" source="standard:property-naming" />
+        <error line="62" column="15" source="standard:property-naming" />
+        <error line="64" column="15" source="standard:property-naming" />
+        <error line="65" column="15" source="standard:property-naming" />
+        <error line="66" column="15" source="standard:property-naming" />
+        <error line="68" column="15" source="standard:property-naming" />
+        <error line="69" column="15" source="standard:property-naming" />
+        <error line="71" column="15" source="standard:property-naming" />
+        <error line="72" column="15" source="standard:property-naming" />
+        <error line="73" column="15" source="standard:property-naming" />
+        <error line="75" column="15" source="standard:property-naming" />
+        <error line="76" column="15" source="standard:property-naming" />
+        <error line="77" column="15" source="standard:property-naming" />
+        <error line="78" column="15" source="standard:property-naming" />
+        <error line="80" column="15" source="standard:property-naming" />
+        <error line="82" column="15" source="standard:property-naming" />
+    </file>
+    <file name="src/main/java/com/mmr/app/ui/state/MmrStateViews.kt">
+        <error line="3" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/core/backup/BackupJsonCodec.kt">
+        <error line="17" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/core/database/converter/EnumConverters.kt">
+        <error line="4" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/core/database/dao/CoreDaos.kt">
+        <error line="3" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/core/database/dao/LoanDaos.kt">
+        <error line="3" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/core/database/dao/RecurringRuleDaos.kt">
+        <error line="3" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/core/database/dao/SmsMessageRecordDao.kt">
+        <error line="3" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/core/database/dao/TransactionApprovalDao.kt">
+        <error line="3" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/core/database/entity/CoreEntities.kt">
+        <error line="3" column="1" source="standard:no-wildcard-imports" />
+        <error line="4" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/core/database/entity/SmsMessageRecordEntity.kt">
+        <error line="3" column="1" source="standard:no-wildcard-imports" />
+        <error line="4" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/core/database/entity/TransactionApprovalEntity.kt">
+        <error line="3" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/core/domain/repository/LoanRepository.kt">
+        <error line="84" column="5" source="standard:no-consecutive-comments" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/account/ui/AccountListScreen.kt">
+        <error line="17" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/account/ui/AddEditAccountScreen.kt">
+        <error line="14" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/approval/ui/ApprovalCenterScreen.kt">
+        <error line="25" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/approval/ui/ManualSmsEntryDialog.kt">
+        <error line="8" column="1" source="standard:no-wildcard-imports" />
+        <error line="9" column="1" source="standard:no-wildcard-imports" />
+        <error line="19" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/approval/viewmodel/ApprovalCenterViewModel.kt">
+        <error line="34" column="1" source="standard:no-wildcard-imports" />
+        <error line="37" column="1" source="standard:no-wildcard-imports" />
+        <error line="52" column="21" source="standard:backing-property-naming" />
+        <error line="53" column="21" source="standard:backing-property-naming" />
+        <error line="54" column="21" source="standard:backing-property-naming" />
+        <error line="55" column="21" source="standard:backing-property-naming" />
+        <error line="56" column="21" source="standard:backing-property-naming" />
+        <error line="57" column="21" source="standard:backing-property-naming" />
+        <error line="58" column="21" source="standard:backing-property-naming" />
+        <error line="59" column="21" source="standard:backing-property-naming" />
+        <error line="60" column="21" source="standard:backing-property-naming" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/backup/ui/BackupScreen.kt">
+        <error line="6" column="1" source="standard:no-wildcard-imports" />
+        <error line="9" column="1" source="standard:no-wildcard-imports" />
+        <error line="10" column="1" source="standard:no-wildcard-imports" />
+        <error line="226" column="121" source="standard:max-line-length" />
+        <error line="249" column="121" source="standard:max-line-length" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/category/model/AddEditCategoryModels.kt">
+        <error line="46" column="15" source="standard:property-naming" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/category/ui/AddEditCategoryScreen.kt">
+        <error line="3" column="1" source="standard:no-wildcard-imports" />
+        <error line="7" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/category/ui/AddEditSubcategoryScreen.kt">
+        <error line="3" column="1" source="standard:no-wildcard-imports" />
+        <error line="7" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/category/ui/CategoryHierarchyComponents.kt">
+        <error line="5" column="1" source="standard:no-wildcard-imports" />
+        <error line="7" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/category/ui/CategoryListScreen.kt">
+        <error line="6" column="1" source="standard:no-wildcard-imports" />
+        <error line="11" column="1" source="standard:no-wildcard-imports" />
+        <error line="12" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/category/viewmodel/CategoryViewModel.kt">
+        <error line="32" column="21" source="standard:backing-property-naming" />
+        <error line="33" column="21" source="standard:backing-property-naming" />
+        <error line="34" column="21" source="standard:backing-property-naming" />
+        <error line="35" column="21" source="standard:backing-property-naming" />
+        <error line="36" column="21" source="standard:backing-property-naming" />
+        <error line="37" column="21" source="standard:backing-property-naming" />
+        <error line="38" column="21" source="standard:backing-property-naming" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/home/HomeScreen.kt">
+        <error line="5" column="1" source="standard:no-wildcard-imports" />
+        <error line="14" column="1" source="standard:no-wildcard-imports" />
+        <error line="42" column="1" source="standard:no-wildcard-imports" />
+        <error line="393" column="121" source="standard:max-line-length" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/home/HomeViewModel.kt">
+        <error line="18" column="1" source="standard:no-wildcard-imports" />
+        <error line="21" column="1" source="standard:no-wildcard-imports" />
+        <error line="27" column="1" source="standard:no-wildcard-imports" />
+        <error line="43" column="21" source="standard:backing-property-naming" />
+        <error line="44" column="21" source="standard:backing-property-naming" />
+        <error line="48" column="21" source="standard:backing-property-naming" />
+        <error line="49" column="21" source="standard:backing-property-naming" />
+        <error line="50" column="21" source="standard:backing-property-naming" />
+        <error line="51" column="21" source="standard:backing-property-naming" />
+        <error line="52" column="21" source="standard:backing-property-naming" />
+        <error line="53" column="21" source="standard:backing-property-naming" />
+        <error line="54" column="21" source="standard:backing-property-naming" />
+        <error line="55" column="21" source="standard:backing-property-naming" />
+        <error line="56" column="21" source="standard:backing-property-naming" />
+        <error line="57" column="21" source="standard:backing-property-naming" />
+        <error line="58" column="21" source="standard:backing-property-naming" />
+        <error line="59" column="21" source="standard:backing-property-naming" />
+        <error line="60" column="21" source="standard:backing-property-naming" />
+        <error line="61" column="21" source="standard:backing-property-naming" />
+        <error line="68" column="21" source="standard:backing-property-naming" />
+        <error line="69" column="21" source="standard:backing-property-naming" />
+        <error line="70" column="21" source="standard:backing-property-naming" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/home/ui/HomeMonthPickerDialog.kt">
+        <error line="5" column="1" source="standard:no-wildcard-imports" />
+        <error line="7" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/loan/ui/AddEditLoanScreen.kt">
+        <error line="3" column="1" source="standard:no-wildcard-imports" />
+        <error line="9" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/loan/ui/LoanDetailScreen.kt">
+        <error line="4" column="1" source="standard:no-wildcard-imports" />
+        <error line="14" column="1" source="standard:no-wildcard-imports" />
+        <error line="15" column="1" source="standard:no-wildcard-imports" />
+        <error line="42" column="1" source="standard:no-wildcard-imports" />
+        <error line="384" column="121" source="standard:max-line-length" />
+        <error line="390" column="121" source="standard:max-line-length" />
+        <error line="406" column="121" source="standard:max-line-length" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/loan/ui/LoanListScreen.kt">
+        <error line="6" column="1" source="standard:no-wildcard-imports" />
+        <error line="11" column="1" source="standard:no-wildcard-imports" />
+        <error line="37" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/loan/viewmodel/LoanDetailViewModel.kt">
+        <error line="21" column="1" source="standard:no-wildcard-imports" />
+        <error line="24" column="1" source="standard:no-wildcard-imports" />
+        <error line="27" column="1" source="standard:no-wildcard-imports" />
+        <error line="40" column="21" source="standard:backing-property-naming" />
+        <error line="41" column="21" source="standard:backing-property-naming" />
+        <error line="42" column="21" source="standard:backing-property-naming" />
+        <error line="43" column="21" source="standard:backing-property-naming" />
+        <error line="44" column="21" source="standard:backing-property-naming" />
+        <error line="45" column="21" source="standard:backing-property-naming" />
+        <error line="46" column="21" source="standard:backing-property-naming" />
+        <error line="47" column="21" source="standard:backing-property-naming" />
+        <error line="48" column="21" source="standard:backing-property-naming" />
+        <error line="49" column="21" source="standard:backing-property-naming" />
+        <error line="50" column="21" source="standard:backing-property-naming" />
+        <error line="51" column="21" source="standard:backing-property-naming" />
+        <error line="52" column="21" source="standard:backing-property-naming" />
+        <error line="53" column="21" source="standard:backing-property-naming" />
+        <error line="54" column="21" source="standard:backing-property-naming" />
+        <error line="55" column="21" source="standard:backing-property-naming" />
+        <error line="56" column="21" source="standard:backing-property-naming" />
+        <error line="57" column="21" source="standard:backing-property-naming" />
+        <error line="58" column="21" source="standard:backing-property-naming" />
+        <error line="59" column="21" source="standard:backing-property-naming" />
+        <error line="60" column="21" source="standard:backing-property-naming" />
+        <error line="61" column="21" source="standard:backing-property-naming" />
+        <error line="62" column="21" source="standard:backing-property-naming" />
+        <error line="63" column="21" source="standard:backing-property-naming" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/loan/viewmodel/LoanListViewModel.kt">
+        <error line="12" column="1" source="standard:no-wildcard-imports" />
+        <error line="14" column="1" source="standard:no-wildcard-imports" />
+        <error line="17" column="1" source="standard:no-wildcard-imports" />
+        <error line="26" column="21" source="standard:backing-property-naming" />
+        <error line="27" column="21" source="standard:backing-property-naming" />
+        <error line="28" column="21" source="standard:backing-property-naming" />
+        <error line="29" column="21" source="standard:backing-property-naming" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/recurring/ui/RecurringDetailScreen.kt">
+        <error line="3" column="1" source="standard:no-wildcard-imports" />
+        <error line="10" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/recurring/ui/RecurringListScreen.kt">
+        <error line="5" column="1" source="standard:no-wildcard-imports" />
+        <error line="10" column="1" source="standard:no-wildcard-imports" />
+        <error line="112" column="121" source="standard:max-line-length" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/recurring/viewmodel/RecurringListViewModel.kt">
+        <error line="10" column="1" source="standard:no-wildcard-imports" />
+        <error line="12" column="1" source="standard:no-wildcard-imports" />
+        <error line="15" column="1" source="standard:no-wildcard-imports" />
+        <error line="24" column="21" source="standard:backing-property-naming" />
+        <error line="25" column="21" source="standard:backing-property-naming" />
+        <error line="26" column="21" source="standard:backing-property-naming" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/search/ui/SearchCategoryPickerSheet.kt">
+        <error line="4" column="1" source="standard:no-wildcard-imports" />
+        <error line="111" column="121" source="standard:max-line-length" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/search/viewmodel/TransactionSearchViewModel.kt">
+        <error line="28" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/stats/ui/StatsCategoryDetailScreen.kt">
+        <error line="6" column="1" source="standard:no-wildcard-imports" />
+        <error line="12" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/stats/ui/StatsScreen.kt">
+        <error line="6" column="1" source="standard:no-wildcard-imports" />
+        <error line="9" column="1" source="standard:no-wildcard-imports" />
+        <error line="34" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/stats/viewmodel/StatsCategoryDetailViewModel.kt">
+        <error line="18" column="1" source="standard:no-wildcard-imports" />
+        <error line="21" column="1" source="standard:no-wildcard-imports" />
+        <error line="57" column="21" source="standard:backing-property-naming" />
+        <error line="66" column="21" source="standard:backing-property-naming" />
+        <error line="73" column="21" source="standard:backing-property-naming" />
+        <error line="80" column="21" source="standard:backing-property-naming" />
+        <error line="87" column="21" source="standard:backing-property-naming" />
+        <error line="88" column="21" source="standard:backing-property-naming" />
+        <error line="89" column="21" source="standard:backing-property-naming" />
+        <error line="90" column="21" source="standard:backing-property-naming" />
+        <error line="91" column="21" source="standard:backing-property-naming" />
+        <error line="92" column="21" source="standard:backing-property-naming" />
+        <error line="93" column="21" source="standard:backing-property-naming" />
+        <error line="94" column="21" source="standard:backing-property-naming" />
+        <error line="95" column="21" source="standard:backing-property-naming" />
+        <error line="96" column="21" source="standard:backing-property-naming" />
+        <error line="97" column="21" source="standard:backing-property-naming" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/stats/viewmodel/StatsViewModel.kt">
+        <error line="12" column="1" source="standard:no-wildcard-imports" />
+        <error line="15" column="1" source="standard:no-wildcard-imports" />
+        <error line="36" column="21" source="standard:backing-property-naming" />
+        <error line="37" column="21" source="standard:backing-property-naming" />
+        <error line="38" column="21" source="standard:backing-property-naming" />
+        <error line="39" column="21" source="standard:backing-property-naming" />
+        <error line="40" column="21" source="standard:backing-property-naming" />
+        <error line="41" column="21" source="standard:backing-property-naming" />
+        <error line="42" column="21" source="standard:backing-property-naming" />
+        <error line="43" column="21" source="standard:backing-property-naming" />
+        <error line="44" column="21" source="standard:backing-property-naming" />
+        <error line="45" column="21" source="standard:backing-property-naming" />
+        <error line="46" column="21" source="standard:backing-property-naming" />
+        <error line="47" column="21" source="standard:backing-property-naming" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/transaction/ui/AddEditTransactionScreen.kt">
+        <error line="3" column="1" source="standard:no-wildcard-imports" />
+        <error line="6" column="1" source="standard:no-wildcard-imports" />
+        <error line="7" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/transaction/ui/CategorySubcategoryPickerSheet.kt">
+        <error line="4" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/transaction/ui/TransactionFormRow.kt">
+        <error line="4" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/main/java/com/mmr/feature/transaction/viewmodel/TransactionDetailViewModel.kt">
+        <error line="50" column="21" source="standard:backing-property-naming" />
+    </file>
+    <file name="src/test/java/com/mmr/app/ExampleUnitTest.kt">
+        <error line="3" column="1" source="standard:no-wildcard-imports" />
+    </file>
+    <file name="src/test/java/com/mmr/core/parser/SmsParserDecisionsTest.kt">
+        <error line="44" column="121" source="standard:max-line-length" />
+    </file>
+    <file name="src/test/java/com/mmr/core/parser/SmsParserPhase1Test.kt">
+        <error line="67" column="121" source="standard:max-line-length" />
+        <error line="106" column="121" source="standard:max-line-length" />
+        <error line="116" column="121" source="standard:max-line-length" />
+        <error line="123" column="121" source="standard:max-line-length" />
+    </file>
+    <file name="src/test/java/com/mmr/core/parser/SmsParserPhase2Test.kt">
+        <error line="31" column="121" source="standard:max-line-length" />
+        <error line="53" column="121" source="standard:max-line-length" />
+        <error line="70" column="121" source="standard:max-line-length" />
+        <error line="86" column="121" source="standard:max-line-length" />
+    </file>
+    <file name="src/test/java/com/mmr/core/parser/SmsParserPhase3Test.kt">
+        <error line="31" column="121" source="standard:max-line-length" />
+        <error line="48" column="121" source="standard:max-line-length" />
+        <error line="60" column="121" source="standard:max-line-length" />
+        <error line="70" column="121" source="standard:max-line-length" />
+        <error line="87" column="121" source="standard:max-line-length" />
+        <error line="101" column="121" source="standard:max-line-length" />
+    </file>
+    <file name="src/test/java/com/mmr/core/parser/template/SmsTemplateRegistryMatchTest.kt">
+        <error line="35" column="121" source="standard:max-line-length" />
+    </file>
+</baseline>

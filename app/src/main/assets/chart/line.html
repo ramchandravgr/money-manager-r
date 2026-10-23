@@ -1,0 +1,178 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Bar Chart</title>
+  <script src="../js/jquery-3.5.1.min.js"></script>
+  <script src="highcharts.js"></script>
+  <script src="no-data-to-display.js"></script>
+</head>
+<body style="margin:0px">
+<div id="container" style="height: 100%"></div>
+<script>
+
+	window.onload = function(){
+		window.androidActivity.drawChart();
+	}
+
+	var drawChart = function(data) {
+
+		$("#container").css( { height: window.innerHeight +"px"} );
+
+    const plotBackgroundColor = data.plotBackgroundColor ? data.plotBackgroundColor : '#F7F7FA';
+    const tooltipBackgroundColor = data.tooltipBackgroundColor ? data.tooltipBackgroundColor : '#FF6255';
+    const tooltipTextColor = data.tooltipTextColor ? data.tooltipTextColor : '#FFFFFF'; // base
+    const borderColor = data.borderColor ? data.borderColor : '#D5D5D5';
+    const textMediumColor = data.textMediumColor ? data.textMediumColor : '#7B7B7B';
+    const baseColor = data.baseColor ? data.baseColor : '#FFFFFF';
+
+    // const minValue = data.minValue ? data.minValue : null;
+    // const maxValue = data.maxValue ? data.maxValue : null;
+
+    const xAxisVisible = data.xAxisVisible;
+    const valuePrefix = data.valuePrefix ? data.valuePrefix : '';
+    const valueSuffix = data.valueSuffix ? data.valueSuffix : '';
+
+    const labelFontSize = data.labelFontSize ? data.labelFontSize : 10;
+
+
+    if (data.colors == undefined ) {
+			data.colors = ['#7cb5ec', '#434348', '#90ed7d', '#f7a35c', '#8085e9',
+			               '#f15c80', '#e4d354', '#8085e8', '#8d4653', '#91e8e1'];
+		}
+
+      Highcharts.setOptions({
+       lang: {
+          thousandsSep: ','
+        }
+      });
+
+	    $('#container').highcharts({
+         chart: {
+	          type: 'line',
+	          backgroundColor: baseColor,
+	          plotBackgroundColor: plotBackgroundColor,
+            plotBorderColor: borderColor,
+            plotBorderWidth: 1,
+	          spacingTop: 0,
+	          spacingLeft: 0,
+            marginRight: 0,
+	          spacingRight: 0,
+           	marginTop: 10,
+	          marginLeft: 44
+	       },
+
+	       title: {
+	            text: ''
+	       },
+
+	       credits:{
+	    	  enabled : false
+	       },
+
+	       colors: data.colors,
+
+	       xAxis: {
+	            categories: data.categories,
+	            gridLineColor: borderColor,
+	            lineColor: borderColor,
+	            tickWidth: 0,
+	            labels : {
+	            	style : {
+	            		fontSize : 9,
+	            		color: textMediumColor
+	            	}
+	            },
+	            visible: xAxisVisible
+	       },
+
+	       yAxis: {
+	            title: {
+	               text: ''
+	            },
+	            lineColor: borderColor,
+	            lineWidth: 1,
+	            gridLineColor: borderColor,
+	            gridLineWidth: 1,
+	            labels : {
+	              align: 'right',
+	              x: -5,
+	            	style : {
+	            		fontSize : labelFontSize,
+	            		color: textMediumColor
+	            	}
+	            }
+	        },
+	       tooltip: {
+	            headerFormat: '<table>',
+	            pointFormat: '<tr><b>{point.y}</b></tr>',
+	            footerFormat: '</table>',
+	            backgroundColor: tooltipBackgroundColor,
+	            borderRadius: 10,
+	            borderWidth: 0,
+	            borderColor: '#00000000',
+	            valuePrefix: valuePrefix,
+	            valueSuffix: valueSuffix,
+	            shared: true,
+	            shadow: false,
+	            padding: 3,
+	            useHTML: true,
+	            style : {
+	              fontSize: "12px",
+	              color: '#FFFFFF'
+	            }
+	       },
+	       legend: {
+	        	 enabled: false
+	       },
+	       plotOptions: {
+	              series: {
+	                animation: false,
+	                marker: {
+	                    states: {
+	                      hover : {
+                          fillColor: tooltipTextColor,
+                          lineColor: data.colors[0],
+                          lineWidth: 2,
+                          radius: 4,
+	                      },
+	                      select: {
+                        enabled: false,
+                        }
+	                  }
+	              }
+	           }
+	        },
+	       series: data.series,
+	       lang: {
+	            noData: data.nodata
+	       },
+	       noData: {
+	            style: {
+	                fontWeight: 'normal',
+	                fontSize: '15px',
+	                color: tooltipTextColor
+	            }
+	       }
+	    });
+	}
+	
+/*  alert($(window).height() +  " " + window.innerHeight);
+
+   	var data = {};
+	 	data.categories = ['2014/01', '02', '03', '04', '05', '06'];
+	 	data.series = [{
+	 		name: '금액',
+	 		data: [1000, 3000, 12000, 200000, 100000, 15000]
+	 	}];
+		data.color = "#FFCC33";
+		
+	    var style = { height: $(window).height() +"px"};
+	   
+	    drawChart(data);  
+*/
+
+
+</script>
+</body>
+</html>

@@ -8,16 +8,17 @@ import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
 @HiltViewModel
-class SettingsViewModel @Inject constructor(
-    private val smsScanSettingsStore: SmsScanSettingsStore
-) : ViewModel() {
+class SettingsViewModel
+    @Inject
+    constructor(
+        private val smsScanSettingsStore: SmsScanSettingsStore,
+    ) : ViewModel() {
+        val smsScanMonths: StateFlow<Int> = smsScanSettingsStore.scanMonths
 
-    val smsScanMonths: StateFlow<Int> = smsScanSettingsStore.scanMonths
+        fun setSmsScanMonths(months: Int) {
+            smsScanSettingsStore.setScanMonths(months)
+        }
 
-    fun setSmsScanMonths(months: Int) {
-        smsScanSettingsStore.setScanMonths(months)
+        val minScanMonths: Int = SmsScanPeriod.MIN_MONTHS
+        val maxScanMonths: Int = SmsScanPeriod.MAX_MONTHS
     }
-
-    val minScanMonths: Int = SmsScanPeriod.MIN_MONTHS
-    val maxScanMonths: Int = SmsScanPeriod.MAX_MONTHS
-}

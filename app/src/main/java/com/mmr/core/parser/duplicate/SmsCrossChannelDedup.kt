@@ -5,12 +5,11 @@ import com.mmr.core.parser.model.ParsedSmsCandidate
 import kotlin.math.abs
 
 object SmsCrossChannelDedup {
-
     private const val TIME_WINDOW_MS = 2 * 60 * 1000L
 
     data class Result(
         val kept: List<ParsedSmsCandidate>,
-        val suppressedCount: Int
+        val suppressedCount: Int,
     )
 
     fun deduplicate(candidates: List<ParsedSmsCandidate>): Result {
@@ -42,7 +41,10 @@ object SmsCrossChannelDedup {
         return Result(kept = kept, suppressedCount = suppressed)
     }
 
-    private fun isHpPayCardDuplicate(a: ParsedSmsCandidate, b: ParsedSmsCandidate): Boolean {
+    private fun isHpPayCardDuplicate(
+        a: ParsedSmsCandidate,
+        b: ParsedSmsCandidate,
+    ): Boolean {
         if (abs(a.amount - b.amount) > 0.01) return false
         if (abs(a.timestamp - b.timestamp) > TIME_WINDOW_MS) return false
         return (SmsSpendChannel.isCreditCardSpend(a) && SmsSpendChannel.isHpPayWalletSpend(b)) ||
@@ -51,7 +53,7 @@ object SmsCrossChannelDedup {
 
     private fun mergePreferCard(
         card: ParsedSmsCandidate,
-        hpPay: ParsedSmsCandidate
+        hpPay: ParsedSmsCandidate,
     ): ParsedSmsCandidate {
         val merchant = card.merchant?.takeIf { it.isNotBlank() } ?: hpPay.merchant
         return card.copy(merchant = merchant)

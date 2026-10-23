@@ -1,0 +1,33 @@
+---
+description: Keep PROJECT_MEMORY.md in sync after each completed user request
+alwaysApply: true
+---
+
+# Project memory maintenance
+
+`PROJECT_MEMORY.md` at the repository root is the canonical architecture and feature tracker for MMR.
+
+## When to update
+
+At the **end of every user prompt** where you made progress (code, design, debugging, or decisions), update `PROJECT_MEMORY.md` before finishing your reply.
+
+Skip only when the turn was purely informational with **no** project state change (e.g. a one-line clarification) and nothing new belongs in the memory file.
+
+## What to record
+
+- New or changed features, UX contracts, and user-visible behavior
+- Schema / Room version bumps, migrations, backup format changes
+- Important algorithms (interest accrual, SMS rules, approval flow)
+- Key file paths for new subsystems
+- Known test/build caveats (failing suites, required flags)
+
+## How to update
+
+- Prefer **editing existing sections** (§5 Development Roadmap, §6 Key Implementation Decisions, §7 Current State) over duplicating bullets.
+- Use dated subsections when a large area grows (e.g. `### Loans`).
+- Keep §8 Maintenance Note accurate; do not claim the file is never auto-updated.
+- Do **not** commit unless the user asked for a commit.
+
+## Completion check
+
+Before sending the final message, confirm `PROJECT_MEMORY.md` reflects work done in **this** turn and any still-relevant context from the session.

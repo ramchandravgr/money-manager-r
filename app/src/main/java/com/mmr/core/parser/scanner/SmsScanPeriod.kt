@@ -12,10 +12,11 @@ object SmsScanPeriod {
 
     fun sinceTimestampMillis(
         monthsBack: Int,
-        zoneId: ZoneId = ZoneId.systemDefault()
+        zoneId: ZoneId = ZoneId.systemDefault(),
     ): Long {
         val clamped = clampMonths(monthsBack)
-        return ZonedDateTime.now(zoneId)
+        return ZonedDateTime
+            .now(zoneId)
             .minusMonths(clamped.toLong())
             .toInstant()
             .toEpochMilli()

@@ -6,6 +6,7 @@ import com.mmr.core.data.repository.TransactionRepositoryImpl
 import com.mmr.core.domain.repository.AccountRepository
 import com.mmr.core.domain.repository.BackupRepository
 import com.mmr.core.domain.repository.CategoryRepository
+import com.mmr.core.domain.repository.LanSyncRepository
 import com.mmr.core.domain.repository.TransactionRepository
 import dagger.Binds
 import dagger.Module
@@ -16,46 +17,41 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class RepositoryModule {
+    @Binds
+    @Singleton
+    abstract fun bindTransactionRepository(impl: TransactionRepositoryImpl): TransactionRepository
 
     @Binds
     @Singleton
-    abstract fun bindTransactionRepository(
-        impl: TransactionRepositoryImpl
-    ): TransactionRepository
+    abstract fun bindCategoryRepository(impl: CategoryRepositoryImpl): CategoryRepository
 
     @Binds
     @Singleton
-    abstract fun bindCategoryRepository(
-        impl: CategoryRepositoryImpl
-    ): CategoryRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindAccountRepository(
-        impl: AccountRepositoryImpl
-    ): AccountRepository
+    abstract fun bindAccountRepository(impl: AccountRepositoryImpl): AccountRepository
 
     @Binds
     @Singleton
     abstract fun bindApprovalRepository(
-        impl: com.mmr.core.data.repository.ApprovalRepositoryImpl
+        impl: com.mmr.core.data.repository.ApprovalRepositoryImpl,
     ): com.mmr.core.domain.repository.ApprovalRepository
 
     @Binds
     @Singleton
     abstract fun bindLoanRepository(
-        impl: com.mmr.core.data.repository.LoanRepositoryImpl
+        impl: com.mmr.core.data.repository.LoanRepositoryImpl,
     ): com.mmr.core.domain.repository.LoanRepository
 
     @Binds
     @Singleton
     abstract fun bindRecurringRuleRepository(
-        impl: com.mmr.core.data.repository.RecurringRuleRepositoryImpl
+        impl: com.mmr.core.data.repository.RecurringRuleRepositoryImpl,
     ): com.mmr.core.domain.repository.RecurringRuleRepository
 
     @Binds
     @Singleton
-    abstract fun bindBackupRepository(
-        impl: com.mmr.core.data.repository.BackupRepositoryImpl
-    ): BackupRepository
+    abstract fun bindBackupRepository(impl: com.mmr.core.data.repository.BackupRepositoryImpl): BackupRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLanSyncRepository(impl: com.mmr.core.data.repository.LanSyncRepositoryImpl): LanSyncRepository
 }

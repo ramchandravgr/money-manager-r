@@ -6,7 +6,7 @@ import com.mmr.core.model.enums.TransactionType
 enum class RecurringFilterType {
     ALL,
     ACTIVE,
-    PAUSED
+    PAUSED,
 }
 
 data class RecurringRuleItemUi(
@@ -25,7 +25,7 @@ data class RecurringRuleItemUi(
     val isEnabled: Boolean,
     val reminderMinutesBefore: Int,
     val reminderLabel: String,
-    val noteTemplate: String?
+    val noteTemplate: String?,
 )
 
 data class UpcomingReminderUi(
@@ -35,7 +35,7 @@ data class UpcomingReminderUi(
     val message: String,
     val scheduleTime: Long,
     val formattedScheduleDate: String,
-    val amountFormatted: String?
+    val amountFormatted: String?,
 )
 
 data class RecurringListUiState(
@@ -46,15 +46,29 @@ data class RecurringListUiState(
     val selectedFilter: RecurringFilterType = RecurringFilterType.ALL,
     val isEmpty: Boolean = false,
     val errorMessage: String? = null,
-    val statusMessage: String? = null
+    val statusMessage: String? = null,
 )
 
 sealed interface RecurringListUiEvent {
-    data class OnFilterSelected(val filter: RecurringFilterType) : RecurringListUiEvent
-    data class OnToggleRuleEnabled(val ruleId: Long, val isEnabled: Boolean) : RecurringListUiEvent
-    data class OnDeleteRule(val ruleId: Long) : RecurringListUiEvent
-    data class OnAdvanceNextRunDate(val ruleId: Long) : RecurringListUiEvent
+    data class OnFilterSelected(
+        val filter: RecurringFilterType,
+    ) : RecurringListUiEvent
+
+    data class OnToggleRuleEnabled(
+        val ruleId: Long,
+        val isEnabled: Boolean,
+    ) : RecurringListUiEvent
+
+    data class OnDeleteRule(
+        val ruleId: Long,
+    ) : RecurringListUiEvent
+
+    data class OnAdvanceNextRunDate(
+        val ruleId: Long,
+    ) : RecurringListUiEvent
+
     object OnRetryClick : RecurringListUiEvent
+
     object OnDismissStatus : RecurringListUiEvent
 }
 
@@ -74,19 +88,64 @@ data class AddEditRecurringRuleUiState(
     val reminderMinutesBefore: Int = 1440, // 1 day before by default
     val notes: String = "",
     val errorMessage: String? = null,
-    val canSave: Boolean = false
+    val canSave: Boolean = false,
+    val categoryPickerVisible: Boolean = false,
+    val accountPickerVisible: Boolean = false,
+    val reminderPickerVisible: Boolean = false,
 )
 
 sealed interface AddEditRecurringRuleUiEvent {
-    data class OnNameChanged(val name: String) : AddEditRecurringRuleUiEvent
-    data class OnAmountChanged(val amount: String) : AddEditRecurringRuleUiEvent
-    data class OnTypeSelected(val type: TransactionType) : AddEditRecurringRuleUiEvent
-    data class OnCategorySelected(val categoryId: Long?) : AddEditRecurringRuleUiEvent
-    data class OnAccountSelected(val accountId: Long) : AddEditRecurringRuleUiEvent
-    data class OnIntervalSelected(val interval: RecurrenceInterval) : AddEditRecurringRuleUiEvent
-    data class OnDayOfMonthChanged(val day: Int?) : AddEditRecurringRuleUiEvent
-    data class OnStartDateChanged(val date: Long) : AddEditRecurringRuleUiEvent
-    data class OnReminderMinutesChanged(val minutes: Int) : AddEditRecurringRuleUiEvent
-    data class OnNotesChanged(val notes: String) : AddEditRecurringRuleUiEvent
+    data class OnNameChanged(
+        val name: String,
+    ) : AddEditRecurringRuleUiEvent
+
+    data class OnAmountChanged(
+        val amount: String,
+    ) : AddEditRecurringRuleUiEvent
+
+    data class OnTypeSelected(
+        val type: TransactionType,
+    ) : AddEditRecurringRuleUiEvent
+
+    data class OnCategorySelected(
+        val categoryId: Long?,
+    ) : AddEditRecurringRuleUiEvent
+
+    data class OnAccountSelected(
+        val accountId: Long,
+    ) : AddEditRecurringRuleUiEvent
+
+    data class OnIntervalSelected(
+        val interval: RecurrenceInterval,
+    ) : AddEditRecurringRuleUiEvent
+
+    data class OnDayOfMonthChanged(
+        val day: Int?,
+    ) : AddEditRecurringRuleUiEvent
+
+    data class OnStartDateChanged(
+        val date: Long,
+    ) : AddEditRecurringRuleUiEvent
+
+    data class OnReminderMinutesChanged(
+        val minutes: Int,
+    ) : AddEditRecurringRuleUiEvent
+
+    data class OnNotesChanged(
+        val notes: String,
+    ) : AddEditRecurringRuleUiEvent
+
+    object OnCategoryRowClick : AddEditRecurringRuleUiEvent
+
+    object OnDismissCategoryPicker : AddEditRecurringRuleUiEvent
+
+    object OnAccountRowClick : AddEditRecurringRuleUiEvent
+
+    object OnDismissAccountPicker : AddEditRecurringRuleUiEvent
+
+    object OnReminderRowClick : AddEditRecurringRuleUiEvent
+
+    object OnDismissReminderPicker : AddEditRecurringRuleUiEvent
+
     object OnSaveClick : AddEditRecurringRuleUiEvent
 }

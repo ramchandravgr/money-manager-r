@@ -1,25 +1,26 @@
 package com.mmr.feature.search.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.mmr.feature.category.ui.parseColorHex
+import com.mmr.app.ui.components.MmrDimens
+import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.feature.category.ui.CategoryPickerPaneLabel
+import com.mmr.feature.category.ui.CategoryPickerParentRow
+import com.mmr.feature.category.ui.CategoryPickerSheetHeader
+import com.mmr.feature.category.ui.CategoryPickerSubRow
 import com.mmr.feature.search.model.TransactionSearchUiEvent
 import com.mmr.feature.search.model.TransactionSearchUiState
-import com.mmr.feature.transaction.model.CategoryUi
-import com.mmr.feature.transaction.model.SubcategoryUi
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -27,7 +28,7 @@ fun SearchCategoryPickerSheet(
     state: TransactionSearchUiState,
     onEvent: (TransactionSearchUiEvent) -> Unit,
     sheetState: SheetState,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     val highlightedId = state.pickerHighlightedCategoryId
     val highlightedCategory = state.categories.firstOrNull { it.id == highlightedId }
@@ -36,158 +37,108 @@ fun SearchCategoryPickerSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = MaterialTheme.colorScheme.surface
+        containerColor = MmrMmColors.SurfaceWhite,
+        dragHandle = {
+            androidx.compose.material3.BottomSheetDefaults
+                .DragHandle()
+        },
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(Color(0xFF1A1A1A))
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Category",
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Row {
-                    if (highlightedCategory != null && subcategories.isNotEmpty()) {
-                        TextButton(onClick = { onEvent(TransactionSearchUiEvent.OnPickerConfirmParentOnly) }) {
-                            Text("Parent only", color = Color.White)
-                        }
-                    }
-                    TextButton(onClick = onDismiss) {
-                        Text("Close", color = Color.White)
-                    }
-                }
-            }
+            CategoryPickerSheetHeader(
+                onClose = onDismiss,
+                parentOnlyVisible = highlightedCategory != null && subcategories.isNotEmpty(),
+                onParentOnly = { onEvent(TransactionSearchUiEvent.OnPickerConfirmParentOnly) },
+            )
+
+            HorizontalDivider(color = MmrMmColors.BorderMain.copy(alpha = 0.6f))
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 280.dp, max = 420.dp)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 240.dp, max = 380.dp),
             ) {
                 LazyColumn(
-                    modifier = Modifier
-                        .weight(0.42f)
-                        .fillMaxHeight()
-                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier =
+                        Modifier
+                            .weight(0.38f)
+                            .fillMaxHeight()
+                            .background(MmrMmColors.ListBackground),
                 ) {
                     items(state.categories, key = { it.id }) { category ->
-                        SearchParentRow(
-                            category = category,
+                        CategoryPickerParentRow(
+                            name = category.name,
+                            colorHex = category.colorHex,
                             selected = category.id == highlightedId,
                             onClick = {
                                 onEvent(TransactionSearchUiEvent.OnPickerParentSelected(category.id))
-                            }
+                            },
                         )
                     }
                 }
-                VerticalDivider(modifier = Modifier.fillMaxHeight())
+
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxHeight()
+                            .width(1.dp)
+                            .background(MmrMmColors.BorderMain.copy(alpha = 0.5f)),
+                )
+
                 LazyColumn(
-                    modifier = Modifier
-                        .weight(0.58f)
-                        .fillMaxHeight(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier =
+                        Modifier
+                            .weight(0.62f)
+                            .fillMaxHeight(),
                 ) {
-                    if (highlightedCategory == null) {
-                        item {
-                            Text(
-                                text = "Select a category",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                    when {
+                        highlightedCategory == null -> {
+                            item {
+                                Text(
+                                    text = "Select a category",
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(MmrDimens.space2xl),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MmrMmColors.TextLight,
+                                )
+                            }
                         }
-                    } else if (subcategories.isEmpty()) {
-                        item {
-                            Text(
-                                text = highlightedCategory.name,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                textAlign = TextAlign.Center,
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                        subcategories.isEmpty() -> {
+                            item {
+                                Text(
+                                    text = "\"${highlightedCategory.name}\" has no subcategories. Use Parent only or Close.",
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .padding(
+                                                horizontal = MmrDimens.spaceLg,
+                                                vertical = MmrDimens.spaceMd,
+                                            ),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MmrMmColors.TextMedium,
+                                )
+                            }
                         }
-                    } else {
-                        items(subcategories, key = { it.id }) { sub ->
-                            SearchSubRow(
-                                subcategory = sub,
-                                parentColorHex = highlightedCategory.colorHex,
-                                onClick = {
-                                    onEvent(TransactionSearchUiEvent.OnPickerSubcategorySelected(sub.id))
-                                }
-                            )
+                        else -> {
+                            item {
+                                CategoryPickerPaneLabel("Subcategory (optional)")
+                            }
+                            items(subcategories, key = { it.id }) { sub ->
+                                CategoryPickerSubRow(
+                                    name = sub.name,
+                                    colorHex = highlightedCategory.colorHex,
+                                    onClick = {
+                                        onEvent(TransactionSearchUiEvent.OnPickerSubcategorySelected(sub.id))
+                                    },
+                                )
+                            }
                         }
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(MmrDimens.spaceLg))
         }
-    }
-}
-
-@Composable
-private fun SearchParentRow(
-    category: CategoryUi,
-    selected: Boolean,
-    onClick: () -> Unit
-) {
-    val background = if (selected) {
-        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.65f)
-    } else {
-        Color.Transparent
-    }
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(background)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 14.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier
-                .size(10.dp)
-                .clip(CircleShape)
-                .background(parseColorHex(category.colorHex))
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = category.name,
-            textAlign = TextAlign.Center,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
-        )
-    }
-}
-
-@Composable
-private fun SearchSubRow(
-    subcategory: SubcategoryUi,
-    parentColorHex: String,
-    onClick: () -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(
-            modifier = Modifier
-                .size(8.dp)
-                .clip(CircleShape)
-                .background(parseColorHex(parentColorHex))
-        )
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(text = subcategory.name, textAlign = TextAlign.Center)
     }
 }

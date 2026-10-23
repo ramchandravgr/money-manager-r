@@ -4,7 +4,6 @@ import com.mmr.core.model.enums.RecurrenceInterval
 import java.util.Calendar
 
 object RecurrenceCalculator {
-
     /**
      * Calculates the next execution timestamp based on the current run date and interval.
      * Preserves the specific target day of month where applicable.
@@ -12,11 +11,12 @@ object RecurrenceCalculator {
     fun calculateNextRunDate(
         fromTimestamp: Long,
         interval: RecurrenceInterval,
-        targetDayOfMonth: Int? = null
+        targetDayOfMonth: Int? = null,
     ): Long {
-        val calendar = Calendar.getInstance().apply {
-            timeInMillis = fromTimestamp
-        }
+        val calendar =
+            Calendar.getInstance().apply {
+                timeInMillis = fromTimestamp
+            }
 
         when (interval) {
             RecurrenceInterval.DAILY -> {
@@ -54,14 +54,16 @@ object RecurrenceCalculator {
     /**
      * Calculates the reminder notification trigger timestamp, subtracting reminderMinutes.
      */
-    fun calculateReminderScheduleTime(nextRunDate: Long, reminderMinutesBefore: Int): Long {
-        return (nextRunDate - (reminderMinutesBefore * 60 * 1000L)).coerceAtLeast(0L)
-    }
+    fun calculateReminderScheduleTime(
+        nextRunDate: Long,
+        reminderMinutesBefore: Int,
+    ): Long = (nextRunDate - (reminderMinutesBefore * 60 * 1000L)).coerceAtLeast(0L)
 
     /**
      * Checks if a recurring rule has expired relative to its end date.
      */
-    fun isExpired(nextRunDate: Long, endDate: Long?): Boolean {
-        return endDate != null && nextRunDate > endDate
-    }
+    fun isExpired(
+        nextRunDate: Long,
+        endDate: Long?,
+    ): Boolean = endDate != null && nextRunDate > endDate
 }

@@ -16,36 +16,39 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LoanListViewModelTest {
-
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
-    fun loadFailure_setsFriendlyErrorMessage() = runTest {
-        val repository = FakeLoanRepository().apply {
-            allLoansError = RuntimeException()
-        }
-        val viewModel = LoanListViewModel(repository)
+    fun loadFailure_setsFriendlyErrorMessage() =
+        runTest {
+            val repository =
+                FakeLoanRepository().apply {
+                    allLoansError = RuntimeException()
+                }
+            val viewModel = LoanListViewModel(repository)
 
-        backgroundScope.launch { viewModel.uiState.collect { } }
-        val errorState = viewModel.uiState.first { it.errorMessage != null }
-        assertEquals(MmrUiMessages.GENERIC_LOAD, errorState.errorMessage)
-    }
+            backgroundScope.launch { viewModel.uiState.collect { } }
+            val errorState = viewModel.uiState.first { it.errorMessage != null }
+            assertEquals(MmrUiMessages.GENERIC_LOAD, errorState.errorMessage)
+        }
 
     @Test
-    fun retryClick_clearsLoadError() = runTest {
-        val repository = FakeLoanRepository().apply {
-            allLoansError = RuntimeException()
+    fun retryClick_clearsLoadError() =
+        runTest {
+            val repository =
+                FakeLoanRepository().apply {
+                    allLoansError = RuntimeException()
+                }
+            val viewModel = LoanListViewModel(repository)
+
+            backgroundScope.launch { viewModel.uiState.collect { } }
+            viewModel.uiState.first { it.errorMessage != null }
+
+            repository.allLoansError = null
+            viewModel.onEvent(LoanListUiEvent.OnRetryClick)
+
+            val cleared = viewModel.uiState.first { it.errorMessage == null }
+            assertNull(cleared.errorMessage)
         }
-        val viewModel = LoanListViewModel(repository)
-
-        backgroundScope.launch { viewModel.uiState.collect { } }
-        viewModel.uiState.first { it.errorMessage != null }
-
-        repository.allLoansError = null
-        viewModel.onEvent(LoanListUiEvent.OnRetryClick)
-
-        val cleared = viewModel.uiState.first { it.errorMessage == null }
-        assertNull(cleared.errorMessage)
-    }
 }

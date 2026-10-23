@@ -5,5 +5,5 @@ data class CategorySpending(
     val categoryName: String?,
     val colorHex: String?,
     val totalAmount: Double,
-    val transactionCount: Int
+    val transactionCount: Int,
 )

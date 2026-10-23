@@ -7,5 +7,5 @@ data class ExactBodyDuplicateRow(
     @ColumnInfo(name = "approvalId")
     val approvalId: Long,
     @ColumnInfo(name = "approvalState")
-    val approvalState: SmsApprovalState
+    val approvalState: SmsApprovalState,
 )

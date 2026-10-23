@@ -16,16 +16,22 @@ import javax.inject.Singleton
 
 @Singleton
 class SmsTemplateRegistry private constructor(
-    private val templates: List<SmsTemplate>
+    private val templates: List<SmsTemplate>,
 ) {
-
     @Inject
-    constructor(@ApplicationContext context: Context) : this(loadFromAssets(context))
+    constructor(
+        @ApplicationContext context: Context,
+    ) : this(loadFromAssets(context))
 
-    fun matchSettled(sms: RawSmsMessage, normalizedBody: String): SmsTemplateMatch? =
-        matchByIntent(sms, normalizedBody, SmsParseIntent.SETTLED)
+    fun matchSettled(
+        sms: RawSmsMessage,
+        normalizedBody: String,
+    ): SmsTemplateMatch? = matchByIntent(sms, normalizedBody, SmsParseIntent.SETTLED)
 
-    fun matchInformational(sms: RawSmsMessage, normalizedBody: String): SmsTemplateMatch? {
+    fun matchInformational(
+        sms: RawSmsMessage,
+        normalizedBody: String,
+    ): SmsTemplateMatch? {
         val senderKey = normalizeSenderId(sms.sender)
         for (template in templates) {
             if (template.intent == SmsParseIntent.SETTLED) continue
@@ -38,19 +44,21 @@ class SmsTemplateRegistry private constructor(
     }
 
     /** Settled-transaction templates only (phase 2 API). */
-    fun match(sms: RawSmsMessage, normalizedBody: String): SmsTemplateMatch? =
-        matchSettled(sms, normalizedBody)
+    fun match(
+        sms: RawSmsMessage,
+        normalizedBody: String,
+    ): SmsTemplateMatch? = matchSettled(sms, normalizedBody)
 
     fun matchWithIntent(
         sms: RawSmsMessage,
         normalizedBody: String,
-        intent: SmsParseIntent
+        intent: SmsParseIntent,
     ): SmsTemplateMatch? = matchByIntent(sms, normalizedBody, intent)
 
     private fun matchByIntent(
         sms: RawSmsMessage,
         normalizedBody: String,
-        intent: SmsParseIntent
+        intent: SmsParseIntent,
     ): SmsTemplateMatch? {
         val senderKey = normalizeSenderId(sms.sender)
         for (template in templates) {
@@ -63,25 +71,31 @@ class SmsTemplateRegistry private constructor(
         return null
     }
 
-    private fun buildMatch(template: SmsTemplate, matcher: java.util.regex.Matcher): SmsTemplateMatch? {
-        val amount = SmsTemplateFieldMapper.parseAmount(
-            SmsTemplateFieldMapper.groupValue(matcher, template.amountGroup)
-        ) ?: return null
-        val merchant = SmsTemplateFieldMapper.prettifyMerchant(
-            SmsTemplateFieldMapper.groupValue(matcher, template.merchantGroup)
-        )
+    private fun buildMatch(
+        template: SmsTemplate,
+        matcher: java.util.regex.Matcher,
+    ): SmsTemplateMatch? {
+        val amount =
+            SmsTemplateFieldMapper.parseAmount(
+                SmsTemplateFieldMapper.groupValue(matcher, template.amountGroup),
+            ) ?: return null
+        val merchant =
+            SmsTemplateFieldMapper.prettifyMerchant(
+                SmsTemplateFieldMapper.groupValue(matcher, template.merchantGroup),
+            )
         val last4 = SmsTemplateFieldMapper.groupValue(matcher, template.last4Group)
         val ref = SmsTemplateFieldMapper.groupValue(matcher, template.refGroup)
-        val balance = SmsTemplateFieldMapper.parseAmount(
-            SmsTemplateFieldMapper.groupValue(matcher, template.balanceGroup)
-        )
+        val balance =
+            SmsTemplateFieldMapper.parseAmount(
+                SmsTemplateFieldMapper.groupValue(matcher, template.balanceGroup),
+            )
         return SmsTemplateMatch(
             template = template,
             amount = amount,
             merchant = merchant,
             accountLastDigits = last4?.takeIf { it.length == 4 },
             referenceNumber = ref,
-            balanceAfter = balance
+            balanceAfter = balance,
         )
     }
 
@@ -93,8 +107,7 @@ class SmsTemplateRegistry private constructor(
         fun fromTemplates(templates: List<SmsTemplate>): SmsTemplateRegistry =
             SmsTemplateRegistry(templates.sortedByDescending { it.priority })
 
-        fun fromJson(json: String): SmsTemplateRegistry =
-            SmsTemplateRegistry(parseTemplates(JSONObject(json)))
+        fun fromJson(json: String): SmsTemplateRegistry = SmsTemplateRegistry(parseTemplates(JSONObject(json)))
 
         fun normalizeSenderId(sender: String): String {
             val upper = sender.trim().uppercase()
@@ -106,7 +119,10 @@ class SmsTemplateRegistry private constructor(
             }
         }
 
-        fun senderMatches(senderKey: String, suffixes: List<String>): Boolean {
+        fun senderMatches(
+            senderKey: String,
+            suffixes: List<String>,
+        ): Boolean {
             if (suffixes.isEmpty()) return true
             return suffixes.any { suffix ->
                 senderKey == suffix || senderKey.endsWith(suffix) || senderKey.contains(suffix)
@@ -114,7 +130,11 @@ class SmsTemplateRegistry private constructor(
         }
 
         fun loadFromAssets(context: Context): List<SmsTemplate> {
-            val text = context.assets.open(ASSET_FILE).bufferedReader().use { it.readText() }
+            val text =
+                context.assets
+                    .open(ASSET_FILE)
+                    .bufferedReader()
+                    .use { it.readText() }
             return parseTemplates(JSONObject(text))
         }
 
@@ -136,15 +156,20 @@ class SmsTemplateRegistry private constructor(
                 }
             }
             val type = TransactionType.valueOf(item.getString("transactionType"))
-            val channel = item.optString("paymentChannel", "")
-                .takeIf { it.isNotBlank() }
-                ?.let { runCatching { SmsPaymentChannel.valueOf(it) }.getOrNull() }
-            val instrument = item.optString("instrument", "")
-                .takeIf { it.isNotBlank() }
-                ?.let { runCatching { SmsInstrument.valueOf(it) }.getOrNull() }
-            val intent = runCatching {
-                SmsParseIntent.valueOf(item.optString("intent", "SETTLED"))
-            }.getOrDefault(SmsParseIntent.SETTLED)
+            val channel =
+                item
+                    .optString("paymentChannel", "")
+                    .takeIf { it.isNotBlank() }
+                    ?.let { runCatching { SmsPaymentChannel.valueOf(it) }.getOrNull() }
+            val instrument =
+                item
+                    .optString("instrument", "")
+                    .takeIf { it.isNotBlank() }
+                    ?.let { runCatching { SmsInstrument.valueOf(it) }.getOrNull() }
+            val intent =
+                runCatching {
+                    SmsParseIntent.valueOf(item.optString("intent", "SETTLED"))
+                }.getOrDefault(SmsParseIntent.SETTLED)
             return SmsTemplate(
                 id = item.getString("id"),
                 senderSuffixes = suffixes,
@@ -158,7 +183,7 @@ class SmsTemplateRegistry private constructor(
                 merchantGroup = item.optString("merchantGroup", "merchant").ifBlank { null },
                 last4Group = item.optString("last4Group", "last4").ifBlank { null },
                 refGroup = item.optString("refGroup", "ref").ifBlank { null },
-                balanceGroup = item.optString("balanceGroup", "balance").ifBlank { null }
+                balanceGroup = item.optString("balanceGroup", "balance").ifBlank { null },
             )
         }
     }

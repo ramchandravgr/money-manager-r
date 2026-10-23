@@ -17,29 +17,43 @@ data class AddEditCategoryUiState(
     val loadErrorMessage: String? = null,
     val errorMessage: String? = null,
     val canSave: Boolean = false,
-    val subcategories: List<SubcategoryItemUi> = emptyList()
+    val subcategories: List<SubcategoryItemUi> = emptyList(),
 )
 
 sealed interface AddEditCategoryUiEvent {
-    data class OnNameChanged(val name: String) : AddEditCategoryUiEvent
-    data class OnColorSelected(val colorHex: String) : AddEditCategoryUiEvent
-    data class OnTypeSelected(val type: CategoryType) : AddEditCategoryUiEvent
-    data class OnSortOrderChanged(val sortOrder: String) : AddEditCategoryUiEvent
+    data class OnNameChanged(
+        val name: String,
+    ) : AddEditCategoryUiEvent
+
+    data class OnColorSelected(
+        val colorHex: String,
+    ) : AddEditCategoryUiEvent
+
+    data class OnTypeSelected(
+        val type: CategoryType,
+    ) : AddEditCategoryUiEvent
+
+    data class OnSortOrderChanged(
+        val sortOrder: String,
+    ) : AddEditCategoryUiEvent
+
     data object OnSaveClick : AddEditCategoryUiEvent
+
     data object OnDismissError : AddEditCategoryUiEvent
 }
 
 object CategoryColorPresets {
     const val defaultHex = "#3B82F6"
 
-    val presets: List<String> = listOf(
-        "#EF4444",
-        "#F59E0B",
-        "#10B981",
-        "#3B82F6",
-        "#8B5CF6",
-        "#EC4899",
-        "#06B6D4",
-        "#64748B"
-    )
+    val presets: List<String> =
+        listOf(
+            "#EF4444",
+            "#F59E0B",
+            "#10B981",
+            "#3B82F6",
+            "#8B5CF6",
+            "#EC4899",
+            "#06B6D4",
+            "#64748B",
+        )
 }

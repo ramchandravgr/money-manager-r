@@ -11,52 +11,56 @@ import com.mmr.core.model.category.Subcategory
 import com.mmr.core.model.category.SubcategoryId
 
 object CategoryPersistenceMapper {
+    fun CategoryEntity.toCategory(): Category =
+        Category(
+            id = CategoryId(id),
+            name = name,
+            iconName = iconName,
+            color = CategoryColor(colorHex),
+            type = type,
+            isDefault = isDefault,
+            isActive = isActive,
+            sortOrder = orderIndex,
+        )
 
-    fun CategoryEntity.toCategory(): Category = Category(
-        id = CategoryId(id),
-        name = name,
-        iconName = iconName,
-        color = CategoryColor(colorHex),
-        type = type,
-        isDefault = isDefault,
-        isActive = isActive,
-        sortOrder = orderIndex
-    )
-
-    fun SubcategoryEntity.toSubcategory(): Subcategory = Subcategory(
-        id = SubcategoryId(id),
-        categoryId = CategoryId(categoryId),
-        name = name,
-        isActive = isActive,
-        sortOrder = orderIndex
-    )
+    fun SubcategoryEntity.toSubcategory(): Subcategory =
+        Subcategory(
+            id = SubcategoryId(id),
+            categoryId = CategoryId(categoryId),
+            name = name,
+            isActive = isActive,
+            sortOrder = orderIndex,
+        )
 
     fun CategoryWithSubcategories.toModel(): CategoryWithChildren {
-        val activeSorted = subcategories
-            .filter { it.isActive }
-            .sortedWith(compareBy({ it.orderIndex }, { it.name }))
+        val activeSorted =
+            subcategories
+                .filter { it.isActive }
+                .sortedWith(compareBy({ it.orderIndex }, { it.name }))
         return CategoryWithChildren(
             category = category.toCategory(),
-            subcategories = activeSorted.map { it.toSubcategory() }
+            subcategories = activeSorted.map { it.toSubcategory() },
         )
     }
 
-    fun Category.toEntity(): CategoryEntity = CategoryEntity(
-        id = id.value,
-        name = name,
-        iconName = iconName,
-        colorHex = color.hex,
-        type = type,
-        isDefault = isDefault,
-        isActive = isActive,
-        orderIndex = sortOrder
-    )
+    fun Category.toEntity(): CategoryEntity =
+        CategoryEntity(
+            id = id.value,
+            name = name,
+            iconName = iconName,
+            colorHex = color.hex,
+            type = type,
+            isDefault = isDefault,
+            isActive = isActive,
+            orderIndex = sortOrder,
+        )
 
-    fun Subcategory.toEntity(): SubcategoryEntity = SubcategoryEntity(
-        id = id.value,
-        categoryId = categoryId.value,
-        name = name,
-        isActive = isActive,
-        orderIndex = sortOrder
-    )
+    fun Subcategory.toEntity(): SubcategoryEntity =
+        SubcategoryEntity(
+            id = id.value,
+            categoryId = categoryId.value,
+            name = name,
+            isActive = isActive,
+            orderIndex = sortOrder,
+        )
 }

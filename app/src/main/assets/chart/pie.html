@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Bar Chart</title>
+  <script src="../js/jquery-3.5.1.min.js"></script>
+  <script src="highcharts.js"></script>
+  <script src="no-data-to-display.js"></script>
+</head>
+<body style="margin:0px">
+<div id="container" style="height: 300px; margin:auto;"></div>
+<script>
+
+	window.onload = function() {
+		window.androidActivity.drawChart();
+	}
+
+
+	var drawChart = function(data) {
+
+      const pieBackgroundColor = data.pieBackgroundColor ? data.pieBackgroundColor : '#FFFFFF';
+      const pieTextColor = data.pieTextColor ? data.pieTextColor : '#000000';
+      const pieTextSize = data.pieTextSize ? data.pieTextSize : '14';
+      const pieBorderColor = data.pieBorderColor ? data.pieBorderColor : '#FFFFFF';
+      // var tooltipBackgroundColor = data.tooltipBackgroundColor ? data.tooltipBackgroundColor : '#FFFFFF';
+      // var tooltipTextColor = data.tooltipTextColor ? data.tooltipTextColor : '#000000';
+
+		  $("#container").css( { height: window.innerHeight +"px" } );
+
+	    // Radialize the colors
+/* 	    Highcharts.getOptions().colors = Highcharts.map(Highcharts.getOptions().colors, function (color) {
+	        return {
+	            radialGradient: { cx: 0.5, cy: 0.3, r: 0.7 },
+	            stops: [
+	                [0, color],
+	                [1, Highcharts.Color(color).brighten(-0.3).get('rgb')] // darken
+	            ]
+	        };
+	    }); */
+	    	    
+	    $("#container").highcharts({
+	        chart: {
+	        	type:'pie',
+	        	backgroundColor: pieBackgroundColor,
+	          plotShadow: false
+/* 	            options3d: {
+	                enabled: true,
+	                alpha: 45,
+	                beta: 0
+	            } */
+	        },
+          series: data.series,
+	        title: {
+	            text: ''
+	        },
+	        colors: data.colors,
+	        credits: {
+	            enabled: false
+	        },
+	        tooltip: {
+	            pointFormat: '{series.name}<b>{point.amount}</b>'
+	        },
+	        plotOptions: {
+	        	  series: {
+	                animation: {
+	                    duration: 500
+	                },
+	                label: {
+	                  style: {
+	                    fontWeight: 'normal'
+	                  }
+	                }
+	            },
+	            pie: {
+	                borderColor: pieBorderColor,
+	                allowPointSelect: true,
+	                animation: true,
+	                cursor: 'pointer',
+	                dataLabels: {
+	                    enabled: true,
+	                    useHTML: true,
+	                    format: '<b>{point.name}</b><br>{point.percentage:.1f} %',
+	                    style: {
+	                    	fontWeight: 'normal',
+	                    	fontSize: pieTextSize,
+	                      color: (Highcharts.theme && Highcharts.theme.contrastTextColor) || pieTextColor
+	                    }
+	                }
+	            }, 
+	            
+	        },
+	        lang: {
+	            noData: data.nodata
+	        },
+	        noData: {
+	            style: {
+	                fontWeight: 'normal',
+	                fontSize: '15px',
+	                color: '#8d8d8d'
+	            }
+	        } 
+	    });
+	}
+
+
+/*  	var data = {"series":[{"data":[["식사",39.0],["문화",31.0],["사회생활",19.0],["생활용품",7.0],["자기계발",4.0]],"type":"pie","name":" "}],"colors":["#ea1d1d","#ffd608","#21ca21","#4699ec","#e7901f"]};
+	var data = {"nodata":"데이터가 없습니다.","series":[{"data":[],"type":"pie","name":"A"}],"colors":["#ea1d1d","#ffd608","#21ca21","#4699ec","#e7901f"]};
+	drawChart(data);  */
+
+
+
+</script>
+</body>
+</html>

@@ -2,17 +2,22 @@ package com.mmr.core.database.entity
 
 import androidx.room.*
 import com.mmr.core.model.enums.*
+import com.mmr.core.model.enums.CardNetwork
 
 @Entity(
     tableName = "accounts",
     indices = [
         Index(value = ["name"]),
-        Index(value = ["isActive"])
-    ]
+        Index(value = ["isActive"]),
+        Index(value = ["syncId"], unique = true),
+    ],
 )
 data class AccountEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val syncId: String =
+        com.mmr.core.common.sync.MmrSyncId
+            .newId(),
     val name: String,
     val type: AccountType = AccountType.BANK,
     val openingBalance: Double = 0.0,
@@ -23,7 +28,7 @@ data class AccountEntity(
     /** Last 4 digits for card / bank matching from SMS (optional). */
     val cardLastFour: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = System.currentTimeMillis(),
 )
 
 @Entity(
@@ -33,25 +38,29 @@ data class AccountEntity(
             entity = AccountEntity::class,
             parentColumns = ["id"],
             childColumns = ["linkedDebitAccountId"],
-            onDelete = ForeignKey.SET_NULL
+            onDelete = ForeignKey.SET_NULL,
         ),
         ForeignKey(
             entity = AccountEntity::class,
             parentColumns = ["id"],
             childColumns = ["linkedLoanAccountId"],
-            onDelete = ForeignKey.SET_NULL
-        )
+            onDelete = ForeignKey.SET_NULL,
+        ),
     ],
     indices = [
         Index(value = ["linkedDebitAccountId"]),
         Index(value = ["linkedLoanAccountId"]),
         Index(value = ["status"]),
-        Index(value = ["dueDate"])
-    ]
+        Index(value = ["dueDate"]),
+        Index(value = ["syncId"], unique = true),
+    ],
 )
 data class LoanEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val syncId: String =
+        com.mmr.core.common.sync.MmrSyncId
+            .newId(),
     val name: String,
     val lenderName: String,
     val principalAmount: Double,
@@ -65,9 +74,72 @@ data class LoanEntity(
     val loanType: LoanType = LoanType.BORROWED,
     val status: LoanStatus = LoanStatus.ACTIVE,
     val repaymentMode: String? = null,
+    val tenureMonths: Int? = null,
+    val remainingTenureMonths: Int? = null,
+    val fixedEmiAmount: Double? = null,
+    val emiDayOfMonth: Int? = null,
+    val fixedEmiInputMode: String? = null,
     val notes: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = System.currentTimeMillis(),
+)
+
+@Entity(
+    tableName = "loan_interest_revisions",
+    foreignKeys = [
+        ForeignKey(
+            entity = LoanEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["loanId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index(value = ["loanId"]), Index(value = ["effectiveFromMillis"])],
+)
+data class LoanInterestRevisionEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val loanId: Long,
+    val effectiveFromMillis: Long,
+    val annualRatePercent: Double,
+    val note: String? = null,
+    val createdAt: Long = System.currentTimeMillis(),
+)
+
+@Entity(
+    tableName = "loan_schedule_entries",
+    foreignKeys = [
+        ForeignKey(
+            entity = LoanEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["loanId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = LoanPaymentEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["linkedPaymentId"],
+            onDelete = ForeignKey.SET_NULL,
+        ),
+    ],
+    indices = [
+        Index(value = ["loanId"]),
+        Index(value = ["dueDateMillis"]),
+        Index(value = ["status"]),
+    ],
+)
+data class LoanScheduleEntryEntity(
+    @PrimaryKey(autoGenerate = true)
+    val id: Long = 0,
+    val loanId: Long,
+    val sequenceNumber: Int,
+    val dueDateMillis: Long,
+    val emiAmount: Double,
+    val principalPlanned: Double,
+    val interestPlanned: Double,
+    val status: LoanScheduleStatus = LoanScheduleStatus.PLANNED,
+    val linkedPaymentId: Long? = null,
+    val annualRatePercentAtPlan: Double,
 )
 
 @Entity(
@@ -77,20 +149,20 @@ data class LoanEntity(
             entity = LoanEntity::class,
             parentColumns = ["id"],
             childColumns = ["loanId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = TransactionEntity::class,
             parentColumns = ["id"],
             childColumns = ["transactionId"],
-            onDelete = ForeignKey.SET_NULL
-        )
+            onDelete = ForeignKey.SET_NULL,
+        ),
     ],
     indices = [
         Index(value = ["loanId"]),
         Index(value = ["transactionId"]),
-        Index(value = ["paymentDate"])
-    ]
+        Index(value = ["paymentDate"]),
+    ],
 )
 data class LoanPaymentEntity(
     @PrimaryKey(autoGenerate = true)
@@ -103,7 +175,7 @@ data class LoanPaymentEntity(
     val principalComponent: Double? = null,
     val interestComponent: Double? = null,
     val outstandingAfterPayment: Double,
-    val notes: String? = null
+    val notes: String? = null,
 )
 
 @Entity(
@@ -113,28 +185,28 @@ data class LoanPaymentEntity(
             entity = CategoryEntity::class,
             parentColumns = ["id"],
             childColumns = ["categoryId"],
-            onDelete = ForeignKey.SET_NULL
+            onDelete = ForeignKey.SET_NULL,
         ),
         ForeignKey(
             entity = SubcategoryEntity::class,
             parentColumns = ["id"],
             childColumns = ["subcategoryId"],
-            onDelete = ForeignKey.SET_NULL
+            onDelete = ForeignKey.SET_NULL,
         ),
         ForeignKey(
             entity = AccountEntity::class,
             parentColumns = ["id"],
             childColumns = ["accountId"],
-            onDelete = ForeignKey.RESTRICT
-        )
+            onDelete = ForeignKey.RESTRICT,
+        ),
     ],
     indices = [
         Index(value = ["nextRunDate"]),
         Index(value = ["isEnabled"]),
         Index(value = ["accountId"]),
         Index(value = ["categoryId"]),
-        Index(value = ["subcategoryId"])
-    ]
+        Index(value = ["subcategoryId"]),
+    ],
 )
 data class RecurringRuleEntity(
     @PrimaryKey(autoGenerate = true)
@@ -154,7 +226,7 @@ data class RecurringRuleEntity(
     val noteTemplate: String? = null,
     val reminderMinutesBefore: Int = 0,
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = System.currentTimeMillis(),
 )
 
 @Entity(
@@ -164,22 +236,22 @@ data class RecurringRuleEntity(
             entity = LoanEntity::class,
             parentColumns = ["id"],
             childColumns = ["targetLoanId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = RecurringRuleEntity::class,
             parentColumns = ["id"],
             childColumns = ["targetRecurringRuleId"],
-            onDelete = ForeignKey.CASCADE
-        )
+            onDelete = ForeignKey.CASCADE,
+        ),
     ],
     indices = [
         Index(value = ["type"]),
         Index(value = ["enabled"]),
         Index(value = ["targetLoanId"]),
         Index(value = ["targetRecurringRuleId"]),
-        Index(value = ["scheduleTime"])
-    ]
+        Index(value = ["scheduleTime"]),
+    ],
 )
 data class NotificationRuleEntity(
     @PrimaryKey(autoGenerate = true)
@@ -193,7 +265,7 @@ data class NotificationRuleEntity(
     val title: String? = null,
     val message: String? = null,
     val isFired: Boolean = false,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
 )
 
 @Entity(
@@ -203,32 +275,32 @@ data class NotificationRuleEntity(
             entity = CategoryEntity::class,
             parentColumns = ["id"],
             childColumns = ["categoryId"],
-            onDelete = ForeignKey.SET_NULL
+            onDelete = ForeignKey.SET_NULL,
         ),
         ForeignKey(
             entity = SubcategoryEntity::class,
             parentColumns = ["id"],
             childColumns = ["subcategoryId"],
-            onDelete = ForeignKey.SET_NULL
+            onDelete = ForeignKey.SET_NULL,
         ),
         ForeignKey(
             entity = AccountEntity::class,
             parentColumns = ["id"],
             childColumns = ["accountId"],
-            onDelete = ForeignKey.RESTRICT
+            onDelete = ForeignKey.RESTRICT,
         ),
         ForeignKey(
             entity = AccountEntity::class,
             parentColumns = ["id"],
             childColumns = ["relatedAccountId"],
-            onDelete = ForeignKey.SET_NULL
+            onDelete = ForeignKey.SET_NULL,
         ),
         ForeignKey(
             entity = LoanEntity::class,
             parentColumns = ["id"],
             childColumns = ["loanId"],
-            onDelete = ForeignKey.SET_NULL
-        )
+            onDelete = ForeignKey.SET_NULL,
+        ),
     ],
     indices = [
         Index(value = ["dateTime"]),
@@ -239,12 +311,16 @@ data class NotificationRuleEntity(
         Index(value = ["loanId"]),
         Index(value = ["type"]),
         Index(value = ["sourceType"]),
-        Index(value = ["status"])
-    ]
+        Index(value = ["status"]),
+        Index(value = ["syncId"], unique = true),
+    ],
 )
 data class TransactionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val syncId: String =
+        com.mmr.core.common.sync.MmrSyncId
+            .newId(),
     val dateTime: Long,
     val amount: Double,
     val type: TransactionType,
@@ -260,5 +336,9 @@ data class TransactionEntity(
     val attachmentCount: Int = 0,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
-    val isEdited: Boolean = false
+    val isEdited: Boolean = false,
+    val paymentChannel: String? = null,
+    val paymentInstrument: String? = null,
+    val cardLastFour: String? = null,
+    val cardNetwork: CardNetwork? = null,
 )

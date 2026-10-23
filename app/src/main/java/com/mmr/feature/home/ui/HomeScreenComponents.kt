@@ -2,12 +2,27 @@ package com.mmr.feature.home.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,16 +30,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mmr.app.R
+import com.mmr.app.testing.MmrTestTags
+import com.mmr.app.ui.components.MmrDimens
+import com.mmr.app.ui.components.MmrMmHomeTopBar
+import com.mmr.app.ui.components.MmrMmSummaryStrip
+import com.mmr.app.ui.components.MmrMmTabRow
+import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.core.model.settings.MmrAmountColorScheme
 import com.mmr.feature.home.model.HomeSummaryUi
 import com.mmr.feature.home.model.HomeViewTab
+import com.mmr.feature.home.ui.formatRupeeAmount
 
-private val TopBarActionSize = 40.dp
-private val TopBarIconSize = 22.dp
+private val HomeMonthTitleStyle
+    @Composable get() =
+        MaterialTheme.typography.labelMedium.copy(
+            fontSize = 12.sp,
+            lineHeight = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeMonthTopBar(
     monthTitle: String,
@@ -33,83 +61,79 @@ fun HomeMonthTopBar(
     onMonthTitleClick: () -> Unit,
     onSearchClick: () -> Unit,
     pendingApprovalCount: Int,
-    onApprovalsClick: () -> Unit
+    onApprovalsClick: () -> Unit,
 ) {
-    CenterAlignedTopAppBar(
-        navigationIcon = {
-            HomeAppBrandIcon(modifier = Modifier.padding(start = 4.dp))
-        },
-        title = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                TextButton(
-                    onClick = onPreviousMonth,
-                    modifier = Modifier.size(TopBarActionSize),
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Text("‹", style = MaterialTheme.typography.titleLarge)
-                }
-                Text(
-                    text = monthTitle,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier
-                        .clickable(onClick = onMonthTitleClick)
-                        .padding(horizontal = 4.dp, vertical = 4.dp)
-                )
-                TextButton(
-                    onClick = onNextMonth,
-                    modifier = Modifier.size(TopBarActionSize),
-                    contentPadding = PaddingValues(0.dp)
-                ) {
-                    Text("›", style = MaterialTheme.typography.titleLarge)
-                }
-            }
-        },
-        actions = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(2.dp),
-                modifier = Modifier.padding(end = 4.dp)
-            ) {
-                HomeTopBarIconButton(
-                    onClick = onSearchClick,
-                    contentDescription = "Search"
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Search,
-                        contentDescription = null,
-                        modifier = Modifier.size(TopBarIconSize)
-                    )
-                }
-                HomeTopBarApprovalsButton(
-                    pendingCount = pendingApprovalCount,
-                    onClick = onApprovalsClick
-                )
-            }
-        },
-        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface
-        )
+    MmrMmHomeTopBar(
+        monthTitle = monthTitle,
+        onPreviousMonth = onPreviousMonth,
+        onNextMonth = onNextMonth,
+        onMonthTitleClick = onMonthTitleClick,
+        onSearchClick = onSearchClick,
+        onApprovalsClick = onApprovalsClick,
+        pendingApprovalCount = pendingApprovalCount,
     )
+}
+
+@Composable
+private fun HomeMonthPickerControl(
+    monthTitle: String,
+    onPreviousMonth: () -> Unit,
+    onNextMonth: () -> Unit,
+    onMonthTitleClick: () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+        modifier = Modifier.height(MmrDimens.homeTopBarIconButton),
+    ) {
+        IconButton(
+            onClick = onPreviousMonth,
+            modifier = Modifier.size(MmrDimens.homeTopBarIconButton),
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = "Previous month",
+                modifier = Modifier.size(MmrDimens.homeIconSm),
+            )
+        }
+        Text(
+            text = monthTitle,
+            style = HomeMonthTitleStyle,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+            modifier =
+                Modifier
+                    .width(MmrDimens.homeMonthTitleWidth)
+                    .clickable(onClick = onMonthTitleClick),
+        )
+        IconButton(
+            onClick = onNextMonth,
+            modifier = Modifier.size(MmrDimens.homeTopBarIconButton),
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = "Next month",
+                modifier = Modifier.size(MmrDimens.homeIconSm),
+            )
+        }
+    }
 }
 
 @Composable
 private fun HomeAppBrandIcon(modifier: Modifier = Modifier) {
     Surface(
-        modifier = modifier.size(36.dp),
-        shape = RoundedCornerShape(10.dp),
-        color = Color(0xFF0F3468)
+        modifier = modifier,
+        shape = RoundedCornerShape(MmrDimens.spaceSm),
+        color = Color(0xFF0F3468),
     ) {
         Image(
             painter = painterResource(R.drawable.ic_launcher_foreground),
             contentDescription = "MMR",
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(4.dp)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(2.dp),
         )
     }
 }
@@ -119,49 +143,65 @@ private fun HomeTopBarIconButton(
     onClick: () -> Unit,
     contentDescription: String,
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     IconButton(
         onClick = onClick,
-        modifier = modifier.size(TopBarActionSize),
-        content = content
+        modifier = modifier.size(MmrDimens.homeTopBarIconButton),
+        content = content,
     )
 }
 
 @Composable
 private fun HomeTopBarApprovalsButton(
     pendingCount: Int,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
-    val badgeLabel = when {
-        pendingCount <= 0 -> null
-        pendingCount > 99 -> "99+"
-        else -> pendingCount.toString()
-    }
-    BadgedBox(
-        badge = {
-            if (badgeLabel != null) {
-                Badge(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = MaterialTheme.colorScheme.onError
-                ) {
-                    Text(
-                        text = badgeLabel,
-                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp)
-                    )
-                }
-            }
+    val badgeLabel =
+        when {
+            pendingCount <= 0 -> null
+            pendingCount > 99 -> "99+"
+            else -> pendingCount.toString()
         }
+    Box(
+        modifier =
+            Modifier
+                .width(MmrDimens.homeTopBarIconButton + 10.dp)
+                .height(MmrDimens.homeTopBarIconButton),
+        contentAlignment = Alignment.Center,
     ) {
         IconButton(
             onClick = onClick,
-            modifier = Modifier.size(TopBarActionSize)
+            modifier = Modifier.size(MmrDimens.homeTopBarIconButton),
         ) {
             Icon(
                 imageVector = Icons.Outlined.Email,
                 contentDescription = "Pending approvals",
-                modifier = Modifier.size(TopBarIconSize)
+                modifier = Modifier.size(MmrDimens.homeIconSm),
             )
+        }
+        if (badgeLabel != null) {
+            Surface(
+                modifier =
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = 0.dp, y = 0.dp),
+                shape = RoundedCornerShape(6.dp),
+                color = MaterialTheme.colorScheme.error,
+            ) {
+                Text(
+                    text = badgeLabel,
+                    modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
+                    style =
+                        MaterialTheme.typography.labelSmall.copy(
+                            fontSize = 8.sp,
+                            lineHeight = 9.sp,
+                            fontWeight = FontWeight.Bold,
+                        ),
+                    color = MaterialTheme.colorScheme.onError,
+                    maxLines = 1,
+                )
+            }
         }
     }
 }
@@ -170,84 +210,66 @@ private fun HomeTopBarApprovalsButton(
 fun HomeViewTabRow(
     selectedTab: HomeViewTab,
     onTabSelected: (HomeViewTab) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val tabs = HomeViewTab.entries
-    ScrollableTabRow(
-        selectedTabIndex = tabs.indexOf(selectedTab).coerceAtLeast(0),
-        modifier = modifier.fillMaxWidth(),
-        edgePadding = 8.dp,
-        divider = {}
-    ) {
-        tabs.forEach { tab ->
-            Tab(
-                selected = selectedTab == tab,
-                onClick = { onTabSelected(tab) },
-                text = {
-                    Text(
-                        text = tab.name.lowercase().replaceFirstChar { it.uppercase() },
-                        fontWeight = if (selectedTab == tab) FontWeight.Bold else FontWeight.Normal
-                    )
-                }
-            )
-        }
-    }
+    MmrMmTabRow(
+        tabs = tabs.map { it.mmLabel },
+        selectedIndex = tabs.indexOf(selectedTab).coerceAtLeast(0),
+        onTabSelected = { index -> onTabSelected(tabs[index]) },
+        modifier = modifier,
+        testTagForIndex = { index -> MmrTestTags.homeViewTab(tabs[index]) },
+    )
 }
 
 @Composable
 fun HomePeriodSummaryStrip(
     summary: HomeSummaryUi,
-    modifier: Modifier = Modifier
+    amountColorScheme: MmrAmountColorScheme = MmrAmountColorScheme.SET_B,
+    modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            SummaryColumn(
-                label = "Income",
-                amount = summary.totalIncome,
-                color = Color(0xFF2563EB),
-                prefix = ""
-            )
-            SummaryColumn(
-                label = "Expenses",
-                amount = summary.totalExpense,
-                color = Color(0xFFEF4444),
-                prefix = ""
-            )
-            SummaryColumn(
-                label = "Total",
-                amount = summary.netBalance,
-                color = MaterialTheme.colorScheme.onSurface,
-                prefix = if (summary.netBalance >= 0) "" else "-"
+        MmrMmSummaryStrip(
+            incomeLabel = "Income",
+            incomeAmount = formatRupeeAmount(summary.totalIncome),
+            expenseLabel = "Expenses",
+            expenseAmount = formatRupeeAmount(summary.totalExpense),
+            totalLabel = "Total",
+            totalAmount = formatRupeeAmount(summary.netBalance),
+            amountColorScheme = amountColorScheme,
+            incomeAmountTestTag = MmrTestTags.homeSummaryIncome,
+            expenseAmountTestTag = MmrTestTags.homeSummaryExpense,
+            totalAmountTestTag = MmrTestTags.homeSummaryTotal,
+        )
+        if (summary.carriedForward != 0.0) {
+            Text(
+                text = "Includes ${formatRupeeAmount(summary.carriedForward)} carried forward",
+                style = MaterialTheme.typography.labelSmall,
+                color = MmrMmColors.TextMedium,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 6.dp, start = 16.dp, end = 16.dp),
+                textAlign = TextAlign.Center,
             )
         }
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }
 }
 
 @Composable
-private fun SummaryColumn(
+private fun SummaryInlineItem(
     label: String,
     amount: Double,
     color: Color,
-    prefix: String
+    prefix: String,
 ) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Text(
-            text = "$prefix${"%.2f".format(kotlin.math.abs(amount))}",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = color,
-            textAlign = TextAlign.Center
-        )
-    }
+    Text(
+        text = "$label $prefix₹${"%.2f".format(kotlin.math.abs(amount))}",
+        style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, lineHeight = 13.sp),
+        color = color,
+        fontWeight = FontWeight.Medium,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        textAlign = TextAlign.Center,
+    )
 }

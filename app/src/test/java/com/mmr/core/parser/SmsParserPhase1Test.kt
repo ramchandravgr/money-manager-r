@@ -18,7 +18,6 @@ import org.junit.Before
 import org.junit.Test
 
 class SmsParserPhase1Test {
-
     private lateinit var engine: SmsParserEngine
 
     @Before
@@ -28,10 +27,11 @@ class SmsParserPhase1Test {
 
     @Test
     fun amountRule_picksSpendAmount_notAvailableBalance() {
-        val body = """
+        val body =
+            """
             You've spent Rs.1,250.00 on HDFC Bank Credit Card xx1234 at Amazon on 12-10-2025.
             Avl bal: Rs.50,000.00 Curr O/S: Rs.12,000.00
-        """.trimIndent()
+            """.trimIndent()
         val normalized = SmsNormalizer.normalizeForMatching(body)
         assertEquals(1250.0, AmountRule.extractAmount(normalized)!!, 0.01)
     }
@@ -55,7 +55,7 @@ class SmsParserPhase1Test {
         val mandate = "for the upcoming mandate set for 01-02-2026, inr 500 will be debited from your a/c"
         assertEquals(
             com.mmr.core.parser.model.SmsParseIntent.MANDATE,
-            SmsClassifier.detectInformational(mandate)
+            SmsClassifier.detectInformational(mandate),
         )
 
         val data = "we have credited your daily 1gb 4g/3g pack. it gets renewed every midnight."
@@ -69,6 +69,27 @@ class SmsParserPhase1Test {
     }
 
     @Test
+    fun classifier_nachWillBePresented_isMandate_notTransaction() {
+        val body =
+            "Dear Sir/Madam, The NACH for Rs. 112500 will be presented on 05/10/2026 towards the housing loan installment."
+        assertEquals(com.mmr.core.parser.model.SmsParseIntent.MANDATE, SmsClassifier.detectInformational(body))
+        assertNull(
+            parse(
+                sender = "JK-LICHFL-S",
+                body = body,
+            ),
+        )
+    }
+
+    @Test
+    fun classifier_declinedCardTransaction_isIgnored() {
+        val body =
+            "A transaction of INR 1,700.00 on your YES BANK Credit Card ending 7663 on 21-10-2026 at GROK XAI is declined because International Ecom/ online transactions are disabled on your card."
+        assertTrue(SmsClassifier.isDeclinedOrFailedTransaction(body))
+        assertNull(parse(sender = "VA-YESBNK-S", body = body))
+    }
+
+    @Test
     fun merchantRule_extractsVpaAndBobCardMerchant() {
         val upi = "HDFC Bank: Rs 100 debited to VPA cred.club@axisb (UPI Ref No 999)"
         assertEquals("cred", MerchantRule.extractMerchant(upi)?.lowercase())
@@ -79,19 +100,21 @@ class SmsParserPhase1Test {
 
     @Test
     fun engine_parsesRealWorldTemplates() {
-        val hdfc = parse(
-            sender = "VM-HDFCBK",
-            body = "HDFC Bank: Rs 499 debited from a/c **5678 on 01-01-2026 to VPA zepto@ybl (UPI Ref No 123456789012)"
-        )
+        val hdfc =
+            parse(
+                sender = "VM-HDFCBK",
+                body = "HDFC Bank: Rs 499 debited from a/c **5678 on 01-01-2026 to VPA zepto@ybl (UPI Ref No 123456789012)",
+            )
         assertNotNull(hdfc)
         assertEquals(499.0, hdfc!!.amount, 0.01)
         assertEquals(TransactionType.EXPENSE, hdfc.type)
         assertTrue(SenderRule.isKnownFinancialSender(hdfc.sender))
 
-        val mandate = parse(
-            sender = "VM-AXISBK",
-            body = "For the upcoming mandate set for 01-02-2026, INR 500 will be debited from your a/c towards Paytm Money Limited"
-        )
+        val mandate =
+            parse(
+                sender = "VM-AXISBK",
+                body = "For the upcoming mandate set for 01-02-2026, INR 500 will be debited from your a/c towards Paytm Money Limited",
+            )
         assertNull(mandate)
     }
 
@@ -101,13 +124,15 @@ class SmsParserPhase1Test {
         assertEquals(TransactionType.LOAN_PAYMENT, TransactionTypeRule.inferType(body))
     }
 
-    private fun parse(sender: String, body: String) =
-        engine.parse(
-            RawSmsMessage(
-                id = "1",
-                sender = sender,
-                body = body,
-                timestamp = 1_700_000_000_000L
-            )
-        )
+    private fun parse(
+        sender: String,
+        body: String,
+    ) = engine.parse(
+        RawSmsMessage(
+            id = "1",
+            sender = sender,
+            body = body,
+            timestamp = 1_700_000_000_000L,
+        ),
+    )
 }

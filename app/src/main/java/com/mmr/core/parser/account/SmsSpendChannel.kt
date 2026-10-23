@@ -5,13 +5,13 @@ import com.mmr.core.parser.model.SmsInstrument
 import com.mmr.core.parser.template.SmsTemplateRegistry
 
 internal object SmsSpendChannel {
-
     fun isCreditCardSpend(candidate: ParsedSmsCandidate): Boolean {
         if (candidate.instrument == SmsInstrument.CREDIT_CARD) return true
         val body = candidate.rawBody.lowercase()
         return body.contains("bobcard") ||
             body.contains("credit card") ||
-            body.contains("is spent on your") && body.contains("card ending")
+            body.contains("is spent on your") &&
+            body.contains("card ending")
     }
 
     fun isHpPayWalletSpend(candidate: ParsedSmsCandidate): Boolean {

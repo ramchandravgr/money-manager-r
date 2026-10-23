@@ -32,40 +32,42 @@ fun HomeMonthPickerDialog(
     onPreviousYear: () -> Unit,
     onNextYear: () -> Unit,
     onMonthSelected: (Int) -> Unit,
-    onThisMonth: () -> Unit
+    onThisMonth: () -> Unit,
 ) {
     if (!visible) return
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth(0.92f)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.White)
+            modifier =
+                Modifier
+                    .fillMaxWidth(0.92f)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.White),
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(PickerHeaderBlue)
-                    .padding(start = 20.dp, end = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(PickerHeaderBlue)
+                        .padding(start = 20.dp, end = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = "Date",
                     color = Color.White,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
                 )
                 TextButton(onClick = onThisMonth) {
                     Text(
                         text = "THIS MONTH",
                         color = Color.White,
                         style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                 }
                 IconButton(onClick = onDismiss) {
@@ -74,11 +76,12 @@ fun HomeMonthPickerDialog(
             }
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 20.dp, horizontal = 24.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 20.dp, horizontal = 24.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center,
             ) {
                 TextButton(onClick = onPreviousYear) {
                     Text("‹", style = MaterialTheme.typography.headlineSmall)
@@ -87,7 +90,7 @@ fun HomeMonthPickerDialog(
                     text = pickerYear.toString(),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(horizontal = 24.dp)
+                    modifier = Modifier.padding(horizontal = 24.dp),
                 )
                 TextButton(onClick = onNextYear) {
                     Text("›", style = MaterialTheme.typography.headlineSmall)
@@ -95,33 +98,37 @@ fun HomeMonthPickerDialog(
             }
 
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Month.entries.chunked(3).forEach { rowMonths ->
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        horizontalArrangement = Arrangement.SpaceEvenly,
                     ) {
                         rowMonths.forEach { month ->
                             val monthValue = month.value
                             val isSelected = pickerYear == selectedYear && monthValue == selectedMonth
-                            val label = month.getDisplayName(TextStyle.SHORT, Locale.getDefault())
-                                .uppercase(Locale.getDefault())
+                            val label =
+                                month
+                                    .getDisplayName(TextStyle.SHORT, Locale.getDefault())
+                                    .uppercase(Locale.getDefault())
 
                             Text(
                                 text = label,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable { onMonthSelected(monthValue) }
-                                    .padding(vertical = 14.dp),
+                                modifier =
+                                    Modifier
+                                        .weight(1f)
+                                        .clickable { onMonthSelected(monthValue) }
+                                        .padding(vertical = 14.dp),
                                 textAlign = TextAlign.Center,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isSelected) PickerSelectedMonth else Color.Black
+                                color = if (isSelected) PickerSelectedMonth else Color.Black,
                             )
                         }
                         if (rowMonths.size < 3) {

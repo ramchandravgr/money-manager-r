@@ -48,10 +48,21 @@ interface RecurringRuleDao {
     suspend fun getDueRules(now: Long = System.currentTimeMillis()): List<RecurringRuleEntity>
 
     @Query("UPDATE recurring_rules SET isEnabled = :isEnabled, updatedAt = :now WHERE id = :ruleId")
-    suspend fun updateEnabledState(ruleId: Long, isEnabled: Boolean, now: Long = System.currentTimeMillis())
+    suspend fun updateEnabledState(
+        ruleId: Long,
+        isEnabled: Boolean,
+        now: Long = System.currentTimeMillis(),
+    )
 
-    @Query("UPDATE recurring_rules SET nextRunDate = :nextRunDate, lastGeneratedDate = :lastGenDate, updatedAt = :now WHERE id = :ruleId")
-    suspend fun updateNextRunDate(ruleId: Long, nextRunDate: Long, lastGenDate: Long, now: Long = System.currentTimeMillis())
+    @Query(
+        "UPDATE recurring_rules SET nextRunDate = :nextRunDate, lastGeneratedDate = :lastGenDate, updatedAt = :now WHERE id = :ruleId",
+    )
+    suspend fun updateNextRunDate(
+        ruleId: Long,
+        nextRunDate: Long,
+        lastGenDate: Long,
+        now: Long = System.currentTimeMillis(),
+    )
 
     @Query("SELECT COUNT(*) FROM recurring_rules WHERE isEnabled = 1")
     fun getEnabledRulesCount(): Flow<Int>
@@ -77,7 +88,9 @@ interface NotificationRuleDao {
     @Query("SELECT * FROM notification_rules WHERE enabled = 1 ORDER BY scheduleTime ASC")
     fun getEnabledRules(): Flow<List<NotificationRuleEntity>>
 
-    @Query("SELECT * FROM notification_rules WHERE enabled = 1 AND scheduleTime <= :now AND isFired = 0 ORDER BY scheduleTime ASC")
+    @Query(
+        "SELECT * FROM notification_rules WHERE enabled = 1 AND scheduleTime <= :now AND isFired = 0 ORDER BY scheduleTime ASC",
+    )
     suspend fun getPendingNotifications(now: Long = System.currentTimeMillis()): List<NotificationRuleEntity>
 
     @Query("UPDATE notification_rules SET isFired = 1 WHERE id = :ruleId")

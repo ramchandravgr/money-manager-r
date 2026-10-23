@@ -1,0 +1,21 @@
+{
+  "exactVpa": {
+    "zepto@ybl": "Zepto",
+    "blinkit@ybl": "Blinkit",
+    "swiggy@ybl": "Swiggy",
+    "zomato@ybl": "Zomato",
+    "paytmqr@paytm": "Paytm QR",
+    "amazon@yapl": "Amazon Pay",
+    "cred.club@axisb": "CRED"
+  },
+  "pspHandles": {
+    "ybl": "PhonePe",
+    "paytm": "Paytm",
+    "okaxis": "Google Pay",
+    "oksbi": "SBI UPI",
+    "okicici": "ICICI UPI",
+    "axl": "Axis UPI",
+    "ibl": "PhonePe",
+    "apl": "Amazon Pay"
+  }
+}

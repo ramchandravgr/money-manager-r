@@ -13,12 +13,19 @@ data class AddEditSubcategoryUiState(
     val isSaved: Boolean = false,
     val loadErrorMessage: String? = null,
     val errorMessage: String? = null,
-    val canSave: Boolean = false
+    val canSave: Boolean = false,
 )
 
 sealed interface AddEditSubcategoryUiEvent {
-    data class OnNameChanged(val name: String) : AddEditSubcategoryUiEvent
-    data class OnSortOrderChanged(val sortOrder: String) : AddEditSubcategoryUiEvent
+    data class OnNameChanged(
+        val name: String,
+    ) : AddEditSubcategoryUiEvent
+
+    data class OnSortOrderChanged(
+        val sortOrder: String,
+    ) : AddEditSubcategoryUiEvent
+
     data object OnSaveClick : AddEditSubcategoryUiEvent
+
     data object OnDismissError : AddEditSubcategoryUiEvent
 }

@@ -10,14 +10,14 @@ data class CategoryTreeItemUi(
     val type: CategoryType,
     val isDefault: Boolean,
     val sortOrder: Int,
-    val subcategories: List<SubcategoryItemUi>
+    val subcategories: List<SubcategoryItemUi>,
 )
 
 data class SubcategoryItemUi(
     val id: Long,
     val categoryId: Long,
     val name: String,
-    val sortOrder: Int
+    val sortOrder: Int,
 )
 
 data class CategoryUiState(
@@ -30,21 +30,32 @@ data class CategoryUiState(
     val isEmpty: Boolean = false,
     val isSaving: Boolean = false,
     val errorMessage: String? = null,
-    val statusMessage: String? = null
+    val statusMessage: String? = null,
 )
 
 sealed interface CategoryUiEvent {
     data object OnRetryLoad : CategoryUiEvent
+
     data object OnDismissMessage : CategoryUiEvent
-    data class OnTypeFilterSelected(val type: CategoryType?) : CategoryUiEvent
-    data class OnParentCategorySelected(val categoryId: Long?) : CategoryUiEvent
-    data class OnSubcategorySelected(val subcategoryId: Long?) : CategoryUiEvent
+
+    data class OnTypeFilterSelected(
+        val type: CategoryType?,
+    ) : CategoryUiEvent
+
+    data class OnParentCategorySelected(
+        val categoryId: Long?,
+    ) : CategoryUiEvent
+
+    data class OnSubcategorySelected(
+        val subcategoryId: Long?,
+    ) : CategoryUiEvent
+
     data class OnCreateCategory(
         val name: String,
         val colorHex: String,
         val type: CategoryType,
         val iconName: String = "category_default",
-        val sortOrder: Int = 0
+        val sortOrder: Int = 0,
     ) : CategoryUiEvent
 
     data class OnUpdateCategory(
@@ -53,23 +64,27 @@ sealed interface CategoryUiEvent {
         val colorHex: String,
         val type: CategoryType,
         val iconName: String,
-        val sortOrder: Int
+        val sortOrder: Int,
     ) : CategoryUiEvent
 
-    data class OnDeleteCategory(val categoryId: Long) : CategoryUiEvent
+    data class OnDeleteCategory(
+        val categoryId: Long,
+    ) : CategoryUiEvent
 
     data class OnCreateSubcategory(
         val categoryId: Long,
         val name: String,
-        val sortOrder: Int = 0
+        val sortOrder: Int = 0,
     ) : CategoryUiEvent
 
     data class OnUpdateSubcategory(
         val id: Long,
         val categoryId: Long,
         val name: String,
-        val sortOrder: Int
+        val sortOrder: Int,
     ) : CategoryUiEvent
 
-    data class OnDeleteSubcategory(val subcategoryId: Long) : CategoryUiEvent
+    data class OnDeleteSubcategory(
+        val subcategoryId: Long,
+    ) : CategoryUiEvent
 }

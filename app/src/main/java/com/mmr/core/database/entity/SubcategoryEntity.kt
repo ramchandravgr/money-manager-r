@@ -12,21 +12,25 @@ import androidx.room.PrimaryKey
             entity = CategoryEntity::class,
             parentColumns = ["id"],
             childColumns = ["categoryId"],
-            onDelete = ForeignKey.CASCADE
-        )
+            onDelete = ForeignKey.CASCADE,
+        ),
     ],
     indices = [
         Index(value = ["categoryId"]),
         Index(value = ["name", "categoryId"], unique = true),
         Index(value = ["isActive"]),
-        Index(value = ["orderIndex"])
-    ]
+        Index(value = ["orderIndex"]),
+        Index(value = ["syncId"], unique = true),
+    ],
 )
 data class SubcategoryEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val syncId: String =
+        com.mmr.core.common.sync.MmrSyncId
+            .newId(),
     val categoryId: Long,
     val name: String,
     val isActive: Boolean = true,
-    val orderIndex: Int = 0
+    val orderIndex: Int = 0,
 )

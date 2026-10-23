@@ -6,13 +6,15 @@ data class RawSmsMessage(
     val id: String,
     val sender: String,
     val body: String,
-    val timestamp: Long
+    val timestamp: Long,
 )
 
-enum class ParserConfidence(val minScore: Int) {
+enum class ParserConfidence(
+    val minScore: Int,
+) {
     HIGH(80),
     MEDIUM(50),
-    LOW(0)
+    LOW(0),
 }
 
 data class ParsedSmsCandidate(
@@ -32,5 +34,5 @@ data class ParsedSmsCandidate(
     val rawBody: String,
     val templateId: String? = null,
     val paymentChannel: SmsPaymentChannel? = null,
-    val instrument: SmsInstrument? = null
+    val instrument: SmsInstrument? = null,
 )

@@ -2,53 +2,71 @@ package com.mmr.feature.home
 
 import com.mmr.core.common.validation.MmrValidation
 import com.mmr.core.database.relation.TransactionWithDetails
-import com.mmr.core.model.enums.TransactionType
+import com.mmr.core.transaction.TransactionCashFlow
 import com.mmr.feature.home.model.TransactionGroupUi
 import com.mmr.feature.home.model.TransactionRowUi
 import java.text.SimpleDateFormat
 import java.time.ZoneId
-import java.util.Date
+import java.time.format.TextStyle
 import java.util.Locale
 
 object TransactionGrouping {
-
     fun groupByDate(
         items: List<TransactionWithDetails>,
-        zoneId: ZoneId = ZoneId.systemDefault()
+        zoneId: ZoneId = ZoneId.systemDefault(),
+        withinDayAscending: Boolean = true,
+        rowMapper: (TransactionWithDetails) -> TransactionRowUi = { item ->
+            TransactionRowMapping.fromDetails(
+                item,
+                SimpleDateFormat("h:mm a", Locale.getDefault()),
+            )
+        },
     ): List<TransactionGroupUi> {
-        val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
-        val groups = linkedMapOf<java.time.LocalDate, MutableList<TransactionRowUi>>()
-        val daySums = linkedMapOf<java.time.LocalDate, Double>()
+        val groups = linkedMapOf<java.time.LocalDate, MutableList<TransactionWithDetails>>()
+        val dayExpense = linkedMapOf<java.time.LocalDate, Double>()
+        val dayIncome = linkedMapOf<java.time.LocalDate, Double>()
 
         for (item in items) {
             if (!MmrValidation.isValidEpochMillis(item.transaction.dateTime)) continue
             val localDate = HomePeriodUtils.toLocalDate(item.transaction.dateTime, zoneId)
-            val isIncome = item.transaction.type == TransactionType.INCOME
-            val sign = if (isIncome) "+" else "-"
-            val categoryName = item.category?.name ?: "Uncategorized"
-            val accountName = item.account?.name ?: "Account"
-            val title = item.transaction.note?.trim()?.takeIf { it.isNotEmpty() } ?: categoryName
-            val row = TransactionRowUi(
-                id = item.transaction.id,
-                title = title,
-                subtitle = "$categoryName • $accountName",
-                amountFormatted = "$sign₹${"%.2f".format(item.transaction.amount)}",
-                isIncome = isIncome,
-                timeLabel = timeFormat.format(Date(item.transaction.dateTime))
-            )
-            groups.getOrPut(localDate) { mutableListOf() }.add(row)
-            val netDelta = if (isIncome) item.transaction.amount else -item.transaction.amount
-            daySums[localDate] = daySums.getOrDefault(localDate, 0.0) + netDelta
+            groups.getOrPut(localDate) { mutableListOf() }.add(item)
+            val loanType = item.loan?.loanType
+            val income = TransactionCashFlow.incomeAmount(item.transaction, loanType)
+            val expense = TransactionCashFlow.expenseAmount(item.transaction, loanType)
+            if (income > 0.0) {
+                dayIncome[localDate] = dayIncome.getOrDefault(localDate, 0.0) + income
+            }
+            if (expense > 0.0) {
+                dayExpense[localDate] = dayExpense.getOrDefault(localDate, 0.0) + expense
+            }
         }
 
         return groups.entries
             .sortedByDescending { it.key }
-            .map { (localDate, rows) ->
+            .map { (localDate, dayItems) ->
+                val sortedDay =
+                    dayItems
+                        .sortedBy { it.transaction.dateTime }
+                        .let { if (withinDayAscending) it else it.asReversed() }
+                val rows = sortedDay.map(rowMapper)
+                val locale = Locale.getDefault()
                 TransactionGroupUi(
-                    dateLabel = HomePeriodUtils.transactionGroupDateLabel(localDate),
-                    dayTotal = daySums.getOrDefault(localDate, 0.0),
-                    items = rows
+                    dateKey = localDate.toString(),
+                    dayOfMonth = localDate.dayOfMonth,
+                    weekdayShort = localDate.dayOfWeek.getDisplayName(TextStyle.SHORT, locale),
+                    monthYearLabel = "${localDate.monthValue}.${localDate.year}",
+                    dayExpenseTotal = dayExpense.getOrDefault(localDate, 0.0),
+                    dayIncomeTotal = dayIncome.getOrDefault(localDate, 0.0),
+                    items = rows,
                 )
             }
+    }
+
+    fun sortByDateTime(
+        items: List<TransactionWithDetails>,
+        ascending: Boolean,
+    ): List<TransactionWithDetails> {
+        val sorted = items.sortedBy { it.transaction.dateTime }
+        return if (ascending) sorted else sorted.asReversed()
     }
 }

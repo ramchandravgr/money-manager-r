@@ -10,7 +10,6 @@ import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class RepositoryGuardsTest {
-
     @Test
     fun normalizedQueryRange_swapsInvertedBounds() {
         val (start, end) = RepositoryGuards.normalizedQueryRange(500L, 100L)
@@ -20,13 +19,14 @@ class RepositoryGuardsTest {
 
     @Test
     fun requireValidTransactionEntity_rejectsNonPositiveAmount() {
-        val tx = TransactionEntity(
-            dateTime = System.currentTimeMillis(),
-            amount = 0.0,
-            type = TransactionType.EXPENSE,
-            accountId = 1L,
-            status = RecordStatus.APPROVED
-        )
+        val tx =
+            TransactionEntity(
+                dateTime = System.currentTimeMillis(),
+                amount = 0.0,
+                type = TransactionType.EXPENSE,
+                accountId = 1L,
+                status = RecordStatus.APPROVED,
+            )
         assertThrows(IllegalArgumentException::class.java) {
             RepositoryGuards.requireValidTransactionEntity(tx)
         }
@@ -34,15 +34,16 @@ class RepositoryGuardsTest {
 
     @Test
     fun requireValidLoanEntity_rejectsOutstandingAbovePrincipal() {
-        val loan = LoanEntity(
-            name = "Test",
-            lenderName = "Bank",
-            principalAmount = 1000.0,
-            interestRate = 0.0,
-            outstandingAmount = 1500.0,
-            openingDate = System.currentTimeMillis(),
-            loanType = LoanType.BORROWED
-        )
+        val loan =
+            LoanEntity(
+                name = "Test",
+                lenderName = "Bank",
+                principalAmount = 1000.0,
+                interestRate = 0.0,
+                outstandingAmount = 1500.0,
+                openingDate = System.currentTimeMillis(),
+                loanType = LoanType.BORROWED,
+            )
         assertThrows(IllegalArgumentException::class.java) {
             RepositoryGuards.requireValidLoanEntity(loan)
         }

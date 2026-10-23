@@ -15,80 +15,88 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class LocalSmsScannerService @Inject constructor(
-    @ApplicationContext private val context: Context,
-    private val smsParserEngine: SmsParserEngine
-) {
+class LocalSmsScannerService
+    @Inject
+    constructor(
+        @ApplicationContext private val context: Context,
+        private val smsParserEngine: SmsParserEngine,
+    ) {
+        /**
+         * Reads device SMS inbox messages purely locally for the given lookback window.
+         * No data is transmitted outside the device.
+         */
+        suspend fun scanInbox(monthsBack: Int): SmsInboxScanSummary =
+            withContext(Dispatchers.IO) {
+                val sinceTimestamp = SmsScanPeriod.sinceTimestampMillis(monthsBack)
+                val candidates = mutableListOf<com.mmr.core.parser.model.ParsedSmsCandidate>()
+                var mandateNotices = 0
+                var statementNotices = 0
+                var investmentNotices = 0
+                var cardPaymentNotices = 0
+                val uri = Uri.parse("content://sms/inbox")
+                val projection = arrayOf("_id", "address", "body", "date")
+                val selection = "date >= ?"
+                val selectionArgs = arrayOf(sinceTimestamp.toString())
+                val sortOrder = "date DESC"
 
-    /**
-     * Reads device SMS inbox messages purely locally for the given lookback window.
-     * No data is transmitted outside the device.
-     */
-    suspend fun scanInbox(monthsBack: Int): SmsInboxScanSummary = withContext(Dispatchers.IO) {
-        val sinceTimestamp = SmsScanPeriod.sinceTimestampMillis(monthsBack)
-        val candidates = mutableListOf<com.mmr.core.parser.model.ParsedSmsCandidate>()
-        var mandateNotices = 0
-        var statementNotices = 0
-        var investmentNotices = 0
-        val uri = Uri.parse("content://sms/inbox")
-        val projection = arrayOf("_id", "address", "body", "date")
-        val selection = "date >= ?"
-        val selectionArgs = arrayOf(sinceTimestamp.toString())
-        val sortOrder = "date DESC"
+                try {
+                    val cursor =
+                        context.contentResolver.query(
+                            uri,
+                            projection,
+                            selection,
+                            selectionArgs,
+                            sortOrder,
+                        )
 
-        try {
-            val cursor = context.contentResolver.query(
-                uri,
-                projection,
-                selection,
-                selectionArgs,
-                sortOrder
-            )
+                    cursor?.use {
+                        val idIdx = it.getColumnIndexOrThrow("_id")
+                        val addressIdx = it.getColumnIndexOrThrow("address")
+                        val bodyIdx = it.getColumnIndexOrThrow("body")
+                        val dateIdx = it.getColumnIndexOrThrow("date")
 
-            cursor?.use {
-                val idIdx = it.getColumnIndexOrThrow("_id")
-                val addressIdx = it.getColumnIndexOrThrow("address")
-                val bodyIdx = it.getColumnIndexOrThrow("body")
-                val dateIdx = it.getColumnIndexOrThrow("date")
+                        while (it.moveToNext()) {
+                            val id = it.getString(idIdx) ?: ""
+                            val sender = it.getString(addressIdx) ?: ""
+                            val body = it.getString(bodyIdx) ?: ""
+                            val date = it.getLong(dateIdx)
 
-                while (it.moveToNext()) {
-                    val id = it.getString(idIdx) ?: ""
-                    val sender = it.getString(addressIdx) ?: ""
-                    val body = it.getString(bodyIdx) ?: ""
-                    val date = it.getLong(dateIdx)
+                            val raw =
+                                RawSmsMessage(
+                                    id = id,
+                                    sender = sender,
+                                    body = body,
+                                    timestamp = date,
+                                )
 
-                    val raw = RawSmsMessage(
-                        id = id,
-                        sender = sender,
-                        body = body,
-                        timestamp = date
-                    )
-
-                    when (val result = smsParserEngine.parseResult(raw)) {
-                        is SmsParseResult.Transaction -> candidates.add(result.candidate)
-                        is SmsParseResult.Informational -> when (result.intent) {
-                            SmsParseIntent.MANDATE -> mandateNotices++
-                            SmsParseIntent.STATEMENT -> statementNotices++
-                            SmsParseIntent.INVESTMENT -> investmentNotices++
-                            SmsParseIntent.SETTLED -> Unit
+                            when (val result = smsParserEngine.parseResult(raw)) {
+                                is SmsParseResult.Transaction -> candidates.add(result.candidate)
+                                is SmsParseResult.Informational ->
+                                    when (result.intent) {
+                                        SmsParseIntent.MANDATE -> mandateNotices++
+                                        SmsParseIntent.STATEMENT -> statementNotices++
+                                        SmsParseIntent.INVESTMENT -> investmentNotices++
+                                        SmsParseIntent.CARD_PAYMENT -> cardPaymentNotices++
+                                        SmsParseIntent.SETTLED -> Unit
+                                    }
+                                SmsParseResult.Ignored -> Unit
+                            }
                         }
-                        SmsParseResult.Ignored -> Unit
                     }
+                } catch (e: SecurityException) {
+                    return@withContext SmsInboxScanSummary(transactions = emptyList())
+                } catch (e: Exception) {
+                    return@withContext SmsInboxScanSummary(transactions = emptyList())
                 }
-            }
-        } catch (e: SecurityException) {
-            return@withContext SmsInboxScanSummary(transactions = emptyList())
-        } catch (e: Exception) {
-            return@withContext SmsInboxScanSummary(transactions = emptyList())
-        }
 
-        val deduped = SmsCrossChannelDedup.deduplicate(candidates)
-        SmsInboxScanSummary(
-            transactions = deduped.kept,
-            mandateNotices = mandateNotices,
-            statementNotices = statementNotices,
-            investmentNotices = investmentNotices,
-            duplicateSuppressed = deduped.suppressedCount
-        )
+                val deduped = SmsCrossChannelDedup.deduplicate(candidates)
+                SmsInboxScanSummary(
+                    transactions = deduped.kept,
+                    mandateNotices = mandateNotices,
+                    statementNotices = statementNotices,
+                    investmentNotices = investmentNotices,
+                    cardPaymentNotices = cardPaymentNotices,
+                    duplicateSuppressed = deduped.suppressedCount,
+                )
+            }
     }
-}

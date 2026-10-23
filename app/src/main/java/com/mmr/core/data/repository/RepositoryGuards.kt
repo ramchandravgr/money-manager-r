@@ -3,12 +3,11 @@ package com.mmr.core.data.repository
 import com.mmr.core.common.validation.MmrValidation
 import com.mmr.core.database.entity.CategoryEntity
 import com.mmr.core.database.entity.LoanEntity
-import com.mmr.core.database.entity.SubcategoryEntity
 import com.mmr.core.database.entity.RecurringRuleEntity
+import com.mmr.core.database.entity.SubcategoryEntity
 import com.mmr.core.database.entity.TransactionEntity
 
 internal object RepositoryGuards {
-
     fun requireValidTransactionEntity(transaction: TransactionEntity) {
         MmrValidation.requirePositiveAmount(transaction.amount)
         require(transaction.accountId > 0L) { "Account is required." }
@@ -45,8 +44,10 @@ internal object RepositoryGuards {
         MmrValidation.requirePositiveAmount(paymentAmount, "Payment")
     }
 
-    fun normalizedQueryRange(startDate: Long, endDate: Long): Pair<Long, Long> =
-        MmrValidation.normalizeDateRange(startDate, endDate)
+    fun normalizedQueryRange(
+        startDate: Long,
+        endDate: Long,
+    ): Pair<Long, Long> = MmrValidation.normalizeDateRange(startDate, endDate)
 
     fun requireValidCategoryEntity(category: CategoryEntity) {
         MmrValidation.requireNonBlank(category.name, "Category name")

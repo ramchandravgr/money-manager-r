@@ -7,7 +7,6 @@ import java.time.Instant
 import java.time.ZoneId
 
 class SmsScanPeriodTest {
-
     @Test
     fun clampMonths_respectsBounds() {
         assertEquals(1, SmsScanPeriod.clampMonths(0))

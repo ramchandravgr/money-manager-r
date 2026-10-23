@@ -11,10 +11,9 @@ import com.mmr.core.database.entity.SubcategoryEntity
 data class CategoryWithSubcategories(
     @Embedded
     val category: CategoryEntity,
-
     @Relation(
         parentColumn = "id",
-        entityColumn = "categoryId"
+        entityColumn = "categoryId",
     )
-    val subcategories: List<SubcategoryEntity>
+    val subcategories: List<SubcategoryEntity>,
 )

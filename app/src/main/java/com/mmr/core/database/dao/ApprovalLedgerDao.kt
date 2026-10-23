@@ -17,7 +17,6 @@ import com.mmr.core.model.enums.SmsApprovalState
  */
 @Dao
 interface ApprovalLedgerDao {
-
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertSmsRecord(record: SmsMessageRecordEntity): Long
 
@@ -26,6 +25,9 @@ interface ApprovalLedgerDao {
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertTransaction(transaction: TransactionEntity): Long
+
+    @Update
+    suspend fun updateTransaction(transaction: TransactionEntity)
 
     @Update
     suspend fun updateSmsRecord(record: SmsMessageRecordEntity)
@@ -42,7 +44,7 @@ interface ApprovalLedgerDao {
         AND ta.approvalState IN ('PENDING', 'REJECTED', 'APPROVED', 'DUPLICATE')
         ORDER BY ta.updatedAt DESC
         LIMIT 1
-        """
+        """,
     )
     suspend fun findLatestApprovalByExactBody(body: String): ExactBodyDuplicateRow?
 
@@ -60,18 +62,18 @@ interface ApprovalLedgerDao {
         UPDATE transaction_approvals
         SET approvalState = :state, updatedAt = :now
         WHERE id = :id AND approvalState = 'PENDING'
-        """
+        """,
     )
     suspend fun markApprovalStateIfPending(
         id: Long,
         state: SmsApprovalState,
-        now: Long = System.currentTimeMillis()
+        now: Long = System.currentTimeMillis(),
     ): Int
 
     @Transaction
     suspend fun insertPendingCandidate(
         record: SmsMessageRecordEntity,
-        approval: TransactionApprovalEntity
+        approval: TransactionApprovalEntity,
     ): Long? {
         if (isDuplicateHash(record.messageBodyHash)) return null
         val recordId = insertSmsRecord(record)
@@ -84,7 +86,7 @@ interface ApprovalLedgerDao {
         approvalId: Long,
         transaction: TransactionEntity,
         smsRecordId: Long,
-        approvedSms: SmsMessageRecordEntity
+        approvedSms: SmsMessageRecordEntity,
     ): Long {
         val updated = markApprovalStateIfPending(approvalId, SmsApprovalState.APPROVED)
         if (updated == 0) {
@@ -94,10 +96,31 @@ interface ApprovalLedgerDao {
         updateSmsRecord(
             approvedSms.copy(
                 approvalState = SmsApprovalState.APPROVED,
-                matchedTransactionId = transactionId
-            )
+                matchedTransactionId = transactionId,
+            ),
         )
         return transactionId
+    }
+
+    @Transaction
+    suspend fun mergeApprovalWithExistingTransaction(
+        approvalId: Long,
+        mergedTransaction: TransactionEntity,
+        smsRecordId: Long,
+        approvedSms: SmsMessageRecordEntity,
+    ): Long {
+        val updated = markApprovalStateIfPending(approvalId, SmsApprovalState.APPROVED)
+        if (updated == 0) {
+            throw IllegalStateException("This entry is no longer pending.")
+        }
+        updateTransaction(mergedTransaction)
+        updateSmsRecord(
+            approvedSms.copy(
+                approvalState = SmsApprovalState.APPROVED,
+                matchedTransactionId = mergedTransaction.id,
+            ),
+        )
+        return mergedTransaction.id
     }
 
     @Transaction
@@ -105,7 +128,7 @@ interface ApprovalLedgerDao {
         approvalId: Long,
         smsRecordId: Long,
         updatedSms: SmsMessageRecordEntity,
-        updatedApproval: TransactionApprovalEntity
+        updatedApproval: TransactionApprovalEntity,
     ) {
         updateSmsRecord(updatedSms.copy(id = smsRecordId))
         updateApproval(updatedApproval.copy(id = approvalId, smsMessageRecordId = smsRecordId))
@@ -115,7 +138,7 @@ interface ApprovalLedgerDao {
     suspend fun updatePendingApprovalState(
         approvalId: Long,
         smsRecordId: Long,
-        newState: SmsApprovalState
+        newState: SmsApprovalState,
     ): Boolean {
         val updated = markApprovalStateIfPending(approvalId, newState)
         if (updated == 0) return false

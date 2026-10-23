@@ -23,35 +23,36 @@ import com.mmr.feature.category.model.CategoryColorPresets
 fun CategoryColorPicker(
     selectedColorHex: String,
     onColorSelected: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Text(
         text = "Color",
         style = MaterialTheme.typography.titleMedium,
-        modifier = modifier
+        modifier = modifier,
     )
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         CategoryColorPresets.presets.forEach { hex ->
             val color = parseColorHex(hex)
             val selected = hex.equals(selectedColorHex, ignoreCase = true)
             Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(color)
-                    .border(
-                        width = if (selected) 3.dp else 1.dp,
-                        color = if (selected) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.outlineVariant
-                        },
-                        shape = CircleShape
-                    )
-                    .clickable { onColorSelected(hex) }
+                modifier =
+                    Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(color)
+                        .border(
+                            width = if (selected) 3.dp else 1.dp,
+                            color =
+                                if (selected) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.outlineVariant
+                                },
+                            shape = CircleShape,
+                        ).clickable { onColorSelected(hex) },
             )
         }
     }
@@ -64,6 +65,6 @@ fun parseColorHex(hex: String): Color {
         alpha = 1f,
         red = normalized.substring(0, 2).toInt(16) / 255f,
         green = normalized.substring(2, 4).toInt(16) / 255f,
-        blue = normalized.substring(4, 6).toInt(16) / 255f
+        blue = normalized.substring(4, 6).toInt(16) / 255f,
     )
 }

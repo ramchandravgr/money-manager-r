@@ -16,6 +16,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mmr.app.ui.components.MmrConfirmDialog
+import com.mmr.app.ui.components.MmrDimens
+import com.mmr.app.ui.components.MmrTopAppBar
 import com.mmr.app.ui.state.MmrEmptyState
 import com.mmr.app.ui.state.MmrErrorState
 import com.mmr.app.ui.state.MmrLoadingState
@@ -34,126 +37,99 @@ fun CategoryListScreen(
     onNavigateToEditCategory: (Long) -> Unit,
     onNavigateToAddSubcategory: (Long) -> Unit,
     onNavigateToEditSubcategory: (Long) -> Unit,
-    viewModel: CategoryViewModel = hiltViewModel()
+    viewModel: CategoryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var pendingDeleteCategory by remember { mutableStateOf<CategoryTreeItemUi?>(null) }
     var pendingDeleteSubcategory by remember { mutableStateOf<Pair<CategoryTreeItemUi, SubcategoryItemUi>?>(null) }
 
     pendingDeleteCategory?.let { item ->
-        AlertDialog(
-            onDismissRequest = { pendingDeleteCategory = null },
-            title = { Text("Remove category?") },
-            text = {
-                Text(
-                    "\"${item.name}\" and its subcategories will be hidden from pickers. " +
-                        "Existing transactions keep their references."
-                )
+        MmrConfirmDialog(
+            title = "Remove category?",
+            message =
+                "\"${item.name}\" and its subcategories will be hidden from pickers. " +
+                    "Existing transactions keep their references.",
+            confirmLabel = "Remove",
+            onConfirm = {
+                viewModel.onEvent(CategoryUiEvent.OnDeleteCategory(item.id))
+                pendingDeleteCategory = null
             },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.onEvent(CategoryUiEvent.OnDeleteCategory(item.id))
-                        pendingDeleteCategory = null
-                    },
-                    enabled = !uiState.isSaving
-                ) {
-                    Text("Remove")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { pendingDeleteCategory = null }) {
-                    Text("Cancel")
-                }
-            }
+            onDismiss = { pendingDeleteCategory = null },
+            confirmIsDestructive = true,
+            confirmEnabled = !uiState.isSaving,
         )
     }
 
     pendingDeleteSubcategory?.let { (parent, sub) ->
-        AlertDialog(
-            onDismissRequest = { pendingDeleteSubcategory = null },
-            title = { Text("Remove subcategory?") },
-            text = {
-                Text("\"${sub.name}\" under \"${parent.name}\" will be removed from pickers.")
+        MmrConfirmDialog(
+            title = "Remove subcategory?",
+            message = "\"${sub.name}\" under \"${parent.name}\" will be removed from pickers.",
+            confirmLabel = "Remove",
+            onConfirm = {
+                viewModel.onEvent(CategoryUiEvent.OnDeleteSubcategory(sub.id))
+                pendingDeleteSubcategory = null
             },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        viewModel.onEvent(CategoryUiEvent.OnDeleteSubcategory(sub.id))
-                        pendingDeleteSubcategory = null
-                    },
-                    enabled = !uiState.isSaving
-                ) {
-                    Text("Remove")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { pendingDeleteSubcategory = null }) {
-                    Text("Cancel")
-                }
-            }
+            onDismiss = { pendingDeleteSubcategory = null },
+            confirmIsDestructive = true,
+            confirmEnabled = !uiState.isSaving,
         )
     }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Categories", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    TextButton(onClick = onNavigateBack) {
-                        Text("Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+            MmrTopAppBar(
+                title = "Categories",
+                showBackNavigation = true,
+                onNavigateBack = onNavigateBack,
+                usePrimaryContainerColors = true,
             )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onNavigateToAddCategory) {
                 Text("+", style = MaterialTheme.typography.titleLarge)
             }
-        }
+        },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
         ) {
             uiState.statusMessage?.let { message ->
                 MmrStatusBanner(
                     message = message,
                     onDismiss = { viewModel.onEvent(CategoryUiEvent.OnDismissMessage) },
-                    isError = false
+                    isError = false,
                 )
             }
 
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(horizontal = MmrDimens.spaceLg, vertical = MmrDimens.spaceSm),
+                horizontalArrangement = Arrangement.spacedBy(MmrDimens.spaceSm),
             ) {
                 FilterChip(
                     selected = uiState.typeFilter == null,
                     onClick = { viewModel.onEvent(CategoryUiEvent.OnTypeFilterSelected(null)) },
-                    label = { Text("All") }
+                    label = { Text("All") },
                 )
                 FilterChip(
                     selected = uiState.typeFilter == CategoryType.EXPENSE,
                     onClick = {
                         viewModel.onEvent(CategoryUiEvent.OnTypeFilterSelected(CategoryType.EXPENSE))
                     },
-                    label = { Text("Expense") }
+                    label = { Text("Expense") },
                 )
                 FilterChip(
                     selected = uiState.typeFilter == CategoryType.INCOME,
                     onClick = {
                         viewModel.onEvent(CategoryUiEvent.OnTypeFilterSelected(CategoryType.INCOME))
                     },
-                    label = { Text("Income") }
+                    label = { Text("Income") },
                 )
             }
 
@@ -165,7 +141,7 @@ fun CategoryListScreen(
                 uiState.errorMessage != null && uiState.categories.isEmpty() -> {
                     MmrErrorState(
                         message = uiState.errorMessage!!,
-                        onRetry = { viewModel.onEvent(CategoryUiEvent.OnRetryLoad) }
+                        onRetry = { viewModel.onEvent(CategoryUiEvent.OnRetryLoad) },
                     )
                 }
 
@@ -177,13 +153,13 @@ fun CategoryListScreen(
                     if (uiState.errorMessage != null) {
                         MmrStatusBanner(
                             message = uiState.errorMessage!!,
-                            onDismiss = { viewModel.onEvent(CategoryUiEvent.OnDismissMessage) }
+                            onDismiss = { viewModel.onEvent(CategoryUiEvent.OnDismissMessage) },
                         )
                     }
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                        contentPadding = PaddingValues(horizontal = MmrDimens.spaceLg, vertical = MmrDimens.spaceSm),
+                        verticalArrangement = Arrangement.spacedBy(MmrDimens.spaceMd),
                     ) {
                         items(uiState.categories, key = { it.id }) { category ->
                             CategoryHierarchyCard(
@@ -194,7 +170,7 @@ fun CategoryListScreen(
                                 onEditSubcategory = onNavigateToEditSubcategory,
                                 onDeleteSubcategory = { sub ->
                                     pendingDeleteSubcategory = category to sub
-                                }
+                                },
                             )
                         }
                     }
@@ -211,43 +187,50 @@ private fun CategoryHierarchyCard(
     onDeleteCategory: () -> Unit,
     onAddSubcategory: () -> Unit,
     onEditSubcategory: (Long) -> Unit,
-    onDeleteSubcategory: (SubcategoryItemUi) -> Unit
+    onDeleteSubcategory: (SubcategoryItemUi) -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(MmrDimens.cardPadding)) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onEditCategory),
-                verticalAlignment = Alignment.CenterVertically
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = onEditCategory),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(
-                    modifier = Modifier
-                        .size(14.dp)
-                        .clip(CircleShape)
-                        .background(parseColorHex(category.colorHex))
+                    modifier =
+                        Modifier
+                            .size(14.dp)
+                            .clip(CircleShape)
+                            .background(parseColorHex(category.colorHex)),
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = category.name,
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.SemiBold,
                     )
                     Text(
-                        text = buildString {
-                            append(category.type.name.lowercase().replaceFirstChar { it.uppercase() })
-                            append(" · Order ")
-                            append(category.sortOrder)
-                            if (category.isDefault) {
-                                append(" · Default")
-                            }
-                        },
+                        text =
+                            buildString {
+                                append(
+                                    category.type.name
+                                        .lowercase()
+                                        .replaceFirstChar { it.uppercase() },
+                                )
+                                append(" · Order ")
+                                append(category.sortOrder)
+                                if (category.isDefault) {
+                                    append(" · Default")
+                                }
+                            },
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
                 if (!category.isDefault) {
@@ -264,7 +247,7 @@ private fun CategoryHierarchyCard(
                     text = "No subcategories",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 26.dp, bottom = 4.dp)
+                    modifier = Modifier.padding(start = 26.dp, bottom = 4.dp),
                 )
             } else {
                 category.subcategories.forEach { sub ->
@@ -273,7 +256,7 @@ private fun CategoryHierarchyCard(
                         parentColorHex = category.colorHex,
                         onEdit = { onEditSubcategory(sub.id) },
                         onDelete = { onDeleteSubcategory(sub) },
-                        modifier = Modifier.padding(start = 4.dp)
+                        modifier = Modifier.padding(start = 4.dp),
                     )
                 }
             }

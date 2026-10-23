@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
+import com.mmr.app.ui.components.MmrDimens
 
 @Composable
 fun TransactionFormRow(
@@ -17,27 +17,27 @@ fun TransactionFormRow(
     value: String,
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
-    valueContent: (@Composable () -> Unit)? = null
+    valueContent: (@Composable () -> Unit)? = null,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(
-                    if (onClick != null) {
-                        Modifier.clickable(onClick = onClick)
-                    } else {
-                        Modifier
-                    }
-                )
-                .padding(vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .then(
+                        if (onClick != null) {
+                            Modifier.clickable(onClick = onClick)
+                        } else {
+                            Modifier
+                        },
+                    ).padding(vertical = MmrDimens.listItemPaddingVertical),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = label,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.width(100.dp)
+                modifier = Modifier.width(MmrDimens.formLabelWidth),
             )
             if (valueContent != null) {
                 Box(modifier = Modifier.weight(1f)) {
@@ -49,7 +49,7 @@ fun TransactionFormRow(
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.weight(1f),
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
