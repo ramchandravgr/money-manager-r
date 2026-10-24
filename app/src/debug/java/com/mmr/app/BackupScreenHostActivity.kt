@@ -5,7 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.mmr.app.testing.BackupScreenHostTestBridge
-import com.mmr.app.ui.theme.MoneyManagerRTheme
+import com.mmr.app.ui.theme.MoneyInboxTheme
 import com.mmr.feature.backup.ui.BackupScreen
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -18,7 +18,7 @@ class BackupScreenHostActivity : ComponentActivity() {
             intent.getParcelableExtra(IMPORT_URI_EXTRA, Uri::class.java)
                 ?: BackupScreenHostTestBridge.pendingImportUri
         setContent {
-            MoneyManagerRTheme {
+            MoneyInboxTheme {
                 BackupScreen(
                     onNavigateBack = { finish() },
                     testImportUri = importUri,

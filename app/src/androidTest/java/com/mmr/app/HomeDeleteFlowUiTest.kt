@@ -1,14 +1,14 @@
 package com.mmr.app
 
-import androidx.compose.ui.test.longClick
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTouchInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mmr.app.testing.MmrHiltUiTest
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.testing.MmrUiTestFixtures
+import com.mmr.app.testing.traceClickTag
+import com.mmr.app.testing.traceClickText
+import com.mmr.app.testing.traceLongClickTag
+import com.mmr.app.testing.traceWaitUntil
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
@@ -25,16 +25,13 @@ class HomeDeleteFlowUiTest : MmrHiltUiTest() {
                 MmrUiTestFixtures.seedSingleExpense(database, note = note, amount = 15.0)
             }
 
-        composeRule.activityRule.scenario.recreate()
-        composeRule.waitForIdle()
+        traceActivityRecreate()
 
-        composeRule
-            .onNodeWithTag(MmrTestTags.transactionRow(fixture.transactionId))
-            .performTouchInput { longClick() }
-        composeRule.onNodeWithTag(MmrTestTags.homeSelectionDelete).performClick()
-        composeRule.onNodeWithText("Delete").performClick()
+        composeRule.traceLongClickTag(MmrTestTags.transactionRow(fixture.transactionId))
+        composeRule.traceClickTag(MmrTestTags.homeSelectionDelete)
+        composeRule.traceClickText("Delete")
 
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 10_000) {
             runCatching {
                 composeRule.onNodeWithText(note).assertDoesNotExist()
                 true

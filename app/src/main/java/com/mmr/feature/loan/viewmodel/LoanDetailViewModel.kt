@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mmr.app.ui.state.MmrUiMessages
+import com.mmr.core.common.display.MmrMoneyFormat
 import com.mmr.core.common.validation.MmrValidation
 import com.mmr.core.database.entity.LoanInterestRevisionEntity
 import com.mmr.core.database.entity.LoanPaymentEntity
@@ -212,9 +213,9 @@ class LoanDetailViewModel
                         schedule.take(12).map {
                             LoanScheduleItemUi(
                                 dueDateLabel = dateFormat.format(Date(it.dueDateMillis)),
-                                emiFormatted = "₹${"%.2f".format(it.emiAmount)}",
-                                principalFormatted = "₹${"%.2f".format(it.principalPlanned)}",
-                                interestFormatted = "₹${"%.2f".format(it.interestPlanned)}",
+                                emiFormatted = MmrMoneyFormat.formatInr(it.emiAmount),
+                                principalFormatted = MmrMoneyFormat.formatInr(it.principalPlanned),
+                                interestFormatted = MmrMoneyFormat.formatInr(it.interestPlanned),
                             )
                         }
                     val revisionUi =
@@ -253,9 +254,9 @@ class LoanDetailViewModel
                                 accrualStart,
                                 form.paymentDateMillis,
                             )
-                        flexibleInterestPendingFormatted = "₹${"%.2f".format(pendingNow)}"
+                        flexibleInterestPendingFormatted = MmrMoneyFormat.formatInr(pendingNow)
                         flexibleInterestAccrualFromLabel = dateFormat.format(Date(accrualStart))
-                        flexibleRepaymentAccruedInterestHint = "₹${"%.2f".format(pendingAtPaymentDate)}"
+                        flexibleRepaymentAccruedInterestHint = MmrMoneyFormat.formatInr(pendingAtPaymentDate)
                     } else {
                         flexibleInterestPendingFormatted = null
                         flexibleInterestAccrualFromLabel = null
@@ -266,7 +267,7 @@ class LoanDetailViewModel
                         isLoading = false,
                         loan = loanUi,
                         repaymentMode = entity.repaymentModeEnum(),
-                        fixedEmiFormatted = entity.fixedEmiAmount?.let { "₹${"%.2f".format(it)}" },
+                        fixedEmiFormatted = entity.fixedEmiAmount?.let { MmrMoneyFormat.formatInr(it) },
                         remainingTenureMonths = entity.remainingTenureMonths,
                         upcomingSchedule = scheduleUi,
                         payments = paymentUis,
@@ -306,8 +307,7 @@ class LoanDetailViewModel
         fun onEvent(event: LoanDetailUiEvent) {
             when (event) {
                 is LoanDetailUiEvent.OnRepaymentAmountChanged -> {
-                    val clean = event.amount.filter { it.isDigit() || it == '.' }
-                    _repaymentAmountInput.value = clean
+                    _repaymentAmountInput.value = MmrValidation.sanitizeDecimalInput(event.amount)
                 }
 
                 is LoanDetailUiEvent.OnRepaymentNotesChanged -> {
@@ -323,7 +323,7 @@ class LoanDetailViewModel
                     _repaymentType.value = event.type
                     if (event.type == LoanPaymentType.CLOSING_PAYMENT) {
                         uiState.value.loan?.outstandingAmount?.let { outstanding ->
-                            _repaymentAmountInput.value = "%.2f".format(outstanding)
+                            _repaymentAmountInput.value = MmrMoneyFormat.formatNumber(outstanding)
                         }
                     }
                 }
@@ -440,7 +440,7 @@ class LoanDetailViewModel
                 }
 
                 is LoanDetailUiEvent.OnTopUpAmountChanged -> {
-                    _topUpAmountInput.value = event.amount.filter { it.isDigit() || it == '.' }
+                    _topUpAmountInput.value = MmrValidation.sanitizeDecimalInput(event.amount)
                 }
 
                 is LoanDetailUiEvent.OnTopUpNotesChanged -> {
@@ -519,8 +519,8 @@ class LoanDetailViewModel
                 LoanRevisionDetailUi(
                     beforeRateLabel = LoanDisplayFormat.annualRatePerAnnumLabel(previousRate),
                     afterRateLabel = LoanDisplayFormat.annualRatePerAnnumLabel(current.annualRatePercent),
-                    emiBeforeFormatted = emiBefore?.let { "₹${"%.2f".format(it)}" },
-                    emiAfterFormatted = emiAfter?.let { "₹${"%.2f".format(it)}" },
+                    emiBeforeFormatted = emiBefore?.let { MmrMoneyFormat.formatInr(it) },
+                    emiAfterFormatted = emiAfter?.let { MmrMoneyFormat.formatInr(it) },
                     note = current.note,
                 )
         }
@@ -613,9 +613,9 @@ private fun LoanPaymentEntity.toPaymentUi(): LoanPaymentItemUi {
         }
     val amountFormatted =
         if (paymentType == LoanPaymentType.TOP_UP) {
-            "+₹${"%.2f".format(paymentAmount)}"
+            "+${MmrMoneyFormat.formatInr(paymentAmount)}"
         } else {
-            "₹${"%.2f".format(paymentAmount)}"
+            MmrMoneyFormat.formatInr(paymentAmount)
         }
 
     return LoanPaymentItemUi(
@@ -625,9 +625,9 @@ private fun LoanPaymentEntity.toPaymentUi(): LoanPaymentItemUi {
         paymentDateFormatted = dateFormat.format(Date(paymentDate)),
         paymentType = paymentType,
         paymentTypeLabel = typeLabel,
-        principalComponentFormatted = principalComponent?.let { "₹${"%.2f".format(it)}" },
-        interestComponentFormatted = interestComponent?.let { "₹${"%.2f".format(it)}" },
-        outstandingAfterFormatted = "₹${"%.2f".format(outstandingAfterPayment)}",
+        principalComponentFormatted = principalComponent?.let { MmrMoneyFormat.formatInr(it) },
+        interestComponentFormatted = interestComponent?.let { MmrMoneyFormat.formatInr(it) },
+        outstandingAfterFormatted = MmrMoneyFormat.formatInr(outstandingAfterPayment),
         notes = notes,
         linkedTransactionId = transactionId,
     )

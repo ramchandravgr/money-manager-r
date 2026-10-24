@@ -9,10 +9,10 @@ data class LanSyncPairingOffer(
 )
 
 object LanSyncPairingCodec {
-    private const val PREFIX = "mmr-lan-sync:"
+    const val LEGACY_PREFIX = "mmr-lan-sync:"
 
     fun encode(offer: LanSyncPairingOffer): String =
-        PREFIX +
+        LEGACY_PREFIX +
             JSONObject()
                 .apply {
                     put("deviceId", offer.deviceId)
@@ -21,7 +21,7 @@ object LanSyncPairingCodec {
                 }.toString()
 
     fun decode(raw: String): LanSyncPairingOffer {
-        val jsonText = raw.trim().removePrefix(PREFIX)
+        val jsonText = raw.trim().removePrefix(LEGACY_PREFIX)
         val json = JSONObject(jsonText)
         return LanSyncPairingOffer(
             deviceId = json.getString("deviceId"),

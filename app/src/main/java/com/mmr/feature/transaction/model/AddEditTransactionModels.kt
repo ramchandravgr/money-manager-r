@@ -13,6 +13,11 @@ data class LoanPickerUi(
     val name: String,
 )
 
+data class TransactionReceiptUi(
+    val id: Long = 0L,
+    val filePath: String,
+)
+
 data class AddEditTransactionUiState(
     val isEditMode: Boolean = false,
     val isLoading: Boolean = false,
@@ -44,6 +49,7 @@ data class AddEditTransactionUiState(
     val hasLinkedLoanPayment: Boolean = false,
     val showDeleteButton: Boolean = false,
     val isDuplicatePrefilled: Boolean = false,
+    val receipts: List<TransactionReceiptUi> = emptyList(),
 )
 
 enum class PickerNameEditorKind {
@@ -168,6 +174,18 @@ sealed interface AddEditTransactionUiEvent {
 
     data class OnNoteChanged(
         val value: String,
+    ) : AddEditTransactionUiEvent
+
+    data class OnReceiptPicked(
+        val uriString: String,
+    ) : AddEditTransactionUiEvent
+
+    data class OnRemoveReceipt(
+        val attachmentId: Long,
+    ) : AddEditTransactionUiEvent
+
+    data class OnRemovePendingReceipt(
+        val filePath: String,
     ) : AddEditTransactionUiEvent
 
     object OnSaveClick : AddEditTransactionUiEvent

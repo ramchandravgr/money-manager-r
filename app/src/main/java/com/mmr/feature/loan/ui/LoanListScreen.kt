@@ -23,14 +23,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.ui.adaptive.MmrAdaptiveWidthBox
 import com.mmr.app.ui.adaptive.mmrScreenHorizontalPadding
+import com.mmr.app.ui.components.MmrAddListFab
 import com.mmr.app.ui.components.MmrDimens
-import com.mmr.app.ui.components.MmrMmDualSummaryStrip
-import com.mmr.app.ui.components.MmrMmHeaderBar
+import com.mmr.app.ui.components.MmrDualSummaryStrip
+import com.mmr.app.ui.components.MmrHeaderBar
 import com.mmr.app.ui.state.MmrEmptyState
 import com.mmr.app.ui.state.MmrErrorState
 import com.mmr.app.ui.state.MmrLoadingState
 import com.mmr.app.ui.state.MmrStatusBanner
-import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.app.ui.theme.MmrBrandColors
 import com.mmr.core.model.enums.LoanStatus
 import com.mmr.core.model.enums.LoanType
 import com.mmr.core.model.settings.MmrAmountColorScheme
@@ -50,11 +51,11 @@ fun LoanListScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
-        containerColor = MmrMmColors.ListBackground,
+        containerColor = MmrBrandColors.ListBackground,
         contentWindowInsets = com.mmr.app.ui.components.MmrNestedScaffoldInsets,
         topBar = {
             Column(modifier = Modifier.fillMaxWidth()) {
-                MmrMmHeaderBar(
+                MmrHeaderBar(
                     title = "Loans",
                     showBack = showBackNavigation,
                     onBack = onNavigateBack,
@@ -63,14 +64,11 @@ fun LoanListScreen(
             }
         },
         floatingActionButton = {
-            SmallFloatingActionButton(
+            MmrAddListFab(
                 modifier = Modifier.testTag(MmrTestTags.loanFabAdd),
+                contentDescription = "Add loan",
                 onClick = onNavigateToAddLoan,
-                containerColor = MmrMmColors.Active,
-                contentColor = Color.White,
-            ) {
-                Text("+", style = MaterialTheme.typography.titleMedium)
-            }
+            )
         },
     ) { innerPadding ->
         val horizontalPadding = mmrScreenHorizontalPadding()
@@ -215,13 +213,13 @@ fun LoanListScreen(
 
 @Composable
 private fun LoanOutstandingSummaryStrip(summary: LoanSummaryUi) {
-    MmrMmDualSummaryStrip(
+    MmrDualSummaryStrip(
         leftLabel = "Borrowed (outstanding)",
         leftAmount = summary.totalBorrowedOutstandingFormatted,
-        leftAmountColor = MmrMmColors.expenseColor(MmrAmountColorScheme.SET_A),
+        leftAmountColor = MmrBrandColors.expenseColor(MmrAmountColorScheme.SET_A),
         rightLabel = "Lent (outstanding)",
         rightAmount = summary.totalLentOutstandingFormatted,
-        rightAmountColor = Color(0xFF10B981),
+        rightAmountColor = MmrBrandColors.AmountPositive,
     )
 }
 
@@ -234,7 +232,7 @@ private fun LoanCard(
 ) {
     val isBorrowed = loan.loanType == LoanType.BORROWED
     val directionLabel = if (isBorrowed) "Borrowed" else "Lent"
-    val directionColor = if (isBorrowed) Color(0xFFEF4444) else Color(0xFF10B981)
+    val directionColor = if (isBorrowed) MmrBrandColors.AmountNegative else MmrBrandColors.AmountPositive
 
     val statusContainerColor =
         when (loan.status) {

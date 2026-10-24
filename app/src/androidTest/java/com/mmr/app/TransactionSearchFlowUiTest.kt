@@ -1,15 +1,15 @@
 package com.mmr.app
 
 import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mmr.app.testing.MmrHiltUiTest
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.testing.MmrUiTestFixtures
 import com.mmr.app.testing.assertTransactionRowShowsExpense
+import com.mmr.app.testing.traceClickTag
+import com.mmr.app.testing.traceClickText
+import com.mmr.app.testing.traceTextInputTag
+import com.mmr.app.testing.traceWaitUntil
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
@@ -26,25 +26,24 @@ class TransactionSearchFlowUiTest : MmrHiltUiTest() {
                 MmrUiTestFixtures.seedSearchTarget(database, note = note, amount = 88.0)
             }
 
-        composeRule.activityRule.scenario.recreate()
-        composeRule.waitForIdle()
+        traceActivityRecreate()
         composeRule.assertTransactionRowShowsExpense(fixture.transactionId, 88.0)
 
-        composeRule.onNodeWithTag(MmrTestTags.homeTopBarSearch).performClick()
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.traceClickTag(MmrTestTags.homeTopBarSearch)
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 10_000) {
             composeRule.onAllNodesWithTag(MmrTestTags.searchNoteQuery).fetchSemanticsNodes().isNotEmpty()
         }
 
-        composeRule.onNodeWithTag(MmrTestTags.searchPeriodChip).performClick()
-        composeRule.onNodeWithText("Year").performClick()
+        composeRule.traceClickTag(MmrTestTags.searchPeriodChip)
+        composeRule.traceClickText("Year")
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithText("Hide filters", substring = true).performClick()
+        composeRule.traceClickText("Hide filters", substring = true)
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag(MmrTestTags.searchNoteQuery).performClick()
-        composeRule.onNodeWithTag(MmrTestTags.searchNoteQuery).performTextInput(note)
-        composeRule.waitUntil(timeoutMillis = 15_000) {
+        composeRule.traceClickTag(MmrTestTags.searchNoteQuery)
+        composeRule.traceTextInputTag(MmrTestTags.searchNoteQuery, note)
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 15_000) {
             composeRule
                 .onAllNodesWithTag(MmrTestTags.transactionRow(fixture.transactionId))
                 .fetchSemanticsNodes()

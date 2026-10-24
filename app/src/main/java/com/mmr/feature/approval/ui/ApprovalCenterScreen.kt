@@ -3,6 +3,8 @@ package com.mmr.feature.approval.ui
 import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,13 +19,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.automirrored.outlined.CallMerge
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckBox
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.outlined.Refresh
+import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material3.*
+import androidx.compose.material3.Checkbox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,36 +42,72 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mmr.app.R
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.ui.adaptive.MmrAdaptiveWidthBox
 import com.mmr.app.ui.adaptive.mmrScreenHorizontalPadding
+import com.mmr.app.ui.components.MmrAddListFab
 import com.mmr.app.ui.components.MmrDimens
+import com.mmr.app.ui.components.MmrNestedScaffoldInsets
+import com.mmr.app.ui.components.MmrSelectionModeBackHandler
 import com.mmr.app.ui.components.MmrTopAppBar
 import com.mmr.app.ui.state.MmrEmptyState
 import com.mmr.app.ui.state.MmrErrorState
 import com.mmr.app.ui.state.MmrLoadingState
+import com.mmr.app.ui.theme.MmrBrandColors
 import com.mmr.core.model.enums.TransactionType
 import com.mmr.core.parser.permission.SmsPermissionHelper
 import com.mmr.feature.approval.model.ApprovalCandidateUi
 import com.mmr.feature.approval.model.ApprovalCenterUiEvent
+import com.mmr.feature.approval.model.ApprovalWidgetLaunchAction
 import com.mmr.feature.approval.viewmodel.ApprovalCenterViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ApprovalCenterScreen(
     onNavigateBack: () -> Unit,
     onNavigateToEditPending: (Long) -> Unit,
     showBackNavigation: Boolean = true,
+    launchApprovalId: Long = 0L,
+    launchAction: String = "",
     viewModel: ApprovalCenterViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    var widgetLaunchConsumed by remember { mutableStateOf(false) }
+    MmrSelectionModeBackHandler(
+        enabled = state.isSelectionMode,
+        onExitSelectionMode = { viewModel.onEvent(ApprovalCenterUiEvent.OnExitApprovalSelection) },
+    )
     val context = LocalContext.current
     var smsPreviewCandidate by remember { mutableStateOf<ApprovalCandidateUi?>(null) }
+
+    LaunchedEffect(launchApprovalId, launchAction, state.candidates, state.isLoading) {
+        if (widgetLaunchConsumed || launchApprovalId <= 0L || launchAction.isBlank() || state.isLoading) {
+            return@LaunchedEffect
+        }
+        val candidate = state.candidates.find { it.id == launchApprovalId } ?: return@LaunchedEffect
+        widgetLaunchConsumed = true
+        when (launchAction) {
+            ApprovalWidgetLaunchAction.VIEW -> smsPreviewCandidate = candidate
+            ApprovalWidgetLaunchAction.EDIT -> {
+                viewModel.onEvent(ApprovalCenterUiEvent.OnEditClick(candidate.id))
+                onNavigateToEditPending(candidate.id)
+            }
+            ApprovalWidgetLaunchAction.LINK -> {
+                if (candidate.isCardRefund) {
+                    viewModel.onEvent(ApprovalCenterUiEvent.OnApplyRefundQuick(candidate.id))
+                } else {
+                    viewModel.onEvent(ApprovalCenterUiEvent.OnLinkToExisting(candidate.id))
+                }
+            }
+        }
+    }
 
     smsPreviewCandidate?.let { candidate ->
         ApprovalSmsPreviewDialog(
@@ -101,15 +144,31 @@ fun ApprovalCenterScreen(
         )
     }
 
+    state.pendingCardRefundApply?.let { refund ->
+        ApplyCardRefundDialog(
+            prompt = refund,
+            onDismiss = { viewModel.onEvent(ApprovalCenterUiEvent.OnDismissCardRefundApply) },
+            onPreviousMonth = { viewModel.onEvent(ApprovalCenterUiEvent.OnCardRefundPickerPreviousMonth) },
+            onNextMonth = { viewModel.onEvent(ApprovalCenterUiEvent.OnCardRefundPickerNextMonth) },
+            onNoteQueryChange = { viewModel.onEvent(ApprovalCenterUiEvent.OnCardRefundPickerNoteQueryChanged(it)) },
+            onSelectPurchase = { viewModel.onEvent(ApprovalCenterUiEvent.OnCardRefundSelectPurchase(it)) },
+            onBackToPicker = { viewModel.onEvent(ApprovalCenterUiEvent.OnCardRefundBackToPicker) },
+            onToggleFullRefund = { viewModel.onEvent(ApprovalCenterUiEvent.OnCardRefundToggleFull(it)) },
+            onPartialAmountChange = { viewModel.onEvent(ApprovalCenterUiEvent.OnCardRefundPartialAmountChanged(it)) },
+            onConfirmApply = { viewModel.onEvent(ApprovalCenterUiEvent.OnCardRefundConfirmApply) },
+        )
+    }
+
     state.pendingSmsMerge?.let { merge ->
-        SmsMergeDialog(
+        ApprovalLinkTransactionDialog(
             prompt = merge,
-            categoryOptions = state.mergeCategoryOptions,
-            onCategorySelected = { viewModel.onEvent(ApprovalCenterUiEvent.OnMergeCategorySelected(it)) },
-            onUseLedgerCategory = { viewModel.onEvent(ApprovalCenterUiEvent.OnMergeUseLedgerCategory) },
+            onEvent = viewModel::onEvent,
             onMergeInto = { viewModel.onEvent(ApprovalCenterUiEvent.OnMergeSmsIntoTransaction(it)) },
             onApproveAsNew = { viewModel.onEvent(ApprovalCenterUiEvent.OnApproveAsNewTransaction) },
             onDismiss = { viewModel.onEvent(ApprovalCenterUiEvent.OnDismissSmsMerge) },
+            onPreviousMonth = { viewModel.onEvent(ApprovalCenterUiEvent.OnLinkPickerPreviousMonth) },
+            onNextMonth = { viewModel.onEvent(ApprovalCenterUiEvent.OnLinkPickerNextMonth) },
+            onNoteQueryChange = { viewModel.onEvent(ApprovalCenterUiEvent.OnLinkPickerNoteQueryChanged(it)) },
         )
     }
 
@@ -124,29 +183,90 @@ fun ApprovalCenterScreen(
     }
 
     Scaffold(
+        containerColor = MmrBrandColors.ListBackground,
+        contentWindowInsets = MmrNestedScaffoldInsets,
         floatingActionButton = {
-            FloatingActionButton(
-                modifier = Modifier.testTag(MmrTestTags.approvalFabManualSms),
-                onClick = { viewModel.onEvent(ApprovalCenterUiEvent.OnAddManualSmsClick) },
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Add SMS manually")
+            if (!state.isSelectionMode) {
+                MmrAddListFab(
+                    modifier = Modifier.testTag(MmrTestTags.approvalFabManualSms),
+                    contentDescription = "Add SMS manually",
+                    onClick = { viewModel.onEvent(ApprovalCenterUiEvent.OnAddManualSmsClick) },
+                )
             }
         },
         topBar = {
-            MmrTopAppBar(
-                title = "Approval Center",
-                showBackNavigation = showBackNavigation,
-                onNavigateBack = onNavigateBack,
-                actions = {
-                    TextButton(
-                        onClick = { onScanSmsClicked() },
-                        enabled = !state.isScanning,
-                        modifier = Modifier.testTag(MmrTestTags.approvalScanSms),
-                    ) {
-                        Text(if (state.isScanning) "Scanning…" else "Scan SMS")
-                    }
-                },
-            )
+            if (state.isSelectionMode) {
+                MmrTopAppBar(
+                    title = "${state.selectedApprovalIds.size} selected",
+                    showBackNavigation = true,
+                    onNavigateBack = { viewModel.onEvent(ApprovalCenterUiEvent.OnExitApprovalSelection) },
+                    useBrandHeaderStyle = true,
+                    useCompactHeaderTitle = true,
+                    actions = {
+                        IconButton(
+                            onClick = { viewModel.onEvent(ApprovalCenterUiEvent.OnApprovalSelectAll) },
+                            modifier = Modifier.testTag(MmrTestTags.approvalSelectionSelectAll),
+                        ) {
+                            Icon(
+                                imageVector =
+                                    if (state.allPendingSelected) {
+                                        Icons.Filled.CheckBox
+                                    } else {
+                                        Icons.Outlined.SelectAll
+                                    },
+                                contentDescription = "Select all",
+                            )
+                        }
+                        IconButton(
+                            onClick = { viewModel.onEvent(ApprovalCenterUiEvent.OnLinkSelectedApprovals) },
+                            enabled = state.canLinkSelection,
+                            modifier = Modifier.testTag(MmrTestTags.approvalSelectionLink),
+                        ) {
+                            Icon(Icons.AutoMirrored.Outlined.CallMerge, contentDescription = "Link to transaction")
+                        }
+                    },
+                )
+            } else {
+                MmrTopAppBar(
+                    title = "Approval Center",
+                    subtitle = stringResource(R.string.app_tagline),
+                    showBackNavigation = showBackNavigation,
+                    onNavigateBack = onNavigateBack,
+                    useBrandHeaderStyle = true,
+                    actions = {
+                        if (state.isScanning) {
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .size(MmrDimens.topBarIconButton)
+                                        .testTag(MmrTestTags.approvalScanSms),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(22.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MmrBrandColors.HeaderIcon,
+                                )
+                            }
+                        } else {
+                            IconButton(
+                                onClick = { onScanSmsClicked() },
+                                modifier =
+                                    Modifier
+                                        .size(MmrDimens.topBarIconButton)
+                                        .testTag(MmrTestTags.approvalScanSms),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Refresh,
+                                    contentDescription = "Scan SMS inbox",
+                                    tint = MmrBrandColors.HeaderIcon,
+                                    modifier = Modifier.size(MmrDimens.iconMd),
+                                )
+                            }
+                        }
+                    },
+                )
+            }
         },
     ) { padding ->
         Column(
@@ -196,7 +316,7 @@ fun ApprovalCenterScreen(
 
                 state.isEmpty -> {
                     MmrEmptyState(
-                        message = "No pending transactions.\nTap 'Scan SMS' or + to add an SMS manually.",
+                        message = "No pending transactions.\nTap refresh or + to scan or add an SMS manually.",
                     )
                 }
 
@@ -211,13 +331,32 @@ fun ApprovalCenterScreen(
                             items(state.candidates, key = { it.id }) { candidate ->
                                 ApprovalCandidateCard(
                                     candidate = candidate,
+                                    isSelectionMode = state.isSelectionMode,
+                                    isSelected = candidate.id in state.selectedApprovalIds,
+                                    onLongPress = {
+                                        viewModel.onEvent(ApprovalCenterUiEvent.OnApprovalLongPress(candidate.id))
+                                    },
+                                    onToggleSelect = {
+                                        viewModel.onEvent(ApprovalCenterUiEvent.OnApprovalSelectionToggle(candidate.id))
+                                    },
                                     onViewSms = { smsPreviewCandidate = candidate },
                                     onEdit = {
                                         viewModel.onEvent(ApprovalCenterUiEvent.OnEditClick(candidate.id))
                                         onNavigateToEditPending(candidate.id)
                                     },
+                                    onLink = {
+                                        if (candidate.isCardRefund) {
+                                            viewModel.onEvent(ApprovalCenterUiEvent.OnApplyRefundQuick(candidate.id))
+                                        } else {
+                                            viewModel.onEvent(ApprovalCenterUiEvent.OnLinkToExisting(candidate.id))
+                                        }
+                                    },
                                     onApprove = {
-                                        viewModel.onEvent(ApprovalCenterUiEvent.OnApproveQuick(candidate.id))
+                                        if (candidate.isCardRefund) {
+                                            viewModel.onEvent(ApprovalCenterUiEvent.OnApplyRefundQuick(candidate.id))
+                                        } else {
+                                            viewModel.onEvent(ApprovalCenterUiEvent.OnApproveQuick(candidate.id))
+                                        }
                                     },
                                     onReject = {
                                         viewModel.onEvent(ApprovalCenterUiEvent.OnRejectQuick(candidate.id))
@@ -236,29 +375,41 @@ private val ApprovalCardLabelWidth = 88.dp
 private val ApprovalCardIconSize = 29.dp
 private val ApprovalCardIconGlyph = 14.dp
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ApprovalCandidateCard(
     candidate: ApprovalCandidateUi,
+    isSelectionMode: Boolean = false,
+    isSelected: Boolean = false,
+    onLongPress: () -> Unit = {},
+    onToggleSelect: () -> Unit = {},
     onViewSms: () -> Unit,
     onEdit: () -> Unit,
+    onLink: () -> Unit = {},
     onApprove: () -> Unit,
     onReject: () -> Unit,
 ) {
     val amountColor =
-        if (candidate.type == TransactionType.INCOME) {
-            Color(0xFF10B981)
-        } else {
-            Color(0xFFEF4444)
+        when {
+            candidate.isCardRefund -> MaterialTheme.colorScheme.primary
+            candidate.type == TransactionType.INCOME -> MmrBrandColors.AmountPositive
+            else -> MmrBrandColors.AmountNegative
         }
     val neutralIconBg = MaterialTheme.colorScheme.surfaceContainerHighest
-    val approveBg = Color(0xFF1B3D2F)
-    val rejectBg = Color(0xFF3D1F24)
+    val approveBg = MmrBrandColors.ApprovalApproveBackground
+    val rejectBg = MmrBrandColors.ApprovalRejectBackground
 
     Card(
         modifier =
             Modifier
                 .testTag(MmrTestTags.approvalCard(candidate.id))
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .combinedClickable(
+                    onClick = {
+                        if (isSelectionMode) onToggleSelect()
+                    },
+                    onLongClick = onLongPress,
+                ),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
@@ -273,7 +424,15 @@ fun ApprovalCandidateCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top,
             ) {
-                Column {
+                if (isSelectionMode) {
+                    Checkbox(
+                        checked = isSelected,
+                        onCheckedChange = { onToggleSelect() },
+                    )
+                }
+                Column(
+                    modifier = if (isSelectionMode) Modifier.weight(1f) else Modifier,
+                ) {
                     Text(
                         text = candidate.amountFormatted,
                         fontSize = 14.sp,
@@ -294,36 +453,48 @@ fun ApprovalCandidateCard(
                     horizontalArrangement = Arrangement.spacedBy(1.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    ApprovalCardIconAction(
-                        onClick = onViewSms,
-                        contentDescription = "View SMS",
-                        containerColor = neutralIconBg,
-                        icon = Icons.Outlined.Visibility,
-                        iconTint = MaterialTheme.colorScheme.onSurface,
-                    )
-                    ApprovalCardIconAction(
-                        onClick = onEdit,
-                        contentDescription = "Edit",
-                        containerColor = neutralIconBg,
-                        icon = Icons.Filled.Edit,
-                        iconTint = MaterialTheme.colorScheme.onSurface,
-                    )
-                    ApprovalCardIconAction(
-                        onClick = onApprove,
-                        contentDescription = "Approve",
-                        containerColor = approveBg,
-                        icon = Icons.Filled.Check,
-                        iconTint = Color(0xFF22C55E),
-                        modifier = Modifier.testTag(MmrTestTags.approvalQuickApprove(candidate.id)),
-                    )
-                    ApprovalCardIconAction(
-                        onClick = onReject,
-                        contentDescription = "Reject",
-                        containerColor = rejectBg,
-                        icon = Icons.Filled.Close,
-                        iconTint = Color(0xFFEF4444),
-                        modifier = Modifier.testTag(MmrTestTags.approvalQuickReject(candidate.id)),
-                    )
+                    if (!isSelectionMode) {
+                        ApprovalCardIconAction(
+                            onClick = onViewSms,
+                            contentDescription = "View SMS",
+                            containerColor = neutralIconBg,
+                            icon = Icons.Outlined.Visibility,
+                            iconTint = MaterialTheme.colorScheme.onSurface,
+                        )
+                        ApprovalCardIconAction(
+                            onClick = onEdit,
+                            contentDescription = "Edit",
+                            containerColor = neutralIconBg,
+                            icon = Icons.Filled.Edit,
+                            iconTint = MaterialTheme.colorScheme.onSurface,
+                        )
+                        if (!candidate.isCardRefund) {
+                            ApprovalCardIconAction(
+                                onClick = onLink,
+                                contentDescription = "Link to transaction",
+                                containerColor = neutralIconBg,
+                                icon = Icons.AutoMirrored.Outlined.CallMerge,
+                                iconTint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.testTag(MmrTestTags.approvalLink(candidate.id)),
+                            )
+                        }
+                        ApprovalCardIconAction(
+                            onClick = onApprove,
+                            contentDescription = if (candidate.isCardRefund) "Apply refund" else "Approve",
+                            containerColor = approveBg,
+                            icon = Icons.Filled.Check,
+                            iconTint = MmrBrandColors.ApprovalApproveIcon,
+                            modifier = Modifier.testTag(MmrTestTags.approvalQuickApprove(candidate.id)),
+                        )
+                        ApprovalCardIconAction(
+                            onClick = onReject,
+                            contentDescription = "Reject",
+                            containerColor = rejectBg,
+                            icon = Icons.Filled.Close,
+                            iconTint = MmrBrandColors.ApprovalRejectIcon,
+                            modifier = Modifier.testTag(MmrTestTags.approvalQuickReject(candidate.id)),
+                        )
+                    }
                 }
             }
 

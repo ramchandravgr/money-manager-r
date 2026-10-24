@@ -79,6 +79,56 @@ class SmsParserPhase3Test {
     }
 
     @Test
+    fun parseResult_yesBankCreditCardBillPayment_isInformational_notTransaction() {
+        val body =
+            "Dear Cardmember, payment of Rs.98,675.44 is received towards your YES BANK Credit Card ending 4668. " +
+                "It will reflect in your Credit Card within 1-2 working days."
+        val fromBank =
+            RawSmsMessage(
+                id = "3b",
+                sender = "VA-YESBNK-S",
+                body = body,
+                timestamp = 1_700_000_000_000L,
+            )
+        val manual =
+            RawSmsMessage(
+                id = "3c",
+                sender = "Manual",
+                body = body,
+                timestamp = 1_700_000_000_000L,
+            )
+        for (raw in listOf(fromBank, manual)) {
+            val result = engine.parseResult(raw)
+            assertTrue(result is SmsParseResult.Informational)
+            val info = result as SmsParseResult.Informational
+            assertEquals(SmsParseIntent.CARD_PAYMENT, info.intent)
+            assertNull(engine.parse(raw))
+            assertEquals(98675.44, info.amount!!, 0.01)
+        }
+    }
+
+    @Test
+    fun parseResult_bobcardBillPayment_isInformational_notTransaction() {
+        val body =
+            "Update: Payment of Rs 573.90 received for your BOBCARD ending 7404 on 2026-10-23. " +
+                "Visit bobcard app: bobcard.io/App or online card account at https://"
+        val raw =
+            RawSmsMessage(
+                id = "3d",
+                sender = "JM-BOBCRD-T",
+                body = body,
+                timestamp = 1_700_000_000_000L,
+            )
+        val result = engine.parseResult(raw)
+        assertTrue(result is SmsParseResult.Informational)
+        val info = result as SmsParseResult.Informational
+        assertEquals(SmsParseIntent.CARD_PAYMENT, info.intent)
+        assertEquals("bobcard_bill_payment", info.templateId)
+        assertNull(engine.parse(raw))
+        assertEquals(573.90, info.amount!!, 0.01)
+    }
+
+    @Test
     fun parseResult_hdfcUpiP2pDebit_isSettledTransaction() {
         val raw =
             RawSmsMessage(

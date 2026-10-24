@@ -34,6 +34,10 @@ object MmrTestTags {
     const val transactionDuplicateSameDate = "transaction.duplicate.same_date"
 
     const val backupExport = "backup.action.export"
+    const val googleDriveBackupLink = "backup.action.google_drive"
+    const val googleDriveBackupScreen = "backup.screen.google_drive"
+    const val googleDriveBackupTurnOn = "backup.action.google_drive_turn_on"
+    const val googleDriveBackupNow = "backup.action.google_drive_backup_now"
     const val backupImport = "backup.action.import"
     const val backupImportConfirm = "backup.import.confirm"
     const val backupImportModeReplace = "backup.import.mode.replace"
@@ -52,6 +56,14 @@ object MmrTestTags {
     fun approvalCard(approvalId: Long): String = "approval.card.$approvalId"
 
     fun approvalQuickApprove(approvalId: Long): String = "approval.$approvalId.approve"
+
+    fun approvalLink(approvalId: Long): String = "approval.$approvalId.link"
+
+    const val approvalSelectionLink = "approval.selection.link"
+
+    const val approvalSelectionSelectAll = "approval.selection.select_all"
+
+    const val approvalLinkPickerSearch = "approval.link_picker.search"
 
     fun approvalQuickReject(approvalId: Long): String = "approval.$approvalId.reject"
 
@@ -77,6 +89,16 @@ object MmrTestTags {
     const val settingsNavAccounts = "settings.nav.accounts"
     const val settingsNavCategories = "settings.nav.categories"
     const val settingsNavBackup = "settings.nav.backup"
+    const val settingsNavLanSync = "settings.nav.lan_sync"
+    const val settingsNavWebManage = "settings.nav.web_manage"
+    const val settingsListAddAccounts = "settings.list.accounts.add"
+    const val settingsListAddCategories = "settings.list.categories.add"
+    const val accountFieldName = "account.field.name"
+    const val categoryFieldName = "category.field.name"
+    const val webManagePasswordField = "web_manage.password.field"
+    const val webManagePasswordSave = "web_manage.password.save"
+    const val webManageEnabledSwitch = "web_manage.switch.enabled"
+    const val lanSyncEnabledSwitch = "lan_sync.switch.enabled"
 
     const val loanFabAdd = "loan.fab.add"
     const val loanFieldName = "loan.field.name"

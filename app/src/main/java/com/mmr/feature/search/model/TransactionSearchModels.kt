@@ -20,7 +20,6 @@ data class TransactionSearchUiState(
     val groupedResults: List<TransactionGroupUi> = emptyList(),
     val isLoading: Boolean = true,
     val showDateRangePicker: Boolean = false,
-    val showCategoryPicker: Boolean = false,
     val pickerHighlightedCategoryId: Long? = null,
     val errorMessage: String? = null,
     val isEmpty: Boolean = false,
@@ -58,8 +57,6 @@ sealed interface TransactionSearchUiEvent {
     ) : TransactionSearchUiEvent
 
     object OnCategoryRowClick : TransactionSearchUiEvent
-
-    object OnDismissCategoryPicker : TransactionSearchUiEvent
 
     data class OnPickerParentSelected(
         val categoryId: Long,

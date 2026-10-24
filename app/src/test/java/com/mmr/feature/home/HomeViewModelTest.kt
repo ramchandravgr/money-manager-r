@@ -6,6 +6,7 @@ import com.mmr.core.export.PeriodExcelExporter
 import com.mmr.feature.home.model.HomeUiEvent
 import com.mmr.test.FakeApprovalRepository
 import com.mmr.test.FakeCategoryRepository
+import com.mmr.test.FakeLanSyncRepository
 import com.mmr.test.FakeTransactionRepository
 import com.mmr.test.MainDispatcherRule
 import com.mmr.test.robolectricDisplaySettingsStore
@@ -47,6 +48,7 @@ class HomeViewModelTest {
                     approvals,
                     robolectricDisplaySettingsStore(),
                     PeriodExcelExporter(context),
+                    FakeLanSyncRepository(),
                 )
 
             backgroundScope.launch { viewModel.uiState.collect { } }
@@ -72,6 +74,7 @@ class HomeViewModelTest {
                     approvals,
                     robolectricDisplaySettingsStore(),
                     PeriodExcelExporter(context),
+                    FakeLanSyncRepository(),
                 )
 
             backgroundScope.launch { viewModel.uiState.collect { } }

@@ -3,6 +3,7 @@ package com.mmr.feature.recurring.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mmr.app.ui.state.MmrUiMessages
+import com.mmr.core.common.display.MmrMoneyFormat
 import com.mmr.core.database.relation.RecurringRuleWithDetails
 import com.mmr.core.domain.repository.RecurringRuleRepository
 import com.mmr.core.model.enums.RecurrenceInterval
@@ -53,6 +54,8 @@ class RecurringListViewModel
                 val allRules = data.allRules
                 val upcomingReminders = data.upcomingReminders
                 val enabledCount = data.enabledCount
+                val totalCount = allRules.size
+                val pausedCount = (totalCount - enabledCount).coerceAtLeast(0)
                 val filter = data.filter
                 val filtered =
                     allRules.filter { withDetails ->
@@ -77,13 +80,17 @@ class RecurringListViewModel
                         )
                     }
 
+                val hasAnyRules = totalCount > 0
                 RecurringListUiState(
                     isLoading = false,
                     rules = ruleUis,
                     reminders = reminderUis,
+                    totalRulesCount = totalCount,
                     activeRulesCount = enabledCount,
+                    pausedRulesCount = pausedCount,
                     selectedFilter = filter,
-                    isEmpty = loadError == null && ruleUis.isEmpty(),
+                    isEmpty = loadError == null && !hasAnyRules,
+                    isFilteredEmpty = loadError == null && hasAnyRules && ruleUis.isEmpty(),
                     errorMessage = loadError,
                     statusMessage = status,
                 )
@@ -142,6 +149,10 @@ class RecurringListViewModel
                 RecurringListUiEvent.OnDismissStatus -> {
                     _statusMessage.value = null
                 }
+
+                RecurringListUiEvent.OnResetFilters -> {
+                    _selectedFilter.value = RecurringFilterType.ALL
+                }
             }
         }
     }
@@ -180,7 +191,7 @@ internal fun RecurringRuleWithDetails.toItemUi(): RecurringRuleItemUi {
         id = rule.id,
         name = rule.name,
         amount = rule.amount,
-        amountFormatted = "$sign₹${"%.2f".format(rule.amount)}",
+        amountFormatted = "$sign${MmrMoneyFormat.formatInr(rule.amount)}",
         type = rule.transactionTemplateType,
         isExpense = isExpense,
         interval = rule.recurrenceInterval,

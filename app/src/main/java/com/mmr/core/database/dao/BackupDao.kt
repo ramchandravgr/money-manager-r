@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import com.mmr.core.database.entity.AccountEntity
+import com.mmr.core.database.entity.CategorizationRuleEntity
 import com.mmr.core.database.entity.CategoryEntity
 import com.mmr.core.database.entity.LoanEntity
 import com.mmr.core.database.entity.LoanInterestRevisionEntity
@@ -16,7 +17,9 @@ import com.mmr.core.database.entity.RecurringRuleEntity
 import com.mmr.core.database.entity.SmsMessageRecordEntity
 import com.mmr.core.database.entity.SubcategoryEntity
 import com.mmr.core.database.entity.TransactionApprovalEntity
+import com.mmr.core.database.entity.TransactionAttachmentEntity
 import com.mmr.core.database.entity.TransactionEntity
+import com.mmr.core.database.entity.TrustedLanDeviceEntity
 
 @Dao
 interface BackupDao {
@@ -62,6 +65,15 @@ interface BackupDao {
     @Query("SELECT * FROM transaction_approvals WHERE approvalState != 'PENDING'")
     suspend fun getTransactionApprovalsForExport(): List<TransactionApprovalEntity>
 
+    @Query("SELECT * FROM categorization_rules")
+    suspend fun getAllCategorizationRules(): List<CategorizationRuleEntity>
+
+    @Query("SELECT * FROM trusted_lan_devices")
+    suspend fun getAllTrustedLanDevices(): List<TrustedLanDeviceEntity>
+
+    @Query("SELECT * FROM transaction_attachments")
+    suspend fun getAllTransactionAttachments(): List<TransactionAttachmentEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCategories(categories: List<CategoryEntity>)
 
@@ -97,6 +109,15 @@ interface BackupDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransactionApprovals(approvals: List<TransactionApprovalEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCategorizationRules(rules: List<CategorizationRuleEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTrustedLanDevices(devices: List<TrustedLanDeviceEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTransactionAttachments(attachments: List<TransactionAttachmentEntity>)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertCategoriesIgnore(categories: List<CategoryEntity>)
@@ -134,6 +155,15 @@ interface BackupDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertTransactionApprovalsIgnore(approvals: List<TransactionApprovalEntity>)
 
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertCategorizationRulesIgnore(rules: List<CategorizationRuleEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertTrustedLanDevicesIgnore(devices: List<TrustedLanDeviceEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertTransactionAttachmentsIgnore(attachments: List<TransactionAttachmentEntity>)
+
     @Transaction
     suspend fun mergeUserData(
         categories: List<CategoryEntity>,
@@ -148,6 +178,9 @@ interface BackupDao {
         notificationRules: List<NotificationRuleEntity>,
         smsMessageRecords: List<SmsMessageRecordEntity>,
         transactionApprovals: List<TransactionApprovalEntity>,
+        categorizationRules: List<CategorizationRuleEntity> = emptyList(),
+        trustedLanDevices: List<TrustedLanDeviceEntity> = emptyList(),
+        transactionAttachments: List<TransactionAttachmentEntity> = emptyList(),
     ) {
         if (categories.isNotEmpty()) insertCategoriesIgnore(categories)
         if (subcategories.isNotEmpty()) insertSubcategoriesIgnore(subcategories)
@@ -161,10 +194,16 @@ interface BackupDao {
         if (notificationRules.isNotEmpty()) insertNotificationRulesIgnore(notificationRules)
         if (smsMessageRecords.isNotEmpty()) insertSmsMessageRecordsIgnore(smsMessageRecords)
         if (transactionApprovals.isNotEmpty()) insertTransactionApprovalsIgnore(transactionApprovals)
+        if (categorizationRules.isNotEmpty()) insertCategorizationRulesIgnore(categorizationRules)
+        if (trustedLanDevices.isNotEmpty()) insertTrustedLanDevicesIgnore(trustedLanDevices)
+        if (transactionAttachments.isNotEmpty()) insertTransactionAttachmentsIgnore(transactionAttachments)
     }
 
     @Transaction
     suspend fun clearAllUserData() {
+        deleteAllTransactionAttachments()
+        deleteAllTrustedLanDevices()
+        deleteAllCategorizationRules()
         deleteAllTransactionApprovals()
         deleteAllNotificationRules()
         deleteAllLoanScheduleEntries()
@@ -193,6 +232,9 @@ interface BackupDao {
         notificationRules: List<NotificationRuleEntity>,
         smsMessageRecords: List<SmsMessageRecordEntity>,
         transactionApprovals: List<TransactionApprovalEntity>,
+        categorizationRules: List<CategorizationRuleEntity> = emptyList(),
+        trustedLanDevices: List<TrustedLanDeviceEntity> = emptyList(),
+        transactionAttachments: List<TransactionAttachmentEntity> = emptyList(),
     ) {
         clearAllUserData()
         if (categories.isNotEmpty()) insertCategories(categories)
@@ -207,7 +249,19 @@ interface BackupDao {
         if (notificationRules.isNotEmpty()) insertNotificationRules(notificationRules)
         if (smsMessageRecords.isNotEmpty()) insertSmsMessageRecords(smsMessageRecords)
         if (transactionApprovals.isNotEmpty()) insertTransactionApprovals(transactionApprovals)
+        if (categorizationRules.isNotEmpty()) insertCategorizationRules(categorizationRules)
+        if (trustedLanDevices.isNotEmpty()) insertTrustedLanDevices(trustedLanDevices)
+        if (transactionAttachments.isNotEmpty()) insertTransactionAttachments(transactionAttachments)
     }
+
+    @Query("DELETE FROM transaction_attachments")
+    suspend fun deleteAllTransactionAttachments()
+
+    @Query("DELETE FROM trusted_lan_devices")
+    suspend fun deleteAllTrustedLanDevices()
+
+    @Query("DELETE FROM categorization_rules")
+    suspend fun deleteAllCategorizationRules()
 
     @Query("DELETE FROM transaction_approvals")
     suspend fun deleteAllTransactionApprovals()

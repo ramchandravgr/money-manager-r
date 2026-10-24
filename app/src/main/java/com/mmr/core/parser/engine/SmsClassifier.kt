@@ -1,13 +1,20 @@
 package com.mmr.core.parser.engine
 
 import com.mmr.core.parser.model.SmsParseIntent
+import java.util.Locale
 
 object SmsClassifier {
     private val IGNORED_EXCLUSIONS =
         listOf(
-            "otp",
             "verification code",
             "one time password",
+            "secret otp",
+            " is otp ",
+            " otp is ",
+            "your otp",
+            "otp valid",
+            "otp for txn",
+            "otp for transaction",
             "secret code",
             "do not share",
             "security code",
@@ -32,7 +39,6 @@ object SmsClassifier {
             "credited to your account. shop",
             "ride points credited",
             "reward points credited",
-            "towards interest. total avail",
             "has requested money on the paytm app",
         )
 
@@ -47,8 +53,9 @@ object SmsClassifier {
             "neucoins",
         )
 
-    fun detectInformational(textLower: String): SmsParseIntent? =
-        when {
+    fun detectInformational(textLower: String): SmsParseIntent? {
+        if (isLikelyCardMerchantRefund(textLower)) return null
+        return when {
             isUpcomingDebitOrNachNotice(textLower) -> SmsParseIntent.MANDATE
 
             textLower.contains("e-statement of") ||
@@ -60,8 +67,28 @@ object SmsClassifier {
 
             isIpoBlockOrRelease(textLower) -> SmsParseIntent.INVESTMENT
 
+            isFdSweepLiquidationNotice(textLower) -> SmsParseIntent.INVESTMENT
+
             else -> null
         }
+    }
+
+    fun isLikelyCardMerchantRefund(textLower: String): Boolean {
+        if (textLower.contains("transaction reversed") && textLower.contains("credit card")) return true
+        if (
+            textLower.contains("online refund") &&
+            textLower.contains("credit card") &&
+            textLower.contains("credited")
+        ) {
+            return true
+        }
+        return false
+    }
+
+    fun isFdSweepLiquidationNotice(textLower: String): Boolean {
+        if (!textLower.contains("will be liquidated")) return false
+        return textLower.contains("sweep in debit") || textLower.contains("for sweep in debit")
+    }
 
     fun isIpoBlockOrRelease(textLower: String): Boolean {
         if (!textLower.contains("ipo") && !textLower.contains("asba")) return false
@@ -89,6 +116,7 @@ object SmsClassifier {
             SmsParseIntent.STATEMENT -> "Card/account statement notice (not a new transaction)"
             SmsParseIntent.INVESTMENT -> "IPO block/release or holding notice (not imported)"
             SmsParseIntent.CARD_PAYMENT -> "Credit card bill payment (not imported; spend already tracked)"
+            SmsParseIntent.CARD_REFUND -> "Card merchant refund (apply to original purchase)"
             SmsParseIntent.SETTLED -> "Financial SMS"
         }
 
@@ -111,8 +139,37 @@ object SmsClassifier {
         return false
     }
 
+    /**
+     * Axis Bank auto-sweep / flexi-FD breakage: internal BRN-Flexi credits and Flexi/… debits.
+     * Not mutual-fund "Flexi Cap Fund" SIP messages (see [isMutualFundFlexiCapSms]).
+     */
+    fun isAxisAutoSweepFlexi(text: String): Boolean {
+        val textLower = text.lowercase(Locale.getDefault())
+        if (isMutualFundFlexiCapSms(textLower)) return false
+        if (textLower.contains("brn-flexi") || textLower.contains("brn flexi")) return true
+        if (textLower.contains("info - brn-flexi")) return true
+        val axisContext = textLower.contains("axis bank") || textLower.contains("axbk.in")
+        if (axisContext && AXIS_FLEXI_SWEEP_REF.containsMatchIn(textLower)) return true
+        return false
+    }
+
+    private val AXIS_FLEXI_SWEEP_REF =
+        Regex("""flexi/\d{10,}""", RegexOption.IGNORE_CASE)
+
+    private fun isMutualFundFlexiCapSms(textLower: String): Boolean {
+        if (textLower.contains("flexi cap fund")) return true
+        if (textLower.contains("sip purchase") || textLower.contains("sip pause")) return true
+        if (textLower.contains("nav of") || textLower.contains(" at the nav of ")) return true
+        if (textLower.contains("mutual fund") || textLower.contains("hdfcmf") || textLower.contains("ppfasmf")) {
+            return true
+        }
+        if (textLower.contains("folio") && textLower.contains("fund")) return true
+        return false
+    }
+
     fun isIgnored(textLower: String): Boolean {
         if (isDeclinedOrFailedTransaction(textLower)) return true
+        if (isAxisAutoSweepFlexi(textLower)) return true
         return IGNORED_EXCLUSIONS.any { textLower.contains(it) }
     }
 

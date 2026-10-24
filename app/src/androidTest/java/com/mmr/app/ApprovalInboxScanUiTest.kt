@@ -3,14 +3,14 @@ package com.mmr.app
 import android.Manifest
 import android.os.Build
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.mmr.app.testing.MmrHiltUiTest
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.testing.MmrUiTestFixtures
+import com.mmr.app.testing.traceClickTag
+import com.mmr.app.testing.traceWaitUntil
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
@@ -20,7 +20,7 @@ import org.junit.runner.RunWith
  * Reads the **physical device** SMS inbox (USB debugging). Does not insert fake SMS.
  *
  * Before running: grant READ_SMS if prompted once manually; keep at least one parseable bank
- * transaction SMS in the appâ€™s SMS scan lookback window (Settings â†’ configuration / scan months).
+ * transaction SMS in the app?s SMS scan lookback window (Settings ? configuration / scan months).
  */
 @RunWith(AndroidJUnit4::class)
 @HiltAndroidTest
@@ -30,18 +30,18 @@ class ApprovalInboxScanUiTest : MmrHiltUiTest() {
         grantReadSmsForTestApp()
         runBlocking { MmrUiTestFixtures.clearApprovals(database) }
 
-        composeRule.onNodeWithTag(MmrTestTags.homeTopBarApprovals).performClick()
+        composeRule.traceClickTag(MmrTestTags.homeTopBarApprovals)
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(MmrTestTags.approvalScanSms).performClick()
+        composeRule.traceClickTag(MmrTestTags.approvalScanSms)
 
-        composeRule.waitUntil(timeoutMillis = 45_000) {
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 45_000) {
             composeRule
-                .onAllNodesWithText("Scanningâ€¦", substring = true)
+                .onAllNodesWithText("Scanning?", substring = true)
                 .fetchSemanticsNodes()
                 .isEmpty()
         }
 
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 10_000) {
             scanResultBannerVisible()
         }
 

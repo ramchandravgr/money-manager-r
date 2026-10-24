@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.ui.components.MmrDimens
 import com.mmr.app.ui.components.MmrSecondaryActionButton
-import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.app.ui.theme.MmrBrandColors
 import com.mmr.feature.home.model.HomeTotalAccountsSummaryUi
 import com.mmr.feature.home.model.TransactionGroupUi
 
@@ -78,19 +78,26 @@ fun HomeTotalTabContent(
             item(key = "header-${group.dateKey}") {
                 TransactionDayHeaderRow(group = group)
             }
-            items(group.items, key = { it.id }) { item ->
+            items(
+                count = group.items.size,
+                key = { group.items[it].id },
+            ) { index ->
+                val item = group.items[index]
+                val isLastInDay = index == group.items.lastIndex
                 if (selectionMode) {
                     TransactionSelectionRowCard(
                         item = item,
                         selected = item.id in selectedIds,
                         onClick = { onItemClick(item.id) },
                         onLongClick = { onItemLongClick(item.id) },
+                        isLastInDayGroup = isLastInDay,
                     )
                 } else {
                     TransactionCompactRow(
                         item = item,
                         onClick = { onItemClick(item.id) },
                         onLongClick = { onItemLongClick(item.id) },
+                        isLastInDayGroup = isLastInDay,
                     )
                 }
             }
@@ -116,7 +123,7 @@ private fun TotalAccountsSectionHeader(periodRangeLabel: String) {
             Icon(
                 imageVector = Icons.Outlined.AccountBalance,
                 contentDescription = null,
-                tint = MmrMmColors.TextMedium,
+                tint = MmrBrandColors.TextMedium,
                 modifier = Modifier.padding(end = 2.dp),
             )
             Text(
@@ -126,13 +133,13 @@ private fun TotalAccountsSectionHeader(periodRangeLabel: String) {
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
                     ),
-                color = MmrMmColors.TextStrong,
+                color = MmrBrandColors.TextStrong,
             )
         }
         Text(
             text = periodRangeLabel,
             style = MaterialTheme.typography.labelSmall,
-            color = MmrMmColors.TextMedium,
+            color = MmrBrandColors.TextMedium,
         )
     }
 }
@@ -146,7 +153,7 @@ private fun TotalAccountsSummaryCard(summary: HomeTotalAccountsSummaryUi) {
                 .fillMaxWidth()
                 .padding(horizontal = MmrDimens.listItemPaddingHorizontal)
                 .padding(bottom = MmrDimens.spaceSm)
-                .border(1.dp, MmrMmColors.BorderMain.copy(alpha = 0.55f), shape)
+                .border(1.dp, MmrBrandColors.BorderMain.copy(alpha = 0.55f), shape)
                 .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
@@ -175,7 +182,7 @@ private fun TotalAccountsSummaryCard(summary: HomeTotalAccountsSummaryUi) {
 private fun comparedExpensesLabel() =
     buildAnnotatedString {
         append("Compared Expenses ")
-        withStyle(SpanStyle(color = MmrMmColors.TextLight)) {
+        withStyle(SpanStyle(color = MmrBrandColors.TextLight)) {
             append("(Last month)")
         }
     }
@@ -193,13 +200,13 @@ private fun TotalSummaryAnnotatedRow(
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = MmrMmColors.TextMedium,
+            color = MmrBrandColors.TextMedium,
             modifier = Modifier.weight(1f),
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-            color = MmrMmColors.TextStrong,
+            color = MmrBrandColors.TextStrong,
         )
     }
 }
@@ -217,13 +224,13 @@ private fun TotalSummaryRow(
         Text(
             text = label,
             style = MaterialTheme.typography.bodySmall,
-            color = MmrMmColors.TextMedium,
+            color = MmrBrandColors.TextMedium,
             modifier = Modifier.weight(1f),
         )
         Text(
             text = value,
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
-            color = MmrMmColors.TextStrong,
+            color = MmrBrandColors.TextStrong,
         )
     }
 }

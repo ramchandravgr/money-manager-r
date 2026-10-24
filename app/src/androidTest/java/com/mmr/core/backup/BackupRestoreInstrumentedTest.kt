@@ -4,7 +4,15 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.mmr.core.attachment.TransactionAttachmentStore
+import com.mmr.core.backup.AppSettingsBackupCoordinator
+import com.mmr.core.data.preferences.AppDisplaySettingsStore
+import com.mmr.core.data.preferences.LanSyncIdentityStore
+import com.mmr.core.data.preferences.LanSyncPreferencesStore
+import com.mmr.core.data.preferences.LanSyncWifiTrustStore
+import com.mmr.core.data.preferences.SmsInboundSettingsStore
 import com.mmr.core.data.preferences.SmsScanSettingsStore
+import com.mmr.core.data.preferences.WebManagePreferencesStore
 import com.mmr.core.data.repository.BackupRepositoryImpl
 import com.mmr.core.database.MmrDatabase
 import com.mmr.core.database.entity.AccountEntity
@@ -12,11 +20,14 @@ import com.mmr.core.database.entity.CategoryEntity
 import com.mmr.core.database.entity.SmsMessageRecordEntity
 import com.mmr.core.database.entity.TransactionApprovalEntity
 import com.mmr.core.database.entity.TransactionEntity
+import com.mmr.core.lansync.LanSyncTombstoneMerger
 import com.mmr.core.model.enums.AccountType
 import com.mmr.core.model.enums.CategoryType
 import com.mmr.core.model.enums.RecordStatus
 import com.mmr.core.model.enums.SmsApprovalState
 import com.mmr.core.model.enums.TransactionType
+import com.mmr.core.model.settings.MmrAppColorTheme
+import com.mmr.core.model.settings.MmrStartScreenTab
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After
@@ -24,11 +35,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.text.Charsets
 
 @RunWith(AndroidJUnit4::class)
 class BackupRestoreInstrumentedTest {
     private lateinit var database: MmrDatabase
     private lateinit var settingsStore: SmsScanSettingsStore
+    private lateinit var displaySettingsStore: AppDisplaySettingsStore
     private lateinit var repository: BackupRepositoryImpl
 
     @Before
@@ -40,11 +53,46 @@ class BackupRestoreInstrumentedTest {
                 .allowMainThreadQueries()
                 .build()
         settingsStore = SmsScanSettingsStore(context)
+        displaySettingsStore = AppDisplaySettingsStore(context)
+        val appSettingsCoordinator =
+            AppSettingsBackupCoordinator(
+                smsScanSettingsStore = settingsStore,
+                displaySettingsStore = displaySettingsStore,
+                smsInboundSettingsStore = SmsInboundSettingsStore(context),
+                lanSyncIdentityStore = LanSyncIdentityStore(context),
+                lanSyncPreferencesStore = LanSyncPreferencesStore(context),
+                lanSyncWifiTrustStore = LanSyncWifiTrustStore(context),
+                webManagePreferencesStore = WebManagePreferencesStore(context),
+            )
+        val tombstoneMerger =
+            LanSyncTombstoneMerger(
+                database = database,
+                tombstoneDao = database.syncTombstoneDao(),
+                attachmentRepository =
+                    com.mmr.core.data.repository.TransactionAttachmentRepositoryImpl(
+                        context = context,
+                        database = database,
+                        attachmentDao = database.transactionAttachmentDao(),
+                        transactionDao = database.transactionDao(),
+                        store =
+                            com.mmr.core.attachment
+                                .TransactionAttachmentStore(context),
+                        tombstoneRecorder =
+                            com.mmr.core.lansync.LanSyncTombstoneRecorder(
+                                database.syncTombstoneDao(),
+                                com.mmr.core.data.preferences
+                                    .LanSyncIdentityStore(context),
+                            ),
+                    ),
+            )
         repository =
             BackupRepositoryImpl(
-                database.backupDao(),
-                settingsStore,
-                Dispatchers.IO,
+                backupDao = database.backupDao(),
+                syncTombstoneDao = database.syncTombstoneDao(),
+                tombstoneMerger = tombstoneMerger,
+                appSettingsBackupCoordinator = appSettingsCoordinator,
+                attachmentStore = TransactionAttachmentStore(context),
+                ioDispatcher = Dispatchers.IO,
             )
     }
 
@@ -81,13 +129,13 @@ class BackupRestoreInstrumentedTest {
                 ),
             )
 
-            val exportedJson = repository.exportBackupJson()
+            val exportedArchive = repository.exportBackupArchive()
             backupDao.clearAllUserData()
 
             val emptySummary = repository.getLocalDataSummary()
             assertEquals(0, emptySummary.totalRecords)
 
-            val restored = repository.importBackupJson(exportedJson)
+            val restored = repository.importBackup(exportedArchive)
             assertEquals(1, restored.categories)
             assertEquals(1, restored.accounts)
             assertEquals(1, restored.transactions)
@@ -153,11 +201,25 @@ class BackupRestoreInstrumentedTest {
     fun exportThenRestore_includesAppSettings() =
         runBlocking {
             settingsStore.setScanMonths(9)
+            displaySettingsStore.setStartScreenTab(MmrStartScreenTab.CALENDAR)
+            displaySettingsStore.setAppColorTheme(MmrAppColorTheme.SLATE)
 
-            val exportedJson = repository.exportBackupJson()
+            val exportedArchive = repository.exportBackupArchive()
             settingsStore.setScanMonths(3)
+            displaySettingsStore.setStartScreenTab(MmrStartScreenTab.DAILY)
 
-            repository.importBackupJson(exportedJson)
+            repository.importBackup(exportedArchive)
             assertEquals(9, settingsStore.getScanMonths())
+            assertEquals(MmrStartScreenTab.CALENDAR, displaySettingsStore.snapshot().startScreenTab)
+            assertEquals(MmrAppColorTheme.SLATE, displaySettingsStore.snapshot().appColorTheme)
+        }
+
+    @Test
+    fun importBackup_legacyJsonStillSupported() =
+        runBlocking {
+            val json = repository.exportBackupJson()
+            database.backupDao().clearAllUserData()
+            repository.importBackup(json.toByteArray(Charsets.UTF_8))
+            assertEquals(0, repository.getLocalDataSummary().transactions)
         }
 }

@@ -1,13 +1,14 @@
 package com.mmr.app
 
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mmr.app.testing.MmrHiltUiTest
 import com.mmr.app.testing.MmrTestTags
+import com.mmr.app.testing.traceClickTag
+import com.mmr.app.testing.traceClickText
+import com.mmr.app.testing.traceTextInputTag
+import com.mmr.app.testing.traceWaitUntil
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -19,19 +20,19 @@ class LoanCreateFlowUiTest : MmrHiltUiTest() {
     fun createFlexibleLoan_appearsOnLoanList() {
         val loanName = "UiTest loan ${System.nanoTime()}"
 
-        composeRule.onNodeWithTag(MmrTestTags.navLoans).performClick()
+        composeRule.traceClickTag(MmrTestTags.navLoans)
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(MmrTestTags.loanFabAdd).performClick()
+        composeRule.traceClickTag(MmrTestTags.loanFabAdd)
         composeRule.waitForIdle()
         composeRule.onNodeWithText("New Loan Entry").assertExists()
 
-        composeRule.onNodeWithTag(MmrTestTags.loanFieldName).performTextInput(loanName)
-        composeRule.onNodeWithTag(MmrTestTags.loanFieldLender).performTextInput("Test Bank")
-        composeRule.onNodeWithTag(MmrTestTags.loanFieldPrincipal).performTextInput("5000")
-        composeRule.onNodeWithText("Flexible payments").performClick()
-        composeRule.onNodeWithTag(MmrTestTags.appBarSave).performClick()
+        composeRule.traceTextInputTag(MmrTestTags.loanFieldName, loanName)
+        composeRule.traceTextInputTag(MmrTestTags.loanFieldLender, "Test Bank")
+        composeRule.traceTextInputTag(MmrTestTags.loanFieldPrincipal, "5000")
+        composeRule.traceClickText("Flexible payments")
+        composeRule.traceClickTag(MmrTestTags.appBarSave)
 
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 10_000) {
             composeRule.onAllNodesWithText(loanName).fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText(loanName).assertExists()

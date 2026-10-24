@@ -8,6 +8,9 @@ import com.mmr.core.database.dao.LoanScheduleDao
 import com.mmr.core.database.dao.TransactionDao
 import com.mmr.core.database.entity.LoanPaymentEntity
 import com.mmr.core.database.entity.TransactionEntity
+import com.mmr.core.domain.repository.TransactionAttachmentRepository
+import com.mmr.core.lansync.LanSyncTombstoneRecorder
+import com.mmr.core.lansync.SyncEntityType
 import com.mmr.core.model.enums.LoanScheduleStatus
 import com.mmr.core.model.enums.LoanStatus
 import javax.inject.Inject
@@ -27,6 +30,8 @@ class LoanTransactionCoordinator
         private val loanDao: LoanDao,
         private val loanScheduleDao: LoanScheduleDao,
         private val transactionDao: TransactionDao,
+        private val attachmentRepository: TransactionAttachmentRepository,
+        private val tombstoneRecorder: LanSyncTombstoneRecorder,
     ) {
         suspend fun findPaymentForTransaction(transactionId: Long): LoanPaymentEntity? {
             if (transactionId <= 0L) return null
@@ -51,6 +56,7 @@ class LoanTransactionCoordinator
         ) {
             require(transaction.id > 0L)
             val payment = loanPaymentDao.getByTransactionId(transaction.id)
+            tombstoneRecorder.recordDeletion(transaction.syncId, SyncEntityType.TRANSACTION)
             database.withTransaction {
                 if (payment != null) {
                     when (loanDeleteMode) {
@@ -61,6 +67,7 @@ class LoanTransactionCoordinator
                             )
                     }
                 }
+                attachmentRepository.deleteAllForTransaction(transaction.id)
                 transactionDao.delete(transaction)
             }
         }
@@ -89,6 +96,7 @@ class LoanTransactionCoordinator
             loanScheduleDao.findByLinkedPaymentId(payment.id).forEach { entry ->
                 loanScheduleDao.markEntry(entry.id, LoanScheduleStatus.PLANNED, null)
             }
+            tombstoneRecorder.recordDeletion(payment.syncId, SyncEntityType.LOAN_PAYMENT)
             loanPaymentDao.delete(payment)
         }
     }

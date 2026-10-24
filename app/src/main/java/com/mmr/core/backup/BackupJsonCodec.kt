@@ -1,8 +1,14 @@
 package com.mmr.core.backup
 
 import com.mmr.core.backup.model.MmrAppSettingsBackup
+import com.mmr.core.backup.model.MmrBackupAttachmentRecord
 import com.mmr.core.backup.model.MmrBackupPayload
+import com.mmr.core.backup.model.MmrDisplaySettingsBackup
+import com.mmr.core.backup.model.MmrLanSyncSettingsBackup
+import com.mmr.core.backup.model.MmrSmsInboundSettingsBackup
+import com.mmr.core.backup.model.MmrWebManageSettingsBackup
 import com.mmr.core.database.entity.AccountEntity
+import com.mmr.core.database.entity.CategorizationRuleEntity
 import com.mmr.core.database.entity.CategoryEntity
 import com.mmr.core.database.entity.LoanEntity
 import com.mmr.core.database.entity.LoanInterestRevisionEntity
@@ -12,14 +18,17 @@ import com.mmr.core.database.entity.NotificationRuleEntity
 import com.mmr.core.database.entity.RecurringRuleEntity
 import com.mmr.core.database.entity.SmsMessageRecordEntity
 import com.mmr.core.database.entity.SubcategoryEntity
+import com.mmr.core.database.entity.SyncTombstoneEntity
 import com.mmr.core.database.entity.TransactionApprovalEntity
 import com.mmr.core.database.entity.TransactionEntity
+import com.mmr.core.database.entity.TrustedLanDeviceEntity
 import com.mmr.core.model.enums.*
+import com.mmr.core.model.enums.CategorizationMatchType
 import org.json.JSONArray
 import org.json.JSONObject
 
 object BackupJsonCodec {
-    const val CURRENT_FORMAT_VERSION = 2
+    const val CURRENT_FORMAT_VERSION = 4
     const val MIN_SUPPORTED_FORMAT_VERSION = 1
     const val EXPECTED_APP_ID = "com.mmr.app"
 
@@ -48,6 +57,21 @@ object BackupJsonCodec {
                 payload.appSettings?.let { settings ->
                     put("appSettings", appSettingsToJson(settings))
                 }
+                if (payload.tombstones.isNotEmpty()) {
+                    put("tombstones", payload.tombstones.toJsonArray { tombstoneToJson(it) })
+                }
+                if (payload.categorizationRules.isNotEmpty()) {
+                    put("categorizationRules", payload.categorizationRules.toJsonArray { categorizationRuleToJson(it) })
+                }
+                if (payload.trustedLanDevices.isNotEmpty()) {
+                    put("trustedLanDevices", payload.trustedLanDevices.toJsonArray { trustedLanDeviceToJson(it) })
+                }
+                if (payload.transactionAttachments.isNotEmpty()) {
+                    put(
+                        "transactionAttachments",
+                        payload.transactionAttachments.toJsonArray { backupAttachmentToJson(it) },
+                    )
+                }
             }.toString(2)
 
     fun decode(json: String): MmrBackupPayload {
@@ -67,7 +91,7 @@ object BackupJsonCodec {
         }
         val appId = root.optString("appId", "")
         if (appId != EXPECTED_APP_ID) {
-            throw IllegalArgumentException("This backup file is not for Money Manager R.")
+            throw IllegalArgumentException("This backup file is not for Money Inbox.")
         }
 
         return MmrBackupPayload(
@@ -101,17 +125,243 @@ object BackupJsonCodec {
                 } else {
                     null
                 },
+            tombstones = root.readArray("tombstones").mapObjects { tombstoneFromJson(it) },
+            categorizationRules =
+                root.readArray("categorizationRules").mapObjects { categorizationRuleFromJson(it) },
+            trustedLanDevices = root.readArray("trustedLanDevices").mapObjects { trustedLanDeviceFromJson(it) },
+            transactionAttachments =
+                root.readArray("transactionAttachments").mapObjects { backupAttachmentFromJson(it) },
         )
     }
+
+    private fun tombstoneToJson(entity: SyncTombstoneEntity) =
+        JSONObject().apply {
+            put("syncId", entity.syncId)
+            put("entityType", entity.entityType)
+            put("deletedAt", entity.deletedAt)
+            put("sourceDeviceId", entity.sourceDeviceId)
+        }
+
+    private fun tombstoneFromJson(json: JSONObject) =
+        SyncTombstoneEntity(
+            syncId = json.getString("syncId"),
+            entityType = json.getString("entityType"),
+            deletedAt = json.getLong("deletedAt"),
+            sourceDeviceId = json.getString("sourceDeviceId"),
+        )
 
     private fun appSettingsToJson(settings: MmrAppSettingsBackup) =
         JSONObject().apply {
             put("smsScanMonths", settings.smsScanMonths)
+            settings.display?.let { put("display", displaySettingsBackupToJson(it)) }
+            settings.smsInbound?.let { put("smsInbound", smsInboundSettingsToJson(it)) }
+            settings.lanSync?.let { put("lanSync", lanSyncSettingsToJson(it)) }
+            settings.webManage?.let { put("webManage", webManageSettingsToJson(it)) }
         }
 
-    private fun appSettingsFromJson(json: JSONObject) =
-        MmrAppSettingsBackup(
-            smsScanMonths = json.getInt("smsScanMonths"),
+    private fun appSettingsFromJson(json: JSONObject): MmrAppSettingsBackup {
+        val smsScanMonths =
+            if (json.has("smsScanMonths")) {
+                json.getInt("smsScanMonths")
+            } else {
+                com.mmr.core.parser.scanner.SmsScanPeriod.DEFAULT_MONTHS
+            }
+        return MmrAppSettingsBackup(
+            smsScanMonths = smsScanMonths,
+            display =
+                if (json.has("display") && !json.isNull("display")) {
+                    displaySettingsBackupFromJson(json.getJSONObject("display"))
+                } else {
+                    null
+                },
+            smsInbound =
+                if (json.has("smsInbound") && !json.isNull("smsInbound")) {
+                    smsInboundSettingsFromJson(json.getJSONObject("smsInbound"))
+                } else {
+                    null
+                },
+            lanSync =
+                if (json.has("lanSync") && !json.isNull("lanSync")) {
+                    lanSyncSettingsFromJson(json.getJSONObject("lanSync"))
+                } else {
+                    null
+                },
+            webManage =
+                if (json.has("webManage") && !json.isNull("webManage")) {
+                    webManageSettingsFromJson(json.getJSONObject("webManage"))
+                } else {
+                    null
+                },
+        )
+    }
+
+    private fun displaySettingsBackupToJson(settings: MmrDisplaySettingsBackup) =
+        JSONObject().apply {
+            put("mainCurrencyCode", settings.mainCurrencyCode)
+            putNullableString("subCurrencyCode", settings.subCurrencyCode)
+            put("startScreenTab", settings.startScreenTab)
+            put("monthStartDay", settings.monthStartDay)
+            put("weekStartDay", settings.weekStartDay)
+            put("budgetCarryOver", settings.budgetCarryOver)
+            put("swipeBehavior", settings.swipeBehavior)
+            put("amountColorScheme", settings.amountColorScheme)
+            put("timeDisplay", settings.timeDisplay)
+            put("showDescription", settings.showDescription)
+            put("autocompleteEnabled", settings.autocompleteEnabled)
+            put("inputOrder", settings.inputOrder)
+            put("appColorTheme", settings.appColorTheme)
+        }
+
+    private fun displaySettingsBackupFromJson(json: JSONObject) =
+        MmrDisplaySettingsBackup(
+            mainCurrencyCode = json.getString("mainCurrencyCode"),
+            subCurrencyCode = json.optNullableString("subCurrencyCode"),
+            startScreenTab = json.getString("startScreenTab"),
+            monthStartDay = json.getInt("monthStartDay"),
+            weekStartDay = json.getString("weekStartDay"),
+            budgetCarryOver = json.getBoolean("budgetCarryOver"),
+            swipeBehavior = json.getString("swipeBehavior"),
+            amountColorScheme = json.getString("amountColorScheme"),
+            timeDisplay = json.getString("timeDisplay"),
+            showDescription = json.getBoolean("showDescription"),
+            autocompleteEnabled = json.getBoolean("autocompleteEnabled"),
+            inputOrder = json.getString("inputOrder"),
+            appColorTheme = json.getString("appColorTheme"),
+        )
+
+    private fun smsInboundSettingsToJson(settings: MmrSmsInboundSettingsBackup) =
+        JSONObject().apply {
+            put("notifyOnNewPending", settings.notifyOnNewPending)
+            put("readSmsInboundPromptShown", settings.readSmsInboundPromptShown)
+        }
+
+    private fun smsInboundSettingsFromJson(json: JSONObject) =
+        MmrSmsInboundSettingsBackup(
+            notifyOnNewPending = json.getBoolean("notifyOnNewPending"),
+            readSmsInboundPromptShown = json.getBoolean("readSmsInboundPromptShown"),
+        )
+
+    private fun lanSyncSettingsToJson(settings: MmrLanSyncSettingsBackup) =
+        JSONObject().apply {
+            put("lanSyncEnabled", settings.lanSyncEnabled)
+            put("deviceId", settings.deviceId)
+            put("inboundAuthToken", settings.inboundAuthToken)
+            put("displayName", settings.displayName)
+            put("peerMode", settings.peerMode)
+            putNullableString("selectedPeerDeviceId", settings.selectedPeerDeviceId)
+            put("includeAttachments", settings.includeAttachments)
+            put("trustedWifiSsids", JSONArray(settings.trustedWifiSsids))
+            val policies = JSONObject()
+            settings.duplicateEntityPolicies.forEach { (key, value) -> policies.put(key, value) }
+            put("duplicateEntityPolicies", policies)
+        }
+
+    private fun lanSyncSettingsFromJson(json: JSONObject): MmrLanSyncSettingsBackup {
+        val ssids = mutableListOf<String>()
+        if (json.has("trustedWifiSsids") && !json.isNull("trustedWifiSsids")) {
+            val array = json.getJSONArray("trustedWifiSsids")
+            for (i in 0 until array.length()) {
+                ssids.add(array.getString(i))
+            }
+        }
+        val policies = mutableMapOf<String, String>()
+        if (json.has("duplicateEntityPolicies") && !json.isNull("duplicateEntityPolicies")) {
+            val objectPolicies = json.getJSONObject("duplicateEntityPolicies")
+            objectPolicies.keys().forEach { key -> policies[key] = objectPolicies.getString(key) }
+        }
+        return MmrLanSyncSettingsBackup(
+            lanSyncEnabled = json.getBoolean("lanSyncEnabled"),
+            deviceId = json.getString("deviceId"),
+            inboundAuthToken = json.getString("inboundAuthToken"),
+            displayName = json.getString("displayName"),
+            peerMode = json.getString("peerMode"),
+            selectedPeerDeviceId = json.optNullableString("selectedPeerDeviceId"),
+            includeAttachments = json.getBoolean("includeAttachments"),
+            trustedWifiSsids = ssids,
+            duplicateEntityPolicies = policies,
+        )
+    }
+
+    private fun webManageSettingsToJson(settings: MmrWebManageSettingsBackup) =
+        JSONObject().apply {
+            put("enabled", settings.enabled)
+            putNullableString("passwordSalt", settings.passwordSalt)
+            putNullableString("passwordHash", settings.passwordHash)
+        }
+
+    private fun webManageSettingsFromJson(json: JSONObject) =
+        MmrWebManageSettingsBackup(
+            enabled = json.getBoolean("enabled"),
+            passwordSalt = json.optNullableString("passwordSalt"),
+            passwordHash = json.optNullableString("passwordHash"),
+        )
+
+    private fun categorizationRuleToJson(entity: CategorizationRuleEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("syncId", entity.syncId)
+            put("priority", entity.priority)
+            put("matchType", entity.matchType.name)
+            put("pattern", entity.pattern)
+            put("categoryName", entity.categoryName)
+            putNullableString("subcategoryName", entity.subcategoryName)
+            put("isEnabled", entity.isEnabled)
+            put("createdAt", entity.createdAt)
+            put("updatedAt", entity.updatedAt)
+        }
+
+    private fun categorizationRuleFromJson(json: JSONObject) =
+        CategorizationRuleEntity(
+            id = json.getLong("id"),
+            syncId = json.getString("syncId"),
+            priority = json.getInt("priority"),
+            matchType = CategorizationMatchType.valueOf(json.getString("matchType")),
+            pattern = json.getString("pattern"),
+            categoryName = json.getString("categoryName"),
+            subcategoryName = json.optNullableString("subcategoryName"),
+            isEnabled = json.getBoolean("isEnabled"),
+            createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
+        )
+
+    private fun trustedLanDeviceToJson(entity: TrustedLanDeviceEntity) =
+        JSONObject().apply {
+            put("remoteDeviceId", entity.remoteDeviceId)
+            put("displayName", entity.displayName)
+            put("theirAuthToken", entity.theirAuthToken)
+            put("pairedAtMillis", entity.pairedAtMillis)
+        }
+
+    private fun trustedLanDeviceFromJson(json: JSONObject) =
+        TrustedLanDeviceEntity(
+            remoteDeviceId = json.getString("remoteDeviceId"),
+            displayName = json.getString("displayName"),
+            theirAuthToken = json.getString("theirAuthToken"),
+            pairedAtMillis = json.getLong("pairedAtMillis"),
+        )
+
+    private fun backupAttachmentToJson(record: MmrBackupAttachmentRecord) =
+        JSONObject().apply {
+            put("id", record.id)
+            put("syncId", record.syncId)
+            put("transactionId", record.transactionId)
+            put("mimeType", record.mimeType)
+            put("fileSizeBytes", record.fileSizeBytes)
+            put("createdAt", record.createdAt)
+            put("updatedAt", record.updatedAt)
+            put("contentBase64", record.contentBase64)
+        }
+
+    private fun backupAttachmentFromJson(json: JSONObject) =
+        MmrBackupAttachmentRecord(
+            id = json.getLong("id"),
+            syncId = json.getString("syncId"),
+            transactionId = json.getLong("transactionId"),
+            mimeType = json.getString("mimeType"),
+            fileSizeBytes = json.getLong("fileSizeBytes"),
+            createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
+            contentBase64 = json.getString("contentBase64"),
         )
 
     private fun loanInterestRevisionToJson(entity: LoanInterestRevisionEntity) =
@@ -334,6 +584,8 @@ object BackupJsonCodec {
             putNullableString("paymentInstrument", entity.paymentInstrument)
             putNullableString("cardLastFour", entity.cardLastFour)
             putNullableString("cardNetwork", entity.cardNetwork?.name)
+            putNullableDouble("originalAmount", entity.originalAmount)
+            put("refundedTotal", entity.refundedTotal)
         }
 
     private fun syncIdFromJson(json: JSONObject): String =
@@ -366,6 +618,8 @@ object BackupJsonCodec {
             paymentInstrument = json.optNullableString("paymentInstrument"),
             cardLastFour = json.optNullableString("cardLastFour"),
             cardNetwork = json.optNullableString("cardNetwork")?.let { CardNetwork.valueOf(it) },
+            originalAmount = json.optNullableDouble("originalAmount"),
+            refundedTotal = json.optDouble("refundedTotal", 0.0),
         )
 
     private fun loanPaymentToJson(entity: LoanPaymentEntity) =
@@ -405,6 +659,8 @@ object BackupJsonCodec {
             putNullableLong("categoryId", entity.categoryId)
             putNullableLong("subcategoryId", entity.subcategoryId)
             put("accountId", entity.accountId)
+            putNullableLong("relatedAccountId", entity.relatedAccountId)
+            putNullableLong("loanId", entity.loanId)
             putNullableInt("dayOfMonth", entity.dayOfMonth)
             put("recurrenceInterval", entity.recurrenceInterval.name)
             put("nextRunDate", entity.nextRunDate)
@@ -426,6 +682,8 @@ object BackupJsonCodec {
             categoryId = json.optNullableLong("categoryId"),
             subcategoryId = json.optNullableLong("subcategoryId"),
             accountId = json.getLong("accountId"),
+            relatedAccountId = json.optNullableLong("relatedAccountId"),
+            loanId = json.optNullableLong("loanId"),
             dayOfMonth = json.optNullableInt("dayOfMonth"),
             recurrenceInterval = RecurrenceInterval.valueOf(json.getString("recurrenceInterval")),
             nextRunDate = json.getLong("nextRunDate"),
@@ -483,6 +741,7 @@ object BackupJsonCodec {
             put("approvalState", entity.approvalState.name)
             putNullableString("rawMessageId", entity.rawMessageId)
             putNullableLong("processedAt", entity.processedAt)
+            putNullableString("linkRole", entity.linkRole?.name)
         }
 
     private fun smsRecordFromJson(json: JSONObject) =
@@ -500,6 +759,7 @@ object BackupJsonCodec {
             approvalState = SmsApprovalState.valueOf(json.getString("approvalState")),
             rawMessageId = json.optNullableString("rawMessageId"),
             processedAt = json.optNullableLong("processedAt"),
+            linkRole = json.optNullableString("linkRole")?.let { SmsLinkRole.valueOf(it) },
         )
 
     private fun approvalToJson(entity: TransactionApprovalEntity) =
@@ -508,6 +768,7 @@ object BackupJsonCodec {
             put("smsMessageRecordId", entity.smsMessageRecordId)
             put("extractedAmount", entity.extractedAmount)
             put("extractedType", entity.extractedType.name)
+            put("approvalKind", entity.approvalKind.name)
             put("extractedDateTime", entity.extractedDateTime)
             put("extractedSender", entity.extractedSender)
             putNullableString("extractedMerchant", entity.extractedMerchant)
@@ -533,6 +794,10 @@ object BackupJsonCodec {
             smsMessageRecordId = json.getLong("smsMessageRecordId"),
             extractedAmount = json.getDouble("extractedAmount"),
             extractedType = TransactionType.valueOf(json.getString("extractedType")),
+            approvalKind =
+                runCatching {
+                    SmsApprovalKind.valueOf(json.optString("approvalKind", SmsApprovalKind.TRANSACTION.name))
+                }.getOrDefault(SmsApprovalKind.TRANSACTION),
             extractedDateTime = json.getLong("extractedDateTime"),
             extractedSender = json.getString("extractedSender"),
             extractedMerchant = json.optNullableString("extractedMerchant"),

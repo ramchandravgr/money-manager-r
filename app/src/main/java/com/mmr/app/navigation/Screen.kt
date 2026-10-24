@@ -96,7 +96,18 @@ sealed class Screen(
         fun createRoute(transactionId: Long): String = "transaction_detail/$transactionId"
     }
 
-    object ApprovalCenter : Screen("approval_center")
+    object ApprovalCenter : Screen("approval_center") {
+        const val ARG_APPROVAL_ID = "approvalId"
+        const val ARG_ACTION = "action"
+
+        val routeWithArgs: String =
+            "approval_center?${ARG_APPROVAL_ID}={${ARG_APPROVAL_ID}}&${ARG_ACTION}={${ARG_ACTION}}"
+
+        fun createRoute(
+            approvalId: Long = 0L,
+            action: String = "",
+        ): String = "approval_center?$ARG_APPROVAL_ID=$approvalId&$ARG_ACTION=$action"
+    }
 
     object Accounts : Screen("accounts")
 
@@ -136,7 +147,13 @@ sealed class Screen(
 
     object Backup : Screen("backup")
 
+    object GoogleDriveBackup : Screen("google_drive_backup")
+
+    object SmsTemplateOverlay : Screen("sms_template_overlay")
+
     object LanSync : Screen("lan_sync")
+
+    object WebManage : Screen("web_manage")
 
     object Categories : Screen("categories")
 

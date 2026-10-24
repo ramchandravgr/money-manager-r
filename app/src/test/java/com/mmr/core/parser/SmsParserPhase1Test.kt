@@ -11,6 +11,7 @@ import com.mmr.core.parser.rule.TransactionTypeRule
 import com.mmr.core.parser.template.SmsTemplateRegistry
 import com.mmr.core.parser.util.SmsNormalizer
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -79,6 +80,27 @@ class SmsParserPhase1Test {
                 body = body,
             ),
         )
+    }
+
+    @Test
+    fun classifier_axisAutoSweepFlexiCreditAndDebit_areIgnored_notFlexiCapFund() {
+        val credit =
+            "INR 7120.00 credited to A/c no. XX2043 on 30-09-24 at 20:42:16 IST. " +
+                "Info - BRN-Flexi/924049290755257/. Chk Bal https://ccm.axbk.in/AXISBK/ltt3Dvko - Axis Bank"
+        assertTrue(SmsClassifier.isAxisAutoSweepFlexi(credit))
+        assertNull(parse(sender = "AX-AxisBk-S", body = credit))
+
+        val debit =
+            "Debit INR 32500.00\nAxis Bank A/c XX2043\n25-09-26 23:03:27\nFlexi/926049387489759/VANJ\n" +
+                "WhatsApp BAL to 917036165000"
+        assertTrue(SmsClassifier.isAxisAutoSweepFlexi(debit))
+        assertNull(parse(sender = "AX-AxisBk-S", body = debit))
+
+        val mfSip =
+            "Your SIP Purchase in Folio 15686597/50 under HDFC Flexi Cap Fund-DP-Growth for Rs. 2,999.85 " +
+                "has been processed at the NAV of 2301.233 for 1.304 units"
+        assertFalse(SmsClassifier.isAxisAutoSweepFlexi(mfSip))
+        assertFalse(SmsClassifier.isIgnored(mfSip))
     }
 
     @Test

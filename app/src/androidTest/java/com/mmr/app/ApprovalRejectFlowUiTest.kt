@@ -1,13 +1,13 @@
 package com.mmr.app
 
 import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mmr.app.testing.MmrHiltUiTest
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.testing.MmrUiTestFixtures
+import com.mmr.app.testing.traceClickTag
+import com.mmr.app.testing.traceWaitUntil
 import com.mmr.core.domain.repository.ApprovalRepository
 import com.mmr.core.model.enums.SmsApprovalState
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -37,18 +37,17 @@ class ApprovalRejectFlowUiTest : MmrHiltUiTest() {
                 )
             }
 
-        composeRule.activityRule.scenario.recreate()
-        composeRule.waitForIdle()
+        traceActivityRecreate()
 
-        composeRule.onNodeWithTag(MmrTestTags.homeTopBarApprovals).performClick()
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.traceClickTag(MmrTestTags.homeTopBarApprovals)
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 10_000) {
             composeRule
                 .onAllNodesWithTag(MmrTestTags.approvalCard(fixture.approvalId))
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
 
-        composeRule.onNodeWithTag(MmrTestTags.approvalQuickReject(fixture.approvalId)).performClick()
+        composeRule.traceClickTag(MmrTestTags.approvalQuickReject(fixture.approvalId))
         composeRule.waitForIdle()
 
         composeRule.onNodeWithText("No pending transactions.", substring = true).assertExists()

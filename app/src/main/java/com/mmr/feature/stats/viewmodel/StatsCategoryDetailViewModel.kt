@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mmr.app.navigation.Screen
 import com.mmr.app.ui.state.MmrUiMessages
+import com.mmr.core.common.display.MmrMoneyFormat
 import com.mmr.core.common.validation.MmrValidation
 import com.mmr.core.data.preferences.AppDisplaySettingsStore
 import com.mmr.core.domain.repository.CategoryRepository
@@ -254,7 +255,7 @@ class StatsCategoryDetailViewModel
                         periodEndDate = bounds.endDate,
                         canNavigatePeriod = mode != StatsPeriodMode.PERIOD,
                         periodSwipeEnabled = displaySettings.value.swipeBehavior == MmrSwipeBehavior.CHANGE_DATE,
-                        totalFormatted = "₹ ${"%.2f".format(total)}",
+                        totalFormatted = MmrMoneyFormat.formatInrWithSpace(total),
                         subcategoryBreakdowns = subcategoryUi,
                         selectedSubcategoryId = shell.meta.selectedSubcategoryId,
                         chartPoints = StatsCategoryChartUtils.buildChartPoints(bounds.endDate, monthlyRows),
@@ -397,7 +398,7 @@ class StatsCategoryDetailViewModel
                         subcategoryId = null,
                         name = "All",
                         amount = total,
-                        amountFormatted = "₹ ${"%.2f".format(total)}",
+                        amountFormatted = MmrMoneyFormat.formatInrWithSpace(total),
                         percentage = if (total > 0f) 1f else 0f,
                         percentageFormatted = if (total > 0) "100%" else "0%",
                     ),
@@ -410,7 +411,7 @@ class StatsCategoryDetailViewModel
                             subcategoryId = rowSubcategoryId,
                             name = row.subcategoryName?.takeIf { it.isNotBlank() } ?: "Other",
                             amount = row.totalAmount,
-                            amountFormatted = "₹ ${"%.2f".format(row.totalAmount)}",
+                            amountFormatted = MmrMoneyFormat.formatInrWithSpace(row.totalAmount),
                             percentage = pct,
                             percentageFormatted = "${"%.0f".format(pct * 100)}%",
                         ),

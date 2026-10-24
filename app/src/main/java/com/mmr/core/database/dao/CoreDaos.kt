@@ -95,6 +95,67 @@ interface TransactionDao {
     )
     suspend fun countInvolvingAccount(accountId: Long): Int
 
+    @Query(
+        """
+        SELECT COUNT(*) FROM transactions
+        WHERE categoryId = :categoryId
+        OR subcategoryId IN (SELECT id FROM subcategories WHERE categoryId = :categoryId)
+        """,
+    )
+    suspend fun countByCategoryTree(categoryId: Long): Int
+
+    @Query(
+        """
+        UPDATE transactions
+        SET accountId = :toAccountId, updatedAt = :now, isEdited = 1
+        WHERE accountId = :fromAccountId
+        """,
+    )
+    suspend fun reassignTransactionAccount(
+        fromAccountId: Long,
+        toAccountId: Long,
+        now: Long = System.currentTimeMillis(),
+    )
+
+    @Query(
+        """
+        UPDATE transactions
+        SET relatedAccountId = :toAccountId, updatedAt = :now, isEdited = 1
+        WHERE relatedAccountId = :fromAccountId
+        """,
+    )
+    suspend fun reassignTransactionRelatedAccount(
+        fromAccountId: Long,
+        toAccountId: Long,
+        now: Long = System.currentTimeMillis(),
+    )
+
+    @Query(
+        """
+        UPDATE transactions
+        SET categoryId = :toCategoryId, subcategoryId = NULL, updatedAt = :now, isEdited = 1
+        WHERE categoryId = :fromCategoryId
+        """,
+    )
+    suspend fun migrateTransactionsToCategory(
+        fromCategoryId: Long,
+        toCategoryId: Long,
+        now: Long = System.currentTimeMillis(),
+    )
+
+    @Query(
+        """
+        UPDATE transactions
+        SET categoryId = NULL, subcategoryId = NULL, updatedAt = :now, isEdited = 1
+        WHERE categoryId = :categoryId
+        OR subcategoryId IN (SELECT id FROM subcategories WHERE categoryId = :categoryId)
+        """,
+    )
+    suspend fun uncategorizeTransactionsForCategory(
+        categoryId: Long,
+        now: Long = System.currentTimeMillis(),
+    )
+
     @Query("SELECT id FROM transactions WHERE sourceReferenceId = :ref LIMIT 1")
     suspend fun findIdBySourceReference(ref: String): Long?
 
@@ -120,6 +181,30 @@ interface TransactionDao {
 
     @Query(
         """
+        SELECT * FROM transactions
+        WHERE status = 'APPROVED'
+        AND type = 'EXPENSE'
+        AND dateTime BETWEEN :startMillis AND :endMillis
+        AND amount >= :refundAmount
+        AND (loanId IS NULL OR loanId = 0)
+        AND (
+            (:cardLastFour IS NOT NULL AND cardLastFour = :cardLastFour)
+            OR (:cardLastFour IS NULL AND accountId = :accountId)
+        )
+        ORDER BY ABS(amount - :refundAmount) ASC, dateTime DESC
+        LIMIT 30
+        """,
+    )
+    suspend fun findCardRefundPurchaseCandidates(
+        accountId: Long,
+        cardLastFour: String?,
+        refundAmount: Double,
+        startMillis: Long,
+        endMillis: Long,
+    ): List<TransactionEntity>
+
+    @Query(
+        """
         SELECT SUM(t.amount) FROM transactions t
         LEFT JOIN loans l ON l.id = t.loanId
         WHERE t.status = 'APPROVED'
@@ -129,7 +214,10 @@ interface TransactionDao {
                 t.type = 'TRANSFER'
                 AND t.loanId IS NOT NULL AND t.loanId > 0
                 AND l.loanType = 'BORROWED'
-                AND (t.sourceReferenceId IS NULL OR t.sourceReferenceId NOT LIKE 'loan_topup:%')
+                AND (t.sourceReferenceId IS NULL OR (
+                    t.sourceReferenceId NOT LIKE 'loan_topup:%'
+                    AND t.sourceReferenceId NOT LIKE 'loan_disbursal:%'
+                ))
             )
         )
         """,
@@ -147,7 +235,10 @@ interface TransactionDao {
                 t.type = 'TRANSFER'
                 AND t.loanId IS NOT NULL AND t.loanId > 0
                 AND l.loanType = 'LENT'
-                AND (t.sourceReferenceId IS NULL OR t.sourceReferenceId NOT LIKE 'loan_topup:%')
+                AND (t.sourceReferenceId IS NULL OR (
+                    t.sourceReferenceId NOT LIKE 'loan_topup:%'
+                    AND t.sourceReferenceId NOT LIKE 'loan_disbursal:%'
+                ))
             )
         )
         """,
@@ -166,7 +257,10 @@ interface TransactionDao {
                 t.type = 'TRANSFER'
                 AND t.loanId IS NOT NULL AND t.loanId > 0
                 AND l.loanType = 'BORROWED'
-                AND (t.sourceReferenceId IS NULL OR t.sourceReferenceId NOT LIKE 'loan_topup:%')
+                AND (t.sourceReferenceId IS NULL OR (
+                    t.sourceReferenceId NOT LIKE 'loan_topup:%'
+                    AND t.sourceReferenceId NOT LIKE 'loan_disbursal:%'
+                ))
             )
         )
         """,
@@ -188,7 +282,10 @@ interface TransactionDao {
                 t.type = 'TRANSFER'
                 AND t.loanId IS NOT NULL AND t.loanId > 0
                 AND l.loanType = 'LENT'
-                AND (t.sourceReferenceId IS NULL OR t.sourceReferenceId NOT LIKE 'loan_topup:%')
+                AND (t.sourceReferenceId IS NULL OR (
+                    t.sourceReferenceId NOT LIKE 'loan_topup:%'
+                    AND t.sourceReferenceId NOT LIKE 'loan_disbursal:%'
+                ))
             )
         )
         """,
@@ -320,6 +417,15 @@ interface CategoryDao {
     @Query("SELECT * FROM categories WHERE syncId = :syncId LIMIT 1")
     suspend fun getCategoryBySyncId(syncId: String): CategoryEntity?
 
+    @Query(
+        """
+        SELECT * FROM categories
+        WHERE isActive = 1 AND lower(name) = lower(:name)
+        LIMIT 1
+        """,
+    )
+    suspend fun findActiveByName(name: String): CategoryEntity?
+
     @Query("SELECT * FROM subcategories WHERE id = :id LIMIT 1")
     suspend fun getSubcategoryById(id: Long): SubcategoryEntity?
 
@@ -385,6 +491,9 @@ interface CategoryDao {
         """,
     )
     fun getAllSubcategoriesForCategory(categoryId: Long): Flow<List<SubcategoryEntity>>
+
+    @Query("UPDATE subcategories SET isActive = 0 WHERE categoryId = :categoryId AND isActive = 1")
+    suspend fun deactivateSubcategoriesForCategory(categoryId: Long)
 }
 
 @Dao
@@ -406,6 +515,15 @@ interface AccountDao {
 
     @Query("SELECT * FROM accounts WHERE syncId = :syncId LIMIT 1")
     suspend fun getBySyncId(syncId: String): AccountEntity?
+
+    @Query(
+        """
+        SELECT * FROM accounts
+        WHERE isActive = 1 AND lower(name) = lower(:name)
+        LIMIT 1
+        """,
+    )
+    suspend fun findActiveByName(name: String): AccountEntity?
 
     @Query("SELECT * FROM accounts WHERE isActive = 1 ORDER BY name")
     suspend fun getActiveAccountsOnce(): List<AccountEntity>

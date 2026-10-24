@@ -17,9 +17,16 @@ object HomePeriodUtils {
         return "$month ${yearMonth.year}"
     }
 
+    /** Compact label for narrow home-screen widgets (e.g. 1×2). */
+    fun widgetMonthLabel(yearMonth: YearMonth): String {
+        val month = yearMonth.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+        val yearSuffix = (yearMonth.year % 100).toString().padStart(2, '0')
+        return "$month '$yearSuffix"
+    }
+
     /**
      * Custom month period: from [monthStartDay] of [yearMonth] through the day before
-     * [monthStartDay] of the following month (MM-style “Every N” setting).
+     * [monthStartDay] of the following month (custom month-start / “Every N” setting).
      */
     fun monthDateRange(
         yearMonth: YearMonth,

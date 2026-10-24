@@ -95,12 +95,10 @@ class BackupViewModel
             viewModelScope.launch {
                 _uiState.update { it.copy(isBusy = true, errorMessage = null, statusMessage = null) }
                 try {
-                    val json = backupRepository.exportBackupJson()
+                    val archive = backupRepository.exportBackupArchive()
                     withContext(Dispatchers.IO) {
                         context.contentResolver.openOutputStream(uri)?.use { stream ->
-                            stream.writer(Charsets.UTF_8).use { writer ->
-                                writer.write(json)
-                            }
+                            stream.write(archive)
                         } ?: throw IllegalStateException("Unable to write backup file.")
                     }
                     val summary = backupRepository.getLocalDataSummary()
@@ -136,13 +134,13 @@ class BackupViewModel
                     )
                 }
                 try {
-                    val json =
+                    val data =
                         withContext(Dispatchers.IO) {
                             context.contentResolver.openInputStream(uri)?.use { stream ->
-                                stream.reader(Charsets.UTF_8).readText()
+                                stream.readBytes()
                             } ?: throw IllegalStateException("Unable to read backup file.")
                         }
-                    val imported = backupRepository.importBackupJson(json, importMode)
+                    val imported = backupRepository.importBackup(data, importMode)
                     val summary = backupRepository.getLocalDataSummary()
                     pendingImportUri = null
                     _uiState.update {

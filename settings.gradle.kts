@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MoneyManagerR"
+rootProject.name = "MoneyInbox"
 include(":app")

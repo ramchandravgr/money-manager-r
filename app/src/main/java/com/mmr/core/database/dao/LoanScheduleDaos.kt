@@ -38,6 +38,9 @@ interface LoanInterestRevisionDao {
         loanId: Long,
         atMillis: Long,
     ): LoanInterestRevisionEntity?
+
+    @Query("SELECT * FROM loan_interest_revisions WHERE syncId = :syncId LIMIT 1")
+    suspend fun getBySyncId(syncId: String): LoanInterestRevisionEntity?
 }
 
 @Dao
@@ -115,4 +118,7 @@ interface LoanScheduleDao {
         """,
     )
     suspend fun getPlannedDueUntil(upToMillis: Long): List<LoanScheduleEntryEntity>
+
+    @Query("SELECT * FROM loan_schedule_entries WHERE syncId = :syncId LIMIT 1")
+    suspend fun getBySyncId(syncId: String): LoanScheduleEntryEntity?
 }

@@ -15,12 +15,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.mmr.app.ui.theme.MmrBrandColors
 import java.time.Month
 import java.time.format.TextStyle
 import java.util.Locale
-
-private val PickerHeaderBlue = Color(0xFF263248)
-private val PickerSelectedMonth = Color(0xFFE86A4F)
 
 @Composable
 fun HomeMonthPickerDialog(
@@ -51,7 +49,7 @@ fun HomeMonthPickerDialog(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .background(PickerHeaderBlue)
+                        .background(MmrBrandColors.DialogHeader)
                         .padding(start = 20.dp, end = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -128,7 +126,7 @@ fun HomeMonthPickerDialog(
                                 textAlign = TextAlign.Center,
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = if (isSelected) PickerSelectedMonth else Color.Black,
+                                color = if (isSelected) MmrBrandColors.DialogAccent else MmrBrandColors.Reversal,
                             )
                         }
                         if (rowMonths.size < 3) {

@@ -9,22 +9,20 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.mmr.app.ui.components.MmrAmountOutlinedTextField
 import com.mmr.app.ui.components.MmrDimens
 
 @Composable
@@ -131,28 +129,24 @@ fun SearchAmountFilterRow(
                 horizontalArrangement = Arrangement.spacedBy(MmrDimens.spaceSm),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                OutlinedTextField(
+                MmrAmountOutlinedTextField(
                     value = amountMin,
                     onValueChange = onMinChange,
                     modifier = Modifier.weight(1f),
                     label = { Text("Min") },
                     placeholder = { Text("0") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
                 )
                 Text(
                     text = "–",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                OutlinedTextField(
+                MmrAmountOutlinedTextField(
                     value = amountMax,
                     onValueChange = onMaxChange,
                     modifier = Modifier.weight(1f),
                     label = { Text("Max") },
                     placeholder = { Text("Any") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
                 )
             }
         }

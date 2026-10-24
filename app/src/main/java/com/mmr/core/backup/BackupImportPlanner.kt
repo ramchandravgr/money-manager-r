@@ -21,6 +21,9 @@ object BackupImportPlanner {
         val loanRevisions: Set<Long>,
         val loanScheduleEntries: Set<Long>,
         val transactionApprovals: Set<Long>,
+        val categorizationRules: Set<Long> = emptySet(),
+        val trustedLanDeviceIds: Set<String> = emptySet(),
+        val transactionAttachments: Set<Long> = emptySet(),
     )
 
     fun sanitizeLoanLinks(
@@ -177,6 +180,25 @@ object BackupImportPlanner {
                     approval.smsMessageRecordId in smsIds
             }
 
+        val categorizationIds = existing.categorizationRules.toMutableSet()
+        val newCategorizationRules =
+            payload.categorizationRules.filter { it.id > 0L && it.id !in categorizationIds }
+        categorizationIds.addAll(newCategorizationRules.map { it.id })
+
+        val trustedIds = existing.trustedLanDeviceIds.toMutableSet()
+        val newTrustedDevices =
+            payload.trustedLanDevices.filter { it.remoteDeviceId !in trustedIds }
+        trustedIds.addAll(newTrustedDevices.map { it.remoteDeviceId })
+
+        val attachmentIds = existing.transactionAttachments.toMutableSet()
+        val newAttachments =
+            payload.transactionAttachments.filter { attachment ->
+                attachment.id > 0L &&
+                    attachment.id !in attachmentIds &&
+                    attachment.transactionId in transactionIds
+            }
+        attachmentIds.addAll(newAttachments.map { it.id })
+
         return payload.copy(
             categories = newCategories,
             subcategories = newSubcategories,
@@ -190,6 +212,9 @@ object BackupImportPlanner {
             notificationRules = newNotifications,
             smsMessageRecords = newSms,
             transactionApprovals = newApprovals,
+            categorizationRules = newCategorizationRules,
+            trustedLanDevices = newTrustedDevices,
+            transactionAttachments = newAttachments,
         )
     }
 

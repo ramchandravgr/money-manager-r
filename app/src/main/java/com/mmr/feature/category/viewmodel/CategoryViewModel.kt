@@ -143,7 +143,8 @@ class CategoryViewModel
 
                 is CategoryUiEvent.OnCreateCategory -> createCategory(event)
                 is CategoryUiEvent.OnUpdateCategory -> updateCategory(event)
-                is CategoryUiEvent.OnDeleteCategory -> deleteCategory(event.categoryId)
+                is CategoryUiEvent.OnDeleteCategory ->
+                    deleteCategory(event.categoryId, event.transactionMode, event.migrateToCategoryId)
                 is CategoryUiEvent.OnCreateSubcategory -> createSubcategory(event)
                 is CategoryUiEvent.OnUpdateSubcategory -> updateSubcategory(event)
                 is CategoryUiEvent.OnDeleteSubcategory -> deleteSubcategory(event.subcategoryId)
@@ -199,11 +200,18 @@ class CategoryViewModel
             }
         }
 
-        private fun deleteCategory(categoryId: Long) {
+        suspend fun countTransactionsForCategory(categoryId: Long): Int =
+            categoryRepository.countTransactionsForCategory(categoryId)
+
+        private fun deleteCategory(
+            categoryId: Long,
+            transactionMode: com.mmr.core.domain.model.CategoryDeleteTransactionMode,
+            migrateToCategoryId: Long?,
+        ) {
             viewModelScope.launch {
                 runCatching {
                     _isSaving.value = true
-                    categoryRepository.deleteCategory(categoryId)
+                    categoryRepository.deleteCategory(categoryId, transactionMode, migrateToCategoryId)
                 }.onSuccess {
                     if (_selectedCategoryId.value == categoryId) {
                         _selectedCategoryId.value = null

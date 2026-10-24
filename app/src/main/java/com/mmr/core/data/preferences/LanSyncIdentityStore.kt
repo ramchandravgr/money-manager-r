@@ -54,6 +54,22 @@ class LanSyncIdentityStore
 
         fun isLanSyncEnabled(): Boolean = _lanSyncEnabled.value
 
+        fun applyRestoredIdentity(
+            lanSyncEnabled: Boolean,
+            deviceId: String,
+            inboundAuthToken: String,
+            displayName: String,
+        ) {
+            prefs
+                .edit()
+                .putBoolean(KEY_ENABLED, lanSyncEnabled)
+                .putString(KEY_DEVICE_ID, deviceId)
+                .putString(KEY_INBOUND_TOKEN, inboundAuthToken)
+                .putString(KEY_DISPLAY_NAME, displayName)
+                .apply()
+            _lanSyncEnabled.value = lanSyncEnabled
+        }
+
         private companion object {
             const val PREFS_NAME = "mmr_lan_sync_identity"
             const val KEY_ENABLED = "lan_sync_enabled"

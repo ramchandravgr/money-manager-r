@@ -7,13 +7,31 @@ data class MmrLanSyncPayload(
     val formatVersion: Int,
     val exportedAtEpochMillis: Long,
     val sourceDeviceId: String,
+    val sourceDeviceName: String? = null,
     val categories: List<LanCategoryRecord>,
     val subcategories: List<LanSubcategoryRecord>,
     val accounts: List<LanAccountRecord>,
     val loans: List<LanLoanRecord>,
     val transactions: List<LanTransactionRecord>,
+    val loanPayments: List<LanLoanPaymentRecord> = emptyList(),
+    val loanInterestRevisions: List<LanLoanInterestRevisionRecord> = emptyList(),
+    val loanScheduleEntries: List<LanLoanScheduleEntryRecord> = emptyList(),
+    val recurringRules: List<LanRecurringRuleRecord> = emptyList(),
+    val categorizationRules: List<LanCategorizationRuleRecord> = emptyList(),
+    val notificationRules: List<LanNotificationRuleRecord> = emptyList(),
     val appSettings: MmrAppSettingsBackup? = null,
     val displaySettings: AppDisplaySettingsSnapshot? = null,
+    val attachments: List<LanAttachmentRecord> = emptyList(),
+    val tombstones: List<LanSyncTombstoneRecord> = emptyList(),
+)
+
+data class LanAttachmentRecord(
+    val syncId: String,
+    val transactionSyncId: String,
+    val mimeType: String,
+    val fileSizeBytes: Long,
+    val createdAt: Long,
+    val updatedAt: Long,
 )
 
 data class LanCategoryRecord(
@@ -95,4 +113,6 @@ data class LanTransactionRecord(
     val paymentInstrument: String?,
     val cardLastFour: String?,
     val cardNetwork: String?,
+    val syncedFromDeviceId: String? = null,
+    val syncedFromDeviceName: String? = null,
 )

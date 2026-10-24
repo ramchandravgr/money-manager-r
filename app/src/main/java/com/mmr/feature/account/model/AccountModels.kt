@@ -44,6 +44,11 @@ sealed interface AccountListUiEvent {
     data class OnSetPrimary(
         val id: Long,
     ) : AccountListUiEvent
+
+    data class OnDeleteAccount(
+        val id: Long,
+        val reassignToAccountId: Long?,
+    ) : AccountListUiEvent
 }
 
 sealed interface AddEditAccountUiEvent {
@@ -72,4 +77,8 @@ sealed interface AddEditAccountUiEvent {
     ) : AddEditAccountUiEvent
 
     object OnSave : AddEditAccountUiEvent
+
+    data class OnDelete(
+        val reassignToAccountId: Long?,
+    ) : AddEditAccountUiEvent
 }

@@ -14,6 +14,14 @@ internal object RepositoryGuards {
         require(MmrValidation.isValidEpochMillis(transaction.dateTime)) { "Invalid transaction date." }
     }
 
+    fun requireValidTransactionEntityAllowZeroAmount(transaction: TransactionEntity) {
+        require(transaction.amount.isFinite() && transaction.amount >= 0.0) {
+            "Amount cannot be negative."
+        }
+        require(transaction.accountId > 0L) { "Account is required." }
+        require(MmrValidation.isValidEpochMillis(transaction.dateTime)) { "Invalid transaction date." }
+    }
+
     fun requireValidLoanEntity(loan: LoanEntity) {
         MmrValidation.requirePositiveAmount(loan.principalAmount, "Principal")
         require(loan.outstandingAmount.isFinite() && loan.outstandingAmount >= 0.0) {

@@ -16,7 +16,7 @@ object HomeTotalUtils {
     private val shortRangeFormat: DateTimeFormatter =
         DateTimeFormatter.ofPattern("dd.MM.yy", Locale.getDefault())
 
-    /** MM `AG_TYPE` 1 / 11 — cash-like spending accounts (not card). */
+    /** Cash-like spending accounts (not credit card). */
     private val cashExpenseAccountTypes =
         setOf(
             AccountType.CASH,
@@ -85,14 +85,14 @@ object HomeTotalUtils {
             previousPeriodItems.sumOf {
                 TransactionCashFlow.expenseAmount(it.transaction, it.loan?.loanType)
             }
-        val comparedPercent = mmComparedExpensePercent(currentExpenseTotal, previousExpenseTotal)
+        val comparedPercent = comparedExpensePeriodPercent(currentExpenseTotal, previousExpenseTotal)
 
         return HomeTotalAccountsSummaryUi(
             periodRangeLabel = rangeLabel,
             comparedExpensePercentLabel = "$comparedPercent%",
-            cashExpenseLabel = mmLabelWithAccounts("Cash Expenses", cashAccountNames),
-            cardExpenseLabel = mmLabelWithAccounts("Card Expenses", cardAccountNames),
-            transferExpenseLabel = mmTransferExpenseLabel(transferSourceNames),
+            cashExpenseLabel = labelWithAccounts("Cash Expenses", cashAccountNames),
+            cardExpenseLabel = labelWithAccounts("Card Expenses", cardAccountNames),
+            transferExpenseLabel = transferExpenseLabel(transferSourceNames),
             showCardExpenseRow = cardExpense > 0.0,
             accountExpense = accountExpense,
             cardExpense = cardExpense,
@@ -101,9 +101,9 @@ object HomeTotalUtils {
     }
 
     /**
-     * MM `BudgetService.m39078c`: `((currentOut - lastOut) * 100 / lastOut) + 100`, or `0` when lastOut is 0.
+     * Period-over-period expense index: `((current - previous) * 100 / previous) + 100`, or `100` when previous is 0.
      */
-    fun mmComparedExpensePercent(
+    fun comparedExpensePeriodPercent(
         currentExpense: Double,
         previousExpense: Double,
     ): Long {
@@ -116,7 +116,7 @@ object HomeTotalUtils {
         return deltaPercent + 100L
     }
 
-    private fun mmLabelWithAccounts(
+    private fun labelWithAccounts(
         base: String,
         accountNames: Collection<String>,
     ): String {
@@ -124,7 +124,7 @@ object HomeTotalUtils {
         return "$base (${accountNames.joinToString(", ")})"
     }
 
-    private fun mmTransferExpenseLabel(sourceAccountNames: Collection<String>): String {
+    private fun transferExpenseLabel(sourceAccountNames: Collection<String>): String {
         val base = "Transfer-Expense"
         if (sourceAccountNames.isEmpty()) return base
         return "$base (${sourceAccountNames.joinToString(", ")} → )"
@@ -142,12 +142,12 @@ object HomeTotalUtils {
         }
 
     /**
-     * MM transfer-expense: outflow from cash/bank groups to non-internal destination types.
+     * Transfer-expense: outflow from cash/bank groups to non-internal destination types.
      */
     private fun transferExpenseAmount(item: TransactionWithDetails): Double {
         val transaction = item.transaction
         if (transaction.type != TransactionType.TRANSFER) return 0.0
-        if (TransactionCashFlow.isLoanTopUp(transaction)) return 0.0
+        if (TransactionCashFlow.isLoanPrincipalMovement(transaction)) return 0.0
 
         val fromType = item.account?.type ?: return 0.0
         if (fromType !in cashExpenseAccountTypes) return 0.0

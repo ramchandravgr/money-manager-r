@@ -2,6 +2,8 @@ package com.mmr.feature.account.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mmr.core.common.display.MmrMoneyFormat
+import com.mmr.core.domain.model.AccountDeletionPreview
 import com.mmr.core.domain.repository.AccountRepository
 import com.mmr.feature.account.model.AccountItemUi
 import com.mmr.feature.account.model.AccountListUiEvent
@@ -38,7 +40,7 @@ class AccountListViewModel
                                 entity.type.name
                                     .lowercase(Locale.getDefault())
                                     .replaceFirstChar { it.titlecase(Locale.getDefault()) },
-                            balanceFormatted = "₹${"%.2f".format(entity.currentBalance)}",
+                            balanceFormatted = MmrMoneyFormat.formatInr(entity.currentBalance),
                             cardLastFour = entity.cardLastFour,
                             isActive = entity.isActive,
                             isPrimary = entity.isDefault,
@@ -61,6 +63,24 @@ class AccountListViewModel
                 AccountListUiEvent.OnRetry -> statusMessage.value = null
                 is AccountListUiEvent.OnSetPrimary -> setPrimary(event.id)
                 is AccountListUiEvent.OnEditAccount -> Unit
+                is AccountListUiEvent.OnDeleteAccount -> deleteAccount(event.id, event.reassignToAccountId)
+            }
+        }
+
+        suspend fun previewAccountDeletion(accountId: Long): AccountDeletionPreview =
+            accountRepository.previewAccountDeletion(accountId)
+
+        private fun deleteAccount(
+            accountId: Long,
+            reassignToAccountId: Long?,
+        ) {
+            viewModelScope.launch {
+                try {
+                    accountRepository.deleteAccount(accountId, reassignToAccountId)
+                    statusMessage.value = "Account removed."
+                } catch (e: Exception) {
+                    statusMessage.value = e.message ?: "Could not remove account."
+                }
             }
         }
 

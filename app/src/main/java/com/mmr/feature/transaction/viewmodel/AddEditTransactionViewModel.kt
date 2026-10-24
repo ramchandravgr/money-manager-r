@@ -1,11 +1,15 @@
 package com.mmr.feature.transaction.viewmodel
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mmr.app.ui.state.MmrUiMessages
+import com.mmr.core.common.display.MmrDisplayTextFormat
 import com.mmr.core.common.validation.MmrValidation
 import com.mmr.core.data.preferences.AppDisplaySettingsStore
+import com.mmr.core.data.repository.TransactionAttachmentRepositoryImpl
 import com.mmr.core.database.entity.CategoryEntity
 import com.mmr.core.database.entity.SubcategoryEntity
 import com.mmr.core.database.entity.TransactionEntity
@@ -13,6 +17,7 @@ import com.mmr.core.domain.repository.AccountRepository
 import com.mmr.core.domain.repository.ApprovalRepository
 import com.mmr.core.domain.repository.CategoryRepository
 import com.mmr.core.domain.repository.LoanRepository
+import com.mmr.core.domain.repository.TransactionAttachmentRepository
 import com.mmr.core.domain.repository.TransactionRepository
 import com.mmr.core.loan.LoanLinkedTransactionDeleteMode
 import com.mmr.core.model.category.CategoryWithChildren
@@ -29,8 +34,10 @@ import com.mmr.feature.transaction.model.LoanPickerUi
 import com.mmr.feature.transaction.model.PickerNameEditorKind
 import com.mmr.feature.transaction.model.PickerNameEditorState
 import com.mmr.feature.transaction.model.SubcategoryUi
+import com.mmr.feature.transaction.model.TransactionReceiptUi
 import com.mmr.feature.transaction.model.toAccountUi
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,16 +46,20 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneId
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
 class AddEditTransactionViewModel
     @Inject
     constructor(
+        @ApplicationContext private val context: Context,
         private val transactionRepository: TransactionRepository,
+        private val attachmentRepository: TransactionAttachmentRepository,
         private val approvalRepository: ApprovalRepository,
         private val categoryRepository: CategoryRepository,
         private val accountRepository: AccountRepository,
@@ -213,6 +224,7 @@ class AddEditTransactionViewModel
                             val cats = categoriesForType(categoryTree, txn.type)
                             val catId = resolveCategorySelection(cats, txn.categoryId)
                             val subId = resolveSubcategorySelection(cats, catId, txn.subcategoryId)
+                            val receiptUis = loadReceiptsForTransaction(txn.id)
                             _uiState.update {
                                 val loaded =
                                     it.copy(
@@ -232,6 +244,7 @@ class AddEditTransactionViewModel
                                         dateTimeMillis = txn.dateTime,
                                         hasLinkedLoanPayment = linkedLoan,
                                         showDeleteButton = true,
+                                        receipts = receiptUis,
                                     )
                                 loaded.copy(canSave = computeCanSave(loaded))
                             }
@@ -601,8 +614,21 @@ class AddEditTransactionViewModel
                 }
 
                 is AddEditTransactionUiEvent.OnNoteChanged -> {
-                    _uiState.update { it.copy(note = event.value) }
-                    refreshNoteSuggestions(event.value)
+                    val formatted = MmrDisplayTextFormat.capitalizeAfterWordBoundaries(event.value)
+                    _uiState.update { it.copy(note = formatted) }
+                    refreshNoteSuggestions(formatted)
+                }
+
+                is AddEditTransactionUiEvent.OnReceiptPicked -> {
+                    viewModelScope.launch { handleReceiptPicked(event.uriString) }
+                }
+
+                is AddEditTransactionUiEvent.OnRemoveReceipt -> {
+                    viewModelScope.launch { removeSavedReceipt(event.attachmentId) }
+                }
+
+                is AddEditTransactionUiEvent.OnRemovePendingReceipt -> {
+                    removePendingReceipt(event.filePath)
                 }
 
                 is AddEditTransactionUiEvent.OnSaveClick -> {
@@ -864,23 +890,26 @@ class AddEditTransactionViewModel
                                 isEdited = true,
                             ),
                         )
+                        persistPendingReceipts(transactionId, state.receipts)
                     } else {
                         val savedAt = manualEntryDateTimeMillis(state.dateTimeMillis)
-                        transactionRepository.insertTransaction(
-                            TransactionEntity(
-                                amount = amount,
-                                type = state.selectedType,
-                                dateTime = savedAt,
-                                accountId = accountId,
-                                relatedAccountId = relatedAccountId,
-                                loanId = loanId,
-                                categoryId = state.selectedCategoryId,
-                                subcategoryId = subcategoryId,
-                                note = note,
-                                sourceType = TransactionSourceType.MANUAL,
-                                status = RecordStatus.APPROVED,
-                            ),
-                        )
+                        val newId =
+                            transactionRepository.insertTransaction(
+                                TransactionEntity(
+                                    amount = amount,
+                                    type = state.selectedType,
+                                    dateTime = savedAt,
+                                    accountId = accountId,
+                                    relatedAccountId = relatedAccountId,
+                                    loanId = loanId,
+                                    categoryId = state.selectedCategoryId,
+                                    subcategoryId = subcategoryId,
+                                    note = note,
+                                    sourceType = TransactionSourceType.MANUAL,
+                                    status = RecordStatus.APPROVED,
+                                ),
+                            )
+                        persistPendingReceipts(newId, state.receipts)
                     }
                     _uiState.update { it.copy(isSaved = true) }
                 } catch (e: Exception) {
@@ -938,5 +967,88 @@ class AddEditTransactionViewModel
                 return preferredId
             }
             return null
+        }
+
+        private suspend fun loadReceiptsForTransaction(transactionId: Long): List<TransactionReceiptUi> =
+            attachmentRepository.listForTransaction(transactionId).mapNotNull { entity ->
+                val path = attachmentRepository.localFile(entity)?.absolutePath ?: return@mapNotNull null
+                TransactionReceiptUi(id = entity.id, filePath = path)
+            }
+
+        private suspend fun handleReceiptPicked(uriString: String) {
+            val uri = Uri.parse(uriString)
+            val state = _uiState.value
+            if (state.receipts.size >= TransactionAttachmentRepositoryImpl.MAX_ATTACHMENTS_PER_TRANSACTION) {
+                _uiState.update { it.copy(errorMessage = "At most 5 receipt photos per transaction.") }
+                return
+            }
+            try {
+                if (state.isEditMode && transactionId != null) {
+                    attachmentRepository.addFromUri(transactionId, uri)
+                    _uiState.update {
+                        it.copy(
+                            receipts = loadReceiptsForTransaction(transactionId),
+                            errorMessage = null,
+                        )
+                    }
+                } else {
+                    val staged = stagePendingReceiptFile(uri)
+                    _uiState.update {
+                        it.copy(
+                            receipts = it.receipts + TransactionReceiptUi(id = 0L, filePath = staged.absolutePath),
+                            errorMessage = null,
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(errorMessage = MmrUiMessages.friendly(e.message, "Could not add receipt."))
+                }
+            }
+        }
+
+        private suspend fun removeSavedReceipt(attachmentId: Long) {
+            try {
+                attachmentRepository.delete(attachmentId)
+                if (transactionId != null) {
+                    _uiState.update { it.copy(receipts = loadReceiptsForTransaction(transactionId)) }
+                }
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(errorMessage = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_ACTION))
+                }
+            }
+        }
+
+        private fun removePendingReceipt(filePath: String) {
+            runCatching { File(filePath).delete() }
+            _uiState.update { state ->
+                state.copy(receipts = state.receipts.filterNot { it.id == 0L && it.filePath == filePath })
+            }
+        }
+
+        private suspend fun persistPendingReceipts(
+            txnId: Long,
+            receipts: List<TransactionReceiptUi>,
+        ) {
+            for (receipt in receipts.filter { it.id == 0L }) {
+                val bytes = File(receipt.filePath).readBytes()
+                val mimeType = context.contentResolver.getType(Uri.fromFile(File(receipt.filePath))) ?: "image/jpeg"
+                attachmentRepository.addFromBytes(txnId, mimeType, bytes)
+                runCatching { File(receipt.filePath).delete() }
+            }
+        }
+
+        private fun stagePendingReceiptFile(uri: Uri): File {
+            val dir = File(context.cacheDir, "pending_receipts").apply { mkdirs() }
+            val dest = File(dir, "pending_${UUID.randomUUID()}.img")
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                dest.outputStream().use { output -> input.copyTo(output) }
+            } ?: throw IllegalArgumentException("Could not read image.")
+            if (dest.length() > TransactionAttachmentRepositoryImpl.MAX_ATTACHMENT_BYTES) {
+                dest.delete()
+                throw IllegalArgumentException("Image is too large.")
+            }
+            return dest
         }
     }

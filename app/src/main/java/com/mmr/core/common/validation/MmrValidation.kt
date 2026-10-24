@@ -1,9 +1,12 @@
 package com.mmr.core.common.validation
 
+import com.mmr.core.common.display.MmrMoneyFormat
+
 object MmrValidation {
     private const val MAX_FUTURE_MS = 86_400_000L * 2
 
-    fun sanitizeDecimalInput(input: String): String = input.filter { it.isDigit() || it == '.' }
+    fun sanitizeDecimalInput(input: String): String =
+        MmrMoneyFormat.stripGroupingSeparators(input).filter { it.isDigit() || it == '.' }
 
     fun parsePositiveAmount(input: String): Double? {
         val parsed = sanitizeDecimalInput(input).toDoubleOrNull()

@@ -173,11 +173,12 @@
     {
       "id": "icici_cc_upi_refund",
       "senderSuffixes": ["ICICIB", "ICICIT", "ICICIT-S"],
-      "priority": 77,
+      "priority": 110,
       "bodyRegex": "online refund for upi ecom trxn refund of inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) credited to icici bank credit card xx(?<last4>[0-9]{4})",
-      "transactionType": "INCOME",
+      "transactionType": "EXPENSE",
       "paymentChannel": "UPI",
       "instrument": "CREDIT_CARD",
+      "intent": "CARD_REFUND",
       "merchantGroup": ""
     },
     {
@@ -351,6 +352,50 @@
       "merchantGroup": ""
     },
     {
+      "id": "yes_bank_cc_bill_payment",
+      "senderSuffixes": ["YESBNK", "YESBNK-S", "YESBCC", "YESBCC-S"],
+      "priority": 109,
+      "bodyRegex": "payment of inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)\\s+is received towards your yes bank credit card ending(?:\\s+)?(?<last4>[0-9]{4})",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "CARD",
+      "instrument": "CREDIT_CARD",
+      "intent": "CARD_PAYMENT",
+      "merchantGroup": ""
+    },
+    {
+      "id": "yes_bank_cc_bill_payment_any_sender",
+      "senderSuffixes": [],
+      "priority": 108,
+      "bodyRegex": "payment of inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)\\s+is received towards your yes bank credit card ending(?:\\s+)?(?<last4>[0-9]{4})",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "CARD",
+      "instrument": "CREDIT_CARD",
+      "intent": "CARD_PAYMENT",
+      "merchantGroup": ""
+    },
+    {
+      "id": "bobcard_bill_payment",
+      "senderSuffixes": ["BOBCRD", "BOBCRD-S", "BOBCRD-T"],
+      "priority": 109,
+      "bodyRegex": "payment of inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)\\s+received for your bobcard ending(?:\\s+)?(?<last4>[0-9]{4})",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "CARD",
+      "instrument": "CREDIT_CARD",
+      "intent": "CARD_PAYMENT",
+      "merchantGroup": ""
+    },
+    {
+      "id": "bobcard_bill_payment_any_sender",
+      "senderSuffixes": [],
+      "priority": 108,
+      "bodyRegex": "payment of inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)\\s+received for your bobcard ending(?:\\s+)?(?<last4>[0-9]{4})",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "CARD",
+      "instrument": "CREDIT_CARD",
+      "intent": "CARD_PAYMENT",
+      "merchantGroup": ""
+    },
+    {
       "id": "nps_contribution",
       "senderSuffixes": ["KFNCRA", "KFNCRA-S"],
       "priority": 74,
@@ -442,6 +487,44 @@
       "transactionType": "EXPENSE",
       "paymentChannel": "UPI",
       "instrument": "SAVINGS"
+    },
+    {
+      "id": "hdfc_online_banking_transfer",
+      "senderSuffixes": ["HDFCBK", "HDFCBN", "HDFCBK-S", "HDFCBN-S"],
+      "priority": 94,
+      "bodyRegex": "amt deducted.*?inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?).*?money transfer via hdfc bank online banking",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "NET_BANKING",
+      "instrument": "SAVINGS"
+    },
+    {
+      "id": "hdfc_cc_merchant_reversed",
+      "senderSuffixes": ["HDFCBK", "HDFCBN", "HDFCBK-S", "HDFCBN-S"],
+      "priority": 110,
+      "bodyRegex": "transaction reversed!.*?inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)",
+      "transactionType": "EXPENSE",
+      "paymentChannel": "CARD",
+      "instrument": "CREDIT_CARD",
+      "intent": "CARD_REFUND"
+    },
+    {
+      "id": "union_mob_bk_credit_by_ref",
+      "senderSuffixes": ["UNIONB", "UNIONB-S"],
+      "priority": 84,
+      "bodyRegex": "a/c \\*(?<last4>[0-9]{4}) credited for inr\\s*:?\\s*(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?).*?by mob bk",
+      "transactionType": "INCOME",
+      "paymentChannel": "NET_BANKING",
+      "instrument": "SAVINGS"
+    },
+    {
+      "id": "canara_savings_interest_credit",
+      "senderSuffixes": ["CANBNK", "CANBNK-S"],
+      "priority": 76,
+      "bodyRegex": "inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?) credited.*?towards interest",
+      "transactionType": "INCOME",
+      "paymentChannel": "UNKNOWN",
+      "instrument": "SAVINGS",
+      "merchantGroup": ""
     }
   ]
 }

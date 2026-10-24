@@ -1,10 +1,13 @@
 package com.mmr.core.backup
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.mmr.core.backup.model.MmrAppSettingsBackup
 import com.mmr.core.backup.model.MmrBackupPayload
 import com.mmr.core.database.entity.AccountEntity
 import com.mmr.core.database.entity.CategoryEntity
+import com.mmr.core.database.entity.SyncTombstoneEntity
 import com.mmr.core.database.entity.TransactionEntity
+import com.mmr.core.lansync.SyncEntityType
 import com.mmr.core.model.enums.AccountType
 import com.mmr.core.model.enums.CategoryType
 import com.mmr.core.model.enums.RecordStatus
@@ -64,6 +67,30 @@ class BackupJsonCodecInstrumentedTest {
     }
 
     @Test
+    fun encodeDecode_roundTrip_preservesAppSettings() {
+        val payload =
+            MmrBackupPayload(
+                formatVersion = BackupJsonCodec.CURRENT_FORMAT_VERSION,
+                appId = BackupJsonCodec.EXPECTED_APP_ID,
+                exportedAtEpochMillis = 1_700_000_000_000L,
+                databaseVersion = 2,
+                categories = emptyList(),
+                subcategories = emptyList(),
+                accounts = emptyList(),
+                loans = emptyList(),
+                transactions = emptyList(),
+                loanPayments = emptyList(),
+                recurringRules = emptyList(),
+                notificationRules = emptyList(),
+                smsMessageRecords = emptyList(),
+                transactionApprovals = emptyList(),
+                appSettings = MmrAppSettingsBackup(smsScanMonths = 9),
+            )
+        val decoded = BackupJsonCodec.decode(BackupJsonCodec.encode(payload))
+        assertEquals(9, decoded.appSettings?.smsScanMonths)
+    }
+
+    @Test
     fun decode_formatVersion1_withoutNewSections_usesEmptyDefaults() {
         val v1Json =
             """
@@ -91,6 +118,39 @@ class BackupJsonCodecInstrumentedTest {
     }
 
     @Test
+    fun encodeDecode_roundTrip_preservesTombstones() {
+        val payload =
+            MmrBackupPayload(
+                formatVersion = BackupJsonCodec.CURRENT_FORMAT_VERSION,
+                appId = BackupJsonCodec.EXPECTED_APP_ID,
+                exportedAtEpochMillis = 1L,
+                databaseVersion = 17,
+                categories = emptyList(),
+                subcategories = emptyList(),
+                accounts = emptyList(),
+                loans = emptyList(),
+                transactions = emptyList(),
+                loanPayments = emptyList(),
+                recurringRules = emptyList(),
+                notificationRules = emptyList(),
+                smsMessageRecords = emptyList(),
+                transactionApprovals = emptyList(),
+                tombstones =
+                    listOf(
+                        SyncTombstoneEntity(
+                            syncId = "txn-del",
+                            entityType = SyncEntityType.TRANSACTION,
+                            deletedAt = 500L,
+                            sourceDeviceId = "device-a",
+                        ),
+                    ),
+            )
+        val decoded = BackupJsonCodec.decode(BackupJsonCodec.encode(payload)).tombstones.single()
+        assertEquals("txn-del", decoded.syncId)
+        assertEquals(500L, decoded.deletedAt)
+    }
+
+    @Test
     fun decode_rejectsUnknownAppId() {
         val json =
             BackupJsonCodec.encode(
@@ -115,7 +175,7 @@ class BackupJsonCodecInstrumentedTest {
             BackupJsonCodec.decode(json)
             assertTrue(false)
         } catch (e: IllegalArgumentException) {
-            assertTrue(e.message!!.contains("Money Manager R"))
+            assertTrue(e.message!!.contains("Money Inbox"))
         }
     }
 }

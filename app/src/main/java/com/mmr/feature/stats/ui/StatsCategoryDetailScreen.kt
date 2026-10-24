@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -19,14 +18,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mmr.app.ui.components.MmrDeleteIconButton
 import com.mmr.app.ui.components.MmrDimens
-import com.mmr.app.ui.components.MmrMmHeaderBar
-import com.mmr.app.ui.components.MmrMmPeriodChip
+import com.mmr.app.ui.components.MmrHeaderBar
+import com.mmr.app.ui.components.MmrPeriodChip
 import com.mmr.app.ui.components.MmrPeriodSwipeBox
 import com.mmr.app.ui.state.MmrEmptyState
 import com.mmr.app.ui.state.MmrErrorState
 import com.mmr.app.ui.state.MmrLoadingState
-import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.app.ui.theme.MmrBrandColors
 import com.mmr.feature.home.ui.HomeMonthPickerDialog
 import com.mmr.feature.home.ui.TransactionCompactRow
 import com.mmr.feature.home.ui.TransactionDayHeaderRow
@@ -49,6 +49,10 @@ fun StatsCategoryDetailScreen(
     viewModel: StatsCategoryDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    com.mmr.app.ui.components.MmrSelectionModeBackHandler(
+        enabled = uiState.isSelectionMode,
+        onExitSelectionMode = { viewModel.onEvent(StatsCategoryDetailUiEvent.OnExitSelectionMode) },
+    )
     val zoneId = ZoneId.systemDefault()
     val categoryColor = parseHexColor(uiState.categoryColorHex)
     val slashDate = rememberSlashDateFormatter()
@@ -119,7 +123,7 @@ fun StatsCategoryDetailScreen(
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                     Text(
                         text = startLabel,
-                        color = MmrMmColors.HeaderIcon,
+                        color = MmrBrandColors.HeaderIcon,
                         fontSize = 15.sp,
                         modifier =
                             Modifier.clickable(
@@ -128,10 +132,10 @@ fun StatsCategoryDetailScreen(
                                 onClick = { viewModel.onEvent(StatsCategoryDetailUiEvent.OnPeriodStartFieldClick) },
                             ),
                     )
-                    Text(text = " ~ ", color = MmrMmColors.HeaderIcon, fontSize = 15.sp)
+                    Text(text = " ~ ", color = MmrBrandColors.HeaderIcon, fontSize = 15.sp)
                     Text(
                         text = endLabel,
-                        color = MmrMmColors.HeaderIcon,
+                        color = MmrBrandColors.HeaderIcon,
                         fontSize = 15.sp,
                         modifier =
                             Modifier.clickable(
@@ -147,7 +151,7 @@ fun StatsCategoryDetailScreen(
         }
 
     Scaffold(
-        containerColor = MmrMmColors.ListBackground,
+        containerColor = MmrBrandColors.ListBackground,
         topBar = {
             if (uiState.isSelectionMode) {
                 TopAppBar(
@@ -163,13 +167,11 @@ fun StatsCategoryDetailScreen(
                         ) {
                             Icon(Icons.Default.SelectAll, contentDescription = "Select all")
                         }
-                        IconButton(
+                        MmrDeleteIconButton(
                             onClick = { viewModel.onEvent(StatsCategoryDetailUiEvent.OnRequestDeleteSelected) },
-                        ) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete")
-                        }
+                        )
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MmrMmColors.Header),
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MmrBrandColors.Header),
                 )
             } else {
                 StatsCategoryDetailTopBar(
@@ -294,7 +296,12 @@ fun StatsCategoryDetailScreen(
                                                     ),
                                             )
                                         }
-                                        items(group.items, key = { it.id }) { txn ->
+                                        items(
+                                            count = group.items.size,
+                                            key = { group.items[it].id },
+                                        ) { index ->
+                                            val txn = group.items[index]
+                                            val isLastInDay = index == group.items.lastIndex
                                             if (uiState.isSelectionMode) {
                                                 TransactionSelectionRowCard(
                                                     item = txn,
@@ -307,6 +314,7 @@ fun StatsCategoryDetailScreen(
                                                         )
                                                     },
                                                     onLongClick = {},
+                                                    isLastInDayGroup = isLastInDay,
                                                     modifier =
                                                         Modifier.padding(
                                                             horizontal = MmrDimens.listItemPaddingHorizontal,
@@ -326,6 +334,7 @@ fun StatsCategoryDetailScreen(
                                                             ),
                                                         )
                                                     },
+                                                    isLastInDayGroup = isLastInDay,
                                                     modifier =
                                                         Modifier.padding(
                                                             horizontal = MmrDimens.listItemPaddingHorizontal,
@@ -356,7 +365,7 @@ private fun StatsCategoryDetailTopBar(
     onTitleClick: (() -> Unit)?,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
-    MmrMmHeaderBar(
+    MmrHeaderBar(
         title = if (uiState.periodMode == StatsPeriodMode.PERIOD) "" else uiState.navigationLabel,
         titleContent = periodTitleContent,
         onTitleClick = onTitleClick,
@@ -376,7 +385,7 @@ private fun StatsCategoryDetailTopBar(
             },
         trailing = {
             Box {
-                MmrMmPeriodChip(
+                MmrPeriodChip(
                     label = StatsPeriodUtils.modeDropdownLabel(uiState.periodMode),
                     onClick = { menuExpanded = true },
                 )

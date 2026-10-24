@@ -3,6 +3,7 @@ package com.mmr.feature.stats.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mmr.app.ui.state.MmrUiMessages
+import com.mmr.core.common.display.MmrMoneyFormat
 import com.mmr.core.common.validation.MmrValidation
 import com.mmr.core.data.preferences.AppDisplaySettingsStore
 import com.mmr.core.domain.repository.TransactionRepository
@@ -139,7 +140,8 @@ class StatsViewModel
                             netBalance = net,
                             totalIncomeFormatted = formatLedgerTabAmount(income, isIncome = true),
                             totalExpenseFormatted = formatLedgerTabAmount(expense, isIncome = false),
-                            netBalanceFormatted = "$netPrefix${"%.2f".format(kotlin.math.abs(net))}",
+                            netBalanceFormatted =
+                                "$netPrefix${MmrMoneyFormat.formatNumber(kotlin.math.abs(net))}",
                         )
 
                     val mode = _periodMode.value
@@ -157,7 +159,7 @@ class StatsViewModel
                         incomeBreakdowns = incomeBreakdowns,
                         expenseBreakdowns = expenseBreakdowns,
                         categoryBreakdowns = activeBreakdowns,
-                        activeTabTotalFormatted = "₹ ${"%.2f".format(tabTotal)}",
+                        activeTabTotalFormatted = MmrMoneyFormat.formatInrWithSpace(tabTotal),
                         errorMessage = shell.error,
                         isEmpty = shell.error == null && tabTotal == 0.0 && activeBreakdowns.isEmpty(),
                         incomeTabEmpty = shell.error == null && income == 0.0 && incomeBreakdowns.isEmpty(),
@@ -293,7 +295,7 @@ class StatsViewModel
             isIncome: Boolean,
         ): String {
             val prefix = if (isIncome) "+₹" else "-₹"
-            return "$prefix${"%.2f".format(amount)}"
+            return "$prefix${MmrMoneyFormat.formatNumber(amount)}"
         }
 
         private fun buildCategoryBreakdowns(
@@ -318,7 +320,7 @@ class StatsViewModel
                         categoryName = "Other",
                         colorHex = "#9CA3AF",
                         amount = remainder,
-                        amountFormatted = "₹ ${"%.2f".format(remainder)}",
+                        amountFormatted = MmrMoneyFormat.formatInrWithSpace(remainder),
                         percentage = pct,
                         percentageFormatted = "${"%.0f".format(pct * 100)}%",
                         transactionCount = 0,
@@ -337,7 +339,7 @@ class StatsViewModel
                 categoryName = spending.categoryName ?: "Uncategorized",
                 colorHex = spending.colorHex ?: "#6B7280",
                 amount = spending.totalAmount,
-                amountFormatted = "₹ ${"%.2f".format(spending.totalAmount)}",
+                amountFormatted = MmrMoneyFormat.formatInrWithSpace(spending.totalAmount),
                 percentage = percentage,
                 percentageFormatted = "${"%.0f".format(percentage * 100)}%",
                 transactionCount = spending.transactionCount,

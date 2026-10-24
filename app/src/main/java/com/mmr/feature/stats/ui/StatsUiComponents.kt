@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mmr.app.ui.adaptive.mmrScreenHorizontalPadding
 import com.mmr.app.ui.components.MmrDimens
-import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.app.ui.theme.MmrBrandColors
 import com.mmr.feature.stats.model.CategoryBreakdownUi
 import com.mmr.feature.stats.model.StatsSiblingCategoryUi
 import com.mmr.feature.stats.model.SubcategoryBreakdownUi
@@ -43,7 +43,7 @@ fun StatsPieChartSection(
     Column(modifier = modifier.fillMaxWidth()) {
         StatsWebPieChart(breakdowns = breakdowns)
         HorizontalDivider(
-            color = MmrMmColors.TransactionListBorder,
+            color = MmrBrandColors.TransactionListBorder,
             thickness = MmrDimens.transactionListDividerThickness,
         )
         Spacer(Modifier.height(MmrDimens.spaceXs))
@@ -84,7 +84,7 @@ fun StatsCategoryList(
                 onClick = { onCategoryClick(item) },
             )
             HorizontalDivider(
-                color = MmrMmColors.TransactionListBorder,
+                color = MmrBrandColors.TransactionListBorder,
                 thickness = MmrDimens.transactionListDividerThickness,
             )
         }
@@ -100,13 +100,13 @@ fun StatsNativeAdPlaceholder(modifier: Modifier = Modifier) {
                 .height(72.dp)
                 .padding(vertical = MmrDimens.spaceSm)
                 .clip(RoundedCornerShape(6.dp))
-                .background(MmrMmColors.ListBackground),
+                .background(MmrBrandColors.ListBackground),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = "Ad",
             fontSize = 11.sp,
-            color = MmrMmColors.TextLight,
+            color = MmrBrandColors.TextLight,
         )
     }
 }
@@ -176,19 +176,19 @@ fun StatsDetailTotalBlock(
             modifier
                 .fillMaxWidth()
                 .defaultMinSize(minHeight = MmrDimens.statsDetailTotalMinHeight)
-                .background(MmrMmColors.SurfaceWhite)
+                .background(MmrBrandColors.SurfaceWhite)
                 .padding(start = MmrDimens.statsCategoryRowStartMargin, end = MmrDimens.spaceXl, top = 15.dp),
     ) {
         Text(
             text = "Total Balance",
             fontSize = 12.sp,
-            color = MmrMmColors.TextLight,
+            color = MmrBrandColors.TextLight,
         )
         Text(
             text = amountFormatted,
             fontSize = 24.sp,
             fontWeight = FontWeight.SemiBold,
-            color = MmrMmColors.Active,
+            color = MmrBrandColors.Active,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(top = 1.dp),
@@ -230,7 +230,7 @@ fun StatsMmSubcategoryRow(
             Text(
                 text = row.percentageFormatted,
                 fontSize = 12.sp,
-                color = MmrMmColors.TextMedium,
+                color = MmrBrandColors.TextMedium,
                 modifier = Modifier.widthIn(min = 50.dp),
             )
             Text(
@@ -244,7 +244,7 @@ fun StatsMmSubcategoryRow(
         }
         HorizontalDivider(
             modifier = Modifier.padding(start = MmrDimens.statsDetailSubcategoryDividerInset),
-            color = MmrMmColors.BorderMain,
+            color = MmrBrandColors.BorderMain,
             thickness = MmrDimens.statsDetailSubcategoryDividerThickness,
         )
     }
@@ -262,14 +262,14 @@ fun StatsCategoryPickerBar(
         modifier =
             modifier
                 .fillMaxWidth()
-                .background(MmrMmColors.SurfaceWhite)
+                .background(MmrBrandColors.SurfaceWhite)
                 .padding(vertical = MmrDimens.spaceSm, horizontal = MmrDimens.spaceSm),
         horizontalArrangement = Arrangement.spacedBy(MmrDimens.spaceSm),
     ) {
         categories.forEach { item ->
             val selected = item.categoryId == selectedCategoryId
-            val bg = if (selected) parseHexColor(item.colorHex) else MmrMmColors.ListBackground
-            val textColor = if (selected) Color.White else MmrMmColors.TextStrong
+            val bg = if (selected) parseHexColor(item.colorHex) else MmrBrandColors.ListBackground
+            val textColor = if (selected) Color.White else MmrBrandColors.TextStrong
             Text(
                 text = item.name,
                 fontSize = 12.sp,

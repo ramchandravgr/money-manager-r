@@ -6,7 +6,7 @@ import androidx.compose.ui.unit.dp
  * Shared spacing and sizing for consistent alignment across screens.
  */
 object MmrDimens {
-    /** MM-style tight spacing (default for chrome and lists). */
+    /** Tight spacing (default for chrome and lists). */
     val spaceXs = 3.dp
     val spaceSm = 6.dp
     val spaceMd = 10.dp
@@ -17,6 +17,9 @@ object MmrDimens {
     val iconSm = 20.dp
     val iconMd = 24.dp
     val iconLg = 28.dp
+
+    /** “+” on list-screen [MmrAddListFab] (Small FAB). */
+    val listAddFabPlusIcon = 22.dp
 
     val touchTargetMin = 44.dp
     val topBarIconButton = 40.dp
@@ -33,31 +36,71 @@ object MmrDimens {
     /** Edge inset for home chrome (filters, summary strips). */
     val listItemPaddingHorizontal = 8.dp
 
-    /** MM `title_bar_height` (content row below status bar). */
-    val mmTitleBarHeight = 40.dp
-    val mmHeaderIconSize = 20.dp
-    val mmSummaryStripVerticalPadding = 4.dp
-    val mmFilterChipHeight = 26.dp
-    val mmBottomNavHeight = 52.dp
-    val mmFormRowHorizontalPadding = 15.dp
+    /** Title bar content row height (below status bar). */
+    val chromeTitleBarHeight = 40.dp
+    val chromeHeaderIconSize = 20.dp
+    val chromeSummaryStripVerticalPadding = 4.dp
+    val chromeFilterChipHeight = 26.dp
 
-    /** MM Trans list (`item_day_adapter` / `item_day_adapter_middle`). */
+    /** Tab bar content height (labels + icons); nav bar insets added separately. */
+    val chromeBottomNavHeight = 58.dp
+    val bottomNavIconSize = 24.dp
+    val chromeFormRowHorizontalPadding = 15.dp
+
+    /** Transaction list row layout. */
     val transactionListPaddingHorizontal = 15.dp
     val transactionCategoryColumnWidth = 80.dp
     val transactionRowMinHeight = 48.dp
     val transactionRowColumnGap = 3.dp
-    val transactionDayGroupGap = 8.dp
+    val transactionDayGroupGap = 4.dp
     val transactionDayHeaderMinHeight = 34.dp
     val transactionDayHeaderPaddingVertical = 5.dp
     val transactionTitleSubtitleGap = 2.dp
     val transactionListDividerThickness = 0.5.dp
     val transactionDayHeaderDividerThickness = 0.75.dp
 
+    /** Ledger pill cards: inset from list edge and gap between pills. */
+    val transactionPillHorizontalInset = 10.dp
+    val transactionPillGap = 4.dp
+
+    /** Space below the last pill before the next day header (half of [transactionPillGap]). */
+    val transactionPillDayEndGap = 2.dp
+    val transactionPillContentPaddingHorizontal = 14.dp
+    val transactionPillContentPaddingVertical = 12.dp
+
     val labelColumnWeight = 0.4f
     val valueColumnWeight = 0.6f
     val labelValueGap = 12.dp
 
+    /** Transaction detail metadata card (Type / Date / … rows). */
+    val transactionDetailMetaCardPadding = 6.dp
+    val transactionDetailMetaRowSpacing = 4.dp
+    val transactionDetailLabelValueGap = 6.dp
+    val transactionDetailLabelValueRowVertical = 1.5.dp
+
     val chevronSize = 22.dp
+
+    /** Settings subsection headers (Web Manage, LAN sync, Configuration). */
+    val settingsSectionHeaderCorner = 10.dp
+    val settingsSectionContentGap = 12.dp
+    val settingsSectionTopSpacing = 20.dp
+    val settingsSectionTopSpacingCompact = 12.dp
+    val settingsSectionContentGapCompact = 6.dp
+    val settingsFormPaddingHorizontalCompact = 10.dp
+    val settingsFormPaddingVerticalCompact = 8.dp
+    val settingsFormItemGapCompact = 8.dp
+    val settingsPanelPaddingCompact = 10.dp
+
+    /** iOS inset grouped Settings (UITableView insetGrouped). */
+    val iosSettingsHorizontalInset = 20.dp
+    val iosSettingsGroupCorner = 10.dp
+    val iosSettingsRowMinHeight = 44.dp
+    val iosSettingsRowHorizontalPadding = 16.dp
+    val iosSettingsSectionHeaderInset = 16.dp
+    val iosSettingsSectionHeaderBottom = 7.dp
+    val iosSettingsSectionFooterTop = 8.dp
+    val iosSettingsSectionFirstTop = 8.dp
+    val iosSettingsSectionTop = 22.dp
 
     /** Extra list bottom inset so content clears the main FAB. */
     val fabListBottomInset = 48.dp
@@ -71,12 +114,12 @@ object MmrDimens {
     val homeSummaryVerticalPadding = 4.dp
     val homeTabLabelVerticalPadding = 4.dp
 
-    /** MM `stats.xml` Income/Expense bar. */
+    /** Stats Income/Expense tab bar. */
     val statsTabRowHeight = 43.dp
     val statsTabButtonHeight = 40.dp
     val statsTabIndicatorHeight = 3.dp
 
-    /** MM `stats_list_item.xml`. */
+    /** Stats category list rows. */
     val statsCategoryRowHeight = 44.dp
     val statsCategoryRowStartMargin = 15.dp
     val statsCategoryPercentEndMargin = 12.dp

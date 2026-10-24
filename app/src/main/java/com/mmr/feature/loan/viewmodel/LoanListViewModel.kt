@@ -3,6 +3,7 @@ package com.mmr.feature.loan.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mmr.app.ui.state.MmrUiMessages
+import com.mmr.core.common.display.MmrMoneyFormat
 import com.mmr.core.database.entity.LoanEntity
 import com.mmr.core.database.model.LoanSummaryAggregate
 import com.mmr.core.domain.repository.LoanRepository
@@ -170,9 +171,9 @@ internal fun LoanEntity.toItemUi(): LoanItemUi {
         name = name,
         lenderName = lenderName,
         principalAmount = principalAmount,
-        principalFormatted = "₹${"%.2f".format(principalAmount)}",
+        principalFormatted = MmrMoneyFormat.formatInr(principalAmount),
         outstandingAmount = outstandingAmount,
-        outstandingFormatted = "₹${"%.2f".format(outstandingAmount)}",
+        outstandingFormatted = MmrMoneyFormat.formatInr(outstandingAmount),
         interestRate = interestRate,
         interestRateFormatted = LoanDisplayFormat.annualRatePercent(interestRate),
         loanType = loanType,
@@ -192,6 +193,6 @@ internal fun LoanSummaryAggregate.toSummaryUi(): LoanSummaryUi =
         totalLentPrincipal = totalLentPrincipal,
         totalLentOutstanding = totalLentOutstanding,
         activeLoansCount = activeLoansCount,
-        totalBorrowedOutstandingFormatted = "₹${"%.2f".format(totalBorrowedOutstanding)}",
-        totalLentOutstandingFormatted = "₹${"%.2f".format(totalLentOutstanding)}",
+        totalBorrowedOutstandingFormatted = MmrMoneyFormat.formatInr(totalBorrowedOutstanding),
+        totalLentOutstandingFormatted = MmrMoneyFormat.formatInr(totalLentOutstanding),
     )

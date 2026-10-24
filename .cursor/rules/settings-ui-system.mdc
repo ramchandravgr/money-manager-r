@@ -1,0 +1,82 @@
+---
+description: Unified layout, typography, and components for Settings and all settings sub-screens (backup, Drive, LAN sync, web manage, appearance)
+globs: app/src/main/java/com/mmr/feature/settings/**/*.kt,app/src/main/java/com/mmr/feature/account/**/*.kt,app/src/main/java/com/mmr/feature/category/**/*.kt,app/src/main/java/com/mmr/feature/backup/**/*.kt,app/src/main/java/com/mmr/feature/drivebackup/**/*.kt,app/src/main/java/com/mmr/feature/lansync/**/*.kt,app/src/main/java/com/mmr/feature/webmanage/**/*.kt
+alwaysApply: false
+---
+
+# Settings UI system (MMR)
+
+Settings tab routes and **all nested settings screens** (Backup & Restore, Google Drive backup, LAN sync, Web Manage, Transaction Appearance, SMS templates, etc.) must look like **one product**, not one-off Compose screens.
+
+**Source of truth:** `MmrSettingsScreenTemplate.kt` (start here), **`MmrGroupedFormCard.kt`**, **`MmrDestructiveIcons.kt`** (red delete icons; do not hand-roll `DeleteOutline` tints) (shared white field cards + **`MmrSettingsFieldGrouping`**), **`MmrIosSettingsList.kt`** (sections/rows), **`MmrIosSettingsForm.kt`** (text fields, **`MmrIosSettingsSecureTextRow`**, actions, chips, radio, slider, form gates), **`MmrIosSettingsPickers.kt`** (**`MmrIosSettingsSingleChoiceSheet`**, **`MmrIosSettingsChoiceRow`**), then `MmrAppChrome.kt`, `MmrActionButtons.kt`, `MmrInputDialog.kt`, `MmrDimens.kt`, `MmrBrandColors.kt`.
+
+When adding or editing these screens, **reuse shared components**. Do not invent new card styles, font sizes, or raw Material buttons unless you are extending the shared kit first.
+
+## Screen shell
+
+- **Always wrap** settings flows in **`MmrSettingsScreenScaffold`** (`layout = InsetGrouped` for hub and most sub-screens; `Hub`/`Form` only when inset grouped is a poor fit) or **`MmrSettingsListScaffold`** (`insetGrouped = true`) for FAB + `LazyColumn` (**Accounts**, **Categories**).
+- **Field grouping** — default **`fieldGrouping = MmrSettingsFieldGrouping.Separated`** on scaffolds (one **`MmrGroupedFormCard`** per `MmrIosSettingsNavRow` / switch / control slot). Main **Settings** hub only: **`MmrSettingsFieldGrouping.Grouped`** (classic multi-row inset group). Screen background stays **`MmrBrandColors.ListBackground`**.
+- **Visual density** — `MmrSettingsVisualStyle` (`Standard` vs `Compact`). Form sub-screens default to **Compact** (small section labels, tighter gaps, flat intro copy). Hub stays **Standard** (bordered section headers). Override with `visualStyle = MmrSettingsVisualStyle.Standard` on the scaffold if a screen needs the older, roomier look.
+- **iOS inset grouped** — `MmrSettingsScreenLayout.InsetGrouped` + `MmrIosSettingsList.kt` + **`MmrIosSettingsForm.kt`**. Use **`MmrIosSettingsTextFieldSlot`** / **`MmrIosSettingsTextField`** for inset-grouped inputs (compact caption + line; not `OutlinedTextField`). Use **`MmrIosSettingsPrimaryActionSlot`** / **`MmrIosSettingsSecondaryActionSlot`** for buttons in groups. **`MmrIosSettingsEntityFormGate`** + **`MmrSettingsSaveTopBar`** on add/edit entity screens. **`MmrIosSettingsSectionBodyText`** for helper copy inside sections. Destructive actions on **edit** screens via **`MmrIosSettingsDestructiveActionSection`**.
+- **Entity delete:** `AccountDeleteDialog` / `CategoryDeleteDialog` from `MmrLedgerEntityDeleteDialogs.kt` — do not use a bare confirm when transactions are linked.
+- Do not hand-roll `Scaffold` + `verticalScroll` + padding on settings screens.
+- **Intro copy:** `MmrScreenIntroPanel` at top of form screens when needed.
+- **Status:** `MmrSettingsStatusBanners` for success/error banners.
+- **White grouped blocks:** `MmrGroupedFormCard` / `MmrSettingsPanelCard` (title/helper optional); do not hand-roll `Card` elevation on settings flows.
+
+## Typography (one family, fixed roles)
+
+- **Font family:** `MaterialTheme.typography` / `MmrFontFamily` only — no custom `FontFamily` on settings screens.
+- **Do not** use `MaterialTheme.typography.bodySmall` (11sp) for help, intros, or footnotes on settings flows.
+- **Section title + subtitle:** `MmrSettingsSectionTitle` → `MmrConfigSectionHeader` (15sp semibold `TextStrong` + optional subtitle).
+- **Intro / bullets at top of screen:** `MmrScreenIntroPanel` (same band style as section headers).
+- **Any other explanatory copy:** `MmrHelperText` (13sp, `TextMedium`, line height 18sp).
+- **List row primary label:** 14sp via `MmrLightNavRow` / `MmrLightSwitchRow` / `MmrConfigValueRow` — do not duplicate with ad-hoc `Text(fontSize = …)`.
+
+## Lists, rows, toggles
+
+- **Navigate to sub-screen or show current value:** `MmrLightNavRow` (optional `subtitle` → `MmrHelperText`).
+- **Boolean on white list background:** `MmrLightSwitchRow` with `SwitchDefaults` colors from `MmrLightSwitchRow` (track `MmrBrandColors.Active` when checked).
+- **Picker rows on config (gray) background:** `MmrConfigValueRow` / `MmrConfigSwitchRow` inside Transaction Appearance–style blocks — match `ConfigurationScreen` grouping.
+- **Dividers:** `HorizontalDivider` 0.5.dp `MmrBrandColors.BorderMain` as in chrome rows — no random `Divider()` colors.
+
+## Buttons
+
+- **One primary action per card/section:** `MmrPrimaryActionButton` (filled, theme primary).
+- **Secondary actions (import, disconnect, open another settings page):** `MmrSecondaryActionButton` (outlined). Do not use raw `Button` / `OutlinedButton` / `TextButton` for screen actions.
+- **Do not** mix a third button style on the same screen without updating the shared components.
+
+## Cards and grouping
+
+- **White content blocks:** `Card` with `MmrBrandColors.SurfaceWhite`, elevation 1.dp, inner padding `MmrDimens.cardPadding` (12.dp).
+- **Section headers (gray band):** `MmrSettingsSectionTitle` / `MmrConfigSectionHeader` — not a separate `titleSmall` in a random `Card`.
+- **Avoid** stacking many equal-height cards each with only a title + one button; prefer **one actions card** with multiple buttons (see `BackupScreen`).
+
+## Dialogs and pickers
+
+- **Confirm / destructive / import modes:** `MmrContentDialog` with `confirmTestTag` when tests need it.
+- **Single-choice on settings screens:** `MmrIosSettingsSingleChoiceSheet` + `MmrIosSettingsChoiceRow` (see `ConfigurationScreen`) — not centered `MmrSingleChoiceDialog` for inset-grouped flows.
+- **Text input:** `MmrInputDialog` / `MmrDialogTextField` (`MmrDialogForm.kt`) inside `MmrContentDialog` — not raw `AlertDialog` + `OutlinedTextField` unless extending the dialog form kit.
+
+## Status and errors
+
+- **Inline success/info:** `MmrStatusBanner` (not custom colored `Card` for “uploaded” messages).
+- **Full-screen load/error:** `MmrLoadingState` / `MmrErrorState`.
+
+## Anti-patterns (reject in review)
+
+- Raw `Text(..., fontSize = 12.sp)` or `bodySmall` for help text.
+- `primaryContainer.copy(alpha = …)` summary cards — use white card + `TextStrong` for emphasis.
+- Custom `GoogleDriveSectionTitle`-style duplicates — use `MmrSettingsSectionTitle` or `MmrConfigSectionHeader`.
+- LAN-sync-style walls of `bodySmall` paragraphs — convert to `MmrHelperText` / `MmrScreenIntroPanel`.
+
+## New settings screen checklist
+
+1. Scaffold + `MmrHeaderBar` + `ListBackground` + standard padding.
+2. Intro (if needed): `MmrScreenIntroPanel`.
+3. Sections: `MmrSettingsSectionTitle` then white rows or `MmrLightNavRow` list.
+4. Actions: `MmrPrimaryActionButton` / `MmrSecondaryActionButton`.
+5. Dialogs: `MmrContentDialog` / `MmrSingleChoiceDialog` / `MmrInputDialog`.
+6. Add `MmrTestTags` for primary actions when the screen is user-testable.
+
+When refactoring legacy screens, migrate toward this list in small PRs; update `PROJECT_MEMORY.md` §7 if the contract changes.

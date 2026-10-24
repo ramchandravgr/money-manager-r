@@ -2,9 +2,12 @@ package com.mmr.core.data.repository
 
 import androidx.room.withTransaction
 import com.mmr.core.common.sync.MmrSyncId
+import com.mmr.core.common.widget.HomeScreenWidgetRefreshTrigger
 import com.mmr.core.database.MmrDatabase
 import com.mmr.core.database.dao.AccountDao
 import com.mmr.core.database.dao.CategoryDao
+import com.mmr.core.database.dao.LoanDao
+import com.mmr.core.database.dao.RecurringRuleDao
 import com.mmr.core.database.dao.SmsMessageRecordDao
 import com.mmr.core.database.dao.TransactionDao
 import com.mmr.core.database.entity.AccountEntity
@@ -13,6 +16,8 @@ import com.mmr.core.database.entity.SubcategoryEntity
 import com.mmr.core.database.entity.TransactionEntity
 import com.mmr.core.database.mapper.CategoryPersistenceMapper
 import com.mmr.core.database.relation.TransactionWithDetails
+import com.mmr.core.domain.model.AccountDeletionPreview
+import com.mmr.core.domain.model.CategoryDeleteTransactionMode
 import com.mmr.core.domain.repository.AccountRepository
 import com.mmr.core.domain.repository.CategoryRepository
 import com.mmr.core.domain.repository.TransactionRepository
@@ -21,6 +26,7 @@ import com.mmr.core.loan.LoanTransactionCoordinator
 import com.mmr.core.model.category.CategoryWithChildren
 import com.mmr.core.model.enums.CategoryType
 import com.mmr.core.model.enums.TransactionType
+import com.mmr.core.transaction.TransactionCashFlow
 import com.mmr.core.transaction.TransactionMergeCoordinator
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -28,6 +34,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.math.abs
 
 @Singleton
 class TransactionRepositoryImpl
@@ -38,7 +45,12 @@ class TransactionRepositoryImpl
         private val loanTransactionCoordinator: LoanTransactionCoordinator,
         private val transactionMergeCoordinator: TransactionMergeCoordinator,
         private val smsMessageRecordDao: SmsMessageRecordDao,
+        private val widgetRefreshTrigger: HomeScreenWidgetRefreshTrigger,
     ) : TransactionRepository {
+        private fun refreshWidgets() {
+            widgetRefreshTrigger.requestRefresh()
+        }
+
         override fun getApprovedTransactionsDetailed(): Flow<List<TransactionWithDetails>> =
             transactionDao.getApprovedTransactionsDetailed()
 
@@ -83,7 +95,9 @@ class TransactionRepositoryImpl
             RepositoryGuards.requireValidTransactionEntity(validated)
             accountDao.getById(validated.accountId)
                 ?: throw IllegalArgumentException("Account not found.")
-            return transactionDao.insert(validated)
+            val id = transactionDao.insert(validated)
+            refreshWidgets()
+            return id
         }
 
         override suspend fun updateTransaction(transaction: TransactionEntity) {
@@ -93,6 +107,7 @@ class TransactionRepositoryImpl
                 ?: throw IllegalArgumentException("Account not found.")
             transactionDao.update(transaction)
             loanTransactionCoordinator.syncPaymentFromTransaction(transaction)
+            refreshWidgets()
         }
 
         override suspend fun hasLinkedLoanPayment(transactionId: Long): Boolean =
@@ -104,6 +119,7 @@ class TransactionRepositoryImpl
                 transaction,
                 LoanLinkedTransactionDeleteMode.UNLINK,
             )
+            refreshWidgets()
         }
 
         override suspend fun deleteTransactionWithLoanPolicy(
@@ -112,6 +128,7 @@ class TransactionRepositoryImpl
         ) {
             require(transaction.id > 0L) { "Transaction id is required." }
             loanTransactionCoordinator.deleteTransaction(transaction, mode)
+            refreshWidgets()
         }
 
         override suspend fun suggestTransactionNotes(
@@ -138,7 +155,8 @@ class TransactionRepositoryImpl
         override suspend fun mergeTransactions(
             transactionIds: List<Long>,
             mergedName: String,
-        ): Long = transactionMergeCoordinator.mergeTransactions(transactionIds, mergedName)
+            mergedDateTime: Long?,
+        ): Long = transactionMergeCoordinator.mergeTransactions(transactionIds, mergedName, mergedDateTime)
 
         override fun getLinkedSmsForTransaction(transactionId: Long) =
             if (transactionId <= 0L) {
@@ -209,6 +227,9 @@ class CategoryRepositoryImpl
     @Inject
     constructor(
         private val categoryDao: CategoryDao,
+        private val transactionDao: TransactionDao,
+        private val recurringRuleDao: RecurringRuleDao,
+        private val tombstoneRecorder: com.mmr.core.lansync.LanSyncTombstoneRecorder,
     ) : CategoryRepository {
         override fun getActiveCategories(): Flow<List<CategoryEntity>> = categoryDao.getActiveCategories()
 
@@ -265,11 +286,53 @@ class CategoryRepositoryImpl
             categoryDao.update(category)
         }
 
-        override suspend fun deleteCategory(categoryId: Long) {
+        override suspend fun countTransactionsForCategory(categoryId: Long): Int {
+            if (categoryId <= 0L) return 0
+            return transactionDao.countByCategoryTree(categoryId)
+        }
+
+        override suspend fun deleteCategory(
+            categoryId: Long,
+            transactionMode: CategoryDeleteTransactionMode,
+            migrateToCategoryId: Long?,
+        ) {
             val existing =
                 categoryDao.getCategoryById(categoryId)
                     ?: throw IllegalArgumentException("Category not found.")
-            require(!existing.isDefault) { "Default categories cannot be deleted." }
+            val taggedCount = transactionDao.countByCategoryTree(categoryId)
+            val now = System.currentTimeMillis()
+            when {
+                taggedCount == 0 -> Unit
+                transactionMode == CategoryDeleteTransactionMode.MIGRATE -> {
+                    val targetId =
+                        migrateToCategoryId
+                            ?: throw IllegalArgumentException("Choose a category to move transactions to.")
+                    require(targetId != categoryId) { "Choose a different category." }
+                    val target =
+                        categoryDao.getCategoryById(targetId)
+                            ?: throw IllegalArgumentException("Target category not found.")
+                    require(target.isActive) { "Target category is not active." }
+                    require(target.type == existing.type) {
+                        "Move transactions to another ${existing.type.name.lowercase()} category."
+                    }
+                    transactionDao.migrateTransactionsToCategory(categoryId, targetId, now)
+                    recurringRuleDao.migrateCategory(categoryId, targetId, now)
+                }
+                transactionMode == CategoryDeleteTransactionMode.UNCATEGORIZE -> {
+                    transactionDao.uncategorizeTransactionsForCategory(categoryId, now)
+                    recurringRuleDao.clearCategory(categoryId, now)
+                }
+                else ->
+                    throw IllegalArgumentException(
+                        "This category is used on $taggedCount transaction(s). Choose how to handle them.",
+                    )
+            }
+            val subs = categoryDao.getSubcategoriesForCategoryOnce(categoryId)
+            subs.filter { it.isActive }.forEach { sub ->
+                tombstoneRecorder.recordDeletion(sub.syncId, com.mmr.core.lansync.SyncEntityType.SUBCATEGORY)
+            }
+            categoryDao.deactivateSubcategoriesForCategory(categoryId)
+            tombstoneRecorder.recordDeletion(existing.syncId, com.mmr.core.lansync.SyncEntityType.CATEGORY)
             categoryDao.update(existing.copy(isActive = false))
         }
 
@@ -296,6 +359,7 @@ class CategoryRepositoryImpl
             val existing =
                 categoryDao.getSubcategoryById(subcategoryId)
                     ?: throw IllegalArgumentException("Subcategory not found.")
+            tombstoneRecorder.recordDeletion(existing.syncId, com.mmr.core.lansync.SyncEntityType.SUBCATEGORY)
             categoryDao.updateSubcategory(existing.copy(isActive = false))
         }
     }
@@ -306,6 +370,10 @@ class AccountRepositoryImpl
     constructor(
         private val database: MmrDatabase,
         private val accountDao: AccountDao,
+        private val transactionDao: TransactionDao,
+        private val recurringRuleDao: RecurringRuleDao,
+        private val loanDao: LoanDao,
+        private val tombstoneRecorder: com.mmr.core.lansync.LanSyncTombstoneRecorder,
     ) : AccountRepository {
         override fun getAccounts(): Flow<List<AccountEntity>> = accountDao.getAccounts()
 
@@ -371,6 +439,9 @@ class AccountRepositoryImpl
             val trimmed = name.trim()
             require(trimmed.isNotEmpty()) { "Account name is required." }
             val last4 = cardLastFour?.trim()?.takeIf { it.length == 4 && it.all(Char::isDigit) }
+            if (!isActive && existing.isActive) {
+                tombstoneRecorder.recordDeletion(existing.syncId, com.mmr.core.lansync.SyncEntityType.ACCOUNT)
+            }
             accountDao.update(
                 existing.copy(
                     name = trimmed,
@@ -381,5 +452,118 @@ class AccountRepositoryImpl
                     updatedAt = System.currentTimeMillis(),
                 ),
             )
+        }
+
+        override suspend fun previewAccountDeletion(accountId: Long): AccountDeletionPreview {
+            require(accountId > 0L) { "Account id is required." }
+            getAccountById(accountId) ?: throw IllegalArgumentException("Account not found.")
+            if (loanDao.countByLinkedLoanAccountId(accountId) > 0) {
+                return AccountDeletionPreview(
+                    linkedTransactionCount = transactionDao.countInvolvingAccount(accountId),
+                    linkedRecurringRuleCount = recurringRuleDao.countInvolvingAccount(accountId),
+                    isBlocked = true,
+                    blockReason = "This account is the loan ledger for an active loan. Close or reconfigure the loan first.",
+                )
+            }
+            return AccountDeletionPreview(
+                linkedTransactionCount = transactionDao.countInvolvingAccount(accountId),
+                linkedRecurringRuleCount = recurringRuleDao.countInvolvingAccount(accountId),
+                isBlocked = false,
+            )
+        }
+
+        override suspend fun deleteAccount(
+            accountId: Long,
+            reassignTransactionsToAccountId: Long?,
+        ) {
+            require(accountId > 0L) { "Account id is required." }
+            val existing = getAccountById(accountId) ?: throw IllegalArgumentException("Account not found.")
+            require(existing.isActive) { "Account is already removed." }
+            if (loanDao.countByLinkedLoanAccountId(accountId) > 0) {
+                throw IllegalStateException(
+                    "This account is the loan ledger for a loan. Close or reconfigure the loan first.",
+                )
+            }
+            val activeOthers = accountDao.getActiveAccountsOnce().count { it.id != accountId }
+            require(activeOthers > 0) { "Add another active account before removing this one." }
+
+            val txnCount = transactionDao.countInvolvingAccount(accountId)
+            val recurringCount = recurringRuleDao.countInvolvingAccount(accountId)
+            val needsReassign = txnCount > 0 || recurringCount > 0 || loanDao.countByLinkedDebitAccountId(accountId) > 0
+            val targetId =
+                if (needsReassign) {
+                    val chosen =
+                        reassignTransactionsToAccountId
+                            ?: throw IllegalArgumentException("Choose an active account to move transactions to.")
+                    require(chosen != accountId) { "Choose a different account." }
+                    val target = getAccountById(chosen) ?: throw IllegalArgumentException("Target account not found.")
+                    require(target.isActive) { "Target account must be active." }
+                    chosen
+                } else {
+                    null
+                }
+
+            val now = System.currentTimeMillis()
+            database.withTransaction {
+                if (targetId != null) {
+                    transactionDao.reassignTransactionAccount(accountId, targetId, now)
+                    transactionDao.reassignTransactionRelatedAccount(accountId, targetId, now)
+                    recurringRuleDao.reassignPrimaryAccount(accountId, targetId, now)
+                    recurringRuleDao.reassignRelatedAccount(accountId, targetId, now)
+                    loanDao.reassignLinkedDebitAccount(accountId, targetId, now)
+                    refreshStoredBalances(setOf(accountId, targetId))
+                }
+                if (existing.isDefault) {
+                    accountDao.clearDefaultFlags()
+                }
+                tombstoneRecorder.recordDeletion(existing.syncId, com.mmr.core.lansync.SyncEntityType.ACCOUNT)
+                accountDao.update(
+                    existing.copy(
+                        isActive = false,
+                        isDefault = false,
+                        updatedAt = now,
+                    ),
+                )
+            }
+        }
+
+        private suspend fun refreshStoredBalances(accountIds: Set<Long>) {
+            if (accountIds.isEmpty()) return
+            val transactions = transactionDao.getAllApprovedTransactions()
+            val now = System.currentTimeMillis()
+            for (id in accountIds) {
+                val account = accountDao.getById(id) ?: continue
+                val expected = recomputeBalance(account.openingBalance, id, transactions)
+                if (abs(account.currentBalance - expected) > BALANCE_EPSILON) {
+                    accountDao.update(account.copy(currentBalance = expected, updatedAt = now))
+                }
+            }
+        }
+
+        private fun recomputeBalance(
+            openingBalance: Double,
+            accountId: Long,
+            transactions: List<TransactionEntity>,
+        ): Double {
+            var balance = openingBalance
+            for (txn in transactions) {
+                when (txn.type) {
+                    TransactionType.INCOME ->
+                        if (txn.accountId == accountId) balance += txn.amount
+                    TransactionType.EXPENSE ->
+                        if (txn.accountId == accountId) balance -= txn.amount
+                    TransactionType.TRANSFER -> {
+                        if (TransactionCashFlow.skipsAccountBalanceRecompute(txn)) continue
+                        if (txn.accountId == accountId) balance -= txn.amount
+                        if (txn.relatedAccountId == accountId) balance += txn.amount
+                    }
+                    else -> Unit
+                }
+            }
+            return balance
+        }
+
+        private companion object {
+            const val BALANCE_EPSILON = 0.01
         }
     }

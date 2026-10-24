@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.mmr.app.ui.components.MmrDimens
 
@@ -22,13 +23,16 @@ fun MmrLabelValueRow(
     value: String,
     modifier: Modifier = Modifier,
     valueMaxLines: Int = 3,
+    labelValueGap: Dp = MmrDimens.labelValueGap,
+    rowVerticalPadding: Dp = MmrDimens.spaceXs,
+    rowMinHeight: Dp = 28.dp,
 ) {
     Row(
         modifier =
             modifier
                 .fillMaxWidth()
-                .heightIn(min = 28.dp)
-                .padding(vertical = MmrDimens.spaceXs),
+                .heightIn(min = rowMinHeight)
+                .padding(vertical = rowVerticalPadding),
         verticalAlignment = Alignment.Top,
     ) {
         Text(
@@ -44,7 +48,7 @@ fun MmrLabelValueRow(
             modifier =
                 Modifier
                     .weight(1f)
-                    .padding(start = MmrDimens.labelValueGap),
+                    .padding(start = labelValueGap),
             textAlign = TextAlign.Start,
             maxLines = valueMaxLines,
             overflow = TextOverflow.Ellipsis,

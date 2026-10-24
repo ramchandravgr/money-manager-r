@@ -8,8 +8,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import com.mmr.app.ui.components.MmrDimens
-import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.app.ui.theme.MmrBrandColors
 import com.mmr.feature.stats.model.CategoryBreakdownUi
 import kotlin.math.min
 
@@ -59,7 +60,7 @@ fun StatsPieChart(
         }
         val innerRadius = diameter * 0.45f / 2f
         drawCircle(
-            color = MmrMmColors.ListBackground,
+            color = MmrBrandColors.ListBackground,
             radius = innerRadius,
             center = center,
         )
@@ -78,9 +79,9 @@ internal fun parseHexColor(hex: String): Color =
             when (clean.length) {
                 6 -> (0xFF000000 or clean.toLong(16)).toInt()
                 8 -> clean.toLong(16).toInt()
-                else -> 0xFF3B82F6.toInt()
+                else -> MmrBrandColors.ChartPieFallback.toArgb()
             }
         Color(colorInt)
     } catch (_: Exception) {
-        Color(0xFF3B82F6)
+        MmrBrandColors.ChartPieFallback
     }

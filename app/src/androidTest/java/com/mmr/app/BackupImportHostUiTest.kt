@@ -4,13 +4,16 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performClick
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mmr.app.testing.BackupImportTestFiles
 import com.mmr.app.testing.BackupScreenHostTestBridge
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.testing.MmrUiTestFixtures
+import com.mmr.app.testing.MmrUiTestTraceRule
+import com.mmr.app.testing.traceAction
+import com.mmr.app.testing.traceClickTag
+import com.mmr.app.testing.traceWaitUntil
 import com.mmr.core.backup.BackupImportMode
 import com.mmr.core.database.MmrDatabase
 import com.mmr.core.domain.repository.BackupRepository
@@ -33,6 +36,9 @@ class BackupImportHostUiTest {
 
     @get:Rule(order = 1)
     val composeRule = createAndroidComposeRule<BackupScreenHostActivity>()
+
+    @get:Rule(order = 2)
+    val uiTraceRule = MmrUiTestTraceRule(composeRule)
 
     @Inject
     lateinit var database: MmrDatabase
@@ -61,8 +67,11 @@ class BackupImportHostUiTest {
                 "mmr-host-import-${System.nanoTime()}.json",
             )
         BackupScreenHostTestBridge.pendingImportUri = uri
-        composeRule.activityRule.scenario.recreate()
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.traceAction("host_activity_recreate") {
+            composeRule.activityRule.scenario.recreate()
+        }
+        composeRule.waitForIdle()
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 10_000) {
             composeRule.onAllNodesWithTag(MmrTestTags.backupImportConfirm).fetchSemanticsNodes().isNotEmpty()
         }
     }
@@ -79,9 +88,9 @@ class BackupImportHostUiTest {
 
         launchImportFromPreparedJson(json)
         composeRule.onNodeWithTag(MmrTestTags.backupImportModeReplace).assertExists()
-        composeRule.onNodeWithTag(MmrTestTags.backupImportConfirm).performClick()
+        composeRule.traceClickTag(MmrTestTags.backupImportConfirm)
 
-        composeRule.waitUntil(timeoutMillis = 25_000) {
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 25_000) {
             composeRule.onAllNodesWithText("Restore complete", substring = true).fetchSemanticsNodes().isNotEmpty()
         }
 
@@ -108,10 +117,10 @@ class BackupImportHostUiTest {
         }
 
         launchImportFromPreparedJson(json)
-        composeRule.onNodeWithTag(MmrTestTags.backupImportModeMerge).performClick()
-        composeRule.onNodeWithTag(MmrTestTags.backupImportConfirm).performClick()
+        composeRule.traceClickTag(MmrTestTags.backupImportModeMerge)
+        composeRule.traceClickTag(MmrTestTags.backupImportConfirm)
 
-        composeRule.waitUntil(timeoutMillis = 25_000) {
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 25_000) {
             composeRule.onAllNodesWithText("Merge complete", substring = true).fetchSemanticsNodes().isNotEmpty() ||
                 composeRule.onAllNodesWithText("0 new record", substring = true).fetchSemanticsNodes().isNotEmpty()
         }

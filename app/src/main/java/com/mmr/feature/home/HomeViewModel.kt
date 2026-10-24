@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mmr.app.ui.components.MmrMergeDateOption
+import com.mmr.app.ui.components.MmrTransactionMergeDialogPrep
 import com.mmr.app.ui.state.MmrUiMessages
 import com.mmr.core.common.validation.MmrValidation
 import com.mmr.core.data.preferences.AppDisplaySettingsStore
@@ -11,6 +13,7 @@ import com.mmr.core.data.preferences.toHomeViewTab
 import com.mmr.core.database.relation.TransactionWithDetails
 import com.mmr.core.domain.repository.ApprovalRepository
 import com.mmr.core.domain.repository.CategoryRepository
+import com.mmr.core.domain.repository.LanSyncRepository
 import com.mmr.core.domain.repository.TransactionRepository
 import com.mmr.core.export.PeriodExcelExporter
 import com.mmr.core.model.enums.TransactionType
@@ -37,6 +40,7 @@ class HomeViewModel
         private val approvalRepository: ApprovalRepository,
         private val displaySettingsStore: AppDisplaySettingsStore,
         private val periodExcelExporter: PeriodExcelExporter,
+        private val lanSyncRepository: LanSyncRepository,
     ) : ViewModel() {
         private val zoneId = ZoneId.systemDefault()
 
@@ -55,6 +59,9 @@ class HomeViewModel
         private val _selectedTransactionIds = MutableStateFlow<Set<Long>>(emptySet())
         private val _showMergeDialog = MutableStateFlow(false)
         private val _mergeNameInput = MutableStateFlow("")
+        private val _mergeDateOptions = MutableStateFlow<List<MmrMergeDateOption>>(emptyList())
+        private val _mergeSelectedDateTimeMillis = MutableStateFlow<Long?>(null)
+        private val _mergeCombinedAmountLabel = MutableStateFlow("")
         private val _mergeErrorMessage = MutableStateFlow<String?>(null)
         private val _showDeleteConfirmDialog = MutableStateFlow(false)
         private val _calendarSelectedDate = MutableStateFlow<LocalDate?>(null)
@@ -70,6 +77,7 @@ class HomeViewModel
         private val _isExcelExporting = MutableStateFlow(false)
 
         init {
+            viewModelScope.launch { lanSyncRepository.refreshSessionState() }
             viewModelScope.launch {
                 displaySettings
                     .map { it.startScreenTab }
@@ -402,25 +410,43 @@ class HomeViewModel
                 )
             }
 
-        val uiState: StateFlow<HomeUiState> =
+        val baseHomeUiState: StateFlow<HomeUiState> =
             combine(
                 homeCoreState,
                 displaySettings,
                 combine(
                     combine(
-                        _isSelectionMode,
-                        _selectedTransactionIds,
-                        _showMergeDialog,
-                        _mergeNameInput,
-                        _mergeErrorMessage,
-                    ) { selectionMode, selected, showMerge, mergeName, mergeError ->
-                        SelectionOverlay(
-                            isSelectionMode = selectionMode,
-                            selectedIds = selected,
-                            showMergeDialog = showMerge,
-                            mergeNameInput = mergeName,
-                            mergeErrorMessage = mergeError,
-                            showDeleteConfirmDialog = false,
+                        combine(
+                            _isSelectionMode,
+                            _selectedTransactionIds,
+                            _showMergeDialog,
+                            _mergeNameInput,
+                            _mergeErrorMessage,
+                        ) { selectionMode, selected, showMerge, mergeName, mergeError ->
+                            SelectionOverlay(
+                                isSelectionMode = selectionMode,
+                                selectedIds = selected,
+                                showMergeDialog = showMerge,
+                                mergeNameInput = mergeName,
+                                mergeDateOptions = emptyList(),
+                                mergeSelectedDateTimeMillis = null,
+                                mergeCombinedAmountLabel = "",
+                                mergeErrorMessage = mergeError,
+                                showDeleteConfirmDialog = false,
+                            )
+                        },
+                        combine(
+                            _mergeDateOptions,
+                            _mergeSelectedDateTimeMillis,
+                            _mergeCombinedAmountLabel,
+                        ) { mergeDates, mergeSelectedDate, mergeAmountLabel ->
+                            Triple(mergeDates, mergeSelectedDate, mergeAmountLabel)
+                        },
+                    ) { overlay, mergeMeta ->
+                        overlay.copy(
+                            mergeDateOptions = mergeMeta.first,
+                            mergeSelectedDateTimeMillis = mergeMeta.second,
+                            mergeCombinedAmountLabel = mergeMeta.third,
                         )
                     },
                     _showDeleteConfirmDialog,
@@ -442,6 +468,9 @@ class HomeViewModel
                     selectedTransactionIds = selected,
                     showMergeDialog = selection.showMergeDialog,
                     mergeNameInput = selection.mergeNameInput,
+                    mergeDateOptions = selection.mergeDateOptions,
+                    mergeSelectedDateTimeMillis = selection.mergeSelectedDateTimeMillis,
+                    mergeCombinedAmountLabel = selection.mergeCombinedAmountLabel,
                     mergeErrorMessage = selection.mergeErrorMessage,
                     showDeleteConfirmDialog = selection.showDeleteConfirmDialog,
                     showExcelExportDialog = excel.showDialog,
@@ -464,6 +493,8 @@ class HomeViewModel
                 initialValue = HomeUiState(isLoading = true),
             )
 
+        val uiState: StateFlow<HomeUiState> = baseHomeUiState
+
         private data class HomeCoreInputs(
             val txAndCats: Pair<List<TransactionWithDetails>, List<com.mmr.core.database.entity.CategoryEntity>>,
             val monthData: MonthAggregate,
@@ -477,6 +508,9 @@ class HomeViewModel
             val selectedIds: Set<Long>,
             val showMergeDialog: Boolean,
             val mergeNameInput: String,
+            val mergeDateOptions: List<MmrMergeDateOption>,
+            val mergeSelectedDateTimeMillis: Long?,
+            val mergeCombinedAmountLabel: String,
             val mergeErrorMessage: String?,
             val showDeleteConfirmDialog: Boolean,
         )
@@ -557,6 +591,7 @@ class HomeViewModel
                     _errorMessage.value = null
                     _isRefreshing.value = true
                     _isRefreshing.value = false
+                    viewModelScope.launch { lanSyncRepository.refreshSessionState() }
                 }
 
                 HomeUiEvent.OnAddTransactionClick,
@@ -575,17 +610,13 @@ class HomeViewModel
                     }
                 }
 
-                HomeUiEvent.OnOpenMergeDialog -> {
-                    _mergeErrorMessage.value = null
-                    if (_selectedTransactionIds.value.size >= 2) {
-                        _showMergeDialog.value = true
-                    }
+                HomeUiEvent.OnOpenMergeDialog -> prepareMergeDialog()
+
+                is HomeUiEvent.OnMergeDateSelected -> {
+                    _mergeSelectedDateTimeMillis.value = event.dateTimeMillis
                 }
 
-                HomeUiEvent.OnDismissMergeDialog -> {
-                    _showMergeDialog.value = false
-                    _mergeErrorMessage.value = null
-                }
+                HomeUiEvent.OnDismissMergeDialog -> dismissMergeDialog()
 
                 is HomeUiEvent.OnMergeNameChanged -> {
                     _mergeNameInput.value = event.name
@@ -732,17 +763,59 @@ class HomeViewModel
         private fun clearSelection() {
             _isSelectionMode.value = false
             _selectedTransactionIds.value = emptySet()
+            dismissMergeDialog()
+            _showDeleteConfirmDialog.value = false
+        }
+
+        private fun dismissMergeDialog() {
             _showMergeDialog.value = false
             _mergeNameInput.value = ""
+            _mergeDateOptions.value = emptyList()
+            _mergeSelectedDateTimeMillis.value = null
+            _mergeCombinedAmountLabel.value = ""
             _mergeErrorMessage.value = null
-            _showDeleteConfirmDialog.value = false
+        }
+
+        private fun prepareMergeDialog() {
+            if (_selectedTransactionIds.value.size < 2) return
+            viewModelScope.launch {
+                val ids = _selectedTransactionIds.value.toList()
+                val transactions =
+                    ids.mapNotNull { id ->
+                        transactionRepository.getTransactionDetailedById(id)?.transaction
+                    }
+                if (transactions.size < 2) return@launch
+                val dateFormat = SimpleDateFormat("EEE, d MMM yyyy", Locale.getDefault())
+                val prep =
+                    MmrTransactionMergeDialogPrep.fromTransactionDates(
+                        dateTimes = transactions.map { it.dateTime },
+                        totalAmount = transactions.sumOf { it.amount },
+                        currencySymbol = displaySettings.value.mainCurrencySymbol,
+                        formatDateLabel = { millis -> dateFormat.format(Date(millis)) },
+                    )
+                _mergeDateOptions.value = prep.dateOptions
+                _mergeSelectedDateTimeMillis.value = prep.initialSelectedDateTimeMillis
+                _mergeCombinedAmountLabel.value = prep.combinedAmountLabel
+                _mergeErrorMessage.value = null
+                _showMergeDialog.value = true
+            }
         }
 
         private fun confirmMerge() {
             val ids = _selectedTransactionIds.value.toList()
+            val mergedDate =
+                MmrTransactionMergeDialogPrep.mergedDateTimeForConfirm(
+                    _mergeDateOptions.value.size,
+                    _mergeSelectedDateTimeMillis.value,
+                )
             viewModelScope.launch {
                 try {
-                    val mergedId = transactionRepository.mergeTransactions(ids, _mergeNameInput.value)
+                    val mergedId =
+                        transactionRepository.mergeTransactions(
+                            ids,
+                            _mergeNameInput.value,
+                            mergedDate,
+                        )
                     clearSelection()
                     _mergeErrorMessage.value = null
                     _openTransactionId.tryEmit(mergedId)
@@ -801,6 +874,7 @@ class HomeViewModel
                 timeFormat = timeFormat,
                 showDescription = display.showDescription,
                 showTime = display.timeDisplay.showTime,
+                currencySymbol = display.mainCurrencySymbol,
             )
         }
     }

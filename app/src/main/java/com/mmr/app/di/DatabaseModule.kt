@@ -65,6 +65,10 @@ object DatabaseModule {
     fun provideTransactionDao(database: MmrDatabase): TransactionDao = database.transactionDao()
 
     @Provides
+    fun provideTransactionAttachmentDao(database: MmrDatabase): com.mmr.core.database.dao.TransactionAttachmentDao =
+        database.transactionAttachmentDao()
+
+    @Provides
     fun provideCategoryDao(database: MmrDatabase): CategoryDao = database.categoryDao()
 
     @Provides
@@ -114,4 +118,12 @@ object DatabaseModule {
 
     @Provides
     fun provideLanSyncDao(database: MmrDatabase): com.mmr.core.database.dao.LanSyncDao = database.lanSyncDao()
+
+    @Provides
+    fun provideSyncTombstoneDao(database: MmrDatabase): com.mmr.core.database.dao.SyncTombstoneDao =
+        database.syncTombstoneDao()
+
+    @Provides
+    fun provideLanSyncTombstoneAckDao(database: MmrDatabase): com.mmr.core.database.dao.LanSyncTombstoneAckDao =
+        database.lanSyncTombstoneAckDao()
 }

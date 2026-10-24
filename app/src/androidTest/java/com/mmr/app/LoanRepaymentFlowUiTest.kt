@@ -1,13 +1,13 @@
 package com.mmr.app
 
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mmr.app.testing.MmrHiltUiTest
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.testing.MmrUiTestFixtures
+import com.mmr.app.testing.traceClickTag
+import com.mmr.app.testing.traceTextInputTag
+import com.mmr.app.testing.traceWaitUntil
 import com.mmr.core.domain.repository.LoanRepository
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
@@ -29,19 +29,18 @@ class LoanRepaymentFlowUiTest : MmrHiltUiTest() {
                 MmrUiTestFixtures.seedFlexibleLoan(loanRepository, loanName, principal = 1_000.0)
             }
 
-        composeRule.activityRule.scenario.recreate()
+        traceActivityRecreate()
+
+        composeRule.traceClickTag(MmrTestTags.navLoans)
+        composeRule.traceClickTag(MmrTestTags.loanRow(loanId))
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag(MmrTestTags.navLoans).performClick()
-        composeRule.onNodeWithTag(MmrTestTags.loanRow(loanId)).performClick()
-        composeRule.waitForIdle()
-
-        composeRule.onNodeWithTag(MmrTestTags.loanDetailFabRepayment).performClick()
+        composeRule.traceClickTag(MmrTestTags.loanDetailFabRepayment)
         composeRule.onNodeWithText("Record payment").assertExists()
-        composeRule.onNodeWithTag(MmrTestTags.loanRepaymentAmount).performTextInput("250")
-        composeRule.onNodeWithTag(MmrTestTags.loanRepaymentConfirm).performClick()
+        composeRule.traceTextInputTag(MmrTestTags.loanRepaymentAmount, "250")
+        composeRule.traceClickTag(MmrTestTags.loanRepaymentConfirm)
 
-        composeRule.waitUntil(timeoutMillis = 15_000) {
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 15_000) {
             runCatching {
                 composeRule.onNodeWithText("750.00", substring = true).assertExists()
                 true

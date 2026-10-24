@@ -2,6 +2,7 @@ package com.mmr.core.data.preferences
 
 import android.content.Context
 import com.mmr.core.model.settings.MmrAmountColorScheme
+import com.mmr.core.model.settings.MmrAppColorTheme
 import com.mmr.core.model.settings.MmrInputOrder
 import com.mmr.core.model.settings.MmrStartScreenTab
 import com.mmr.core.model.settings.MmrSwipeBehavior
@@ -29,6 +30,7 @@ data class AppDisplaySettingsSnapshot(
     val showDescription: Boolean = true,
     val autocompleteEnabled: Boolean = true,
     val inputOrder: MmrInputOrder = MmrInputOrder.FROM_AMOUNT,
+    val appColorTheme: MmrAppColorTheme = MmrAppColorTheme.CLASSIC_CORAL,
 )
 
 @Singleton
@@ -77,6 +79,8 @@ class AppDisplaySettingsStore
 
         fun setInputOrder(order: MmrInputOrder) = update { it.copy(inputOrder = order) }
 
+        fun setAppColorTheme(theme: MmrAppColorTheme) = update { it.copy(appColorTheme = theme) }
+
         fun applySnapshot(snapshot: AppDisplaySettingsSnapshot) {
             persist(snapshot)
             _settings.value = snapshot
@@ -97,6 +101,7 @@ class AppDisplaySettingsStore
                 .putBoolean(KEY_SHOW_DESC, snapshot.showDescription)
                 .putBoolean(KEY_AUTOCOMPLETE, snapshot.autocompleteEnabled)
                 .putString(KEY_INPUT_ORDER, snapshot.inputOrder.name)
+                .putString(KEY_APP_COLOR_THEME, snapshot.appColorTheme.name)
                 .apply()
         }
 
@@ -139,6 +144,11 @@ class AppDisplaySettingsStore
                         prefs.getString(KEY_INPUT_ORDER, null),
                         MmrInputOrder.FROM_AMOUNT,
                     ),
+                appColorTheme =
+                    enumOrDefault(
+                        prefs.getString(KEY_APP_COLOR_THEME, null),
+                        MmrAppColorTheme.CLASSIC_CORAL,
+                    ),
             )
 
         private inline fun <reified T : Enum<T>> enumOrDefault(
@@ -172,6 +182,7 @@ class AppDisplaySettingsStore
             const val KEY_SHOW_DESC = "show_description"
             const val KEY_AUTOCOMPLETE = "autocomplete"
             const val KEY_INPUT_ORDER = "input_order"
+            const val KEY_APP_COLOR_THEME = "app_color_theme"
         }
     }
 

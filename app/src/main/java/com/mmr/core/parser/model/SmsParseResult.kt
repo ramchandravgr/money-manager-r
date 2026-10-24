@@ -6,14 +6,22 @@ data class SmsInboxScanSummary(
     val statementNotices: Int = 0,
     val investmentNotices: Int = 0,
     val cardPaymentNotices: Int = 0,
+    val cardRefunds: List<ParsedSmsCandidate> = emptyList(),
     val duplicateSuppressed: Int = 0,
 ) {
     val informationalCount: Int =
         mandateNotices + statementNotices + investmentNotices + cardPaymentNotices
+
+    val cardRefundNotices: Int = cardRefunds.size
 }
 
 sealed class SmsParseResult {
     data class Transaction(
+        val candidate: ParsedSmsCandidate,
+    ) : SmsParseResult()
+
+    /** Card merchant refund / reversal — queue for “apply to purchase”, not income. */
+    data class CardRefund(
         val candidate: ParsedSmsCandidate,
     ) : SmsParseResult()
 

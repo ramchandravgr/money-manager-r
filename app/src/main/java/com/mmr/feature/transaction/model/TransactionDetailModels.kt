@@ -8,6 +8,7 @@ data class LinkedSmsItemUi(
     val snippet: String,
     val receivedLabel: String,
     val amountFormatted: String?,
+    val roleLabel: String? = null,
 )
 
 data class TransactionDetailUiState(
@@ -23,7 +24,10 @@ data class TransactionDetailUiState(
     val paymentChannelLabel: String? = null,
     val paymentInstrumentLabel: String? = null,
     val cardMetadataLabel: String? = null,
+    val syncedFromLabel: String? = null,
+    val refundSummaryLabel: String? = null,
     val linkedSms: List<LinkedSmsItemUi> = emptyList(),
+    val receipts: List<TransactionReceiptUi> = emptyList(),
     val errorMessage: String? = null,
     val dateTimeMillis: Long = 0L,
     val showDeleteConfirmDialog: Boolean = false,

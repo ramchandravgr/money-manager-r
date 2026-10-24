@@ -51,6 +51,7 @@ interface TransactionRepository {
     suspend fun mergeTransactions(
         transactionIds: List<Long>,
         mergedName: String,
+        mergedDateTime: Long? = null,
     ): Long
 
     fun getLinkedSmsForTransaction(transactionId: Long): Flow<List<SmsMessageRecordEntity>>
@@ -115,7 +116,13 @@ interface CategoryRepository {
 
     suspend fun updateCategory(category: CategoryEntity)
 
-    suspend fun deleteCategory(categoryId: Long)
+    suspend fun countTransactionsForCategory(categoryId: Long): Int
+
+    suspend fun deleteCategory(
+        categoryId: Long,
+        transactionMode: com.mmr.core.domain.model.CategoryDeleteTransactionMode,
+        migrateToCategoryId: Long? = null,
+    )
 
     suspend fun createSubcategory(subcategory: SubcategoryEntity): Long
 
@@ -151,4 +158,11 @@ interface AccountRepository {
     suspend fun getDefaultAccount(): AccountEntity?
 
     suspend fun setPrimaryAccount(accountId: Long)
+
+    suspend fun previewAccountDeletion(accountId: Long): com.mmr.core.domain.model.AccountDeletionPreview
+
+    suspend fun deleteAccount(
+        accountId: Long,
+        reassignTransactionsToAccountId: Long? = null,
+    )
 }

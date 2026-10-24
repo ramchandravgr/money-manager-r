@@ -25,35 +25,36 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.app.ui.theme.MmrBrandColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MmrTopAppBar(
     title: String,
+    subtitle: String? = null,
     modifier: Modifier = Modifier,
     showBackNavigation: Boolean = false,
     onNavigateBack: (() -> Unit)? = null,
     /** When set with back navigation, shows a text action (e.g. "Cancel") instead of the back icon. */
     navigationLabel: String? = null,
-    /** @deprecated Use [useMmHeaderStyle] — kept for call sites; enables MM indigo header when true. */
+    /** @deprecated Use [useBrandHeaderStyle] — kept for call sites; enables brand indigo header when true. */
     usePrimaryContainerColors: Boolean = false,
     /** Indigo header that extends under the status bar (matches Transactions / Home). */
-    useMmHeaderStyle: Boolean = false,
-    /** Lighter MM header title (15sp, normal weight). Default true when [useMmHeaderStyle]. */
-    useMmCompactTitle: Boolean? = null,
+    useBrandHeaderStyle: Boolean = false,
+    /** Lighter header title (15sp, normal weight). Default true when [useBrandHeaderStyle]. */
+    useCompactHeaderTitle: Boolean? = null,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
-    val mmStyle = useMmHeaderStyle || usePrimaryContainerColors
-    val compactTitle = useMmCompactTitle ?: mmStyle
+    val brandHeader = useBrandHeaderStyle || usePrimaryContainerColors
+    val compactTitle = useCompactHeaderTitle ?: brandHeader
 
     val colors: TopAppBarColors =
-        if (mmStyle) {
+        if (brandHeader) {
             TopAppBarDefaults.topAppBarColors(
                 containerColor = Color.Transparent,
-                titleContentColor = MmrMmColors.HeaderIcon,
-                navigationIconContentColor = MmrMmColors.HeaderIcon,
-                actionIconContentColor = MmrMmColors.HeaderIcon,
+                titleContentColor = MmrBrandColors.HeaderIcon,
+                navigationIconContentColor = MmrBrandColors.HeaderIcon,
+                actionIconContentColor = MmrBrandColors.HeaderIcon,
             )
         } else {
             TopAppBarDefaults.topAppBarColors()
@@ -63,20 +64,36 @@ fun MmrTopAppBar(
         TopAppBar(
             modifier = Modifier.then(modifier),
             title = {
-                val compact = mmStyle && compactTitle
-                Text(
-                    text = title,
-                    style =
-                        if (compact) {
-                            MaterialTheme.typography.titleMedium
-                        } else {
-                            MaterialTheme.typography.titleLarge
-                        },
-                    fontWeight = FontWeight.Normal,
-                    color = if (mmStyle) MmrMmColors.HeaderIcon else Color.Unspecified,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                val compact = brandHeader && compactTitle
+                Column {
+                    Text(
+                        text = title,
+                        style =
+                            if (compact) {
+                                MaterialTheme.typography.titleMedium
+                            } else {
+                                MaterialTheme.typography.titleLarge
+                            },
+                        fontWeight = FontWeight.Normal,
+                        color = if (brandHeader) MmrBrandColors.HeaderIcon else Color.Unspecified,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (subtitle != null) {
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.labelSmall,
+                            color =
+                                if (brandHeader) {
+                                    MmrBrandColors.TabText
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
             },
             navigationIcon = {
                 if (showBackNavigation && onNavigateBack != null) {
@@ -85,8 +102,8 @@ fun MmrTopAppBar(
                             Text(
                                 text = navigationLabel,
                                 color =
-                                    if (mmStyle) {
-                                        MmrMmColors.HeaderIcon
+                                    if (brandHeader) {
+                                        MmrBrandColors.HeaderIcon
                                     } else {
                                         MaterialTheme.colorScheme.onSurface
                                     },
@@ -102,8 +119,8 @@ fun MmrTopAppBar(
                                 contentDescription = "Back",
                                 modifier = Modifier.size(MmrDimens.iconMd),
                                 tint =
-                                    if (mmStyle) {
-                                        MmrMmColors.HeaderIcon
+                                    if (brandHeader) {
+                                        MmrBrandColors.HeaderIcon
                                     } else {
                                         MaterialTheme.colorScheme.onSurface
                                     },
@@ -114,16 +131,16 @@ fun MmrTopAppBar(
             },
             actions = actions,
             colors = colors,
-            windowInsets = if (mmStyle) WindowInsets(0) else TopAppBarDefaults.windowInsets,
+            windowInsets = if (brandHeader) WindowInsets(0) else TopAppBarDefaults.windowInsets,
         )
     }
 
-    if (mmStyle) {
+    if (brandHeader) {
         Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .background(MmrMmColors.Header)
+                    .background(MmrBrandColors.Header)
                     .statusBarsPadding(),
         ) {
             appBar()

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Money Inbox — Web Manage</title>
+  <link rel="stylesheet" href="/mmr/web/app.css" />
+</head>
+<body>
+  <header>
+    <h1>Money Inbox</h1>
+    <p id="status-line">Connect on the same Wi‑Fi as your phone.</p>
+    <button type="button" id="logout-btn" class="link-btn hidden">Sign out</button>
+  </header>
+  <main>
+    <section id="login-panel" class="card login-card hidden">
+      <h2>Sign in</h2>
+      <p class="login-lead">Use the Web Manage password from your phone settings.</p>
+      <form id="login-form" autocomplete="on">
+        <label>Password <input type="password" id="password" name="password" autocomplete="current-password" required /></label>
+        <button id="login-btn" type="submit">Sign in</button>
+        <p id="login-error" class="error" role="alert"></p>
+      </form>
+    </section>
+    <section id="app-panel" class="hidden">
+      <nav class="tabs">
+        <button type="button" data-tab="approvals" class="active">Approvals</button>
+        <button type="button" data-tab="transactions">Transactions</button>
+        <button type="button" data-tab="stats">Spending</button>
+      </nav>
+      <div id="tab-approvals" class="tab-panel"></div>
+      <div id="tab-transactions" class="tab-panel hidden txn-screen">
+        <div class="txn-filters filter-bar">
+          <label class="filter-field">
+            <span class="filter-label">Period</span>
+            <select id="txn-period" class="filter-control filter-select">
+              <option value="7">Last 7 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="365">Last 12 months</option>
+              <option value="custom">Custom</option>
+            </select>
+          </label>
+          <div id="txn-custom-dates" class="stats-custom-range hidden">
+            <label class="filter-field">
+              <span class="filter-label">From</span>
+              <input type="date" id="txn-filter-start" class="filter-control" />
+            </label>
+            <label class="filter-field">
+              <span class="filter-label">To</span>
+              <input type="date" id="txn-filter-end" class="filter-control" />
+            </label>
+          </div>
+          <label class="filter-field">
+            <span class="filter-label">Type</span>
+            <select id="txn-filter-type" class="filter-control filter-select">
+              <option value="">All</option>
+              <option value="EXPENSE">Expense</option>
+              <option value="INCOME">Income</option>
+              <option value="TRANSFER">Transfer</option>
+            </select>
+          </label>
+          <label class="filter-field">
+            <span class="filter-label">Account</span>
+            <select id="txn-filter-account" class="filter-control filter-select"><option value="">All</option></select>
+          </label>
+          <label class="filter-field">
+            <span class="filter-label">Category</span>
+            <select id="txn-filter-category" class="filter-control filter-select"><option value="">All</option></select>
+          </label>
+          <label class="filter-field filter-field--grow">
+            <span class="filter-label">Search</span>
+            <input type="search" id="txn-filter-q" class="filter-control" placeholder="Note, reference…" />
+          </label>
+          <label class="filter-field">
+            <span class="filter-label">Sort</span>
+            <select id="txn-filter-sort" class="filter-control filter-select">
+              <option value="date-desc">Newest first</option>
+              <option value="date-asc">Oldest first</option>
+              <option value="amount-desc">Amount high → low</option>
+              <option value="amount-asc">Amount low → high</option>
+            </select>
+          </label>
+          <div class="filter-field filter-field--action">
+            <span class="filter-label filter-label--spacer" aria-hidden="true">&#8203;</span>
+            <button type="button" id="txn-apply-filters" class="secondary filter-action-btn">Apply</button>
+          </div>
+          <div class="filter-field filter-field--preset">
+            <span class="filter-label">Preset</span>
+            <div class="filter-inline-actions">
+              <select id="txn-preset-load" class="filter-control filter-select"><option value="">Saved presets…</option></select>
+              <button type="button" id="txn-preset-save" class="secondary filter-action-btn">Save</button>
+              <button type="button" id="txn-preset-delete" class="secondary filter-action-btn">Delete</button>
+            </div>
+          </div>
+        </div>
+        <div id="txn-filter-summary" class="stats-summary txn-summary"></div>
+        <div class="txn-toolbar-stack">
+          <div class="list-toolbar toolbar-panel" id="txn-bulk-toolbar">
+            <label class="inline-check toolbar-check"><input type="checkbox" id="txn-select-all" /> Select all shown</label>
+            <div class="toolbar-actions">
+              <button type="button" id="txn-bulk-delete" class="danger toolbar-btn" disabled>Delete selected</button>
+              <button type="button" id="txn-export-excel" class="secondary toolbar-btn">Export Excel</button>
+            </div>
+            <span class="meta toolbar-meta" id="txn-bulk-count"></span>
+            <span class="meta toolbar-hint">↑↓ to move in list</span>
+          </div>
+          <div class="list-toolbar toolbar-panel" id="txn-toolbar">
+            <span class="toolbar-label">View</span>
+            <div class="segmented-control">
+              <button type="button" class="secondary view-toggle active" data-txn-view="split">List + detail</button>
+              <button type="button" class="secondary view-toggle" data-txn-view="cards">Cards</button>
+              <button type="button" class="secondary view-toggle" data-txn-view="table">Table</button>
+            </div>
+          </div>
+        </div>
+        <div id="txn-split-layout" class="txn-split-layout">
+          <div id="txn-list-pane" class="txn-list-pane"></div>
+          <section id="txn-detail-pane" class="txn-detail-pane">
+            <p class="meta" id="txn-detail-empty">Select a transaction from the list.</p>
+            <form id="txn-detail-form" class="txn-detail-form hidden">
+              <h3 class="txn-detail-title">Transaction</h3>
+              <input type="hidden" id="txn-detail-id" />
+              <label class="filter-field">
+                <span class="filter-label">Amount</span>
+                <input type="number" step="0.01" id="txn-detail-amount" class="filter-control" required />
+              </label>
+              <label class="filter-field">
+                <span class="filter-label">Date</span>
+                <input type="datetime-local" id="txn-detail-datetime" class="filter-control" />
+              </label>
+              <label class="filter-field">
+                <span class="filter-label">Type</span>
+                <select id="txn-detail-type" class="filter-control filter-select">
+                  <option value="EXPENSE">Expense</option>
+                  <option value="INCOME">Income</option>
+                  <option value="TRANSFER">Transfer</option>
+                </select>
+              </label>
+              <label class="filter-field">
+                <span class="filter-label">From account</span>
+                <select id="txn-detail-account" class="filter-control filter-select"></select>
+              </label>
+              <label id="txn-detail-to-wrap" class="filter-field hidden">
+                <span class="filter-label">To account</span>
+                <select id="txn-detail-related" class="filter-control filter-select"></select>
+              </label>
+              <div id="txn-detail-cat-block" class="txn-detail-cat-block">
+                <label class="filter-field">
+                  <span class="filter-label">Category</span>
+                  <select id="txn-detail-category" class="filter-control filter-select"></select>
+                </label>
+                <div class="filter-field filter-field--action">
+                  <span class="filter-label filter-label--spacer" aria-hidden="true">&#8203;</span>
+                  <button type="button" class="secondary filter-action-btn" id="txn-detail-add-cat">+ Category</button>
+                </div>
+                <label class="filter-field">
+                  <span class="filter-label">Subcategory</span>
+                  <select id="txn-detail-subcategory" class="filter-control filter-select"><option value="">—</option></select>
+                </label>
+                <div class="filter-field filter-field--action">
+                  <span class="filter-label filter-label--spacer" aria-hidden="true">&#8203;</span>
+                  <button type="button" class="secondary filter-action-btn" id="txn-detail-add-sub">+ Subcategory</button>
+                </div>
+              </div>
+              <label class="filter-field txn-detail-note">
+                <span class="filter-label">Note</span>
+                <input type="text" id="txn-detail-note" class="filter-control" />
+              </label>
+              <div class="dialog-actions txn-detail-actions">
+                <button type="button" id="txn-detail-delete" class="danger toolbar-btn">Delete</button>
+                <button type="submit" id="txn-detail-save" class="toolbar-btn">Save</button>
+              </div>
+            </form>
+          </section>
+        </div>
+        <div id="txn-alt-host" class="hidden"></div>
+      </div>
+      <div id="tab-stats" class="tab-panel hidden">
+        <div class="filter-bar stats-toolbar">
+          <div class="filter-field" id="stats-ledger">
+            <span class="filter-label">Chart</span>
+            <div class="segmented-control">
+              <button type="button" class="secondary view-toggle active" data-ledger="expense">Expense</button>
+              <button type="button" class="secondary view-toggle" data-ledger="income">Income</button>
+            </div>
+          </div>
+          <label class="filter-field">
+            <span class="filter-label">Period</span>
+            <select id="stats-mode" class="filter-control filter-select">
+              <option value="week">This week</option>
+              <option value="month" selected>This month</option>
+              <option value="year">This year</option>
+              <option value="custom">Custom range</option>
+            </select>
+          </label>
+          <div id="stats-custom-range" class="stats-custom-range hidden">
+            <label class="filter-field">
+              <span class="filter-label">From</span>
+              <input type="date" id="stats-start-date" class="filter-control" />
+            </label>
+            <label class="filter-field">
+              <span class="filter-label">To</span>
+              <input type="date" id="stats-end-date" class="filter-control" />
+            </label>
+          </div>
+          <div class="filter-field filter-field--action">
+            <span class="filter-label filter-label--spacer" aria-hidden="true">&#8203;</span>
+            <button type="button" id="stats-refresh" class="secondary filter-action-btn">Apply</button>
+          </div>
+        </div>
+        <p id="stats-period-label" class="meta stats-period-label"></p>
+        <div id="stats-summary" class="stats-summary"></div>
+        <h3 id="stats-chart-title" class="stats-chart-title">Expenses by category</h3>
+        <div id="stats-chart" class="chart-box"></div>
+        <div id="stats-category-list" class="stats-category-list"></div>
+        <h3 id="stats-txn-title" class="stats-chart-title">Transactions in this period</h3>
+        <div id="stats-txn-table"></div>
+      </div>
+    </section>
+  </main>
+  <dialog id="txn-dialog">
+    <form id="txn-form" method="dialog">
+      <h3>Edit transaction</h3>
+      <input type="hidden" id="txn-id" />
+      <label>Amount <input type="number" step="0.01" id="txn-amount" required /></label>
+      <label>Type
+        <select id="txn-type">
+          <option value="EXPENSE">Expense</option>
+          <option value="INCOME">Income</option>
+          <option value="TRANSFER">Transfer</option>
+        </select>
+      </label>
+      <label>From account <select id="txn-account"></select></label>
+      <label id="txn-to-wrap" class="hidden">To account <select id="txn-related-account"></select></label>
+      <div id="txn-cat-block">
+        <label id="txn-cat-wrap">Category <select id="txn-category"></select></label>
+        <div class="inline-add"><button type="button" class="secondary" id="txn-add-cat">+ Category</button></div>
+        <label id="txn-sub-wrap">Subcategory <select id="txn-subcategory"><option value="">—</option></select></label>
+        <div class="inline-add"><button type="button" class="secondary" id="txn-add-sub">+ Subcategory</button></div>
+      </div>
+      <label>Note <input type="text" id="txn-note" /></label>
+      <div class="dialog-actions">
+        <button type="button" id="txn-delete" class="danger">Delete</button>
+        <button type="button" id="txn-cancel" class="secondary">Cancel</button>
+        <button type="submit" id="txn-save">Save</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="sms-dialog" class="sms-dialog">
+    <h3>SMS message</h3>
+    <p class="meta" id="sms-dialog-meta"></p>
+    <pre id="sms-dialog-body" class="sms-dialog-body"></pre>
+    <div class="dialog-actions">
+      <button type="button" id="sms-dialog-close" class="secondary">Close</button>
+    </div>
+  </dialog>
+  <dialog id="merge-dialog">
+    <form id="merge-form" method="dialog">
+      <h3>Link SMS to existing transaction</h3>
+      <p class="meta" id="merge-summary"></p>
+      <label>Search ledger
+        <input type="search" id="merge-search" placeholder="Amount, note, category…" />
+      </label>
+      <div id="merge-suggested" class="merge-section hidden">
+        <strong>Suggested matches</strong>
+        <div id="merge-suggested-list" class="merge-pick-list"></div>
+      </div>
+      <div class="merge-section">
+        <strong>All recent transactions</strong>
+        <div id="merge-txn-list" class="merge-pick-list"></div>
+      </div>
+      <label id="merge-cat-wrap">Category on merge
+        <select id="merge-category"></select>
+      </label>
+      <label id="merge-sub-wrap">Subcategory
+        <select id="merge-subcategory"><option value="">—</option></select>
+      </label>
+      <label class="inline-check"><input type="checkbox" id="merge-use-ledger" /> Use ledger category</label>
+      <div class="dialog-actions">
+        <button type="button" id="merge-cancel" class="secondary">Cancel</button>
+        <button type="submit" id="merge-confirm" disabled>Link selected</button>
+      </div>
+    </form>
+  </dialog>
+  <script src="/mmr/web/app.js"></script>
+</body>
+</html>

@@ -23,6 +23,9 @@ interface RecurringRuleDao {
     @Query("SELECT * FROM recurring_rules WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): RecurringRuleEntity?
 
+    @Query("SELECT * FROM recurring_rules WHERE syncId = :syncId LIMIT 1")
+    suspend fun getBySyncId(syncId: String): RecurringRuleEntity?
+
     @Query("SELECT * FROM recurring_rules WHERE id = :id LIMIT 1")
     fun getByIdFlow(id: Long): Flow<RecurringRuleEntity?>
 
@@ -66,6 +69,65 @@ interface RecurringRuleDao {
 
     @Query("SELECT COUNT(*) FROM recurring_rules WHERE isEnabled = 1")
     fun getEnabledRulesCount(): Flow<Int>
+
+    @Query(
+        """
+        SELECT COUNT(*) FROM recurring_rules
+        WHERE accountId = :accountId OR relatedAccountId = :accountId
+        """,
+    )
+    suspend fun countInvolvingAccount(accountId: Long): Int
+
+    @Query(
+        """
+        UPDATE recurring_rules
+        SET accountId = :toAccountId, updatedAt = :now
+        WHERE accountId = :fromAccountId
+        """,
+    )
+    suspend fun reassignPrimaryAccount(
+        fromAccountId: Long,
+        toAccountId: Long,
+        now: Long = System.currentTimeMillis(),
+    )
+
+    @Query(
+        """
+        UPDATE recurring_rules
+        SET relatedAccountId = :toAccountId, updatedAt = :now
+        WHERE relatedAccountId = :fromAccountId
+        """,
+    )
+    suspend fun reassignRelatedAccount(
+        fromAccountId: Long,
+        toAccountId: Long,
+        now: Long = System.currentTimeMillis(),
+    )
+
+    @Query(
+        """
+        UPDATE recurring_rules
+        SET categoryId = :toCategoryId, subcategoryId = NULL, updatedAt = :now
+        WHERE categoryId = :fromCategoryId
+        """,
+    )
+    suspend fun migrateCategory(
+        fromCategoryId: Long,
+        toCategoryId: Long,
+        now: Long = System.currentTimeMillis(),
+    )
+
+    @Query(
+        """
+        UPDATE recurring_rules
+        SET categoryId = NULL, subcategoryId = NULL, updatedAt = :now
+        WHERE categoryId = :categoryId
+        """,
+    )
+    suspend fun clearCategory(
+        categoryId: Long,
+        now: Long = System.currentTimeMillis(),
+    )
 }
 
 @Dao
@@ -85,6 +147,9 @@ interface NotificationRuleDao {
     @Query("SELECT * FROM notification_rules WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): NotificationRuleEntity?
 
+    @Query("SELECT * FROM notification_rules WHERE syncId = :syncId LIMIT 1")
+    suspend fun getBySyncId(syncId: String): NotificationRuleEntity?
+
     @Query("SELECT * FROM notification_rules WHERE enabled = 1 ORDER BY scheduleTime ASC")
     fun getEnabledRules(): Flow<List<NotificationRuleEntity>>
 
@@ -95,6 +160,12 @@ interface NotificationRuleDao {
 
     @Query("UPDATE notification_rules SET isFired = 1 WHERE id = :ruleId")
     suspend fun markAsFired(ruleId: Long)
+
+    @Query("SELECT * FROM notification_rules WHERE targetRecurringRuleId = :recurringRuleId")
+    suspend fun listForRecurringRule(recurringRuleId: Long): List<NotificationRuleEntity>
+
+    @Query("SELECT * FROM notification_rules WHERE targetLoanId = :loanId")
+    suspend fun listForLoan(loanId: Long): List<NotificationRuleEntity>
 
     @Query("DELETE FROM notification_rules WHERE targetRecurringRuleId = :recurringRuleId")
     suspend fun deleteForRecurringRule(recurringRuleId: Long)

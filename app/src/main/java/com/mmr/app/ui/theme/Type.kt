@@ -7,7 +7,7 @@ import androidx.compose.ui.unit.sp
 
 private val base = Typography()
 
-/** System sans-serif, slightly smaller sizes, normal weight — minimal MM-style density. */
+/** System sans-serif, slightly smaller sizes, normal weight — compact list density. */
 val Typography: Typography =
     Typography(
         displayLarge = base.displayLarge.withMmrFont().copy(fontSize = 48.sp, fontWeight = FontWeight.Normal),

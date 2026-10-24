@@ -1,34 +1,43 @@
 package com.mmr.feature.settings.ui
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.mmr.app.ui.components.MmrContentDialog
-import com.mmr.app.ui.components.MmrMmHeaderBar
-import com.mmr.app.ui.components.MmrMmLightNavRow
-import com.mmr.app.ui.components.MmrMmLightSwitchRow
-import com.mmr.app.ui.components.MmrMmSettingsSectionTitle
-import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.app.ui.components.MmrIosSettingsChoiceRow
+import com.mmr.app.ui.components.MmrIosSettingsNavRow
+import com.mmr.app.ui.components.MmrIosSettingsSection
+import com.mmr.app.ui.components.MmrIosSettingsSingleChoiceSheet
+import com.mmr.app.ui.components.MmrIosSettingsSwitchRow
+import com.mmr.app.ui.components.MmrSettingsChoiceLabelWithSwatches
+import com.mmr.app.ui.components.MmrSettingsColorSwatchStrip
+import com.mmr.app.ui.components.MmrSettingsScreenLayout
+import com.mmr.app.ui.components.MmrSettingsScreenScaffold
+import com.mmr.app.ui.theme.MmrBrandColors
+import com.mmr.app.ui.theme.MmrThemePresets
+import com.mmr.core.data.preferences.AppDisplaySettingsSnapshot
 import com.mmr.core.model.settings.MmrAmountColorScheme
+import com.mmr.core.model.settings.MmrAppColorTheme
 import com.mmr.core.model.settings.MmrStartScreenTab
 import com.mmr.core.model.settings.MmrSwipeBehavior
 import com.mmr.core.model.settings.MmrTimeDisplay
 import com.mmr.core.model.settings.MmrWeekStartDay
 import com.mmr.feature.settings.viewmodel.ConfigurationViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConfigurationScreen(
     onNavigateBack: () -> Unit,
@@ -36,10 +45,13 @@ fun ConfigurationScreen(
 ) {
     val settings by viewModel.settings.collectAsState()
     var picker by remember { mutableStateOf<ConfigPicker?>(null) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     picker?.let { active ->
-        ConfigPickerDialog(
+        ConfigPickerSheet(
             picker = active,
+            settings = settings,
+            sheetState = sheetState,
             onDismiss = { picker = null },
             onSelectStartScreen = {
                 viewModel.setStartScreen(it)
@@ -65,84 +77,101 @@ fun ConfigurationScreen(
                 viewModel.setTimeDisplay(it)
                 picker = null
             },
+            onSelectAppTheme = {
+                viewModel.setAppColorTheme(it)
+                picker = null
+            },
         )
     }
 
-    Scaffold(
-        containerColor = MmrMmColors.ListBackground,
-        topBar = {
-            MmrMmHeaderBar(
-                title = "App settings",
-                showBack = true,
-                onBack = onNavigateBack,
-            )
-        },
-    ) { innerPadding ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .verticalScroll(rememberScrollState()),
+    MmrSettingsScreenScaffold(
+        title = "Transaction Appearance",
+        onNavigateBack = onNavigateBack,
+        layout = MmrSettingsScreenLayout.InsetGrouped,
+    ) {
+        MmrIosSettingsSection(
+            title = "Home & periods",
+            isFirstInScreen = true,
+            footer = "Month and week boundaries, default tab, and running balance.",
         ) {
-            MmrMmSettingsSectionTitle(
-                title = "Home & periods",
-                subtitle = "Month/week boundaries, default tab, and running balance",
-            )
-            MmrMmLightNavRow(
+            MmrIosSettingsNavRow(
                 label = "Start screen",
                 value = settings.startScreenTab.label,
                 onClick = { picker = ConfigPicker.StartScreen },
             )
-            MmrMmLightNavRow(
+            MmrIosSettingsNavRow(
                 label = "Monthly start date",
                 value = "Every ${settings.monthStartDay}",
                 onClick = { picker = ConfigPicker.MonthStart },
             )
-            MmrMmLightNavRow(
+            MmrIosSettingsNavRow(
                 label = "Weekly start day",
                 value = settings.weekStartDay.label,
                 onClick = { picker = ConfigPicker.WeekStart },
             )
-            MmrMmLightNavRow(
+            MmrIosSettingsNavRow(
                 label = "Swipe on home & stats",
                 value = settings.swipeBehavior.label,
                 onClick = { picker = ConfigPicker.Swipe },
             )
-            MmrMmLightSwitchRow(
+            MmrIosSettingsSwitchRow(
                 label = "Balance carry-over",
                 checked = settings.budgetCarryOver,
                 onCheckedChange = viewModel::setCarryOver,
+                showDividerBelow = false,
             )
+        }
 
-            MmrMmSettingsSectionTitle(
-                title = "Appearance",
-                subtitle = "Colors and transaction list details",
+        MmrIosSettingsSection(
+            title = "Appearance",
+            footer = "Colors and how transactions look on Home.",
+        ) {
+            MmrIosSettingsNavRow(
+                label = "App color theme",
+                onClick = { picker = ConfigPicker.AppTheme },
+                valueContent = {
+                    ConfigurationNavValueWithSwatches(
+                        title = settings.appColorTheme.label,
+                        swatchColors = MmrThemePresets.appThemePreviewColors(settings.appColorTheme),
+                    )
+                },
             )
-            MmrMmLightNavRow(
+            MmrIosSettingsNavRow(
                 label = "Income / expense colors",
-                value = settings.amountColorScheme.label,
                 onClick = { picker = ConfigPicker.AmountColors },
+                valueContent = {
+                    ConfigurationNavValueWithSwatches(
+                        title = settings.amountColorScheme.label,
+                        swatchColors =
+                            MmrThemePresets.amountSchemePreviewColors(
+                                settings.appColorTheme,
+                                settings.amountColorScheme,
+                            ),
+                    )
+                },
             )
-            MmrMmLightNavRow(
+            MmrIosSettingsNavRow(
                 label = "Time on transactions",
                 value = settings.timeDisplay.label,
                 onClick = { picker = ConfigPicker.TimeDisplay },
             )
-            MmrMmLightSwitchRow(
+            MmrIosSettingsSwitchRow(
                 label = "Show description on home",
                 checked = settings.showDescription,
                 onCheckedChange = viewModel::setShowDescription,
+                showDividerBelow = false,
             )
+        }
 
-            MmrMmSettingsSectionTitle(
-                title = "Data entry",
-                subtitle = "Suggestions while you add transactions",
-            )
-            MmrMmLightSwitchRow(
+        MmrIosSettingsSection(
+            title = "Data entry",
+            footer = "Suggestions while you add transactions.",
+        ) {
+            MmrIosSettingsSwitchRow(
                 label = "Note autocomplete",
                 checked = settings.autocompleteEnabled,
                 onCheckedChange = viewModel::setAutocomplete,
+                showDividerBelow = false,
             )
         }
     }
@@ -155,11 +184,15 @@ private enum class ConfigPicker {
     Swipe,
     AmountColors,
     TimeDisplay,
+    AppTheme,
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ConfigPickerDialog(
+private fun ConfigPickerSheet(
     picker: ConfigPicker,
+    settings: AppDisplaySettingsSnapshot,
+    sheetState: SheetState,
     onDismiss: () -> Unit,
     onSelectStartScreen: (MmrStartScreenTab) -> Unit,
     onSelectMonthDay: (Int) -> Unit,
@@ -167,6 +200,7 @@ private fun ConfigPickerDialog(
     onSelectSwipe: (MmrSwipeBehavior) -> Unit,
     onSelectColors: (MmrAmountColorScheme) -> Unit,
     onSelectTime: (MmrTimeDisplay) -> Unit,
+    onSelectAppTheme: (MmrAppColorTheme) -> Unit,
 ) {
     val title =
         when (picker) {
@@ -176,6 +210,7 @@ private fun ConfigPickerDialog(
             ConfigPicker.Swipe -> "Swipe behavior"
             ConfigPicker.AmountColors -> "Income / expense colors"
             ConfigPicker.TimeDisplay -> "Time on transactions"
+            ConfigPicker.AppTheme -> "App color theme"
         }
     val message =
         when (picker) {
@@ -183,51 +218,115 @@ private fun ConfigPickerDialog(
                 "Switches the Transactions tab to Daily or Calendar when you change this setting."
             else -> null
         }
-    MmrContentDialog(
+    MmrIosSettingsSingleChoiceSheet(
         title = title,
-        message = message,
         onDismiss = onDismiss,
-        dismissLabel = "Close",
+        sheetState = sheetState,
+        message = message,
     ) {
-        Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-            when (picker) {
-                ConfigPicker.StartScreen ->
-                    MmrStartScreenTab.entries.forEach { option ->
-                        TextButton(onClick = { onSelectStartScreen(option) }) {
-                            Text(option.label)
-                        }
-                    }
-                ConfigPicker.MonthStart ->
-                    (1..28).forEach { day ->
-                        TextButton(onClick = { onSelectMonthDay(day) }) {
-                            Text("Every $day")
-                        }
-                    }
-                ConfigPicker.WeekStart ->
-                    MmrWeekStartDay.entries.forEach { option ->
-                        TextButton(onClick = { onSelectWeekDay(option) }) {
-                            Text(option.label)
-                        }
-                    }
-                ConfigPicker.Swipe ->
-                    MmrSwipeBehavior.entries.forEach { option ->
-                        TextButton(onClick = { onSelectSwipe(option) }) {
-                            Text(option.label)
-                        }
-                    }
-                ConfigPicker.AmountColors ->
-                    MmrAmountColorScheme.entries.forEach { option ->
-                        TextButton(onClick = { onSelectColors(option) }) {
-                            Text(option.label)
-                        }
-                    }
-                ConfigPicker.TimeDisplay ->
-                    MmrTimeDisplay.entries.forEach { option ->
-                        TextButton(onClick = { onSelectTime(option) }) {
-                            Text(option.label)
-                        }
-                    }
-            }
+        when (picker) {
+            ConfigPicker.StartScreen ->
+                MmrStartScreenTab.entries.forEachIndexed { index, option ->
+                    MmrIosSettingsChoiceRow(
+                        label = option.label,
+                        selected = settings.startScreenTab == option,
+                        onClick = { onSelectStartScreen(option) },
+                        showDividerBelow = index < MmrStartScreenTab.entries.lastIndex,
+                    )
+                }
+            ConfigPicker.MonthStart ->
+                (1..28).forEachIndexed { index, day ->
+                    MmrIosSettingsChoiceRow(
+                        label = "Every $day",
+                        selected = settings.monthStartDay == day,
+                        onClick = { onSelectMonthDay(day) },
+                        showDividerBelow = index < 27,
+                    )
+                }
+            ConfigPicker.WeekStart ->
+                MmrWeekStartDay.entries.forEachIndexed { index, option ->
+                    MmrIosSettingsChoiceRow(
+                        label = option.label,
+                        selected = settings.weekStartDay == option,
+                        onClick = { onSelectWeekDay(option) },
+                        showDividerBelow = index < MmrWeekStartDay.entries.lastIndex,
+                    )
+                }
+            ConfigPicker.Swipe ->
+                MmrSwipeBehavior.entries.forEachIndexed { index, option ->
+                    MmrIosSettingsChoiceRow(
+                        label = option.label,
+                        selected = settings.swipeBehavior == option,
+                        onClick = { onSelectSwipe(option) },
+                        showDividerBelow = index < MmrSwipeBehavior.entries.lastIndex,
+                    )
+                }
+            ConfigPicker.AmountColors ->
+                MmrAmountColorScheme.entries.forEachIndexed { index, option ->
+                    val selected = settings.amountColorScheme == option
+                    MmrIosSettingsChoiceRow(
+                        label = option.label,
+                        selected = selected,
+                        onClick = { onSelectColors(option) },
+                        showDividerBelow = index < MmrAmountColorScheme.entries.lastIndex,
+                        labelContent = {
+                            MmrSettingsChoiceLabelWithSwatches(
+                                label = option.label,
+                                swatchColors =
+                                    MmrThemePresets.amountSchemePreviewColors(
+                                        settings.appColorTheme,
+                                        option,
+                                    ),
+                                labelFontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                            )
+                        },
+                    )
+                }
+            ConfigPicker.TimeDisplay ->
+                MmrTimeDisplay.entries.forEachIndexed { index, option ->
+                    MmrIosSettingsChoiceRow(
+                        label = option.label,
+                        selected = settings.timeDisplay == option,
+                        onClick = { onSelectTime(option) },
+                        showDividerBelow = index < MmrTimeDisplay.entries.lastIndex,
+                    )
+                }
+            ConfigPicker.AppTheme ->
+                MmrAppColorTheme.entries.forEachIndexed { index, option ->
+                    val selected = settings.appColorTheme == option
+                    MmrIosSettingsChoiceRow(
+                        label = option.label,
+                        selected = selected,
+                        onClick = { onSelectAppTheme(option) },
+                        showDividerBelow = index < MmrAppColorTheme.entries.lastIndex,
+                        labelContent = {
+                            MmrSettingsChoiceLabelWithSwatches(
+                                label = option.label,
+                                swatchColors = MmrThemePresets.appThemePreviewColors(option),
+                                labelFontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                            )
+                        },
+                    )
+                }
         }
+    }
+}
+
+@Composable
+private fun ConfigurationNavValueWithSwatches(
+    title: String,
+    swatchColors: List<androidx.compose.ui.graphics.Color>,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text(
+            text = title,
+            color = MmrBrandColors.TextMedium,
+            fontSize = 16.sp,
+            maxLines = 1,
+        )
+        MmrSettingsColorSwatchStrip(colors = swatchColors)
     }
 }

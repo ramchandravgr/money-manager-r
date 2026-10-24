@@ -1,10 +1,8 @@
 package com.mmr.feature.category.ui
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -12,19 +10,25 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.mmr.app.ui.components.MmrAppBarSaveIcon
-import com.mmr.app.ui.components.MmrConfirmDialog
-import com.mmr.app.ui.components.MmrTopAppBar
-import com.mmr.app.ui.state.MmrErrorState
-import com.mmr.app.ui.state.MmrLoadingState
+import com.mmr.app.testing.MmrTestTags
+import com.mmr.app.ui.components.CategoryDeleteDialog
+import com.mmr.app.ui.components.EntityPickerOption
+import com.mmr.app.ui.components.MmrIosSettingsChoiceRow
+import com.mmr.app.ui.components.MmrIosSettingsColorPickerSlot
+import com.mmr.app.ui.components.MmrIosSettingsDestructiveActionSection
+import com.mmr.app.ui.components.MmrIosSettingsEntityFormGate
+import com.mmr.app.ui.components.MmrIosSettingsInlineErrorSection
+import com.mmr.app.ui.components.MmrIosSettingsInlineTextRow
+import com.mmr.app.ui.components.MmrIosSettingsNavRow
+import com.mmr.app.ui.components.MmrIosSettingsSection
+import com.mmr.app.ui.components.MmrIosSettingsSingleChoiceSheet
+import com.mmr.app.ui.components.MmrSettingsSaveTopBar
+import com.mmr.app.ui.components.MmrSettingsScreenLayout
+import com.mmr.app.ui.components.MmrSettingsScreenScaffold
 import com.mmr.core.model.enums.CategoryType
 import com.mmr.feature.category.model.AddEditCategoryUiEvent
-import com.mmr.feature.category.model.SubcategoryItemUi
 import com.mmr.feature.category.viewmodel.AddEditCategoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,20 +40,17 @@ fun AddEditCategoryScreen(
     viewModel: AddEditCategoryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var pendingDeleteSubcategory by remember { mutableStateOf<SubcategoryItemUi?>(null) }
+    var showDeleteCategory by remember { mutableStateOf(false) }
+    var showTypeSheet by remember { mutableStateOf(false) }
+    val typeSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var categoryTxnCount by remember { mutableStateOf(0) }
+    var migrateOptions by remember { mutableStateOf<List<EntityPickerOption>>(emptyList()) }
 
-    pendingDeleteSubcategory?.let { sub ->
-        MmrConfirmDialog(
-            title = "Remove subcategory?",
-            message = "\"${sub.name}\" under \"${uiState.name}\" will be removed from pickers.",
-            confirmLabel = "Remove",
-            onConfirm = {
-                viewModel.deleteSubcategory(sub.id)
-                pendingDeleteSubcategory = null
-            },
-            onDismiss = { pendingDeleteSubcategory = null },
-            confirmIsDestructive = true,
-        )
+    LaunchedEffect(showDeleteCategory, uiState.categoryId) {
+        if (!showDeleteCategory || uiState.categoryId <= 0L) return@LaunchedEffect
+        categoryTxnCount = viewModel.countTransactionsForCategory()
+        migrateOptions =
+            viewModel.migrationTargetOptions().map { EntityPickerOption(it.first, it.second) }
     }
 
     LaunchedEffect(uiState.isSaved) {
@@ -58,144 +59,123 @@ fun AddEditCategoryScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            MmrTopAppBar(
-                title = if (uiState.isEditMode) "Edit category" else "New category",
-                showBackNavigation = true,
-                onNavigateBack = onNavigateBack,
-                useMmHeaderStyle = true,
-                actions = {
-                    MmrAppBarSaveIcon(
-                        onClick = { viewModel.onEvent(AddEditCategoryUiEvent.OnSaveClick) },
-                        enabled = uiState.canSave && !uiState.isSaving && uiState.loadErrorMessage == null,
-                    )
-                },
-            )
-        },
-    ) { innerPadding ->
-        when {
-            uiState.isLoading -> {
-                MmrLoadingState(modifier = Modifier.padding(innerPadding))
-            }
-
-            uiState.loadErrorMessage != null -> {
-                MmrErrorState(
-                    message = uiState.loadErrorMessage!!,
-                    onRetry = null,
-                    modifier = Modifier.padding(innerPadding),
+    if (showTypeSheet && !uiState.isDefaultCategory) {
+        val typeOptions = listOf(CategoryType.EXPENSE, CategoryType.INCOME)
+        MmrIosSettingsSingleChoiceSheet(
+            title = "Category type",
+            onDismiss = { showTypeSheet = false },
+            sheetState = typeSheetState,
+        ) {
+            typeOptions.forEachIndexed { index, type ->
+                MmrIosSettingsChoiceRow(
+                    label = if (type == CategoryType.EXPENSE) "Expense" else "Income",
+                    selected = uiState.type == type,
+                    onClick = {
+                        viewModel.onEvent(AddEditCategoryUiEvent.OnTypeSelected(type))
+                        showTypeSheet = false
+                    },
+                    showDividerBelow = index < typeOptions.lastIndex,
                 )
             }
+        }
+    }
 
-            else -> {
-                Column(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding)
-                            .padding(16.dp)
-                            .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    uiState.errorMessage?.let { message ->
-                        Card(
-                            colors =
-                                CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.errorContainer,
-                                ),
-                        ) {
-                            Row(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    text = message,
-                                    color = MaterialTheme.colorScheme.onErrorContainer,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                TextButton(
-                                    onClick = { viewModel.onEvent(AddEditCategoryUiEvent.OnDismissError) },
-                                ) {
-                                    Text("Dismiss")
-                                }
-                            }
-                        }
-                    }
+    if (showDeleteCategory && uiState.isEditMode) {
+        CategoryDeleteDialog(
+            categoryName = uiState.name,
+            transactionCount = categoryTxnCount,
+            migrateOptions = migrateOptions,
+            onConfirm = { mode, migrateToId ->
+                viewModel.deleteCategory(mode, migrateToId)
+                showDeleteCategory = false
+            },
+            onDismiss = { showDeleteCategory = false },
+            working = uiState.isSaving,
+        )
+    }
 
-                    OutlinedTextField(
-                        value = uiState.name,
-                        onValueChange = { viewModel.onEvent(AddEditCategoryUiEvent.OnNameChanged(it)) },
-                        label = { Text("Name") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                    )
+    MmrSettingsScreenScaffold(
+        title = if (uiState.isEditMode) "Edit category" else "New category",
+        onNavigateBack = onNavigateBack,
+        layout = MmrSettingsScreenLayout.InsetGrouped,
+        topBarTrailing = {
+            MmrSettingsSaveTopBar(
+                onSave = { viewModel.onEvent(AddEditCategoryUiEvent.OnSaveClick) },
+                enabled = uiState.canSave && !uiState.isSaving && uiState.loadErrorMessage == null,
+            )
+        },
+    ) {
+        MmrIosSettingsEntityFormGate(
+            isLoading = uiState.isLoading,
+            loadErrorMessage = uiState.loadErrorMessage,
+        ) {
+            uiState.errorMessage?.let { message ->
+                MmrIosSettingsInlineErrorSection(message = message, isFirstInScreen = true)
+            }
 
-                    Text("Type", style = MaterialTheme.typography.titleMedium)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        FilterChip(
-                            selected = uiState.type == CategoryType.EXPENSE,
-                            onClick = {
-                                viewModel.onEvent(AddEditCategoryUiEvent.OnTypeSelected(CategoryType.EXPENSE))
-                            },
-                            label = { Text("Expense") },
-                            enabled = !uiState.isDefaultCategory,
-                        )
-                        FilterChip(
-                            selected = uiState.type == CategoryType.INCOME,
-                            onClick = {
-                                viewModel.onEvent(AddEditCategoryUiEvent.OnTypeSelected(CategoryType.INCOME))
-                            },
-                            label = { Text("Income") },
-                            enabled = !uiState.isDefaultCategory,
-                        )
-                    }
+            MmrIosSettingsSection(
+                title = "Details",
+                isFirstInScreen = uiState.errorMessage == null,
+                footer =
                     if (uiState.isDefaultCategory) {
-                        Text(
-                            text = "Built-in categories keep their type.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-
+                        "Built-in categories keep their type."
+                    } else {
+                        "Lower sort order values appear first in lists."
+                    },
+            ) {
+                MmrIosSettingsInlineTextRow(
+                    label = "Name",
+                    value = uiState.name,
+                    onValueChange = { viewModel.onEvent(AddEditCategoryUiEvent.OnNameChanged(it)) },
+                    placeholder = "Required",
+                    testTag = MmrTestTags.categoryFieldName,
+                )
+                if (uiState.isDefaultCategory) {
+                    com.mmr.app.ui.components.MmrIosSettingsValueRow(
+                        label = "Type",
+                        value = if (uiState.type == CategoryType.EXPENSE) "Expense" else "Income",
+                    )
+                } else {
+                    MmrIosSettingsNavRow(
+                        label = "Type",
+                        value = if (uiState.type == CategoryType.EXPENSE) "Expense" else "Income",
+                        onClick = { showTypeSheet = true },
+                    )
+                }
+                MmrIosSettingsColorPickerSlot(showDividerBelow = true) {
                     CategoryColorPicker(
                         selectedColorHex = uiState.colorHex,
                         onColorSelected = {
                             viewModel.onEvent(AddEditCategoryUiEvent.OnColorSelected(it))
                         },
                     )
-
-                    OutlinedTextField(
-                        value = uiState.sortOrder,
-                        onValueChange = {
-                            viewModel.onEvent(AddEditCategoryUiEvent.OnSortOrderChanged(it))
-                        },
-                        label = { Text("Sort order") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        supportingText = {
-                            Text("Lower numbers appear first in lists.")
-                        },
-                    )
-
-                    if (uiState.isEditMode && uiState.categoryId > 0L) {
-                        SubcategoryListSection(
-                            parentName = uiState.name,
-                            parentColorHex = uiState.colorHex,
-                            subcategories = uiState.subcategories,
-                            onAddSubcategory = { onNavigateToAddSubcategory(uiState.categoryId) },
-                            onEditSubcategory = onNavigateToEditSubcategory,
-                            onDeleteSubcategory = { pendingDeleteSubcategory = it },
-                        )
-                    }
                 }
+                MmrIosSettingsInlineTextRow(
+                    label = "Sort order",
+                    value = uiState.sortOrder,
+                    onValueChange = { viewModel.onEvent(AddEditCategoryUiEvent.OnSortOrderChanged(it)) },
+                    placeholder = "0",
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    showDividerBelow = false,
+                )
+            }
+
+            if (uiState.isEditMode && uiState.categoryId > 0L) {
+                SubcategoryListSection(
+                    parentName = uiState.name,
+                    parentColorHex = uiState.colorHex,
+                    subcategories = uiState.subcategories,
+                    onAddSubcategory = { onNavigateToAddSubcategory(uiState.categoryId) },
+                    onEditSubcategory = onNavigateToEditSubcategory,
+                    onDeleteSubcategory = { viewModel.deleteSubcategory(it.id) },
+                )
+            }
+
+            if (uiState.isEditMode) {
+                MmrIosSettingsDestructiveActionSection(
+                    label = "Remove category",
+                    onClick = { showDeleteCategory = true },
+                )
             }
         }
     }

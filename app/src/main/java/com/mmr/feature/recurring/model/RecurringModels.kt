@@ -42,9 +42,12 @@ data class RecurringListUiState(
     val isLoading: Boolean = true,
     val rules: List<RecurringRuleItemUi> = emptyList(),
     val reminders: List<UpcomingReminderUi> = emptyList(),
+    val totalRulesCount: Int = 0,
     val activeRulesCount: Int = 0,
+    val pausedRulesCount: Int = 0,
     val selectedFilter: RecurringFilterType = RecurringFilterType.ALL,
     val isEmpty: Boolean = false,
+    val isFilteredEmpty: Boolean = false,
     val errorMessage: String? = null,
     val statusMessage: String? = null,
 )
@@ -70,6 +73,8 @@ sealed interface RecurringListUiEvent {
     object OnRetryClick : RecurringListUiEvent
 
     object OnDismissStatus : RecurringListUiEvent
+
+    object OnResetFilters : RecurringListUiEvent
 }
 
 data class AddEditRecurringRuleUiState(
@@ -80,17 +85,27 @@ data class AddEditRecurringRuleUiState(
     val name: String = "",
     val amount: String = "",
     val transactionType: TransactionType = TransactionType.EXPENSE,
+    val categories: List<com.mmr.feature.transaction.model.CategoryUi> = emptyList(),
+    val accounts: List<com.mmr.feature.transaction.model.AccountUi> = emptyList(),
+    val loans: List<com.mmr.feature.transaction.model.LoanPickerUi> = emptyList(),
     val categoryId: Long? = null,
+    val subcategoryId: Long? = null,
     val accountId: Long? = null,
+    val relatedAccountId: Long? = null,
+    val transferLoanId: Long? = null,
     val interval: RecurrenceInterval = RecurrenceInterval.MONTHLY,
     val dayOfMonth: Int? = null,
     val startDate: Long = System.currentTimeMillis(),
-    val reminderMinutesBefore: Int = 1440, // 1 day before by default
+    val reminderMinutesBefore: Int = 1440,
     val notes: String = "",
     val errorMessage: String? = null,
     val canSave: Boolean = false,
     val categoryPickerVisible: Boolean = false,
+    val pickerHighlightedCategoryId: Long? = null,
     val accountPickerVisible: Boolean = false,
+    val accountPickerTarget: com.mmr.feature.transaction.model.AccountPickerTarget =
+        com.mmr.feature.transaction.model.AccountPickerTarget.SINGLE_ACCOUNT,
+    val transferToPickerVisible: Boolean = false,
     val reminderPickerVisible: Boolean = false,
 )
 
@@ -109,10 +124,29 @@ sealed interface AddEditRecurringRuleUiEvent {
 
     data class OnCategorySelected(
         val categoryId: Long?,
+        val subcategoryId: Long?,
     ) : AddEditRecurringRuleUiEvent
+
+    data class OnPickerParentSelected(
+        val categoryId: Long,
+    ) : AddEditRecurringRuleUiEvent
+
+    data class OnPickerSubcategorySelected(
+        val subcategoryId: Long,
+    ) : AddEditRecurringRuleUiEvent
+
+    object OnPickerConfirmParentOnly : AddEditRecurringRuleUiEvent
 
     data class OnAccountSelected(
         val accountId: Long,
+    ) : AddEditRecurringRuleUiEvent
+
+    data class OnTransferToAccountSelected(
+        val accountId: Long,
+    ) : AddEditRecurringRuleUiEvent
+
+    data class OnTransferToLoanSelected(
+        val loanId: Long,
     ) : AddEditRecurringRuleUiEvent
 
     data class OnIntervalSelected(
@@ -142,6 +176,12 @@ sealed interface AddEditRecurringRuleUiEvent {
     object OnAccountRowClick : AddEditRecurringRuleUiEvent
 
     object OnDismissAccountPicker : AddEditRecurringRuleUiEvent
+
+    object OnTransferFromRowClick : AddEditRecurringRuleUiEvent
+
+    object OnTransferToRowClick : AddEditRecurringRuleUiEvent
+
+    object OnDismissTransferToPicker : AddEditRecurringRuleUiEvent
 
     object OnReminderRowClick : AddEditRecurringRuleUiEvent
 

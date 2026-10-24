@@ -103,4 +103,13 @@ object TestDatabaseModule {
 
     @Provides
     fun provideLanSyncDao(database: MmrDatabase) = database.lanSyncDao()
+
+    @Provides
+    fun provideTransactionAttachmentDao(database: MmrDatabase) = database.transactionAttachmentDao()
+
+    @Provides
+    fun provideSyncTombstoneDao(database: MmrDatabase) = database.syncTombstoneDao()
+
+    @Provides
+    fun provideLanSyncTombstoneAckDao(database: MmrDatabase) = database.lanSyncTombstoneAckDao()
 }

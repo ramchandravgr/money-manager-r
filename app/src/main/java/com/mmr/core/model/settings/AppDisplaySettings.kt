@@ -38,16 +38,52 @@ enum class MmrSwipeBehavior {
             }
 }
 
-enum class MmrAmountColorScheme {
-    SET_A,
-    SET_B,
+/** App chrome palette preset (light mode today; each preset has a paired dark palette for later). */
+enum class MmrAppColorTheme {
+    CLASSIC_CORAL,
+    OCEAN,
+    FOREST,
+    SLATE,
+    ROYAL,
+    SUNSET,
+    MIDNIGHT,
+    ROSE_GOLD,
+    MINT,
+    CHARCOAL_GOLD,
     ;
 
     val label: String
         get() =
             when (this) {
-                SET_A -> "Set. A"
-                SET_B -> "Set. B"
+                CLASSIC_CORAL -> "Classic Coral"
+                OCEAN -> "Ocean"
+                FOREST -> "Forest"
+                SLATE -> "Slate"
+                ROYAL -> "Royal"
+                SUNSET -> "Sunset"
+                MIDNIGHT -> "Midnight"
+                ROSE_GOLD -> "Rose Gold"
+                MINT -> "Mint"
+                CHARCOAL_GOLD -> "Charcoal & Gold"
+            }
+}
+
+enum class MmrAmountColorScheme {
+    SET_A,
+    SET_B,
+    SET_C,
+    SET_D,
+    SET_E,
+    ;
+
+    val label: String
+        get() =
+            when (this) {
+                SET_A -> "Teal & brick red"
+                SET_B -> "Emerald & bright red"
+                SET_C -> "Sky & crimson"
+                SET_D -> "Lime & amber"
+                SET_E -> "Indigo & magenta"
             }
 }
 

@@ -1,0 +1,52 @@
+---
+description: Design 12 detail-screen shell and body components (transaction, loan, recurring, future read-only details)
+globs: app/src/main/java/com/mmr/feature/**/ui/*Detail*.kt,app/src/main/java/com/mmr/app/ui/components/MmrDetail*.kt,app/src/main/java/com/mmr/app/ui/components/MmrDetailScreen*.kt,app/src/main/java/com/mmr/app/ui/components/MmrFooterCtaBar.kt
+alwaysApply: false
+---
+
+# Detail screen UI system (MMR)
+
+Read-only **entity detail** flows use **Design 12** from `docs/design/detail-screen-mockups/index.html`:
+
+- Brand **top bar** (back + title; overflow menu only when needed e.g. loan ⋮)
+- **Gray** screen background (`MmrBrandColors.ListBackground`)
+- **White / tinted cards** and shared typography in the body
+- **Sticky footer CTA bar** (`MmrFooterCtaBar`) — primary actions move here; do not duplicate as FAB + footer
+
+**Source of truth:** `MmrDetailScreenScaffold.kt`, `MmrDetailScreenForm.kt`, `MmrFooterCtaBar.kt` (shared with `MmrContentDialog`).
+
+## Shell
+
+- Wrap detail screens in **`MmrDetailScreenScaffold`** — not raw `Scaffold` + `MmrTopAppBar` + hand-rolled footer.
+- Pass **`footerPrimaryLabel` / `footerSecondaryLabel` / `footerTextLabel`** for screen actions (e.g. transaction Edit / Duplicate / Delete).
+- Use **`topBarActions`** only for overflow menus (loan edit/pause/delete), not for actions that belong in the footer on Design 12.
+- Loading / error: use scaffold `isLoading`, `errorMessage`, `onRetry` — do not nest duplicate `MmrLoadingState` outside the scaffold.
+
+## Body primitives (`MmrDetailScreenForm.kt`)
+
+| Use case | Component |
+|----------|-----------|
+| Title + amount hero | `MmrDetailHeroBlock` |
+| Type/Date/Category meta | `MmrDetailMetaCard` + `MmrDetailMetaRow` |
+| Loan/recurring summary | `MmrDetailOverviewCard` |
+| Section heading | `MmrDetailSectionTitle` |
+| Empty / helper under section | `MmrDetailSectionHint` |
+| Linked SMS row | `MmrDetailLinkedSmsCard` |
+| Schedule / payment row | `MmrDetailListItemCard` |
+| Label/value in overview | `MmrDetailKeyValueRow` |
+| Progress | `MmrDetailProgressStrip` |
+| Status chip | `MmrDetailStatusBadge` |
+| Inline action link | `MmrDetailTextLink` |
+
+## Anti-patterns
+
+- Raw `Card` + `MaterialTheme` for new detail sections without matching the kit.
+- `SmallFloatingActionButton` for primary detail actions when Design 12 footer is active (loan repayment → footer).
+- Top-bar icon rows for actions that the mockup places in the footer (transaction edit/duplicate/delete).
+
+## New detail screen checklist
+
+1. `MmrDetailScreenScaffold` with title and footer CTAs.
+2. `LazyColumn` content via scaffold `content { item { … } }` only.
+3. Reuse form components above; add to `MmrDetailScreenForm.kt` if a new pattern repeats twice.
+4. Add `MmrTestTags` on footer actions when UI-tested.

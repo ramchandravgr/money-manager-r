@@ -36,10 +36,11 @@ import androidx.compose.ui.unit.sp
 import com.mmr.app.R
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.ui.components.MmrDimens
-import com.mmr.app.ui.components.MmrMmHomeTopBar
-import com.mmr.app.ui.components.MmrMmSummaryStrip
-import com.mmr.app.ui.components.MmrMmTabRow
-import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.app.ui.components.MmrHomeTopBar
+import com.mmr.app.ui.components.MmrSummaryStrip
+import com.mmr.app.ui.components.MmrTabRow
+import com.mmr.app.ui.components.MmrTabRowSurface
+import com.mmr.app.ui.theme.MmrBrandColors
 import com.mmr.core.model.settings.MmrAmountColorScheme
 import com.mmr.feature.home.model.HomeSummaryUi
 import com.mmr.feature.home.model.HomeViewTab
@@ -63,7 +64,7 @@ fun HomeMonthTopBar(
     pendingApprovalCount: Int,
     onApprovalsClick: () -> Unit,
 ) {
-    MmrMmHomeTopBar(
+    MmrHomeTopBar(
         monthTitle = monthTitle,
         onPreviousMonth = onPreviousMonth,
         onNextMonth = onNextMonth,
@@ -125,7 +126,7 @@ private fun HomeAppBrandIcon(modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(MmrDimens.spaceSm),
-        color = Color(0xFF0F3468),
+        color = MmrBrandColors.HeaderBrandTile,
     ) {
         Image(
             painter = painterResource(R.drawable.ic_launcher_foreground),
@@ -213,12 +214,13 @@ fun HomeViewTabRow(
     modifier: Modifier = Modifier,
 ) {
     val tabs = HomeViewTab.entries
-    MmrMmTabRow(
+    MmrTabRow(
         tabs = tabs.map { it.mmLabel },
         selectedIndex = tabs.indexOf(selectedTab).coerceAtLeast(0),
         onTabSelected = { index -> onTabSelected(tabs[index]) },
         modifier = modifier,
         testTagForIndex = { index -> MmrTestTags.homeViewTab(tabs[index]) },
+        surface = MmrTabRowSurface.Ledger,
     )
 }
 
@@ -229,7 +231,7 @@ fun HomePeriodSummaryStrip(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        MmrMmSummaryStrip(
+        MmrSummaryStrip(
             incomeLabel = "Income",
             incomeAmount = formatRupeeAmount(summary.totalIncome),
             expenseLabel = "Expenses",
@@ -245,7 +247,7 @@ fun HomePeriodSummaryStrip(
             Text(
                 text = "Includes ${formatRupeeAmount(summary.carriedForward)} carried forward",
                 style = MaterialTheme.typography.labelSmall,
-                color = MmrMmColors.TextMedium,
+                color = MmrBrandColors.TextMedium,
                 modifier =
                     Modifier
                         .fillMaxWidth()
@@ -264,7 +266,10 @@ private fun SummaryInlineItem(
     prefix: String,
 ) {
     Text(
-        text = "$label $prefix₹${"%.2f".format(kotlin.math.abs(amount))}",
+        text = "$label $prefix${com.mmr.core.common.display.MmrMoneyFormat.formatWithSpace(
+            kotlin.math.abs(amount),
+            "₹",
+        )}",
         style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, lineHeight = 13.sp),
         color = color,
         fontWeight = FontWeight.Medium,

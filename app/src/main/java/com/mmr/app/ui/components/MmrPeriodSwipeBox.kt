@@ -139,8 +139,10 @@ fun MmrPeriodSwipeBox(
                         )
                 },
                 label = "mmrPeriodSwipe",
-            ) {
-                content()
+            ) { _ ->
+                Box(Modifier.fillMaxSize()) {
+                    content()
+                }
             }
         }
     }

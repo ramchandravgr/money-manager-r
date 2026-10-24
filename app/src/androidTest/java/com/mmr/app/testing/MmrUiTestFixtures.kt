@@ -9,6 +9,7 @@ import com.mmr.core.model.enums.LoanRepaymentMode
 import com.mmr.core.model.enums.LoanStatus
 import com.mmr.core.model.enums.LoanType
 import com.mmr.core.model.enums.RecordStatus
+import com.mmr.core.model.enums.SmsApprovalKind
 import com.mmr.core.model.enums.SmsApprovalState
 import com.mmr.core.model.enums.TransactionSourceType
 import com.mmr.core.model.enums.TransactionType
@@ -49,6 +50,15 @@ object MmrUiTestFixtures {
         val transactionId: Long,
         val ledgerNote: String,
         val amount: Double,
+    )
+
+    data class CardRefundApplyFixture(
+        val purchaseMerchant: String,
+        val purchaseTransactionId: Long,
+        val refundApprovalId: Long,
+        val purchaseAmount: Double,
+        val refundAmount: Double,
+        val netAmountAfterRefund: Double,
     )
 
     suspend fun clearApprovals(database: MmrDatabase) {
@@ -319,4 +329,90 @@ object MmrUiTestFixtures {
                 repaymentMode = LoanRepaymentMode.FLEXIBLE.name,
             ),
         )
+
+    /**
+     * Approved card purchase plus a pending [SmsApprovalKind.CARD_REFUND] for the same card last four.
+     */
+    suspend fun seedCardRefundApplyScenario(
+        database: MmrDatabase,
+        approvalRepository: ApprovalRepository,
+        purchaseAmount: Double = 500.0,
+        refundAmount: Double = 150.0,
+        cardLastFour: String = "4148",
+    ): CardRefundApplyFixture {
+        clearLedgerForApprovalTest(database)
+        val accountId = requireDefaultAccountId(database)
+        val merchant = "UiTest CC purchase ${System.nanoTime()}"
+        val now = System.currentTimeMillis()
+        val purchaseHash = "ui-cc-purchase-$merchant"
+        val purchaseInserted =
+            approvalRepository.insertCandidates(
+                listOf(
+                    ParsedSmsCandidate(
+                        sender = "HDFCBK",
+                        amount = purchaseAmount,
+                        type = TransactionType.EXPENSE,
+                        timestamp = now,
+                        merchant = merchant,
+                        referenceNumber = null,
+                        accountLastDigits = cardLastFour,
+                        balanceAfter = null,
+                        categoryHint = null,
+                        rawMessageId = "sms-$purchaseHash",
+                        messageHash = purchaseHash,
+                        confidenceScore = 90,
+                        confidenceBand = ParserConfidence.HIGH,
+                        rawBody = "spent $purchaseAmount on card xx$cardLastFour at $merchant",
+                    ),
+                ),
+            )
+        require(purchaseInserted == 1) { "Expected one purchase approval, inserted $purchaseInserted" }
+        val purchaseApprovalId =
+            approvalRepository
+                .getApprovalsByState(SmsApprovalState.PENDING)
+                .first()
+                .first()
+                .id
+        val purchaseTxnId = approvalRepository.approveCandidate(purchaseApprovalId, accountId, null)
+
+        val refundHash = "ui-cc-refund-$merchant"
+        val refundInserted =
+            approvalRepository.insertCandidates(
+                listOf(
+                    ParsedSmsCandidate(
+                        sender = "HDFCBK",
+                        amount = refundAmount,
+                        type = TransactionType.EXPENSE,
+                        timestamp = now + 1,
+                        merchant = "Amazon",
+                        referenceNumber = null,
+                        accountLastDigits = cardLastFour,
+                        balanceAfter = null,
+                        categoryHint = null,
+                        rawMessageId = "sms-$refundHash",
+                        messageHash = refundHash,
+                        confidenceScore = 88,
+                        confidenceBand = ParserConfidence.HIGH,
+                        rawBody = "Transaction Reversed! card xx$cardLastFour Amt: Rs.$refundAmount",
+                        approvalKind = SmsApprovalKind.CARD_REFUND,
+                    ),
+                ),
+            )
+        require(refundInserted == 1) { "Expected one refund approval, inserted $refundInserted" }
+        val refundApprovalId =
+            approvalRepository
+                .getApprovalsByState(SmsApprovalState.PENDING)
+                .first()
+                .first()
+                .id
+
+        return CardRefundApplyFixture(
+            purchaseMerchant = merchant,
+            purchaseTransactionId = purchaseTxnId,
+            refundApprovalId = refundApprovalId,
+            purchaseAmount = purchaseAmount,
+            refundAmount = refundAmount,
+            netAmountAfterRefund = purchaseAmount - refundAmount,
+        )
+    }
 }

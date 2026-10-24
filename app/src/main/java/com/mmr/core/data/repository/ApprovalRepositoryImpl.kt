@@ -1,7 +1,9 @@
 package com.mmr.core.data.repository
 
 import com.mmr.core.categorization.CategorizationRuleEngine
+import com.mmr.core.common.display.MmrDisplayTextFormat
 import com.mmr.core.common.validation.MmrValidation
+import com.mmr.core.common.widget.HomeScreenWidgetRefreshTrigger
 import com.mmr.core.database.dao.ApprovalLedgerDao
 import com.mmr.core.database.dao.CategoryDao
 import com.mmr.core.database.dao.TransactionApprovalDao
@@ -17,8 +19,10 @@ import com.mmr.core.domain.model.PendingApprovalWithSms
 import com.mmr.core.domain.model.SmsMergeCandidate
 import com.mmr.core.domain.model.toManualPriorActionLabel
 import com.mmr.core.domain.repository.ApprovalRepository
+import com.mmr.core.loan.LoanLinkedTransactionDeleteMode
 import com.mmr.core.loan.LoanTransactionCoordinator
 import com.mmr.core.model.enums.RecordStatus
+import com.mmr.core.model.enums.SmsApprovalKind
 import com.mmr.core.model.enums.SmsApprovalState
 import com.mmr.core.model.enums.SmsParsedStatus
 import com.mmr.core.model.enums.TransactionSourceType
@@ -30,6 +34,7 @@ import com.mmr.core.parser.engine.SmsParserEngine
 import com.mmr.core.parser.model.ParsedSmsCandidate
 import com.mmr.core.parser.model.RawSmsMessage
 import com.mmr.core.parser.model.SmsParseResult
+import com.mmr.core.transaction.CardRefundLedgerMath
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
@@ -50,7 +55,12 @@ class ApprovalRepositoryImpl
         private val smsParserEngine: SmsParserEngine,
         private val loanTransactionCoordinator: LoanTransactionCoordinator,
         private val categorizationRuleEngine: CategorizationRuleEngine,
+        private val widgetRefreshTrigger: HomeScreenWidgetRefreshTrigger,
     ) : ApprovalRepository {
+        private fun refreshWidgets() {
+            widgetRefreshTrigger.requestRefresh()
+        }
+
         private suspend fun resolveCategoryId(
             candidate: ParsedSmsCandidate,
             activeCategories: List<CategoryEntity>,
@@ -100,6 +110,8 @@ class ApprovalRepositoryImpl
             }
 
         override fun getPendingCount(): Flow<Int> = transactionApprovalDao.getPendingCount()
+
+        override suspend fun getPendingCountOnce(): Int = transactionApprovalDao.getPendingCountOnce()
 
         override suspend fun getApprovalById(id: Long): TransactionApprovalEntity? =
             if (id <= 0L) null else transactionApprovalDao.getById(id)
@@ -153,6 +165,7 @@ class ApprovalRepositoryImpl
                         extractedInstrument = candidate.instrument?.name,
                         extractedCardLastFour = candidate.accountLastDigits,
                         extractedCardNetwork = cardNetwork,
+                        approvalKind = candidate.approvalKind,
                     )
 
                 if (approvalLedgerDao.insertPendingCandidate(recordEntity, approvalEntity) != null) {
@@ -160,6 +173,7 @@ class ApprovalRepositoryImpl
                 }
             }
 
+            refreshWidgets()
             return insertedCount
         }
 
@@ -184,8 +198,13 @@ class ApprovalRepositoryImpl
                         body = body,
                         timestamp = approval.extractedDateTime,
                     )
-                val stillTransaction = smsParserEngine.parseResult(raw) is SmsParseResult.Transaction
-                if (stillTransaction) continue
+                val parseResult = smsParserEngine.parseResult(raw)
+                val stillValid =
+                    when (approval.approvalKind) {
+                        SmsApprovalKind.CARD_REFUND -> parseResult is SmsParseResult.CardRefund
+                        SmsApprovalKind.TRANSACTION -> parseResult is SmsParseResult.Transaction
+                    }
+                if (stillValid) continue
                 val updated =
                     approvalLedgerDao.markApprovalStateIfPending(
                         id = approval.id,
@@ -201,6 +220,9 @@ class ApprovalRepositoryImpl
                     )
                     cleared++
                 }
+            }
+            if (cleared > 0) {
+                refreshWidgets()
             }
             return cleared
         }
@@ -225,7 +247,7 @@ class ApprovalRepositoryImpl
                     extractedDateTime = dateTimeMillis ?: current.extractedDateTime,
                     extractedCategoryId = categoryId,
                     extractedAccountId = accountId?.takeIf { it > 0L },
-                    extractedNote = note?.trim()?.takeIf { it.isNotEmpty() },
+                    extractedNote = MmrDisplayTextFormat.formatStoredTitle(note),
                     userEdited = true,
                     updatedAt = System.currentTimeMillis(),
                 )
@@ -236,6 +258,9 @@ class ApprovalRepositoryImpl
             if (approvalId <= 0L) return emptyList()
             val approval = transactionApprovalDao.getById(approvalId) ?: return emptyList()
             if (approval.approvalState != SmsApprovalState.PENDING) return emptyList()
+            if (approval.approvalKind == SmsApprovalKind.CARD_REFUND) {
+                return findCardRefundPurchaseCandidates(approval)
+            }
             if (approval.extractedType == TransactionType.TRANSFER) return emptyList()
             val accountId = approval.extractedAccountId ?: return emptyList()
             val windowMillis = 3L * 24L * 60L * 60L * 1000L
@@ -258,6 +283,87 @@ class ApprovalRepositoryImpl
             }
         }
 
+        private suspend fun findCardRefundPurchaseCandidates(
+            approval: TransactionApprovalEntity,
+        ): List<SmsMergeCandidate> {
+            val accountId = approval.extractedAccountId ?: return emptyList()
+            val refundMillis = MmrValidation.normalizeEpochMillis(approval.extractedDateTime)
+            val windowMillis = 90L * 24L * 60L * 60L * 1000L
+            val candidates =
+                transactionDao.findCardRefundPurchaseCandidates(
+                    accountId = accountId,
+                    cardLastFour = approval.extractedCardLastFour,
+                    refundAmount = approval.extractedAmount,
+                    startMillis = refundMillis - windowMillis,
+                    endMillis = refundMillis,
+                )
+            return candidates.map { txn ->
+                SmsMergeCandidate(
+                    transactionId = txn.id,
+                    amount = txn.amount,
+                    dateTimeMillis = txn.dateTime,
+                    note = txn.note,
+                )
+            }
+        }
+
+        override suspend fun applyCardRefund(
+            approvalId: Long,
+            purchaseTransactionId: Long,
+            refundAmount: Double,
+        ): Long {
+            if (approvalId <= 0L || purchaseTransactionId <= 0L) {
+                throw IllegalArgumentException("Pending entry not found.")
+            }
+            MmrValidation.requirePositiveAmount(refundAmount, "Refund amount")
+            val approval =
+                transactionApprovalDao.getById(approvalId)
+                    ?: throw IllegalArgumentException("Pending entry not found.")
+            if (approval.approvalState != SmsApprovalState.PENDING) {
+                throw IllegalStateException("This entry is no longer pending.")
+            }
+            if (approval.approvalKind != SmsApprovalKind.CARD_REFUND) {
+                throw IllegalStateException("This approval is not a card refund.")
+            }
+            val purchase =
+                transactionDao.getById(purchaseTransactionId)
+                    ?: throw IllegalArgumentException("Ledger transaction not found.")
+            if (purchase.type != TransactionType.EXPENSE) {
+                throw IllegalArgumentException("Refunds can only apply to expense purchases.")
+            }
+            val smsRecord =
+                approvalLedgerDao.getSmsRecordById(approval.smsMessageRecordId)
+                    ?: throw IllegalStateException("SMS record missing for this approval.")
+
+            val math =
+                CardRefundLedgerMath.applyRefund(
+                    currentNetAmount = purchase.amount,
+                    currentOriginalAmount = purchase.originalAmount,
+                    currentRefundedTotal = purchase.refundedTotal,
+                    refundAmount = refundAmount,
+                )
+            val now = System.currentTimeMillis()
+
+            val updatedPurchase =
+                purchase.copy(
+                    amount = math.netAmount,
+                    originalAmount = math.originalAmount,
+                    refundedTotal = math.refundedTotal,
+                    updatedAt = now,
+                    isEdited = true,
+                )
+            RepositoryGuards.requireValidTransactionEntityAllowZeroAmount(updatedPurchase)
+
+            val txnId =
+                approvalLedgerDao.applyCardRefundToPurchase(
+                    approvalId = approvalId,
+                    updatedPurchase = updatedPurchase,
+                    refundSms = smsRecord,
+                )
+            refreshWidgets()
+            return txnId
+        }
+
         override suspend fun mergeCandidateWithTransaction(
             approvalId: Long,
             transactionId: Long,
@@ -274,12 +380,12 @@ class ApprovalRepositoryImpl
             if (approval.approvalState != SmsApprovalState.PENDING) {
                 throw IllegalStateException("This entry is no longer pending.")
             }
+            if (approval.approvalKind == SmsApprovalKind.CARD_REFUND) {
+                throw IllegalStateException("Use Apply refund for card refund SMS.")
+            }
             val existing =
                 transactionDao.getById(transactionId)
                     ?: throw IllegalArgumentException("Ledger transaction not found.")
-            if (existing.type != approval.extractedType) {
-                throw IllegalStateException("Transaction type does not match this SMS.")
-            }
             MmrValidation.requirePositiveAmount(approval.extractedAmount)
 
             val smsRecord =
@@ -328,13 +434,46 @@ class ApprovalRepositoryImpl
                     approvedSms = smsRecord,
                 )
             loanTransactionCoordinator.syncPaymentFromTransaction(merged.copy(id = txnId))
+            refreshWidgets()
             return txnId
+        }
+
+        override suspend fun mergeApprovalsWithTransaction(
+            approvalIds: List<Long>,
+            transactionId: Long,
+            categoryId: Long?,
+            subcategoryId: Long?,
+            useLedgerCategory: Boolean,
+        ): Long {
+            val ids = approvalIds.filter { it > 0L }.distinct()
+            if (ids.isEmpty()) {
+                throw IllegalArgumentException("Pending entry not found.")
+            }
+            var lastTxnId = transactionId
+            ids.forEachIndexed { index, approvalId ->
+                val useLedger =
+                    when {
+                        index > 0 -> true
+                        else -> useLedgerCategory
+                    }
+                lastTxnId =
+                    mergeCandidateWithTransaction(
+                        approvalId = approvalId,
+                        transactionId = lastTxnId,
+                        categoryId = categoryId,
+                        subcategoryId = subcategoryId,
+                        useLedgerCategory = useLedger,
+                    )
+            }
+            return lastTxnId
         }
 
         override suspend fun approveCandidate(
             id: Long,
             fallbackAccountId: Long,
             fallbackCategoryId: Long?,
+            subcategoryId: Long?,
+            relatedAccountId: Long?,
         ): Long {
             if (id <= 0L) {
                 throw IllegalArgumentException("Pending entry not found.")
@@ -344,6 +483,9 @@ class ApprovalRepositoryImpl
                     ?: throw IllegalArgumentException("Pending entry not found.")
             if (approval.approvalState != SmsApprovalState.PENDING) {
                 throw IllegalStateException("This entry is no longer pending.")
+            }
+            if (approval.approvalKind == SmsApprovalKind.CARD_REFUND) {
+                throw IllegalStateException("Use Apply refund for card refund SMS.")
             }
             MmrValidation.requirePositiveAmount(approval.extractedAmount)
             val accountId = approval.extractedAccountId ?: fallbackAccountId
@@ -357,14 +499,21 @@ class ApprovalRepositoryImpl
                 approvalLedgerDao.getSmsRecordById(approval.smsMessageRecordId)
                     ?: throw IllegalStateException("SMS record missing for this approval.")
 
-            val subcategoryId =
-                resolveSubcategoryIdFromRules(
-                    approval = approval,
-                    categoryId = categoryId,
-                    smsBody =
-                        smsRecord.messageBodyFull?.trim()?.takeIf { it.isNotEmpty() }
-                            ?: smsRecord.messageBodySnippet,
-                )
+            val resolvedSubcategoryId =
+                subcategoryId
+                    ?: resolveSubcategoryIdFromRules(
+                        approval = approval,
+                        categoryId = categoryId,
+                        smsBody =
+                            smsRecord.messageBodyFull?.trim()?.takeIf { it.isNotEmpty() }
+                                ?: smsRecord.messageBodySnippet,
+                    )
+            val resolvedRelatedAccountId =
+                if (approval.extractedType == TransactionType.TRANSFER) {
+                    relatedAccountId?.takeIf { it > 0L }
+                } else {
+                    null
+                }
 
             val transaction =
                 TransactionEntity(
@@ -373,8 +522,12 @@ class ApprovalRepositoryImpl
                     dateTime = dateTime,
                     accountId = accountId,
                     categoryId = categoryId,
-                    subcategoryId = subcategoryId,
-                    note = approval.extractedNote ?: approval.extractedMerchant ?: "Approved SMS",
+                    subcategoryId = resolvedSubcategoryId,
+                    relatedAccountId = resolvedRelatedAccountId,
+                    note =
+                        MmrDisplayTextFormat.formatStoredTitle(
+                            approval.extractedNote ?: approval.extractedMerchant,
+                        ) ?: "Approved SMS",
                     sourceType = TransactionSourceType.SMS,
                     sourceReferenceId = approval.id.toString(),
                     status = RecordStatus.APPROVED,
@@ -387,12 +540,15 @@ class ApprovalRepositoryImpl
                 )
             RepositoryGuards.requireValidTransactionEntity(transaction)
 
-            return approvalLedgerDao.approvePendingAndCreateTransaction(
-                approvalId = id,
-                transaction = transaction,
-                smsRecordId = approval.smsMessageRecordId,
-                approvedSms = smsRecord,
-            )
+            val txnId =
+                approvalLedgerDao.approvePendingAndCreateTransaction(
+                    approvalId = id,
+                    transaction = transaction,
+                    smsRecordId = approval.smsMessageRecordId,
+                    approvedSms = smsRecord,
+                )
+            refreshWidgets()
+            return txnId
         }
 
         override suspend fun rejectCandidate(id: Long) {
@@ -404,6 +560,7 @@ class ApprovalRepositoryImpl
                 smsRecordId = approval.smsMessageRecordId,
                 newState = SmsApprovalState.REJECTED,
             )
+            refreshWidgets()
         }
 
         override suspend fun markDuplicate(id: Long) {
@@ -415,6 +572,7 @@ class ApprovalRepositoryImpl
                 smsRecordId = approval.smsMessageRecordId,
                 newState = SmsApprovalState.DUPLICATE,
             )
+            refreshWidgets()
         }
 
         override suspend fun submitManualSms(
@@ -443,6 +601,7 @@ class ApprovalRepositoryImpl
             val candidate =
                 when (parseResult) {
                     is SmsParseResult.Transaction -> parseResult.candidate
+                    is SmsParseResult.CardRefund -> parseResult.candidate
                     is SmsParseResult.Informational ->
                         return ManualSmsSubmitResult.ParseFailed(
                             parseResult.reason ?: "This SMS is informational, not a transaction.",
@@ -513,7 +672,12 @@ class ApprovalRepositoryImpl
             if (approval.approvalState == SmsApprovalState.APPROVED) {
                 val txnId = sms.matchedTransactionId
                 if (txnId != null) {
-                    transactionDao.getById(txnId)?.let { transactionDao.delete(it) }
+                    transactionDao.getById(txnId)?.let {
+                        loanTransactionCoordinator.deleteTransaction(
+                            it,
+                            LoanLinkedTransactionDeleteMode.UNLINK,
+                        )
+                    }
                 }
             }
 
@@ -591,6 +755,7 @@ class ApprovalRepositoryImpl
                     extractedInstrument = candidate.instrument?.name,
                     extractedCardLastFour = candidate.accountLastDigits,
                     extractedCardNetwork = cardNetwork,
+                    approvalKind = candidate.approvalKind,
                 )
             return recordEntity to approvalEntity
         }

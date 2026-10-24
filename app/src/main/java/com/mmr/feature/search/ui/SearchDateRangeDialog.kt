@@ -32,7 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.mmr.app.ui.components.MmrDimens
-import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.app.ui.theme.MmrBrandColors
 import com.mmr.feature.home.HomePeriodUtils
 import com.mmr.feature.search.SearchPeriodPresets
 import java.time.LocalDate
@@ -90,7 +90,7 @@ fun SearchDateRangeDialog(
                     text = "Quick select",
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.Medium,
-                    color = MmrMmColors.TextStrong,
+                    color = MmrBrandColors.TextStrong,
                 )
                 val quickPicks = SearchPeriodPresets.QuickPick.entries
                 Column(verticalArrangement = Arrangement.spacedBy(MmrDimens.spaceSm)) {
@@ -116,7 +116,7 @@ fun SearchDateRangeDialog(
                     }
                 }
 
-                HorizontalDivider(color = MmrMmColors.BorderMain, thickness = 0.5.dp)
+                HorizontalDivider(color = MmrBrandColors.BorderMain, thickness = 0.5.dp)
 
                 CompactDateSelector(
                     label = "From",
@@ -142,14 +142,14 @@ fun SearchDateRangeDialog(
                     )} — ${HomePeriodUtils.formatShortDate(preview.end)}",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = MmrMmColors.Active,
+                    color = MmrBrandColors.Active,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
                 )
                 Text(
                     text = "FY = 1 Apr – 31 Mar",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MmrMmColors.TextMedium,
+                    color = MmrBrandColors.TextMedium,
                     modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
                 )
@@ -162,12 +162,12 @@ fun SearchDateRangeDialog(
                     onConfirm(normalized.start, normalized.end)
                 },
             ) {
-                Text("Apply", color = MmrMmColors.Active)
+                Text("Apply", color = MmrBrandColors.Active)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = MmrMmColors.TextMedium)
+                Text("Cancel", color = MmrBrandColors.TextMedium)
             }
         },
     )
@@ -183,12 +183,12 @@ private fun SearchQuickPickOption(
     val shape = RoundedCornerShape(8.dp)
     val background =
         if (selected) {
-            MmrMmColors.Active.copy(alpha = 0.12f)
+            MmrBrandColors.Active.copy(alpha = 0.12f)
         } else {
-            MmrMmColors.SurfaceWhite
+            MmrBrandColors.SurfaceWhite
         }
-    val borderColor = if (selected) MmrMmColors.Active else MmrMmColors.BorderMain
-    val textColor = if (selected) MmrMmColors.Active else MmrMmColors.TextStrong
+    val borderColor = if (selected) MmrBrandColors.Active else MmrBrandColors.BorderMain
+    val textColor = if (selected) MmrBrandColors.Active else MmrBrandColors.TextStrong
 
     Text(
         text = label,
@@ -230,7 +230,7 @@ private fun CompactDateSelector(
             text = label,
             style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Medium,
-            color = MmrMmColors.TextStrong,
+            color = MmrBrandColors.TextStrong,
         )
         Row(
             modifier = Modifier.fillMaxWidth(),

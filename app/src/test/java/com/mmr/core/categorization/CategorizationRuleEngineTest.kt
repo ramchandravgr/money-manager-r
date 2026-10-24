@@ -43,5 +43,15 @@ class CategorizationRuleEngineTest {
         override suspend fun insertAll(rules: List<CategorizationRuleEntity>) = Unit
 
         override suspend fun getEnabledOrdered(): List<CategorizationRuleEntity> = rules
+
+        override suspend fun getAll(): List<CategorizationRuleEntity> = rules
+
+        override suspend fun getBySyncId(syncId: String): CategorizationRuleEntity? = rules.find { it.syncId == syncId }
+
+        override suspend fun upsert(rule: CategorizationRuleEntity) = Unit
+
+        override suspend fun deleteBySyncId(syncId: String) = Unit
+
+        override suspend fun delete(rule: CategorizationRuleEntity) = Unit
     }
 }

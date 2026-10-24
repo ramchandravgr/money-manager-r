@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
@@ -28,14 +27,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.mmr.app.testing.MmrTestTags
+import com.mmr.app.ui.components.MmrAmountOutlinedTextField
 import com.mmr.app.ui.components.MmrDimens
 import com.mmr.app.ui.components.MmrPrimaryActionButton
-import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.app.ui.theme.MmrBrandColors
 import com.mmr.core.common.validation.MmrValidation
 import com.mmr.core.model.enums.LoanPartPaymentAdjustment
 import com.mmr.core.model.enums.LoanPaymentType
@@ -89,8 +88,9 @@ fun LoanRepaymentDialog(
                     .fillMaxWidth()
                     .padding(horizontal = MmrDimens.space2xl),
             shape = RoundedCornerShape(16.dp),
-            color = MmrMmColors.SurfaceWhite,
+            color = MmrBrandColors.SurfaceWhite,
             shadowElevation = 8.dp,
+            tonalElevation = 0.dp,
         ) {
             Column(
                 modifier = Modifier.padding(MmrDimens.cardPadding),
@@ -100,7 +100,7 @@ fun LoanRepaymentDialog(
                     text = "Record payment",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = MmrMmColors.Reversal,
+                    color = MmrBrandColors.Reversal,
                 )
 
                 OutlinedCard(modifier = Modifier.fillMaxWidth()) {
@@ -146,7 +146,7 @@ fun LoanRepaymentDialog(
                     }
                 }
 
-                OutlinedTextField(
+                MmrAmountOutlinedTextField(
                     value = amountInput,
                     onValueChange = onAmountChanged,
                     label = { Text("Amount (₹)") },
@@ -163,8 +163,6 @@ fun LoanRepaymentDialog(
                             else -> null
                         }
                     },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    singleLine = true,
                     modifier =
                         Modifier
                             .testTag(MmrTestTags.loanRepaymentAmount)
@@ -272,7 +270,7 @@ fun LoanRepaymentDialog(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     TextButton(onClick = onDismiss, enabled = !isSubmitting) {
-                        Text("Cancel", color = MmrMmColors.TextMedium)
+                        Text("Cancel", color = MmrBrandColors.TextMedium)
                     }
                     MmrPrimaryActionButton(
                         text = if (isSubmitting) "Saving…" else "Confirm",

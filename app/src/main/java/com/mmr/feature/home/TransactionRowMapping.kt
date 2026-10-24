@@ -1,8 +1,8 @@
 package com.mmr.feature.home
 
+import com.mmr.core.common.display.MmrMoneyFormat
 import com.mmr.core.common.display.TransactionCategoryLabels
 import com.mmr.core.database.relation.TransactionWithDetails
-import com.mmr.core.model.enums.TransactionType
 import com.mmr.core.parser.model.SmsInstrument
 import com.mmr.core.transaction.TransactionCashFlow
 import com.mmr.feature.home.model.TransactionRowUi
@@ -16,16 +16,10 @@ object TransactionRowMapping {
         timeFormat: SimpleDateFormat,
         showDescription: Boolean = true,
         showTime: Boolean = false,
+        currencySymbol: String = "₹",
     ): TransactionRowUi {
         val loanType = item.loan?.loanType
         val isIncome = TransactionCashFlow.countsAsIncome(item.transaction, loanType)
-        val sign =
-            when {
-                isIncome -> "+"
-                TransactionCashFlow.countsAsExpense(item.transaction, loanType) -> "-"
-                item.transaction.type == TransactionType.INCOME -> "+"
-                else -> "-"
-            }
         val categoryName = item.category?.name ?: "Uncategorized"
         val subcategoryName = item.subcategory?.name
         val categoryDisplay = TransactionCategoryLabels.format(categoryName, subcategoryName)
@@ -47,7 +41,7 @@ object TransactionRowMapping {
                 add(categoryDisplay)
                 if (paymentLabel != null) add(paymentLabel)
             }
-        val amountLabel = "₹ ${"%.2f".format(item.transaction.amount)}"
+        val amountLabel = MmrMoneyFormat.formatWithSpace(item.transaction.amount, currencySymbol)
         return TransactionRowUi(
             id = item.transaction.id,
             title = title,
@@ -55,7 +49,7 @@ object TransactionRowMapping {
             detailLine = detailLine,
             subtitle = metaParts.joinToString(" • "),
             amountLabel = amountLabel,
-            amountFormatted = "$sign$amountLabel",
+            amountFormatted = amountLabel,
             isIncome = isIncome,
             timeLabel = if (showTime) timeFormat.format(Date(item.transaction.dateTime)) else "",
         )

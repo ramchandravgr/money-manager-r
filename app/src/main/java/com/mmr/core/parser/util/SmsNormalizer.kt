@@ -13,7 +13,8 @@ object SmsNormalizer {
         text
             .trim()
             .replace("₹", "inr ")
-            .replace("rs[:.]?\\s*".toRegex(RegexOption.IGNORE_CASE), "inr ")
+            // Require non-letter before "rs" so words like "reversed" are not corrupted.
+            .replace("(?<![a-z])rs[:.]?\\s*".toRegex(RegexOption.IGNORE_CASE), "inr ")
             .replace("\\s+".toRegex(), " ")
             .lowercase(Locale.getDefault())
 

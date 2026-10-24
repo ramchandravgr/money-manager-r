@@ -30,6 +30,26 @@ class TransactionCashFlowTest {
     }
 
     @Test
+    fun loanDisbursal_excludedFromTotals() {
+        val txn =
+            TransactionEntity(
+                dateTime = 1L,
+                amount = 100_000.0,
+                type = TransactionType.TRANSFER,
+                categoryId = 1L,
+                accountId = 1L,
+                relatedAccountId = 2L,
+                loanId = 10L,
+                sourceType = TransactionSourceType.LOAN,
+                sourceReferenceId = "loan_disbursal:10:123",
+                status = RecordStatus.APPROVED,
+            )
+        assertEquals(0.0, TransactionCashFlow.expenseAmount(txn, LoanType.BORROWED), 0.01)
+        assertEquals(0.0, TransactionCashFlow.incomeAmount(txn, LoanType.BORROWED), 0.01)
+        assertTrue(TransactionCashFlow.isLoanPrincipalMovement(txn))
+    }
+
+    @Test
     fun loanTopUp_excludedFromTotals() {
         val txn =
             TransactionEntity(

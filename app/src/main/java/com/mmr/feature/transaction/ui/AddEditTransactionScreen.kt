@@ -1,24 +1,30 @@
 package com.mmr.feature.transaction.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.ui.components.MmrAppBarDeleteIcon
 import com.mmr.app.ui.components.MmrAppBarSaveIcon
 import com.mmr.app.ui.components.MmrContentDialog
-import com.mmr.app.ui.components.MmrSecondaryActionButton
+import com.mmr.app.ui.components.MmrDialogOptionButton
+import com.mmr.app.ui.components.MmrImeAwareScrollColumn
 import com.mmr.app.ui.components.MmrTopAppBar
+import com.mmr.app.ui.components.MmrTransactionFormIcons
+import com.mmr.app.ui.components.MmrTransactionFormScreenBackground
+import com.mmr.app.ui.components.MmrTransactionTypeSegment
 import com.mmr.app.ui.state.MmrErrorState
 import com.mmr.app.ui.state.MmrLoadingState
+import com.mmr.core.data.repository.TransactionAttachmentRepositoryImpl
 import com.mmr.core.loan.LoanLinkedTransactionDeleteMode
 import com.mmr.core.model.enums.TransactionType
+import com.mmr.feature.transaction.model.AccountPickerMode
 import com.mmr.feature.transaction.model.AddEditTransactionUiEvent
 import com.mmr.feature.transaction.viewmodel.AddEditTransactionViewModel
 
@@ -29,9 +35,15 @@ fun AddEditTransactionRoute(
     viewModel: AddEditTransactionViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
-    val categorySheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val accountSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val transferToSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val receiptPicker =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            uri?.let { viewModel.onEvent(AddEditTransactionUiEvent.OnReceiptPicked(it.toString())) }
+        }
+    var expandedField by remember { mutableStateOf(TransactionFormExpandedField.None) }
+
+    LaunchedEffect(state.selectedType) {
+        expandedField = TransactionFormExpandedField.None
+    }
 
     LaunchedEffect(state.isSaved) {
         if (state.isSaved) {
@@ -46,10 +58,11 @@ fun AddEditTransactionRoute(
                 "This transaction is tied to a loan repayment. Unlink keeps the loan payment record; " +
                     "Reverse removes the payment and restores the loan balance.",
             onDismiss = { viewModel.onEvent(AddEditTransactionUiEvent.OnDismissLoanDeleteDialog) },
-            showDismissButton = false,
+            showDismissButton = true,
+            dismissLabel = "Cancel",
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                MmrSecondaryActionButton(
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                MmrDialogOptionButton(
                     text = "Reverse payment & restore balance",
                     onClick = {
                         viewModel.onEvent(
@@ -58,9 +71,8 @@ fun AddEditTransactionRoute(
                             ),
                         )
                     },
-                    modifier = Modifier.fillMaxWidth(),
                 )
-                MmrSecondaryActionButton(
+                MmrDialogOptionButton(
                     text = "Unlink only",
                     onClick = {
                         viewModel.onEvent(
@@ -69,66 +81,17 @@ fun AddEditTransactionRoute(
                             ),
                         )
                     },
-                    modifier = Modifier.fillMaxWidth(),
                 )
-                TextButton(
-                    onClick = { viewModel.onEvent(AddEditTransactionUiEvent.OnDismissLoanDeleteDialog) },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("Cancel")
-                }
             }
         }
     }
 
-    if (state.categoryPickerVisible) {
-        CategorySubcategoryPickerSheet(
-            state = state,
-            onEvent = viewModel::onEvent,
-            sheetState = categorySheetState,
-            onDismiss = { viewModel.onEvent(AddEditTransactionUiEvent.OnDismissCategoryPicker) },
-        )
-    }
-
-    if (state.accountPickerVisible) {
-        val title =
-            when (state.accountPickerTarget) {
-                com.mmr.feature.transaction.model.AccountPickerTarget.SINGLE_ACCOUNT -> "Account"
-                com.mmr.feature.transaction.model.AccountPickerTarget.TRANSFER_FROM -> "Transfer from"
-            }
-        AccountPickerSheet(
-            title = title,
-            accounts = state.accounts,
-            selectedAccountId = state.selectedAccountId,
-            onAccountSelected = { id ->
-                viewModel.onEvent(AddEditTransactionUiEvent.OnAccountSelected(id))
-                viewModel.onEvent(AddEditTransactionUiEvent.OnDismissAccountPicker)
-            },
-            sheetState = accountSheetState,
-            onDismiss = { viewModel.onEvent(AddEditTransactionUiEvent.OnDismissAccountPicker) },
-            mode = com.mmr.feature.transaction.model.AccountPickerMode.AccountsGrouped,
-        )
-    }
-
-    if (state.transferToPickerVisible) {
-        AccountPickerSheet(
-            title = "Transfer to",
-            accounts = state.accounts,
-            selectedAccountId = state.selectedRelatedAccountId,
-            onAccountSelected = { id ->
-                viewModel.onEvent(AddEditTransactionUiEvent.OnTransferToAccountSelected(id))
-                viewModel.onEvent(AddEditTransactionUiEvent.OnDismissTransferToPicker)
-            },
-            sheetState = transferToSheetState,
-            onDismiss = { viewModel.onEvent(AddEditTransactionUiEvent.OnDismissTransferToPicker) },
-            mode = com.mmr.feature.transaction.model.AccountPickerMode.TransferTo,
-            loans = state.loans,
-            selectedLoanId = state.selectedTransferLoanId,
-            onLoanSelected = { id ->
-                viewModel.onEvent(AddEditTransactionUiEvent.OnTransferToLoanSelected(id))
-                viewModel.onEvent(AddEditTransactionUiEvent.OnDismissTransferToPicker)
-            },
-            excludedAccountId = state.selectedAccountId,
+    state.pickerNameEditor?.let { editor ->
+        TransactionPickerNameEditorDialog(
+            editor = editor,
+            onNameChange = { viewModel.onEvent(AddEditTransactionUiEvent.OnPickerNameEditorChanged(it)) },
+            onSave = { viewModel.onEvent(AddEditTransactionUiEvent.OnPickerNameEditorSave) },
+            onDismiss = { viewModel.onEvent(AddEditTransactionUiEvent.OnPickerNameEditorDismiss) },
         )
     }
 
@@ -143,7 +106,7 @@ fun AddEditTransactionRoute(
                     },
                 showBackNavigation = true,
                 onNavigateBack = onNavigateBack,
-                useMmHeaderStyle = true,
+                useBrandHeaderStyle = true,
                 actions = {
                     if (state.showDeleteButton) {
                         MmrAppBarDeleteIcon(
@@ -172,170 +135,221 @@ fun AddEditTransactionRoute(
             }
 
             else -> {
-                Column(
+                MmrTransactionFormScreenBackground(
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(padding)
-                            .padding(horizontal = 16.dp)
-                            .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                            .padding(padding),
                 ) {
-                    SingleChoiceSegmentedButtonRow(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp),
+                    MmrImeAwareScrollColumn(
+                        horizontalPadding = 16.dp,
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        val types =
-                            listOf(
-                                TransactionType.INCOME,
-                                TransactionType.EXPENSE,
-                                TransactionType.TRANSFER,
-                            )
-                        types.forEachIndexed { index, type ->
-                            val typeTag =
+                        MmrTransactionTypeSegment(
+                            selected = state.selectedType,
+                            onTypeSelected = { viewModel.onEvent(AddEditTransactionUiEvent.OnTypeSelected(it)) },
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            testTagForType = { type ->
                                 when (type) {
                                     TransactionType.INCOME -> MmrTestTags.transactionTypeIncome
                                     TransactionType.EXPENSE -> MmrTestTags.transactionTypeExpense
                                     TransactionType.TRANSFER -> MmrTestTags.transactionTypeTransfer
-                                    else -> "transaction.type.${type.name.lowercase()}"
+                                    else -> null
                                 }
-                            SegmentedButton(
-                                modifier = Modifier.testTag(typeTag),
-                                shape = SegmentedButtonDefaults.itemShape(index = index, count = types.size),
-                                onClick = { viewModel.onEvent(AddEditTransactionUiEvent.OnTypeSelected(type)) },
-                                selected = state.selectedType == type,
-                            ) {
-                                Text(
-                                    text = type.name.lowercase().replaceFirstChar { it.uppercase() },
-                                    style = MaterialTheme.typography.labelMedium,
-                                )
-                            }
-                        }
-                    }
-
-                    TransactionDateTimeField(
-                        dateTimeMillis = state.dateTimeMillis,
-                        onDateTimeMillisChange = {
-                            viewModel.onEvent(AddEditTransactionUiEvent.OnDateTimeChanged(it))
-                        },
-                    )
-
-                    TransactionAmountField(
-                        amount = state.amount,
-                        onAmountChange = { viewModel.onEvent(AddEditTransactionUiEvent.OnAmountChanged(it)) },
-                    )
-
-                    val selectedCategory = state.categories.firstOrNull { it.id == state.selectedCategoryId }
-                    val selectedSub =
-                        selectedCategory?.subcategories?.firstOrNull {
-                            it.id == state.selectedSubcategoryId
-                        }
-                    val categoryDisplay =
-                        when {
-                            selectedCategory == null -> ""
-                            selectedSub != null -> "${selectedCategory.name} · ${selectedSub.name}"
-                            else -> selectedCategory.name
-                        }
-
-                    TransactionFormPickerField(
-                        label = "Category",
-                        value = categoryDisplay.ifEmpty { "Select category" },
-                        onClick =
-                            if (state.categories.isNotEmpty()) {
-                                { viewModel.onEvent(AddEditTransactionUiEvent.OnCategoryRowClick) }
-                            } else {
-                                null
                             },
-                        enabled = state.categories.isNotEmpty(),
-                    )
-
-                    if (state.categories.isEmpty()) {
-                        Text(
-                            text = "Add expense or income categories in Settings → Manage categories.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                    }
 
-                    val isTransfer = state.selectedType == TransactionType.TRANSFER
-                    val selectedAccountName =
-                        state.accounts
-                            .firstOrNull { it.id == state.selectedAccountId }
-                            ?.name
-                            ?: ""
+                        TransactionDateTimeField(
+                            dateTimeMillis = state.dateTimeMillis,
+                            onDateTimeMillisChange = {
+                                viewModel.onEvent(AddEditTransactionUiEvent.OnDateTimeChanged(it))
+                            },
+                        )
 
-                    val transferToLabel =
-                        when {
-                            state.selectedTransferLoanId != null -> {
-                                state.loans.firstOrNull { it.id == state.selectedTransferLoanId }?.name
-                                    ?: ""
+                        TransactionAmountField(
+                            amount = state.amount,
+                            onAmountChange = { viewModel.onEvent(AddEditTransactionUiEvent.OnAmountChanged(it)) },
+                        )
+
+                        val selectedCategory = state.categories.firstOrNull { it.id == state.selectedCategoryId }
+                        val selectedSub =
+                            selectedCategory?.subcategories?.firstOrNull {
+                                it.id == state.selectedSubcategoryId
                             }
-                            state.selectedRelatedAccountId != null -> {
-                                state.accounts.firstOrNull { it.id == state.selectedRelatedAccountId }?.name
-                                    ?: ""
+                        val categoryDisplay =
+                            when {
+                                selectedCategory == null -> ""
+                                selectedSub != null -> "${selectedCategory.name} · ${selectedSub.name}"
+                                else -> selectedCategory.name
                             }
-                            else -> ""
+
+                        TransactionExpandableCategoryField(
+                            state = state,
+                            displayValue = categoryDisplay,
+                            expanded = expandedField == TransactionFormExpandedField.Category,
+                            onExpandedChange = { open ->
+                                if (open) {
+                                    viewModel.onEvent(AddEditTransactionUiEvent.OnCategoryRowClick)
+                                    expandedField = TransactionFormExpandedField.Category
+                                } else {
+                                    expandedField = TransactionFormExpandedField.None
+                                }
+                            },
+                            onEvent = viewModel::onEvent,
+                            enabled = state.categories.isNotEmpty(),
+                        )
+
+                        if (state.categories.isEmpty()) {
+                            Text(
+                                text = "Add expense or income categories in Settings → Categories.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
 
-                    if (isTransfer) {
-                        TransactionFormPickerField(
-                            label = "From account",
-                            value = selectedAccountName.ifEmpty { "Select account" },
-                            onClick =
-                                if (state.accounts.isNotEmpty()) {
-                                    { viewModel.onEvent(AddEditTransactionUiEvent.OnFromAccountRowClick) }
-                                } else {
-                                    null
-                                },
-                            enabled = state.accounts.isNotEmpty(),
-                        )
-                        TransactionFormPickerField(
-                            label = "To",
-                            value = transferToLabel.ifEmpty { "Select destination" },
-                            onClick =
-                                if (state.accounts.isNotEmpty() || state.loans.isNotEmpty()) {
-                                    { viewModel.onEvent(AddEditTransactionUiEvent.OnToAccountRowClick) }
-                                } else {
-                                    null
-                                },
-                            enabled = state.accounts.isNotEmpty() || state.loans.isNotEmpty(),
-                        )
-                    } else {
-                        TransactionFormPickerField(
-                            label = "Account",
-                            value = selectedAccountName.ifEmpty { "Select account" },
-                            onClick =
-                                if (state.accounts.isNotEmpty()) {
-                                    { viewModel.onEvent(AddEditTransactionUiEvent.OnAccountRowClick) }
-                                } else {
-                                    null
-                                },
-                            enabled = state.accounts.isNotEmpty(),
-                        )
-                    }
+                        val isTransfer = state.selectedType == TransactionType.TRANSFER
+                        val selectedAccountName =
+                            state.accounts
+                                .firstOrNull { it.id == state.selectedAccountId }
+                                ?.name
+                                ?: ""
 
-                    if (state.accounts.isEmpty()) {
-                        Text(
-                            text = "Add an account in Settings before saving transactions.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+                        val transferToLabel =
+                            when {
+                                state.selectedTransferLoanId != null -> {
+                                    state.loans.firstOrNull { it.id == state.selectedTransferLoanId }?.name
+                                        ?: ""
+                                }
+                                state.selectedRelatedAccountId != null -> {
+                                    state.accounts.firstOrNull { it.id == state.selectedRelatedAccountId }?.name
+                                        ?: ""
+                                }
+                                else -> ""
+                            }
 
-                    TransactionNoteField(
-                        note = state.note,
-                        onNoteChange = { viewModel.onEvent(AddEditTransactionUiEvent.OnNoteChanged(it)) },
-                        suggestions = if (state.autocompleteEnabled) state.noteSuggestions else emptyList(),
-                    )
+                        if (isTransfer) {
+                            TransactionExpandableAccountField(
+                                label = "From account",
+                                displayValue = selectedAccountName,
+                                emptyHint = "Select account",
+                                icon = MmrTransactionFormIcons.transferFrom,
+                                accounts = state.accounts,
+                                selectedAccountId = state.selectedAccountId,
+                                mode = AccountPickerMode.AccountsGrouped,
+                                expanded = expandedField == TransactionFormExpandedField.TransferFrom,
+                                onExpandedChange = { open ->
+                                    if (open) {
+                                        viewModel.onEvent(AddEditTransactionUiEvent.OnFromAccountRowClick)
+                                        expandedField = TransactionFormExpandedField.TransferFrom
+                                    } else {
+                                        expandedField = TransactionFormExpandedField.None
+                                    }
+                                },
+                                onAccountSelected = {
+                                    viewModel.onEvent(AddEditTransactionUiEvent.OnAccountSelected(it))
+                                },
+                                enabled = state.accounts.isNotEmpty(),
+                            )
+                            TransactionExpandableAccountField(
+                                label = "To",
+                                displayValue = transferToLabel,
+                                emptyHint = "Select destination",
+                                icon = MmrTransactionFormIcons.transferTo,
+                                accounts = state.accounts,
+                                selectedAccountId = state.selectedRelatedAccountId,
+                                mode = AccountPickerMode.TransferTo,
+                                expanded = expandedField == TransactionFormExpandedField.TransferTo,
+                                onExpandedChange = { open ->
+                                    if (open) {
+                                        viewModel.onEvent(AddEditTransactionUiEvent.OnToAccountRowClick)
+                                        expandedField = TransactionFormExpandedField.TransferTo
+                                    } else {
+                                        expandedField = TransactionFormExpandedField.None
+                                    }
+                                },
+                                onAccountSelected = {
+                                    viewModel.onEvent(AddEditTransactionUiEvent.OnTransferToAccountSelected(it))
+                                },
+                                loans = state.loans,
+                                selectedLoanId = state.selectedTransferLoanId,
+                                onLoanSelected = {
+                                    viewModel.onEvent(AddEditTransactionUiEvent.OnTransferToLoanSelected(it))
+                                },
+                                excludedAccountId = state.selectedAccountId,
+                                enabled = state.accounts.isNotEmpty() || state.loans.isNotEmpty(),
+                            )
+                        } else {
+                            TransactionExpandableAccountField(
+                                label = "Account",
+                                displayValue = selectedAccountName,
+                                emptyHint = "Select account",
+                                icon = MmrTransactionFormIcons.account,
+                                accounts = state.accounts,
+                                selectedAccountId = state.selectedAccountId,
+                                mode = AccountPickerMode.AccountsGrouped,
+                                expanded = expandedField == TransactionFormExpandedField.Account,
+                                onExpandedChange = { open ->
+                                    if (open) {
+                                        viewModel.onEvent(AddEditTransactionUiEvent.OnAccountRowClick)
+                                        expandedField = TransactionFormExpandedField.Account
+                                    } else {
+                                        expandedField = TransactionFormExpandedField.None
+                                    }
+                                },
+                                onAccountSelected = {
+                                    viewModel.onEvent(AddEditTransactionUiEvent.OnAccountSelected(it))
+                                },
+                                enabled = state.accounts.isNotEmpty(),
+                            )
+                        }
 
-                    state.errorMessage?.let { error ->
-                        Text(
-                            text = error,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyMedium,
+                        if (state.accounts.isEmpty()) {
+                            Text(
+                                text = "Add an account in Settings before saving transactions.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+
+                        TransactionNoteField(
+                            note = state.note,
+                            onNoteChange = { viewModel.onEvent(AddEditTransactionUiEvent.OnNoteChanged(it)) },
+                            suggestions = if (state.autocompleteEnabled) state.noteSuggestions else emptyList(),
+                            onAttachPhotoClick = {
+                                receiptPicker.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                                )
+                            },
+                            canAttachMore =
+                                state.receipts.size <
+                                    TransactionAttachmentRepositoryImpl.MAX_ATTACHMENTS_PER_TRANSACTION,
                         )
+
+                        TransactionReceiptSection(
+                            receipts = state.receipts,
+                            onAddClick = {
+                                receiptPicker.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                                )
+                            },
+                            onRemoveSaved = { viewModel.onEvent(AddEditTransactionUiEvent.OnRemoveReceipt(it)) },
+                            onRemovePending = {
+                                viewModel.onEvent(
+                                    AddEditTransactionUiEvent.OnRemovePendingReceipt(it),
+                                )
+                            },
+                            canAddMore =
+                                state.receipts.size <
+                                    TransactionAttachmentRepositoryImpl.MAX_ATTACHMENTS_PER_TRANSACTION,
+                        )
+
+                        state.errorMessage?.let { error ->
+                            Text(
+                                text = error,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
                     }
                 }
             }

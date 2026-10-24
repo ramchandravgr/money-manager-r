@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mmr.app.ui.state.MmrUiMessages
 import com.mmr.core.common.validation.MmrValidation
+import com.mmr.core.domain.model.AccountDeletionPreview
 import com.mmr.core.domain.repository.AccountRepository
 import com.mmr.feature.account.model.AddEditAccountUiEvent
 import com.mmr.feature.account.model.AddEditAccountUiState
@@ -12,6 +13,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -67,6 +69,39 @@ class AddEditAccountViewModel
                 is AddEditAccountUiEvent.OnActiveChanged -> _uiState.update { it.copy(isActive = event.active) }
                 is AddEditAccountUiEvent.OnPrimaryChanged -> _uiState.update { it.copy(isPrimary = event.primary) }
                 AddEditAccountUiEvent.OnSave -> save()
+                is AddEditAccountUiEvent.OnDelete -> delete(event.reassignToAccountId)
+            }
+        }
+
+        suspend fun previewDeletion(): AccountDeletionPreview? {
+            val id = _uiState.value.accountId ?: return null
+            return accountRepository.previewAccountDeletion(id)
+        }
+
+        suspend fun replacementAccountOptions(): List<Pair<Long, String>> {
+            val id = _uiState.value.accountId ?: return emptyList()
+            return accountRepository
+                .getActiveAccounts()
+                .first()
+                .filter { it.id != id }
+                .map { Pair(it.id, it.name) }
+        }
+
+        private fun delete(reassignToAccountId: Long?) {
+            val id = _uiState.value.accountId ?: return
+            viewModelScope.launch {
+                _uiState.update { it.copy(isSaving = true, errorMessage = null) }
+                try {
+                    accountRepository.deleteAccount(id, reassignToAccountId)
+                    _uiState.update { it.copy(isSaving = false, isSaved = true) }
+                } catch (e: Exception) {
+                    _uiState.update {
+                        it.copy(
+                            isSaving = false,
+                            errorMessage = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_ACTION),
+                        )
+                    }
+                }
             }
         }
 

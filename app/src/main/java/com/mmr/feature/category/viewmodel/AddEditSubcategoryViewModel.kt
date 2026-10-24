@@ -59,8 +59,28 @@ class AddEditSubcategoryViewModel
                 }
 
                 AddEditSubcategoryUiEvent.OnSaveClick -> saveSubcategory()
+                AddEditSubcategoryUiEvent.OnDeleteClick -> deleteSubcategory()
                 AddEditSubcategoryUiEvent.OnDismissError -> {
                     _uiState.update { it.copy(errorMessage = null, loadErrorMessage = null) }
+                }
+            }
+        }
+
+        private fun deleteSubcategory() {
+            val subcategoryId = _uiState.value.subcategoryId
+            if (subcategoryId <= 0L) return
+            viewModelScope.launch {
+                _uiState.update { it.copy(isSaving = true, errorMessage = null) }
+                try {
+                    categoryRepository.deleteSubcategory(subcategoryId)
+                    _uiState.update { it.copy(isSaving = false, isSaved = true) }
+                } catch (e: Exception) {
+                    _uiState.update {
+                        it.copy(
+                            isSaving = false,
+                            errorMessage = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_SAVE),
+                        )
+                    }
                 }
             }
         }

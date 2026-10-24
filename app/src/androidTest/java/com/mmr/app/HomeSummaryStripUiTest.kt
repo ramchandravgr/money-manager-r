@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mmr.app.testing.MmrHiltUiTest
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.testing.MmrUiTestFixtures
+import com.mmr.app.testing.traceWaitUntil
 import com.mmr.feature.home.ui.formatRupeeAmount
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
@@ -19,10 +20,9 @@ class HomeSummaryStripUiTest : MmrHiltUiTest() {
     fun summaryStrip_reflectsSeededMonthTotals() {
         val fixture = runBlocking { MmrUiTestFixtures.seedHomeSummarySample(database) }
 
-        composeRule.activityRule.scenario.recreate()
-        composeRule.waitForIdle()
+        traceActivityRecreate()
 
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 10_000) {
             runCatching {
                 composeRule
                     .onNodeWithTag(MmrTestTags.homeSummaryExpense)

@@ -29,4 +29,5 @@ data class SmsMessageRecordEntity(
     val approvalState: SmsApprovalState = SmsApprovalState.PENDING,
     val rawMessageId: String? = null,
     val processedAt: Long? = System.currentTimeMillis(),
+    val linkRole: SmsLinkRole? = null,
 )

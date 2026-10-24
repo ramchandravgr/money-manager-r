@@ -20,15 +20,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mmr.app.ui.adaptive.MmrAdaptiveWidthBox
-import com.mmr.app.ui.components.MmrMmHeaderBar
-import com.mmr.app.ui.components.MmrMmPeriodChip
-import com.mmr.app.ui.components.MmrMmStatsTabRow
+import com.mmr.app.ui.components.MmrHeaderBar
 import com.mmr.app.ui.components.MmrNestedScaffoldInsets
+import com.mmr.app.ui.components.MmrPeriodChip
 import com.mmr.app.ui.components.MmrPeriodSwipeBox
+import com.mmr.app.ui.components.MmrStatsTabRow
 import com.mmr.app.ui.state.MmrEmptyState
 import com.mmr.app.ui.state.MmrErrorState
 import com.mmr.app.ui.state.MmrLoadingState
-import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.app.ui.theme.MmrBrandColors
 import com.mmr.feature.home.ui.HomeMonthPickerDialog
 import com.mmr.feature.stats.StatsPeriodUtils
 import com.mmr.feature.stats.model.*
@@ -113,7 +113,7 @@ fun StatsScreen(
     }
 
     Scaffold(
-        containerColor = MmrMmColors.ListBackground,
+        containerColor = MmrBrandColors.ListBackground,
         contentWindowInsets = MmrNestedScaffoldInsets,
         topBar = {
             StatsTopBar(
@@ -140,7 +140,7 @@ fun StatsScreen(
                     .fillMaxSize()
                     .padding(innerPadding),
         ) {
-            MmrMmStatsTabRow(
+            MmrStatsTabRow(
                 incomeTabLabel = viewModel.ledgerTabLabel(StatsLedgerTab.INCOME, uiState.summary),
                 expenseTabLabel = viewModel.ledgerTabLabel(StatsLedgerTab.EXPENSE, uiState.summary),
                 selectedIndex = if (uiState.ledgerTab == StatsLedgerTab.INCOME) 0 else 1,
@@ -153,7 +153,7 @@ fun StatsScreen(
                 },
             )
             HorizontalDivider(
-                color = MmrMmColors.TransactionListBorder,
+                color = MmrBrandColors.TransactionListBorder,
                 thickness = com.mmr.app.ui.components.MmrDimens.transactionListDividerThickness,
             )
 
@@ -263,7 +263,7 @@ private fun StatsTopBar(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = startLabel,
-                        color = MmrMmColors.HeaderIcon,
+                        color = MmrBrandColors.HeaderIcon,
                         fontSize = 15.sp,
                         modifier =
                             Modifier.clickable(
@@ -272,10 +272,10 @@ private fun StatsTopBar(
                                 onClick = onPeriodStartClick,
                             ),
                     )
-                    Text(text = " ~ ", color = MmrMmColors.HeaderIcon, fontSize = 15.sp)
+                    Text(text = " ~ ", color = MmrBrandColors.HeaderIcon, fontSize = 15.sp)
                     Text(
                         text = endLabel,
-                        color = MmrMmColors.HeaderIcon,
+                        color = MmrBrandColors.HeaderIcon,
                         fontSize = 15.sp,
                         modifier =
                             Modifier.clickable(
@@ -291,7 +291,7 @@ private fun StatsTopBar(
         }
 
     Column(Modifier.fillMaxWidth()) {
-        MmrMmHeaderBar(
+        MmrHeaderBar(
             title = if (uiState.periodMode == StatsPeriodMode.PERIOD) "" else uiState.navigationLabel,
             titleContent = periodTitleContent,
             onTitleClick = onTitleClick,
@@ -311,7 +311,7 @@ private fun StatsTopBar(
                 },
             trailing = {
                 Box {
-                    MmrMmPeriodChip(
+                    MmrPeriodChip(
                         label = StatsPeriodUtils.modeDropdownLabel(uiState.periodMode),
                         onClick = { menuExpanded = true },
                     )

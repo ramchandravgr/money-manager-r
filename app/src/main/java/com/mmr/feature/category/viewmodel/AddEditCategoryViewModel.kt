@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mmr.app.ui.state.MmrUiMessages
 import com.mmr.core.database.entity.CategoryEntity
+import com.mmr.core.domain.model.CategoryDeleteTransactionMode
 import com.mmr.core.domain.repository.CategoryRepository
 import com.mmr.core.model.enums.CategoryType
 import com.mmr.feature.category.model.AddEditCategoryUiEvent
@@ -14,6 +15,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -76,6 +78,46 @@ class AddEditCategoryViewModel
                 AddEditCategoryUiEvent.OnSaveClick -> saveCategory()
                 AddEditCategoryUiEvent.OnDismissError -> {
                     _uiState.update { it.copy(errorMessage = null, loadErrorMessage = null) }
+                }
+            }
+        }
+
+        suspend fun countTransactionsForCategory(): Int {
+            val id = _uiState.value.categoryId
+            if (id <= 0L) return 0
+            return categoryRepository.countTransactionsForCategory(id)
+        }
+
+        suspend fun migrationTargetOptions(): List<Pair<Long, String>> {
+            val state = _uiState.value
+            if (state.categoryId <= 0L) return emptyList()
+            val tree =
+                categoryRepository
+                    .observeActiveCategoryTreeByType(state.type)
+                    .first()
+            return tree
+                .filter { it.category.id.value != state.categoryId }
+                .map { Pair(it.category.id.value, it.category.name) }
+        }
+
+        fun deleteCategory(
+            transactionMode: CategoryDeleteTransactionMode,
+            migrateToCategoryId: Long?,
+        ) {
+            val id = _uiState.value.categoryId
+            if (id <= 0L) return
+            viewModelScope.launch {
+                _uiState.update { it.copy(isSaving = true, errorMessage = null) }
+                try {
+                    categoryRepository.deleteCategory(id, transactionMode, migrateToCategoryId)
+                    _uiState.update { it.copy(isSaving = false, isSaved = true) }
+                } catch (e: Exception) {
+                    _uiState.update {
+                        it.copy(
+                            isSaving = false,
+                            errorMessage = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_ACTION),
+                        )
+                    }
                 }
             }
         }

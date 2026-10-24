@@ -38,6 +38,18 @@ enum class SmsParsedStatus {
     NON_FINANCIAL,
 }
 
+/** Pending approval queue item: normal spend/income vs card refund to apply to a purchase. */
+enum class SmsApprovalKind {
+    TRANSACTION,
+    CARD_REFUND,
+}
+
+/** Role of an SMS linked to a ledger transaction. */
+enum class SmsLinkRole {
+    PURCHASE,
+    REFUND,
+}
+
 enum class CategoryType {
     EXPENSE,
     INCOME,

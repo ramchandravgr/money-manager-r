@@ -17,10 +17,12 @@ fun ComposeTestRule.waitForTransactionRow(
     timeoutMillis: Long = 10_000L,
 ) {
     val tag = MmrTestTags.transactionRow(transactionId)
-    waitUntil(timeoutMillis) {
+    traceWaitUntil("transaction_row_$transactionId", timeoutMillis) {
         onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
     }
-    onNodeWithTag(tag).performScrollTo()
+    traceAction("scroll_to_transaction_row_$transactionId") {
+        onNodeWithTag(tag).performScrollTo()
+    }
 }
 
 fun ComposeTestRule.assertTransactionRowShowsExpense(
@@ -38,7 +40,7 @@ fun ComposeTestRule.assertLedgerLineShowsExpense(
     timeoutMillis: Long = 15_000L,
 ) {
     val amountLabel = MmrUiTestFormat.expenseAmountFormatted(amount)
-    waitUntil(timeoutMillis) {
+    traceWaitUntil("ledger_line_$note", timeoutMillis) {
         onAllNodes(
             hasText(note, substring = true) and hasText(amountLabel, substring = true),
         ).fetchSemanticsNodes().isNotEmpty()

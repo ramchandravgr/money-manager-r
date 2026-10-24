@@ -2,6 +2,7 @@ package com.mmr.core.database.entity
 
 import androidx.room.*
 import com.mmr.core.model.enums.CardNetwork
+import com.mmr.core.model.enums.SmsApprovalKind
 import com.mmr.core.model.enums.SmsApprovalState
 import com.mmr.core.model.enums.TransactionType
 
@@ -41,6 +42,7 @@ data class TransactionApprovalEntity(
     val smsMessageRecordId: Long,
     val extractedAmount: Double,
     val extractedType: TransactionType = TransactionType.EXPENSE,
+    val approvalKind: SmsApprovalKind = SmsApprovalKind.TRANSACTION,
     val extractedDateTime: Long,
     val extractedSender: String,
     val extractedMerchant: String? = null,

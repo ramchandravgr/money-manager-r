@@ -3,11 +3,12 @@ package com.mmr.app
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mmr.app.testing.MmrHiltUiTest
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.testing.MmrUiTestFixtures
+import com.mmr.app.testing.traceClickTag
+import com.mmr.app.testing.traceWaitUntil
 import com.mmr.core.domain.repository.ApprovalRepository
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
@@ -22,26 +23,31 @@ class ApprovalMergeFlowUiTest : MmrHiltUiTest() {
     lateinit var approvalRepository: ApprovalRepository
 
     @Test
-    fun quickApprove_withLedgerMatch_showsMergeDialog() {
+    fun linkAction_showsGlobalLedgerPicker() {
         val fixture =
             runBlocking {
                 MmrUiTestFixtures.seedSmsMergeScenario(database, approvalRepository)
             }
 
-        composeRule.activityRule.scenario.recreate()
-        composeRule.waitForIdle()
+        traceActivityRecreate()
 
-        composeRule.onNodeWithTag(MmrTestTags.homeTopBarApprovals).performClick()
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.traceClickTag(MmrTestTags.homeTopBarApprovals)
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 10_000) {
             composeRule
                 .onAllNodesWithTag(MmrTestTags.approvalCard(fixture.approvalId))
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
 
-        composeRule.onNodeWithTag(MmrTestTags.approvalQuickApprove(fixture.approvalId)).performClick()
-        composeRule.waitForIdle()
-        composeRule.onNodeWithText("Merge with existing transaction?").assertExists()
-        composeRule.onNodeWithText("Transaction #${fixture.transactionId}", substring = true).assertExists()
+        composeRule.traceClickTag(MmrTestTags.approvalLink(fixture.approvalId))
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 10_000) {
+            composeRule
+                .onAllNodesWithTag(
+                    MmrTestTags.transactionRow(fixture.transactionId),
+                ).fetchSemanticsNodes()
+                .isNotEmpty()
+        }
+        composeRule.onNodeWithText("Link to existing transaction").assertExists()
+        composeRule.onNodeWithTag(MmrTestTags.transactionRow(fixture.transactionId)).assertExists()
     }
 }

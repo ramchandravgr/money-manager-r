@@ -4,13 +4,15 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mmr.app.testing.MmrHiltUiTest
 import com.mmr.app.testing.MmrTestTags
+import com.mmr.app.testing.traceClickTag
+import com.mmr.app.testing.traceClickText
+import com.mmr.app.testing.traceMatcherClick
+import com.mmr.app.testing.traceTextInputTag
+import com.mmr.app.testing.traceWaitUntil
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -21,26 +23,27 @@ class TransferTransactionFlowUiTest : MmrHiltUiTest() {
     @Test
     fun addTransfer_betweenCashAndBank_appearsOnHome() {
         val note = "UiTest transfer ${System.currentTimeMillis()}"
-        composeRule.onNodeWithTag(MmrTestTags.homeFabAdd).performClick()
+        composeRule.traceClickTag(MmrTestTags.homeFabAdd)
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag(MmrTestTags.transactionTypeTransfer).performClick()
-        composeRule.onNodeWithTag(MmrTestTags.transactionAmount).performTextInput("75")
-        composeRule.onNodeWithTag(MmrTestTags.transactionNote).performTextInput(note)
+        composeRule.traceClickTag(MmrTestTags.transactionTypeTransfer)
+        composeRule.traceTextInputTag(MmrTestTags.transactionAmount, "75")
+        composeRule.traceTextInputTag(MmrTestTags.transactionNote, note)
 
-        composeRule.onNodeWithText("From account").performClick()
+        composeRule.traceClickText("From account")
         composeRule.waitForIdle()
-        composeRule.onNode(hasText("Cash") and hasClickAction() and isEnabled()).performClick()
+        composeRule.traceMatcherClick(hasText("Cash") and hasClickAction() and isEnabled(), "pick_cash_account")
 
-        composeRule.onNodeWithText("To").performClick()
+        composeRule.traceClickText("To")
         composeRule.waitForIdle()
-        composeRule
-            .onNode(hasText("Main Bank Account") and hasClickAction() and isEnabled())
-            .performClick()
+        composeRule.traceMatcherClick(
+            hasText("Main Bank Account") and hasClickAction() and isEnabled(),
+            "pick_main_bank_account",
+        )
 
-        composeRule.onNodeWithTag(MmrTestTags.appBarSave).performClick()
+        composeRule.traceClickTag(MmrTestTags.appBarSave)
 
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 10_000) {
             composeRule.onAllNodesWithText(note).fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText(note).assertExists()

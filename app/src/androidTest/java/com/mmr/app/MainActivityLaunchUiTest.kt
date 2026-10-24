@@ -1,10 +1,11 @@
 package com.mmr.app
 
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mmr.app.testing.MmrHiltUiTest
 import com.mmr.app.testing.MmrTestTags
+import com.mmr.app.testing.traceClickTag
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -14,13 +15,13 @@ import org.junit.runner.RunWith
 class MainActivityLaunchUiTest : MmrHiltUiTest() {
     @Test
     fun launch_showsHomeTabSelected() {
-        composeRule.onNodeWithTag(MmrTestTags.navHome).assertExists()
+        composeRule.onNodeWithTag(MmrTestTags.navHome).assertIsSelected()
     }
 
     @Test
     fun bottomNav_opensStatsTab() {
-        composeRule.onNodeWithTag(MmrTestTags.navStats).performClick()
+        composeRule.traceClickTag(MmrTestTags.navStats)
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(MmrTestTags.navStats).assertExists()
+        composeRule.onNodeWithTag(MmrTestTags.navStats).assertIsSelected()
     }
 }

@@ -2,7 +2,7 @@ package com.mmr.feature.stats.ui
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.app.ui.theme.MmrBrandColors
 import com.mmr.feature.stats.model.CategoryBreakdownUi
 import com.mmr.feature.stats.model.MonthlyChartPointUi
 import org.json.JSONArray
@@ -12,8 +12,8 @@ internal object StatsChartJsonBuilder {
     fun pieChartJson(
         breakdowns: List<CategoryBreakdownUi>,
         noDataMessage: String,
-        backgroundColor: Color = MmrMmColors.SurfaceWhite,
-        textColor: Color = MmrMmColors.Reversal,
+        backgroundColor: Color = MmrBrandColors.SurfaceWhite,
+        textColor: Color = MmrBrandColors.Reversal,
     ): String {
         val data = JSONArray()
         breakdowns.forEach { row ->
@@ -64,12 +64,12 @@ internal object StatsChartJsonBuilder {
         val colors = JSONArray().put(lineColorHex)
         return JSONObject()
             .put("xAxisVisible", true)
-            .put("plotBackgroundColor", colorToHex(MmrMmColors.ListBackground))
-            .put("tooltipBackgroundColor", colorToHex(MmrMmColors.Active))
-            .put("tooltipTextColor", colorToHex(MmrMmColors.SurfaceWhite))
-            .put("textMediumColor", colorToHex(MmrMmColors.TextMedium))
-            .put("baseColor", colorToHex(MmrMmColors.SurfaceWhite))
-            .put("borderColor", colorToHex(MmrMmColors.TransactionListBorder))
+            .put("plotBackgroundColor", colorToHex(MmrBrandColors.ListBackground))
+            .put("tooltipBackgroundColor", colorToHex(MmrBrandColors.Active))
+            .put("tooltipTextColor", colorToHex(MmrBrandColors.SurfaceWhite))
+            .put("textMediumColor", colorToHex(MmrBrandColors.TextMedium))
+            .put("baseColor", colorToHex(MmrBrandColors.SurfaceWhite))
+            .put("borderColor", colorToHex(MmrBrandColors.TransactionListBorder))
             .put("categories", categories)
             .put("series", series)
             .put("colors", colors)

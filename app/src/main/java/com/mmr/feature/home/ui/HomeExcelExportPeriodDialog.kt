@@ -17,9 +17,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.mmr.app.ui.theme.MmrBrandColors
 import com.mmr.feature.home.model.HomeExcelExportOptionUi
-
-private val DialogHeaderBlue = Color(0xFF263248)
 
 @Composable
 fun HomeExcelExportPeriodDialog(
@@ -47,7 +46,7 @@ fun HomeExcelExportPeriodDialog(
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .background(DialogHeaderBlue)
+                        .background(MmrBrandColors.DialogHeader)
                         .padding(horizontal = 20.dp, vertical = 14.dp),
                 color = Color.White,
                 style = MaterialTheme.typography.titleMedium,
@@ -55,7 +54,7 @@ fun HomeExcelExportPeriodDialog(
             )
             options.forEachIndexed { index, option ->
                 if (index > 0) {
-                    HorizontalDivider(color = Color(0xFFE8E8E8))
+                    HorizontalDivider(color = MmrBrandColors.BorderMain)
                 }
                 Text(
                     text = option.label,
@@ -65,7 +64,7 @@ fun HomeExcelExportPeriodDialog(
                             .clickable { onOptionSelected(option) }
                             .padding(horizontal = 20.dp, vertical = 16.dp),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF333333),
+                    color = MmrBrandColors.TextStrong,
                 )
             }
         }

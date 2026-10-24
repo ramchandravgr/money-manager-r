@@ -5,24 +5,22 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Rounded-square canvas (full bleed for adaptive icon) -->
     <path
         android:pathData="M22,0H86A22,22 0,0 1,108 22V86A22,22 0,0 1,86 108H22A22,22 0,0 1,0 86V22A22,22 0,0 1,22 0Z">
         <aapt:attr name="android:fillColor">
             <gradient
                 android:type="linear"
-                android:startX="18"
-                android:startY="12"
-                android:endX="92"
-                android:endY="98">
-                <item android:offset="0" android:color="#1A4FA3" />
-                <item android:offset="0.55" android:color="#0F3468" />
-                <item android:offset="1" android:color="#0A2540" />
+                android:startX="20"
+                android:startY="16"
+                android:endX="90"
+                android:endY="96">
+                <item android:offset="0" android:color="#FF3F4671" />
+                <item android:offset="0.55" android:color="#FF323861" />
+                <item android:offset="1" android:color="#FF23294E" />
             </gradient>
         </aapt:attr>
     </path>
-    <!-- Subtle inner highlight for depth -->
     <path
-        android:fillColor="#14FFFFFF"
-        android:pathData="M22,4H86A18,18 0,0 1,104 22V42C78,36 52,34 26,40V22A18,18 0,0 1,22 4Z" />
+        android:fillColor="#12FFFFFF"
+        android:pathData="M22,4H86A18,18 0,0 1,104 22V40C76,34 48,32 22,38V22A18,18 0,0 1,22 4Z" />
 </vector>

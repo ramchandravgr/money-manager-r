@@ -1,3 +1,10 @@
 <resources>
-    <string name="app_name">MoneyManagerR</string>
+    <string name="app_name">Money Inbox</string>
+    <string name="app_tagline">Scan bank SMS. Approve before recording.</string>
+    <string name="notification_channel_sms_approvals">SMS approvals</string>
+    <string name="notification_channel_sms_approvals_desc">Summary when new bank SMS are ready to review</string>
+    <string name="widget_pending_approvals_title">Pending approvals</string>
+    <string name="widget_pending_approvals_description">Review one pending SMS at a time — approve, reject, or open the app for link/edit.</string>
+    <string name="widget_month_spend_title">Current month summary</string>
+    <string name="widget_month_spend_description">Income, expenses, and total for the current month (same strip as Home).</string>
 </resources>

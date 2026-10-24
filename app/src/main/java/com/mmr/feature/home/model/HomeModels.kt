@@ -1,5 +1,6 @@
 package com.mmr.feature.home.model
 
+import com.mmr.app.ui.components.MmrMergeDateOption
 import com.mmr.core.model.settings.MmrAmountColorScheme
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -50,6 +51,9 @@ data class HomeUiState(
     val selectedTransactionIds: Set<Long> = emptySet(),
     val showMergeDialog: Boolean = false,
     val mergeNameInput: String = "",
+    val mergeDateOptions: List<MmrMergeDateOption> = emptyList(),
+    val mergeSelectedDateTimeMillis: Long? = null,
+    val mergeCombinedAmountLabel: String = "",
     val mergeErrorMessage: String? = null,
     val canMergeSelection: Boolean = false,
     val canDeleteSelection: Boolean = false,
@@ -221,6 +225,10 @@ sealed interface HomeUiEvent {
 
     data class OnMergeNameChanged(
         val name: String,
+    ) : HomeUiEvent
+
+    data class OnMergeDateSelected(
+        val dateTimeMillis: Long,
     ) : HomeUiEvent
 
     object OnConfirmMerge : HomeUiEvent

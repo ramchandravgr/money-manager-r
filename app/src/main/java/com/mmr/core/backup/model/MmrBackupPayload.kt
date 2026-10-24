@@ -1,6 +1,7 @@
 package com.mmr.core.backup.model
 
 import com.mmr.core.database.entity.AccountEntity
+import com.mmr.core.database.entity.CategorizationRuleEntity
 import com.mmr.core.database.entity.CategoryEntity
 import com.mmr.core.database.entity.LoanEntity
 import com.mmr.core.database.entity.LoanInterestRevisionEntity
@@ -10,8 +11,10 @@ import com.mmr.core.database.entity.NotificationRuleEntity
 import com.mmr.core.database.entity.RecurringRuleEntity
 import com.mmr.core.database.entity.SmsMessageRecordEntity
 import com.mmr.core.database.entity.SubcategoryEntity
+import com.mmr.core.database.entity.SyncTombstoneEntity
 import com.mmr.core.database.entity.TransactionApprovalEntity
 import com.mmr.core.database.entity.TransactionEntity
+import com.mmr.core.database.entity.TrustedLanDeviceEntity
 
 data class MmrBackupPayload(
     val formatVersion: Int,
@@ -31,6 +34,10 @@ data class MmrBackupPayload(
     val smsMessageRecords: List<SmsMessageRecordEntity>,
     val transactionApprovals: List<TransactionApprovalEntity>,
     val appSettings: MmrAppSettingsBackup? = null,
+    val tombstones: List<SyncTombstoneEntity> = emptyList(),
+    val categorizationRules: List<CategorizationRuleEntity> = emptyList(),
+    val trustedLanDevices: List<TrustedLanDeviceEntity> = emptyList(),
+    val transactionAttachments: List<MmrBackupAttachmentRecord> = emptyList(),
 )
 
 data class BackupRestoreSummary(

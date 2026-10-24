@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MMR — Content dialog alternatives (15 × 5 flows)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --header: #3f4671;
+      --accent: #ff6255;
+      --bg: #f7f7fa;
+      --surface: #fff;
+      --border: #e2e6ee;
+      --text: #1a2332;
+      --muted: #6b7280;
+      --danger: #dc2626;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      background: linear-gradient(160deg, #dce3ef, #f4f6fa);
+      color: var(--text);
+    }
+    .page { max-width: 1400px; margin: 0 auto; padding: 20px 16px 56px; }
+    .intro { margin-bottom: 20px; max-width: 80ch; }
+    .intro h1 { font-size: 1.35rem; margin: 0 0 8px; }
+    .intro p { margin: 0 0 8px; color: var(--muted); font-size: 0.9rem; line-height: 1.55; }
+    .intro ul { margin: 8px 0 0; padding-left: 1.2rem; font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+
+    .layout { display: grid; grid-template-columns: 260px 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 960px) { .layout { grid-template-columns: 1fr; } }
+
+    .nav {
+      position: sticky; top: 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 10px; max-height: calc(100vh - 24px); overflow-y: auto;
+    }
+    .nav h2 { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 6px 10px; }
+    .nav button {
+      display: block; width: 100%; text-align: left; border: none; background: transparent;
+      font: inherit; font-size: 0.82rem; padding: 8px 10px; border-radius: 10px; cursor: pointer;
+    }
+    .nav button:hover { background: var(--bg); }
+    .nav button.active { background: rgba(255, 98, 85, 0.12); color: #b91c1c; font-weight: 600; }
+    .nav button small { display: block; color: var(--muted); font-weight: 400; font-size: 0.72rem; margin-top: 2px; }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .panel-head { margin-bottom: 16px; }
+    .panel-head h2 { margin: 0 0 4px; font-size: 1.2rem; }
+    .panel-head p { margin: 0; color: var(--muted); font-size: 0.88rem; line-height: 1.45; }
+
+    .scenario-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+    .scenario-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .scenario-card header {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .scenario-card header span {
+      display: block; text-transform: none; letter-spacing: 0;
+      font-weight: 600; color: var(--text); font-size: 0.88rem; margin-top: 2px;
+    }
+    .scene {
+      position: relative;
+      min-height: 280px;
+      padding: 16px 12px;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .scene .dlg { flex-shrink: 0; }
+    .scene.stacked { min-height: 420px; justify-content: flex-start; padding-top: 12px; }
+    .scene.stacked .dlg { transform: scale(0.92); }
+    .scene.stacked .dlg:last-child { transform: scale(0.88); opacity: 0.95; }
+    .scene::before {
+      content: "";
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, var(--header) 0 56px, var(--bg) 56px);
+      opacity: 0.35;
+    }
+    .scrim {
+      position: absolute; inset: 0;
+      background: rgba(26, 35, 50, 0.42);
+    }
+
+    /* —— Shared dialog primitives —— */
+    .dlg {
+      position: relative; z-index: 2;
+      width: 100%; max-width: 268px;
+      font-size: 0.8rem;
+      line-height: 1.45;
+    }
+    .dlg .t { font-weight: 600; font-size: 1.05rem; margin: 0 0 8px; }
+    .dlg .m { color: var(--muted); margin: 0 0 10px; font-size: 0.78rem; }
+    .dlg .body { margin: 0 0 12px; }
+    .dlg .from { font-size: 0.75rem; color: var(--muted); margin-bottom: 6px; }
+    .dlg .sms { font-size: 0.76rem; color: var(--text); }
+    .dlg .actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+    .dlg .actions.stack { flex-direction: column; align-items: stretch; }
+    .dlg .actions.stack .btn { width: 100%; text-align: center; }
+    .dlg .btn {
+      border: none; background: transparent; font: inherit; cursor: default;
+      padding: 8px 12px; border-radius: 8px; font-size: 0.78rem;
+    }
+    .dlg .btn.primary { color: var(--accent); font-weight: 600; }
+    .dlg .btn.muted { color: var(--muted); }
+    .dlg .btn.danger { color: var(--danger); font-weight: 600; }
+    .dlg .btn.fill {
+      background: var(--accent); color: #fff; font-weight: 600;
+    }
+    .dlg .btn.fill.danger { background: var(--danger); }
+    .dlg .btn.outline {
+      border: 1px solid var(--border); color: var(--text);
+    }
+    .dlg .field {
+      width: 100%; padding: 8px 10px; border: 1px solid var(--border);
+      border-radius: 8px; font: inherit; font-size: 0.78rem; margin-bottom: 8px;
+    }
+    .dlg .radio { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 0.76rem; }
+    .dlg .radio input { accent-color: var(--accent); }
+    .dlg .sec-btn {
+      width: 100%; padding: 10px; border-radius: 10px; border: 1px solid var(--border);
+      background: #fff; font: inherit; font-size: 0.78rem; margin-bottom: 6px; text-align: left;
+    }
+
+    /* Theme 01 — Current MmrContentDialog */
+    .t01 .dlg { background: #fff; border-radius: 20px; padding: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.15); }
+    .t01 .dlg .t { color: #1e2445; }
+
+    /* 02 — iOS alert */
+    .t02 .dlg { background: rgba(255,255,255,.94); backdrop-filter: blur(12px); border-radius: 14px; padding: 16px 14px 0; text-align: center; max-width: 250px; }
+    .t02 .dlg .body, .t02 .dlg .m { text-align: left; }
+    .t02 .dlg .actions { border-top: 1px solid var(--border); margin: 12px -14px 0; padding: 0; flex-direction: column; }
+    .t02 .dlg .btn { width: 100%; padding: 12px; border-top: 1px solid var(--border); border-radius: 0; }
+    .t02 .dlg .btn:first-child { border-top: none; }
+    .t02 .dlg .btn.primary { color: #007aff; }
+
+    /* 03 — Navy header band */
+    .t03 .dlg { background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 16px 48px rgba(0,0,0,.2); padding: 0; }
+    .t03 .dlg .head { background: var(--header); color: #fff; padding: 12px 14px; }
+    .t03 .dlg .head .t { color: #fff; margin: 0; font-size: 0.95rem; }
+    .t03 .dlg .inner { padding: 12px 14px 14px; }
+    .t03 .dlg .actions { padding: 0 14px 12px; }
+
+    /* 04 — Bottom sheet (centered preview) */
+    .t04 .dlg { background: #fff; border-radius: 20px 20px 14px 14px; padding: 8px 14px 14px; max-width: 280px; box-shadow: 0 -4px 32px rgba(0,0,0,.18); }
+    .t04 .dlg::before { content: ""; display: block; width: 36px; height: 4px; background: #d1d5db; border-radius: 4px; margin: 4px auto 12px; }
+    .t04 .dlg .actions .btn.fill { width: 100%; }
+
+    /* 05 — Minimal outline */
+    .t05 .dlg { background: #fff; border: 2px solid var(--text); border-radius: 4px; padding: 14px; box-shadow: none; }
+    .t05 .dlg .actions .btn { text-decoration: underline; }
+
+    /* 06 — Inset grouped (iOS settings card) */
+    .t06 .dlg { background: var(--bg); border-radius: 18px; padding: 12px; max-width: 272px; }
+    .t06 .dlg .card { background: #fff; border-radius: 12px; padding: 12px; }
+    .t06 .dlg .actions { justify-content: center; margin-top: 10px; }
+
+    /* 07 — Glass card */
+    .t07 .scene { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.08'/%3E%3C/svg%3E"), linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .t07 .dlg { background: rgba(255,255,255,.72); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,.5); border-radius: 20px; padding: 14px; }
+
+    /* 08 — SMS / messenger */
+    .t08 .dlg { background: transparent; max-width: 260px; padding: 0; }
+    .t08 .dlg .bubble { background: #fff; border-radius: 16px 16px 16px 4px; padding: 12px; box-shadow: 0 4px 16px rgba(0,0,0,.1); }
+    .t08 .dlg .actions { justify-content: flex-start; margin-top: 10px; }
+
+    /* 09 — Ledger / receipt */
+    .t09 .dlg { background: #fffef8; border: 1px dashed #c4b896; border-radius: 8px; padding: 14px; font-family: "IBM Plex Mono", monospace; font-size: 0.72rem; }
+    .t09 .dlg .t { font-family: "Plus Jakarta Sans", sans-serif; }
+
+    /* 10 — Icon hero */
+    .t10 .dlg { background: #fff; border-radius: 20px; padding: 14px; text-align: center; box-shadow: 0 12px 36px rgba(0,0,0,.12); }
+    .t10 .dlg .ico { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,98,85,.15); margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+    .t10 .dlg .body, .t10 .dlg .m { text-align: left; }
+
+    /* 11 — Left accent stripe */
+    .t11 .dlg { background: #fff; border-radius: 12px; padding: 14px 14px 14px 18px; box-shadow: 0 8px 28px rgba(0,0,0,.1); border-left: 5px solid var(--accent); }
+
+    /* 12 — Full-width footer CTA */
+    .t12 .dlg { background: #fff; border-radius: 16px; padding: 14px 14px 0; overflow: hidden; box-shadow: 0 10px 32px rgba(0,0,0,.14); }
+    .t12 .dlg .actions { margin: 12px -14px 0; padding: 12px 14px; background: var(--bg); flex-direction: column; }
+    .t12 .dlg .btn.fill { width: 100%; }
+
+    /* 13 — Material tonal */
+    .t13 .dlg { background: #eceef4; border-radius: 28px; padding: 16px; }
+    .t13 .dlg .t { font-size: 1.15rem; }
+    .t13 .dlg .btn.fill { background: var(--header); border-radius: 20px; }
+
+    /* 14 — Compact alert */
+    .t14 .dlg { background: #fff; border-radius: 12px; padding: 12px; max-width: 220px; font-size: 0.74rem; box-shadow: 0 6px 20px rgba(0,0,0,.12); }
+    .t14 .dlg .t { font-size: 0.92rem; }
+
+    /* 15 — Split footer bar */
+    .t15 .dlg { background: #fff; border-radius: 16px; padding: 14px 14px 0; box-shadow: 0 12px 40px rgba(0,0,0,.15); overflow: hidden; }
+    .t15 .dlg .actions { margin: 12px -14px 0; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; }
+    .t15 .dlg .btn { border-radius: 0; padding: 12px; }
+    .t15 .dlg .btn + .btn { border-left: 1px solid var(--border); }
+
+    .pick-note {
+      margin-top: 24px; padding: 14px 16px; background: #fff; border: 1px dashed var(--accent);
+      border-radius: 12px; font-size: 0.85rem; color: var(--muted);
+    }
+    .pick-note strong { color: var(--text); }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="intro">
+      <h1>MMR content-dialog alternatives</h1>
+      <p>
+        Replaces today’s <code>MmrContentDialog</code> family (centered card, title, body, text actions).
+        Each design shows <strong>5 scenario groups</strong> from the app — <strong>15 × 5 = 75</strong> previews
+        (some cards stack two dialogs when the app uses the same shell twice).
+        Pick a design number and tell engineering which theme id to implement.
+      </p>
+      <ul>
+        <li><strong>1 — Approval:</strong> SMS message (Close only)</li>
+        <li><strong>2 — Transaction + Add-edit:</strong> Loan-linked delete + Duplicate date</li>
+        <li><strong>3 — Loan detail:</strong> Delete loan confirm + Top-up (amount / date)</li>
+        <li><strong>4 — Backup entities:</strong> Remove account + reassignment</li>
+        <li><strong>5 — Home merge:</strong> Merge name + date</li>
+      </ul>
+    </div>
+    <div class="layout">
+      <nav class="nav" id="nav"></nav>
+      <main id="main"></main>
+    </div>
+    <p class="pick-note"><strong>How to choose:</strong> Open this file in a browser → pick a design from the left → note the number (01–15) and any tweaks per scenario (e.g. “12 but iOS actions for SMS only”).</p>
+  </div>
+  <script>
+    const SMS = "INR 380.00 spent on YES BANK Card X4668 @UPI_OM SRI SAI COCONUT 18-10-2026 01:13:53 pm. Avl Lmt INR 299,824.56.";
+    const themes = [
+      { id: "01", name: "Current baseline", note: "Today’s MmrContentDialog — white 20dp card, end-aligned text buttons." },
+      { id: "02", name: "iOS stacked alert", note: "Centered title; full-width stacked actions with hairlines." },
+      { id: "03", name: "Navy header band", note: "Brand header strip like legacy Excel export dialog." },
+      { id: "04", name: "Bottom sheet idiom", note: "Drag handle + primary fill button (sheet behavior in a card)." },
+      { id: "05", name: "Minimal outline", note: "Flat 2px border, no shadow, underline actions." },
+      { id: "06", name: "Inset grouped", note: "Gray shell; white inner card for body (settings family)." },
+      { id: "07", name: "Glass / blur", note: "Frosted surface over colorful scrim." },
+      { id: "08", name: "Message bubble", note: "SMS preview feels like chat; action below bubble." },
+      { id: "09", name: "Ledger receipt", note: "Monospace body, dashed border (raw SMS emphasis)." },
+      { id: "10", name: "Icon hero", note: "Large circular icon above title." },
+      { id: "11", name: "Accent stripe", note: "Coral left bar for brand cue." },
+      { id: "12", name: "Footer CTA bar", note: "Full-width filled primary in gray footer." },
+      { id: "13", name: "Material tonal", note: "Tonal surface, pill buttons, larger title." },
+      { id: "14", name: "Compact alert", note: "Smaller width for quick confirms." },
+      { id: "15", name: "Split action bar", note: "50/50 Cancel | Delete footer grid." },
+    ];
+
+    function wrap(themeId, inner, stacked) {
+      const st = stacked ? " stacked" : "";
+      return `<div class="scene t${themeId}${st}"><div class="scrim"></div>${inner}</div>`;
+    }
+    function dlg(themeId, inner) {
+      return `<div class="dlg">${inner}</div>`;
+    }
+
+    function headBlock(t, m, themeId) {
+      if (themeId === "03") {
+        return `<div class="head"><p class="t">${t}</p></div><div class="inner">${m ? `<p class="m">${m}</p>` : ""}`;
+      }
+      if (themeId === "06") {
+        return `<div class="card"><p class="t">${t}</p>${m ? `<p class="m">${m}</p>` : ""}`;
+      }
+      if (themeId === "08") {
+        return `<div class="bubble"><p class="t">${t}</p>`;
+      }
+      if (themeId === "10") {
+        return `<div class="ico">✉</div><p class="t">${t}</p>${m ? `<p class="m">${m}</p>` : ""}`;
+      }
+      return `<p class="t">${t}</p>${m ? `<p class="m">${m}</p>` : ""}`;
+    }
+
+    function closeHead(themeId) {
+      if (themeId === "06") return `</div>`;
+      if (themeId === "08") return `</div>`;
+      if (themeId === "03") return ``;
+      return ``;
+    }
+
+    function actions(themeId, spec) {
+      const stack = ["02", "04", "12"].includes(themeId);
+      const split = themeId === "15" && spec.length === 2;
+      let cls = stack ? "actions stack" : "actions";
+      if (split) cls = "actions";
+      const btns = spec.map((b) => {
+        let c = "btn";
+        if (b.kind === "primary") c += " primary";
+        if (b.kind === "danger") c += " danger";
+        if (b.kind === "fill") c += " fill";
+        if (b.kind === "fill-danger") c += " fill danger";
+        if (b.kind === "muted") c += " muted";
+        if (b.kind === "outline") c += " outline";
+        return `<button type="button" class="${c}">${b.label}</button>`;
+      }).join("");
+      if (themeId === "03") return `</div><div class="${cls}">${btns}</div>`;
+      if (themeId === "06") return `${closeHead(themeId)}<div class="${cls}">${btns}</div>`;
+      return `<div class="${cls}">${btns}</div>`;
+    }
+
+    function buildSmsInner(themeId) {
+      return headBlock("SMS message", null, themeId)
+        + `<p class="from">From: VA-YESBNK-S</p><p class="sms body">${SMS}</p>`
+        + closeHead(themeId)
+        + actions(themeId, [{ label: "Close", kind: themeId === "12" || themeId === "04" ? "fill" : "primary" }]);
+    }
+
+    function buildLoanPolicyInner(themeId) {
+      const m = "This transaction is tied to a loan repayment. Unlink keeps the loan payment record; Reverse removes the payment and restores the loan balance.";
+      let body = headBlock("Delete linked loan payment?", m, themeId);
+      body += `<button type="button" class="sec-btn">Unlink from loan</button><button type="button" class="sec-btn">Reverse loan payment</button>`;
+      body += closeHead(themeId) + actions(themeId, [{ label: "Cancel", kind: "muted" }]);
+      return body;
+    }
+
+    function buildDuplicateInner(themeId) {
+      const m = "Use the same date as this transaction, or today's date?";
+      return headBlock("Duplicate transaction", m, themeId)
+        + closeHead(themeId)
+        + actions(themeId, [
+          { label: "Cancel", kind: "muted" },
+          { label: "Same date", kind: "primary" },
+          { label: "Today", kind: "primary" },
+        ]);
+    }
+
+    function buildDeleteLoanInner(themeId) {
+      const m = "This will remove the loan and its schedule. Linked account balances are updated.";
+      const acts = themeId === "15"
+        ? [{ label: "Cancel", kind: "muted" }, { label: "Delete", kind: "danger" }]
+        : [{ label: "Cancel", kind: "muted" }, { label: "Delete", kind: themeId === "12" ? "fill-danger" : "danger" }];
+      return headBlock("Delete loan?", m, themeId)
+        + closeHead(themeId)
+        + actions(themeId, acts);
+    }
+
+    function buildTopUpInner(themeId) {
+      const m = "Outstanding: ₹ 1,24,500.00 · Fixed EMI";
+      return headBlock("Add top-up", m, themeId)
+        + `<input class="field" value="50,000" aria-label="Amount" />`
+        + `<input class="field" value="18 Oct 2026" aria-label="Date" />`
+        + closeHead(themeId)
+        + actions(themeId, [
+          { label: "Cancel", kind: "muted" },
+          { label: "Add top-up", kind: themeId === "12" || themeId === "04" ? "fill" : "primary" },
+        ]);
+    }
+
+    function scenarioSms(themeId) {
+      return wrap(themeId, dlg(themeId, buildSmsInner(themeId)), false);
+    }
+
+    function scenarioTransactionGroup(themeId) {
+      return wrap(themeId,
+        dlg(themeId, buildLoanPolicyInner(themeId))
+        + dlg(themeId, buildDuplicateInner(themeId)),
+        true);
+    }
+
+    function scenarioLoanGroup(themeId) {
+      return wrap(themeId,
+        dlg(themeId, buildDeleteLoanInner(themeId))
+        + dlg(themeId, buildTopUpInner(themeId)),
+        true);
+    }
+
+    function scenarioAccountDelete(themeId) {
+      const m = "\"Savings\" is used on 24 transaction(s). Move them to another active account, then remove this one.";
+      const inner = headBlock("Remove account?", m, themeId)
+        + `<p style="font-size:0.75rem;font-weight:600;margin:0 0 6px">Move to</p>`
+        + `<label class="radio"><input type="radio" checked /> Cash</label>`
+        + `<label class="radio"><input type="radio" /> HDFC Savings</label>`
+        + closeHead(themeId)
+        + (themeId === "12"
+          ? `<div class="actions stack"><button type="button" class="btn fill">Remove account</button><button type="button" class="btn muted">Cancel</button></div>`
+          : actions(themeId, [{ label: "Cancel", kind: "muted" }, { label: "Remove account", kind: themeId === "04" ? "fill" : "primary" }]));
+      return wrap(themeId, dlg(themeId, inner), false);
+    }
+
+    function scenarioMerge(themeId) {
+      const m = "Combine amounts into one transaction. Pick the name and date to keep.";
+      const inner = headBlock("Merge transactions", m, themeId)
+        + `<input class="field" value="m/s.sai ram tyre tech" aria-label="Name" />`
+        + `<p style="font-size:0.75rem;font-weight:600;margin:0 0 4px">Use date</p>`
+        + `<label class="radio"><input type="radio" checked /> 23 Oct 2026</label>`
+        + `<label class="radio"><input type="radio" /> 18 Oct 2026</label>`
+        + closeHead(themeId)
+        + actions(themeId, [
+          { label: "Cancel", kind: "muted" },
+          { label: "Merge", kind: themeId === "12" || themeId === "04" ? "fill" : "primary" },
+        ]);
+      return wrap(themeId, dlg(themeId, inner), false);
+    }
+
+    const scenarios = [
+      { key: "1", title: "Approval — SMS preview", sub: "ApprovalSmsPreviewDialog · Close only", render: scenarioSms },
+      { key: "2", title: "Transaction + Add-edit", sub: "Loan policy + Duplicate date (MmrContentDialog)", render: scenarioTransactionGroup },
+      { key: "3", title: "Loan detail", sub: "Delete loan (MmrConfirmDialog) + Top-up (card shell)", render: scenarioLoanGroup },
+      { key: "4", title: "Backup entities", sub: "AccountDeleteDialog · reassignment", render: scenarioAccountDelete },
+      { key: "5", title: "Home merge", sub: "MmrTransactionMergeDialog", render: scenarioMerge },
+    ];
+
+    const nav = document.getElementById("nav");
+    const main = document.getElementById("main");
+
+    themes.forEach((th, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.innerHTML = `${th.id} — ${th.name}<small>${th.note}</small>`;
+      btn.dataset.id = th.id;
+      if (i === 0) btn.classList.add("active");
+      btn.addEventListener("click", () => {
+        nav.querySelectorAll("button").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        main.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
+        document.getElementById("panel-" + th.id).classList.add("active");
+      });
+      nav.appendChild(btn);
+
+      const panel = document.createElement("section");
+      panel.className = "panel" + (i === 0 ? " active" : "");
+      panel.id = "panel-" + th.id;
+      panel.innerHTML = `
+        <div class="panel-head">
+          <h2>Design ${th.id} — ${th.name}</h2>
+          <p>${th.note}</p>
+        </div>
+        <div class="scenario-grid">
+          ${scenarios.map((sc) => `
+            <article class="scenario-card">
+              <header>${sc.key} <span>${sc.title}</span><br/><span style="font-weight:400;font-size:0.72rem;color:var(--muted)">${sc.sub}</span></header>
+              ${sc.render(th.id)}
+            </article>
+          `).join("")}
+        </div>`;
+      main.appendChild(panel);
+    });
+  </script>
+</body>
+</html>

@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mmr.app.ui.state.MmrUiMessages
+import com.mmr.core.common.display.MmrMoneyFormat
 import com.mmr.core.common.validation.MmrValidation
 import com.mmr.core.database.entity.LoanEntity
 import com.mmr.core.domain.repository.AccountRepository
@@ -72,7 +73,7 @@ class AddEditLoanViewModel
                         loan.remainingTenureMonths?.toString()
                             ?: loan.tenureMonths?.toString()
                             ?: ""
-                    val emiStored = loan.fixedEmiAmount?.let { "%.2f".format(it) } ?: ""
+                    val emiStored = loan.fixedEmiAmount?.let { MmrMoneyFormat.formatNumber(it) } ?: ""
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -123,7 +124,7 @@ class AddEditLoanViewModel
                 }
                 is AddEditLoanUiEvent.OnPrincipalChanged -> {
                     if (_uiState.value.loanId != null) return
-                    val clean = event.principal.filter { it.isDigit() || it == '.' }
+                    val clean = MmrValidation.sanitizeDecimalInput(event.principal)
                     _uiState.update {
                         it.copy(
                             principalAmount = clean,
@@ -197,7 +198,7 @@ class AddEditLoanViewModel
                                     fixedEmiEntryMode = event.mode,
                                     tenureMonths = "",
                                     fixedEmiOverride =
-                                        emiFromTenure?.let { "%.2f".format(it) }
+                                        emiFromTenure?.let { MmrMoneyFormat.formatNumber(it) }
                                             ?: current.fixedEmiOverride,
                                 )
                             }
@@ -209,7 +210,7 @@ class AddEditLoanViewModel
                     _uiState.update { it.copy(tenureMonths = clean) }
                 }
                 is AddEditLoanUiEvent.OnFixedEmiOverrideChanged -> {
-                    val clean = event.emi.filter { it.isDigit() || it == '.' }
+                    val clean = MmrValidation.sanitizeDecimalInput(event.emi)
                     _uiState.update { it.copy(fixedEmiOverride = clean) }
                 }
                 is AddEditLoanUiEvent.OnEmiDayChanged -> {
@@ -266,9 +267,9 @@ class AddEditLoanViewModel
                                     LoanAmortizationEngine.computeTenureMonths(principal, interest, emiInput) <= 0 -> {
                                     val floor = LoanAmortizationEngine.minimumEmiForAmortization(principal, interest)
                                     val interestOnly = LoanAmortizationEngine.firstMonthInterest(principal, interest)
-                                    "Monthly EMI must be at least ₹1 above interest (≥ ₹${"%.2f".format(
+                                    "Monthly EMI must be at least ₹1 above interest (≥ ${MmrMoneyFormat.formatInr(
                                         floor,
-                                    )}; interest ≈ ₹${"%.2f".format(interestOnly)})."
+                                    )}; interest ≈ ${MmrMoneyFormat.formatInr(interestOnly)})."
                                 }
                                 state.fixedEmiEntryMode == FixedEmiEntryMode.TENURE ->
                                     "Enter tenure in months."

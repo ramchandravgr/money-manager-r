@@ -28,6 +28,7 @@ class TransactionMergeCoordinator
         suspend fun mergeTransactions(
             transactionIds: List<Long>,
             mergedName: String,
+            mergedDateTime: Long? = null,
         ): Long {
             val ids = transactionIds.distinct().filter { it > 0L }
             require(ids.size >= 2) { "Select at least two transactions to merge." }
@@ -80,11 +81,15 @@ class TransactionMergeCoordinator
                         smsMessageRecordDao.countByMatchedTransactionId(txn.id) > 0
                     }
                 val template = transactions.maxByOrNull { it.dateTime } ?: transactions.first()
+                val resolvedDateTime =
+                    mergedDateTime?.takeIf { millis ->
+                        transactions.any { it.dateTime == millis }
+                    } ?: template.dateTime
                 val now = System.currentTimeMillis()
 
                 val merged =
                     TransactionEntity(
-                        dateTime = template.dateTime,
+                        dateTime = resolvedDateTime,
                         amount = totalAmount,
                         type = type,
                         categoryId = template.categoryId,

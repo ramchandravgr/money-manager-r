@@ -1,10 +1,10 @@
 package com.mmr.app
 
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mmr.app.testing.MmrHiltUiTest
 import com.mmr.app.testing.MmrTestTags
+import com.mmr.app.testing.traceClickTag
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -14,11 +14,11 @@ import org.junit.runner.RunWith
 class StatsScreenUiTest : MmrHiltUiTest() {
     @Test
     fun statsScreen_showsIncomeAndExpenseLedgerTabs() {
-        composeRule.onNodeWithTag(MmrTestTags.navStats).performClick()
+        composeRule.traceClickTag(MmrTestTags.navStats)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(MmrTestTags.statsTabIncome).assertExists()
         composeRule.onNodeWithTag(MmrTestTags.statsTabExpense).assertExists()
-        composeRule.onNodeWithTag(MmrTestTags.statsTabExpense).performClick()
+        composeRule.traceClickTag(MmrTestTags.statsTabExpense)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(MmrTestTags.statsTabExpense).assertExists()
     }

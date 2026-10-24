@@ -1,3 +1,6 @@
+import java.io.File
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -6,6 +9,17 @@ plugins {
     alias(libs.plugins.ktlint)
     alias(libs.plugins.detekt)
 }
+
+val localProperties =
+    Properties().apply {
+        val file = rootProject.file("local.properties")
+        if (file.exists()) {
+            file.inputStream().use { load(it) }
+        }
+    }
+
+val googleWebClientId: String =
+    localProperties.getProperty("GOOGLE_WEB_CLIENT_ID")?.trim().orEmpty()
 
 android {
     namespace = "com.mmr.app"
@@ -19,6 +33,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "com.mmr.app.HiltTestRunner"
+
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
     }
 
     buildTypes {
@@ -38,12 +54,18 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
 kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        // Hilt @Inject on constructor params; flatMapLatest in ViewModels
+        freeCompilerArgs.addAll(
+            "-Xannotation-default-target=param-property",
+            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+        )
     }
 }
 
@@ -72,6 +94,7 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
 
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.biometric)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
     implementation("androidx.compose.material:material")
@@ -98,6 +121,17 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.fastexcel)
+    implementation(libs.play.services.auth)
+    implementation(libs.okhttp)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
+
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.glance.material3)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
@@ -167,4 +201,21 @@ tasks.named("ktlintCheck") {
 
 tasks.named("ktlintFormat") {
     dependsOn(ktlintFormatSources)
+}
+
+val adbExecutable =
+    System.getenv("ANDROID_HOME")?.let { File(it, "platform-tools/adb.exe").absolutePath }
+        ?: "${System.getenv("LOCALAPPDATA")}/Android/Sdk/platform-tools/adb.exe"
+
+tasks.register<Exec>("pullUiTestScreenshots") {
+    group = "verification"
+    description = "Pull PNG UI traces from the connected device into app/build/ui-test-trace/"
+    val dest = layout.buildDirectory.dir("ui-test-trace")
+    val remote = "/sdcard/Android/data/com.mmr.app/files/ui-test-trace/"
+    commandLine(adbExecutable, "pull", remote, dest.get().asFile.absolutePath)
+    isIgnoreExitValue = true
+}
+
+afterEvaluate {
+    tasks.findByName("connectedDebugAndroidTest")?.finalizedBy("pullUiTestScreenshots")
 }

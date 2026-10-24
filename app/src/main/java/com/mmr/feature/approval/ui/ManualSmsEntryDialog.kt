@@ -3,14 +3,13 @@ package com.mmr.feature.approval.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mmr.app.ui.components.MmrContentDialog
-import com.mmr.app.ui.components.MmrSecondaryActionButton
+import com.mmr.app.ui.components.MmrDialogPickerField
+import com.mmr.app.ui.components.MmrDialogTextField
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
@@ -61,32 +60,29 @@ fun ManualSmsEntryDialog(
         confirmEnabled = body.isNotBlank(),
     ) {
         Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState()),
+            modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            OutlinedTextField(
+            MmrDialogTextField(
                 value = sender,
                 onValueChange = { sender = it },
-                label = { Text("Sender") },
+                label = "Sender",
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
             )
-            OutlinedTextField(
+            MmrDialogTextField(
                 value = body,
                 onValueChange = { body = it },
-                label = { Text("SMS message") },
+                label = "SMS message",
+                singleLine = false,
                 minLines = 4,
-                modifier = Modifier.fillMaxWidth(),
+                maxLines = 8,
                 isError = errorMessage != null,
-                supportingText = errorMessage?.let { { Text(it) } },
+                errorMessage = errorMessage,
             )
-            MmrSecondaryActionButton(
-                text = "Date & time: $dateTimeLabel",
+            MmrDialogPickerField(
+                label = "Date & time",
+                value = dateTimeLabel,
                 onClick = { showDatePicker = true },
-                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -156,12 +152,8 @@ fun ManualSmsDuplicateDialog(
         onDismiss = onDismiss,
         confirmLabel = "Revert & use new",
         onConfirm = onRevertPrior,
+        secondaryConfirmLabel = "Add as separate pending transaction",
+        onSecondaryConfirm = onAddAsNew,
         dismissLabel = "Cancel",
-    ) {
-        MmrSecondaryActionButton(
-            text = "Add as separate pending transaction",
-            onClick = onAddAsNew,
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
+    )
 }

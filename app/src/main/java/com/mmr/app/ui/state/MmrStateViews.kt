@@ -14,7 +14,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.mmr.app.ui.components.MmrDimens
 import com.mmr.app.ui.components.MmrPrimaryActionButton
-import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.app.ui.theme.MmrBrandColors
 
 @Composable
 fun MmrLoadingState(modifier: Modifier = Modifier.fillMaxSize()) {
@@ -64,7 +64,7 @@ fun MmrEmptyState(
         Text(
             text = message,
             style = MaterialTheme.typography.bodyMedium,
-            color = MmrMmColors.TextMedium,
+            color = MmrBrandColors.TextMedium,
             textAlign = TextAlign.Center,
         )
     }

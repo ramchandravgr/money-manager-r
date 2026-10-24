@@ -55,7 +55,6 @@ class TransactionSearchViewModel
         private val amountMin = MutableStateFlow("")
         private val amountMax = MutableStateFlow("")
         private val showDateRangePicker = MutableStateFlow(false)
-        private val showCategoryPicker = MutableStateFlow(false)
         private val pickerHighlightedCategoryId = MutableStateFlow<Long?>(null)
         private val errorMessage = MutableStateFlow<String?>(null)
         private val filtersExpanded = MutableStateFlow(true)
@@ -189,9 +188,8 @@ class TransactionSearchViewModel
                     accountRepository.getAccounts().catch { emit(emptyList()) },
                     categoryTreeFlow,
                     showDateRangePicker,
-                    showCategoryPicker,
-                ) { accountEntities, tree, showDates, showCats ->
-                    ShellMetaPrimary(accountEntities, tree, showDates, showCats)
+                ) { accountEntities, tree, showDates ->
+                    ShellMetaPrimary(accountEntities, tree, showDates)
                 },
                 combine(pickerHighlightedCategoryId, errorMessage) { highlight, error ->
                     ShellMetaSecondary(highlight, error)
@@ -201,7 +199,6 @@ class TransactionSearchViewModel
                     accounts = primary.accounts.map { SearchAccountUi(it.id, it.name, it.type) },
                     categories = mapCategoryTree(primary.categories),
                     showDateRangePicker = primary.showDateRangePicker,
-                    showCategoryPicker = primary.showCategoryPicker,
                     pickerHighlightedCategoryId = secondary.pickerHighlightedCategoryId,
                     errorMessage = secondary.errorMessage,
                 )
@@ -266,7 +263,6 @@ class TransactionSearchViewModel
                     groupedResults = grouped,
                     isLoading = false,
                     showDateRangePicker = meta.showDateRangePicker,
-                    showCategoryPicker = meta.showCategoryPicker,
                     pickerHighlightedCategoryId = meta.pickerHighlightedCategoryId,
                     errorMessage = meta.errorMessage,
                     isEmpty = grouped.isEmpty(),
@@ -299,15 +295,14 @@ class TransactionSearchViewModel
                 }
                 is TransactionSearchUiEvent.OnAccountSelected -> selectedAccountId.value = event.accountId
                 TransactionSearchUiEvent.OnCategoryRowClick -> {
-                    showCategoryPicker.value = true
-                    pickerHighlightedCategoryId.value = selectedCategoryId.value
-                        ?: categoryTreeFlow.value
-                            .firstOrNull()
-                            ?.category
-                            ?.id
-                            ?.value
+                    pickerHighlightedCategoryId.value =
+                        selectedCategoryId.value
+                            ?: categoryTreeFlow.value
+                                .firstOrNull()
+                                ?.category
+                                ?.id
+                                ?.value
                 }
-                TransactionSearchUiEvent.OnDismissCategoryPicker -> showCategoryPicker.value = false
                 is TransactionSearchUiEvent.OnPickerParentSelected -> {
                     val category = uiState.value.categories.firstOrNull { it.id == event.categoryId }
                     if (category == null) return
@@ -315,7 +310,6 @@ class TransactionSearchViewModel
                         selectedCategoryId.value = category.id
                         selectedSubcategoryId.value = null
                         pickerHighlightedCategoryId.value = category.id
-                        showCategoryPicker.value = false
                     } else {
                         pickerHighlightedCategoryId.value = category.id
                     }
@@ -324,13 +318,11 @@ class TransactionSearchViewModel
                     val parentId = pickerHighlightedCategoryId.value ?: return
                     selectedCategoryId.value = parentId
                     selectedSubcategoryId.value = event.subcategoryId
-                    showCategoryPicker.value = false
                 }
                 TransactionSearchUiEvent.OnPickerConfirmParentOnly -> {
                     val parentId = pickerHighlightedCategoryId.value ?: return
                     selectedCategoryId.value = parentId
                     selectedSubcategoryId.value = null
-                    showCategoryPicker.value = false
                 }
                 TransactionSearchUiEvent.OnClearCategory -> {
                     selectedCategoryId.value = null
@@ -385,7 +377,6 @@ class TransactionSearchViewModel
             val accounts: List<AccountEntity>,
             val categories: List<CategoryWithChildren>,
             val showDateRangePicker: Boolean,
-            val showCategoryPicker: Boolean,
         )
 
         private data class ShellMetaSecondary(
@@ -435,7 +426,6 @@ class TransactionSearchViewModel
             val accounts: List<SearchAccountUi>,
             val categories: List<CategoryUi>,
             val showDateRangePicker: Boolean,
-            val showCategoryPicker: Boolean,
             val pickerHighlightedCategoryId: Long?,
             val errorMessage: String?,
         )

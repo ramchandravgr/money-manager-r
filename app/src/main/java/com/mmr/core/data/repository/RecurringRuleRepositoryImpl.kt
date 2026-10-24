@@ -1,6 +1,7 @@
 package com.mmr.core.data.repository
 
 import androidx.room.withTransaction
+import com.mmr.core.common.display.MmrMoneyFormat
 import com.mmr.core.database.MmrDatabase
 import com.mmr.core.database.dao.NotificationRuleDao
 import com.mmr.core.database.dao.RecurringRuleDao
@@ -9,6 +10,8 @@ import com.mmr.core.database.entity.RecurringRuleEntity
 import com.mmr.core.database.relation.RecurringRuleWithDetails
 import com.mmr.core.domain.repository.RecurringRuleRepository
 import com.mmr.core.domain.util.RecurrenceCalculator
+import com.mmr.core.lansync.LanSyncTombstoneRecorder
+import com.mmr.core.lansync.SyncEntityType
 import com.mmr.core.model.enums.NotificationRuleType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -23,6 +26,7 @@ class RecurringRuleRepositoryImpl
         private val database: MmrDatabase,
         private val recurringRuleDao: RecurringRuleDao,
         private val notificationRuleDao: NotificationRuleDao,
+        private val tombstoneRecorder: LanSyncTombstoneRecorder,
     ) : RecurringRuleRepository {
         override fun getAllRules(): Flow<List<RecurringRuleEntity>> = recurringRuleDao.getAllRules()
 
@@ -57,6 +61,7 @@ class RecurringRuleRepositoryImpl
             RepositoryGuards.requireValidRecurringRule(rule)
             database.withTransaction {
                 recurringRuleDao.update(rule)
+                tombstoneNotificationsForRecurring(rule.id)
                 notificationRuleDao.deleteForRecurringRule(rule.id)
                 syncReminderNotification(rule)
             }
@@ -70,6 +75,7 @@ class RecurringRuleRepositoryImpl
             database.withTransaction {
                 recurringRuleDao.updateEnabledState(ruleId, isEnabled)
                 val rule = recurringRuleDao.getById(ruleId) ?: return@withTransaction
+                tombstoneNotificationsForRecurring(ruleId)
                 notificationRuleDao.deleteForRecurringRule(ruleId)
                 if (isEnabled) {
                     syncReminderNotification(rule)
@@ -79,7 +85,9 @@ class RecurringRuleRepositoryImpl
 
         override suspend fun deleteRecurringRule(rule: RecurringRuleEntity) {
             require(rule.id > 0L) { "Recurring rule id is required." }
+            tombstoneRecorder.recordDeletion(rule.syncId, SyncEntityType.RECURRING_RULE)
             database.withTransaction {
+                tombstoneNotificationsForRecurring(rule.id)
                 notificationRuleDao.deleteForRecurringRule(rule.id)
                 recurringRuleDao.delete(rule)
             }
@@ -104,9 +112,11 @@ class RecurringRuleRepositoryImpl
 
                 if (RecurrenceCalculator.isExpired(nextRun, rule.endDate)) {
                     recurringRuleDao.updateEnabledState(ruleId, false)
+                    tombstoneNotificationsForRecurring(ruleId)
                     notificationRuleDao.deleteForRecurringRule(ruleId)
                 } else {
                     recurringRuleDao.updateNextRunDate(ruleId, nextRun, currentRunDate)
+                    tombstoneNotificationsForRecurring(ruleId)
                     notificationRuleDao.deleteForRecurringRule(ruleId)
                     syncReminderNotification(rule.copy(nextRunDate = nextRun))
                 }
@@ -131,7 +141,7 @@ class RecurringRuleRepositoryImpl
                         message = notif.message ?: "",
                         scheduleTime = notif.scheduleTime ?: 0L,
                         formattedScheduleDate = notif.scheduleTime?.let { dateFormat.format(java.util.Date(it)) } ?: "",
-                        amountFormatted = notif.thresholdValue?.let { "₹${"%.2f".format(it)}" },
+                        amountFormatted = notif.thresholdValue?.let { MmrMoneyFormat.formatInr(it) },
                     )
                 }
             }
@@ -148,6 +158,12 @@ class RecurringRuleRepositoryImpl
         override suspend fun createNotificationRule(notification: NotificationRuleEntity): Long =
             notificationRuleDao.insert(notification)
 
+        private suspend fun tombstoneNotificationsForRecurring(ruleId: Long) {
+            notificationRuleDao.listForRecurringRule(ruleId).forEach { notification ->
+                tombstoneRecorder.recordDeletion(notification.syncId, SyncEntityType.NOTIFICATION_RULE)
+            }
+        }
+
         private suspend fun syncReminderNotification(rule: RecurringRuleEntity) {
             if (!rule.isEnabled || rule.reminderMinutesBefore <= 0 || rule.id <= 0L) return
             val scheduleTime =
@@ -162,7 +178,7 @@ class RecurringRuleRepositoryImpl
                     scheduleTime = scheduleTime,
                     targetRecurringRuleId = rule.id,
                     title = "Upcoming: ${rule.name}",
-                    message = "₹${"%.2f".format(rule.amount)} due soon",
+                    message = "${MmrMoneyFormat.formatInr(rule.amount)} due soon",
                 )
             notificationRuleDao.insert(notification)
         }

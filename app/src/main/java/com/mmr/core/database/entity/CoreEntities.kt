@@ -94,11 +94,18 @@ data class LoanEntity(
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index(value = ["loanId"]), Index(value = ["effectiveFromMillis"])],
+    indices = [
+        Index(value = ["loanId"]),
+        Index(value = ["effectiveFromMillis"]),
+        Index(value = ["syncId"], unique = true),
+    ],
 )
 data class LoanInterestRevisionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val syncId: String =
+        com.mmr.core.common.sync.MmrSyncId
+            .newId(),
     val loanId: Long,
     val effectiveFromMillis: Long,
     val annualRatePercent: Double,
@@ -126,11 +133,16 @@ data class LoanInterestRevisionEntity(
         Index(value = ["loanId"]),
         Index(value = ["dueDateMillis"]),
         Index(value = ["status"]),
+        Index(value = ["linkedPaymentId"]),
+        Index(value = ["syncId"], unique = true),
     ],
 )
 data class LoanScheduleEntryEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val syncId: String =
+        com.mmr.core.common.sync.MmrSyncId
+            .newId(),
     val loanId: Long,
     val sequenceNumber: Int,
     val dueDateMillis: Long,
@@ -162,11 +174,15 @@ data class LoanScheduleEntryEntity(
         Index(value = ["loanId"]),
         Index(value = ["transactionId"]),
         Index(value = ["paymentDate"]),
+        Index(value = ["syncId"], unique = true),
     ],
 )
 data class LoanPaymentEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val syncId: String =
+        com.mmr.core.common.sync.MmrSyncId
+            .newId(),
     val loanId: Long,
     val transactionId: Long? = null,
     val paymentAmount: Double,
@@ -199,6 +215,18 @@ data class LoanPaymentEntity(
             childColumns = ["accountId"],
             onDelete = ForeignKey.RESTRICT,
         ),
+        ForeignKey(
+            entity = AccountEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["relatedAccountId"],
+            onDelete = ForeignKey.SET_NULL,
+        ),
+        ForeignKey(
+            entity = LoanEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["loanId"],
+            onDelete = ForeignKey.SET_NULL,
+        ),
     ],
     indices = [
         Index(value = ["nextRunDate"]),
@@ -206,17 +234,25 @@ data class LoanPaymentEntity(
         Index(value = ["accountId"]),
         Index(value = ["categoryId"]),
         Index(value = ["subcategoryId"]),
+        Index(value = ["relatedAccountId"]),
+        Index(value = ["loanId"]),
+        Index(value = ["syncId"], unique = true),
     ],
 )
 data class RecurringRuleEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val syncId: String =
+        com.mmr.core.common.sync.MmrSyncId
+            .newId(),
     val name: String,
     val transactionTemplateType: TransactionType = TransactionType.EXPENSE,
     val amount: Double,
     val categoryId: Long? = null,
     val subcategoryId: Long? = null,
     val accountId: Long,
+    val relatedAccountId: Long? = null,
+    val loanId: Long? = null,
     val dayOfMonth: Int? = null,
     val recurrenceInterval: RecurrenceInterval = RecurrenceInterval.MONTHLY,
     val nextRunDate: Long,
@@ -251,11 +287,15 @@ data class RecurringRuleEntity(
         Index(value = ["targetLoanId"]),
         Index(value = ["targetRecurringRuleId"]),
         Index(value = ["scheduleTime"]),
+        Index(value = ["syncId"], unique = true),
     ],
 )
 data class NotificationRuleEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val syncId: String =
+        com.mmr.core.common.sync.MmrSyncId
+            .newId(),
     val type: NotificationRuleType,
     val enabled: Boolean = true,
     val scheduleTime: Long? = null,
@@ -341,4 +381,10 @@ data class TransactionEntity(
     val paymentInstrument: String? = null,
     val cardLastFour: String? = null,
     val cardNetwork: CardNetwork? = null,
+    val syncedFromDeviceId: String? = null,
+    val syncedFromDeviceName: String? = null,
+    /** Gross amount before card refunds; null until first refund is applied. */
+    val originalAmount: Double? = null,
+    /** Cumulative card refunds applied through MMR. */
+    val refundedTotal: Double = 0.0,
 )

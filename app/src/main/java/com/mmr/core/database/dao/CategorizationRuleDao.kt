@@ -22,4 +22,19 @@ interface CategorizationRuleDao {
         """,
     )
     suspend fun getEnabledOrdered(): List<CategorizationRuleEntity>
+
+    @Query("SELECT * FROM categorization_rules ORDER BY priority DESC, id ASC")
+    suspend fun getAll(): List<CategorizationRuleEntity>
+
+    @Query("SELECT * FROM categorization_rules WHERE syncId = :syncId LIMIT 1")
+    suspend fun getBySyncId(syncId: String): CategorizationRuleEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(rule: CategorizationRuleEntity)
+
+    @Query("DELETE FROM categorization_rules WHERE syncId = :syncId")
+    suspend fun deleteBySyncId(syncId: String)
+
+    @androidx.room.Delete
+    suspend fun delete(rule: CategorizationRuleEntity)
 }

@@ -5,10 +5,13 @@
     <!-- Required for Approval Center inbox scan (local on-device read only). -->
     <uses-permission android:name="android.permission.READ_SMS" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <application
         android:name=".MmrApplication"
@@ -19,13 +22,13 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MoneyManagerR">
+        android:theme="@style/Theme.MoneyInbox">
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:resizeableActivity="true"
-            android:theme="@style/Theme.MoneyManagerR"
+            android:theme="@style/Theme.MoneyInbox"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -33,6 +36,68 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".lansync.LocalLanForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
+
+        <receiver
+            android:name=".widget.MmrPendingApprovalsWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_pending_approvals_title">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/mmr_widget_pending_approvals_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.MmrMonthSpendWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_month_spend_title">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/mmr_widget_month_spend_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.MmrWidgetApproveActionCallback"
+            android:exported="false" />
+        <receiver
+            android:name=".widget.MmrWidgetRejectActionCallback"
+            android:exported="false" />
+        <receiver
+            android:name=".widget.MmrWidgetLaterActionCallback"
+            android:exported="false" />
+        <receiver
+            android:name=".widget.MmrWidgetScanActionCallback"
+            android:exported="false" />
+
+        <receiver
+            android:name=".sms.IncomingSmsReceiver"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter android:priority="999">
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
 
         <provider
             android:name=".export.MmrExportFileProvider"

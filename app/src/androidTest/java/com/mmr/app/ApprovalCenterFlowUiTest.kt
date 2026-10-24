@@ -2,15 +2,15 @@ package com.mmr.app
 
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mmr.app.testing.MmrHiltUiTest
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.testing.MmrUiTestFixtures
 import com.mmr.app.testing.assertTransactionRowShowsExpense
+import com.mmr.app.testing.traceClickTag
+import com.mmr.app.testing.tracePressBack
+import com.mmr.app.testing.traceWaitUntil
 import com.mmr.core.domain.repository.ApprovalRepository
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.flow.first
@@ -38,23 +38,21 @@ class ApprovalCenterFlowUiTest : MmrHiltUiTest() {
                 )
             }
 
-        composeRule.activityRule.scenario.recreate()
-        composeRule.waitForIdle()
+        traceActivityRecreate()
 
-        composeRule.onNodeWithTag(MmrTestTags.homeTopBarApprovals).performClick()
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.traceClickTag(MmrTestTags.homeTopBarApprovals)
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 10_000) {
             composeRule
                 .onAllNodesWithTag(MmrTestTags.approvalCard(fixture.approvalId))
                 .fetchSemanticsNodes()
                 .isNotEmpty()
         }
 
-        composeRule.onNodeWithTag(MmrTestTags.approvalQuickApprove(fixture.approvalId)).performClick()
+        composeRule.traceClickTag(MmrTestTags.approvalQuickApprove(fixture.approvalId))
 
-        Espresso.pressBack()
-        composeRule.waitForIdle()
+        composeRule.tracePressBack()
 
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 10_000) {
             composeRule.onAllNodesWithText(merchant).fetchSemanticsNodes().isNotEmpty()
         }
         composeRule.onNodeWithText(merchant).assertExists()

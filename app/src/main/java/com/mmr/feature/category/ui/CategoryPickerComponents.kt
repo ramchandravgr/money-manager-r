@@ -3,6 +3,7 @@ package com.mmr.feature.category.ui
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -21,11 +22,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mmr.app.ui.components.MmrDimens
-import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.app.ui.theme.MmrBrandColors
 
 @Composable
 fun CategoryPickerSheetHeader(
@@ -46,16 +48,16 @@ fun CategoryPickerSheetHeader(
             text = "Category",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
-            color = MmrMmColors.TextStrong,
+            color = MmrBrandColors.TextStrong,
         )
         Row(horizontalArrangement = Arrangement.spacedBy(0.dp)) {
             if (parentOnlyVisible && onParentOnly != null) {
                 TextButton(onClick = onParentOnly) {
-                    Text("Parent only", color = MmrMmColors.Active)
+                    Text("Parent only", color = MmrBrandColors.Active)
                 }
             }
             TextButton(onClick = onClose) {
-                Text("Close", color = MmrMmColors.TextMedium)
+                Text("Close", color = MmrBrandColors.TextMedium)
             }
         }
     }
@@ -70,10 +72,19 @@ fun CategoryPickerParentRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
+    onDoubleClick: (() -> Unit)? = null,
 ) {
     val accent = parseColorHex(colorHex)
-    val clickModifier =
-        if (onLongClick != null) {
+    val gestureModifier =
+        if (onDoubleClick != null) {
+            Modifier.pointerInput(onClick, onDoubleClick, onLongClick) {
+                detectTapGestures(
+                    onTap = { onClick() },
+                    onDoubleTap = { onDoubleClick() },
+                    onLongPress = { onLongClick?.invoke() },
+                )
+            }
+        } else if (onLongClick != null) {
             Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick)
         } else {
             Modifier.combinedClickable(onClick = onClick)
@@ -82,9 +93,9 @@ fun CategoryPickerParentRow(
         modifier =
             modifier
                 .fillMaxWidth()
-                .then(clickModifier)
+                .then(gestureModifier)
                 .padding(start = if (selected) 0.dp else 3.dp)
-                .padding(vertical = 10.dp, horizontal = MmrDimens.spaceMd),
+                .padding(vertical = 8.dp, horizontal = MmrDimens.spaceMd),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(MmrDimens.spaceSm),
     ) {
@@ -108,7 +119,7 @@ fun CategoryPickerParentRow(
             text = name,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (selected) MmrMmColors.TextStrong else MmrMmColors.TextMedium,
+            color = if (selected) MmrBrandColors.TextStrong else MmrBrandColors.TextMedium,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
@@ -136,23 +147,25 @@ fun CategoryPickerSubRow(
             modifier
                 .fillMaxWidth()
                 .then(clickModifier)
-                .padding(horizontal = MmrDimens.spaceLg, vertical = 11.dp),
+                .padding(vertical = 8.dp, horizontal = MmrDimens.spaceMd),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(MmrDimens.spaceSm),
     ) {
         Box(
             modifier =
                 Modifier
-                    .size(6.dp)
+                    .size(8.dp)
                     .clip(CircleShape)
                     .background(parseColorHex(colorHex)),
         )
         Text(
             text = name,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MmrMmColors.TextStrong,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Normal,
+            color = MmrBrandColors.TextStrong,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
         )
     }
 }
@@ -174,12 +187,12 @@ fun CategoryPickerInlineAdd(
             imageVector = Icons.Filled.Add,
             contentDescription = null,
             modifier = Modifier.size(18.dp),
-            tint = MmrMmColors.Active,
+            tint = MmrBrandColors.Active,
         )
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
-            color = MmrMmColors.Active,
+            color = MmrBrandColors.Active,
             modifier = Modifier.padding(start = 4.dp),
         )
     }
@@ -193,7 +206,7 @@ fun CategoryPickerPaneLabel(
     Text(
         text = text,
         style = MaterialTheme.typography.labelMedium,
-        color = MmrMmColors.TextLight,
+        color = MmrBrandColors.TextLight,
         modifier =
             modifier
                 .fillMaxWidth()

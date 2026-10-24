@@ -75,6 +75,22 @@ interface LoanDao {
     @Query("SELECT COUNT(*) FROM loans WHERE linkedLoanAccountId = :accountId")
     suspend fun countByLinkedLoanAccountId(accountId: Long): Int
 
+    @Query("SELECT COUNT(*) FROM loans WHERE linkedDebitAccountId = :accountId")
+    suspend fun countByLinkedDebitAccountId(accountId: Long): Int
+
+    @Query(
+        """
+        UPDATE loans
+        SET linkedDebitAccountId = :toAccountId, updatedAt = :now
+        WHERE linkedDebitAccountId = :fromAccountId
+        """,
+    )
+    suspend fun reassignLinkedDebitAccount(
+        fromAccountId: Long,
+        toAccountId: Long,
+        now: Long = System.currentTimeMillis(),
+    )
+
     @Query(
         "UPDATE loans SET outstandingAmount = :newOutstanding, status = :newStatus, updatedAt = :now WHERE id = :loanId",
     )
@@ -102,6 +118,9 @@ interface LoanPaymentDao {
 
     @Query("SELECT * FROM loan_payments WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): LoanPaymentEntity?
+
+    @Query("SELECT * FROM loan_payments WHERE syncId = :syncId LIMIT 1")
+    suspend fun getBySyncId(syncId: String): LoanPaymentEntity?
 
     @Query("SELECT * FROM loan_payments WHERE transactionId = :transactionId LIMIT 1")
     suspend fun getByTransactionId(transactionId: Long): LoanPaymentEntity?

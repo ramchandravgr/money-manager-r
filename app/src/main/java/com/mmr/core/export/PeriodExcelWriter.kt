@@ -11,7 +11,7 @@ import java.time.ZonedDateTime
 import java.util.Date
 
 /**
- * MM-compatible period export (`ExcelExportBuilder` / fastexcel), column layout:
+ * Period Excel export (fastexcel), column layout:
  * Date, Account, Category, Subcategory, Note, Amount, Income/Expense, Description, Payment, Currency, Amount (account).
  */
 object PeriodExcelWriter {

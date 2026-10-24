@@ -5,14 +5,20 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mmr.app.ui.state.MmrUiMessages
 import com.mmr.core.common.validation.MmrValidation
+import com.mmr.core.data.preferences.AppDisplaySettingsStore
 import com.mmr.core.data.preferences.SmsScanSettingsStore
 import com.mmr.core.database.entity.AccountEntity
 import com.mmr.core.database.entity.CategoryEntity
+import com.mmr.core.database.relation.TransactionWithDetails
 import com.mmr.core.domain.model.ManualSmsDuplicateResolution
 import com.mmr.core.domain.model.ManualSmsSubmitResult
 import com.mmr.core.domain.repository.AccountRepository
 import com.mmr.core.domain.repository.ApprovalRepository
 import com.mmr.core.domain.repository.CategoryRepository
+import com.mmr.core.domain.repository.TransactionRepository
+import com.mmr.core.model.category.CategoryWithChildren
+import com.mmr.core.model.enums.CategoryType
+import com.mmr.core.model.enums.SmsApprovalKind
 import com.mmr.core.model.enums.SmsApprovalState
 import com.mmr.core.model.enums.TransactionType
 import com.mmr.core.parser.model.SmsInboxScanSummary
@@ -25,15 +31,25 @@ import com.mmr.feature.approval.model.ApprovalCandidateUi
 import com.mmr.feature.approval.model.ApprovalCategoryOptionUi
 import com.mmr.feature.approval.model.ApprovalCenterUiEvent
 import com.mmr.feature.approval.model.ApprovalCenterUiState
+import com.mmr.feature.approval.model.CardRefundApplyStep
+import com.mmr.feature.approval.model.PendingCardRefundApplyPrompt
 import com.mmr.feature.approval.model.PendingManualSmsDraft
 import com.mmr.feature.approval.model.PendingSmsMergePrompt
-import com.mmr.feature.approval.model.SmsMergeCandidateUi
+import com.mmr.feature.home.HomePeriodUtils
+import com.mmr.feature.home.TransactionGrouping
+import com.mmr.feature.home.TransactionRowMapping
+import com.mmr.feature.transaction.model.CategoryUi
+import com.mmr.feature.transaction.model.SubcategoryUi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
+import java.time.Instant
+import java.time.YearMonth
+import java.time.ZoneId
 import java.util.*
 import javax.inject.Inject
 
@@ -45,10 +61,13 @@ class ApprovalCenterViewModel
         private val approvalRepository: ApprovalRepository,
         private val accountRepository: AccountRepository,
         private val categoryRepository: CategoryRepository,
+        private val transactionRepository: TransactionRepository,
         private val smsScannerService: LocalSmsScannerService,
         private val smsScanSettingsStore: SmsScanSettingsStore,
+        private val displaySettingsStore: AppDisplaySettingsStore,
         @ApplicationContext private val appContext: Context,
     ) : ViewModel() {
+        private val zoneId = ZoneId.systemDefault()
         private val _retryKey = MutableStateFlow(0)
         private val _isLoading = MutableStateFlow(true)
         private val _isScanning = MutableStateFlow(false)
@@ -58,6 +77,9 @@ class ApprovalCenterViewModel
         private val _manualEntryError = MutableStateFlow<String?>(null)
         private val _pendingManualDuplicate = MutableStateFlow<PendingManualSmsDraft?>(null)
         private val _pendingSmsMerge = MutableStateFlow<PendingSmsMergePrompt?>(null)
+        private val _pendingCardRefundApply = MutableStateFlow<PendingCardRefundApplyPrompt?>(null)
+        private val _isSelectionMode = MutableStateFlow(false)
+        private val _selectedApprovalIds = MutableStateFlow<Set<Long>>(emptySet())
 
         private val pendingApprovals: Flow<List<com.mmr.core.domain.model.PendingApprovalWithSms>> =
             _retryKey.flatMapLatest {
@@ -87,14 +109,24 @@ class ApprovalCenterViewModel
                     ApprovalCenterMeta(loading, scanning, scanMsg, error)
                 },
                 combine(
-                    _showManualEntryDialog,
-                    _manualEntryError,
-                    _pendingManualDuplicate,
-                    _pendingSmsMerge,
-                ) { showManual, manualErr, dup, smsMerge ->
-                    ManualEntryMeta(showManual, manualErr, dup, smsMerge)
+                    combine(
+                        _showManualEntryDialog,
+                        _manualEntryError,
+                        _pendingManualDuplicate,
+                        _pendingSmsMerge,
+                        _pendingCardRefundApply,
+                    ) { showManual, manualErr, dup, smsMerge, cardRefund ->
+                        ManualEntryMeta(showManual, manualErr, dup, smsMerge, cardRefund)
+                    },
+                    combine(_isSelectionMode, _selectedApprovalIds) { selectionMode, selectedIds ->
+                        SelectionMeta(selectionMode, selectedIds)
+                    },
+                ) { manual, selection ->
+                    OverlayMeta(manual = manual, selection = selection)
                 },
-            ) { approvals, categories, accounts, meta, manualMeta ->
+            ) { approvals, categories, accounts, meta, overlay ->
+                val manualMeta = overlay.manual
+                val selectionMeta = overlay.selection
                 val loading = meta.loading
                 val scanning = meta.scanning
                 val scanMsg = meta.scanMessage
@@ -117,7 +149,15 @@ class ApprovalCenterViewModel
                     manualEntryError = manualMeta.error,
                     pendingManualDuplicate = manualMeta.duplicateDraft,
                     pendingSmsMerge = manualMeta.smsMerge,
+                    pendingCardRefundApply = manualMeta.cardRefundApply,
                     mergeCategoryOptions = categories.map { ApprovalCategoryOptionUi(it.id, it.name) },
+                    isSelectionMode = selectionMeta.isSelectionMode,
+                    selectedApprovalIds = selectionMeta.selectedIds,
+                    canLinkSelection = selectionMeta.isSelectionMode && selectionMeta.selectedIds.isNotEmpty(),
+                    allPendingSelected =
+                        selectionMeta.isSelectionMode &&
+                            candidateUis.isNotEmpty() &&
+                            selectionMeta.selectedIds.size == candidateUis.size,
                 )
             }.stateIn(
                 scope = viewModelScope,
@@ -132,7 +172,70 @@ class ApprovalCenterViewModel
                 is ApprovalCenterUiEvent.OnEditClick -> Unit
 
                 is ApprovalCenterUiEvent.OnApproveQuick -> {
-                    beginApprove(event.id)
+                    viewModelScope.launch {
+                        val approval = approvalRepository.getApprovalById(event.id)
+                        if (approval?.approvalKind == SmsApprovalKind.CARD_REFUND) {
+                            beginApplyRefund(event.id)
+                        } else {
+                            beginApprove(event.id)
+                        }
+                    }
+                }
+
+                is ApprovalCenterUiEvent.OnApplyRefundQuick -> {
+                    viewModelScope.launch { beginApplyRefund(event.id) }
+                }
+
+                ApprovalCenterUiEvent.OnDismissCardRefundApply -> {
+                    _pendingCardRefundApply.value = null
+                }
+
+                is ApprovalCenterUiEvent.OnCardRefundSelectPurchase -> {
+                    _pendingCardRefundApply.update { current ->
+                        current?.copy(
+                            step = CardRefundApplyStep.CONFIRM_AMOUNT,
+                            selectedPurchaseId = event.transactionId,
+                        )
+                    }
+                }
+
+                ApprovalCenterUiEvent.OnCardRefundBackToPicker -> {
+                    _pendingCardRefundApply.update { current ->
+                        current?.copy(step = CardRefundApplyStep.PICK_PURCHASE)
+                    }
+                }
+
+                is ApprovalCenterUiEvent.OnCardRefundToggleFull -> {
+                    _pendingCardRefundApply.update { current ->
+                        current?.copy(applyFullRefund = event.full)
+                    }
+                }
+
+                is ApprovalCenterUiEvent.OnCardRefundPartialAmountChanged -> {
+                    _pendingCardRefundApply.update { current ->
+                        current?.copy(partialRefundAmountText = event.text)
+                    }
+                }
+
+                ApprovalCenterUiEvent.OnCardRefundConfirmApply -> {
+                    confirmCardRefundApply()
+                }
+
+                ApprovalCenterUiEvent.OnCardRefundPickerPreviousMonth -> {
+                    shiftCardRefundPickerMonth(-1)
+                }
+
+                ApprovalCenterUiEvent.OnCardRefundPickerNextMonth -> {
+                    shiftCardRefundPickerMonth(1)
+                }
+
+                is ApprovalCenterUiEvent.OnCardRefundPickerNoteQueryChanged -> {
+                    val current = _pendingCardRefundApply.value ?: return
+                    viewModelScope.launch {
+                        val next = current.copy(noteQuery = event.query, isLoadingCandidates = true)
+                        _pendingCardRefundApply.value = next
+                        _pendingCardRefundApply.value = refreshCardRefundPickerLedger(next)
+                    }
                 }
 
                 ApprovalCenterUiEvent.OnDismissSmsMerge -> {
@@ -140,7 +243,7 @@ class ApprovalCenterViewModel
                 }
 
                 ApprovalCenterUiEvent.OnApproveAsNewTransaction -> {
-                    val approvalId = _pendingSmsMerge.value?.approvalId ?: return
+                    val approvalId = _pendingSmsMerge.value?.approvalIds?.singleOrNull() ?: return
                     _pendingSmsMerge.value = null
                     approveCandidate(approvalId)
                 }
@@ -148,20 +251,91 @@ class ApprovalCenterViewModel
                 is ApprovalCenterUiEvent.OnMergeSmsIntoTransaction -> {
                     val prompt = _pendingSmsMerge.value ?: return
                     _pendingSmsMerge.value = null
-                    mergeCandidate(
-                        approvalId = prompt.approvalId,
+                    clearApprovalSelection()
+                    mergeApprovals(
+                        approvalIds = prompt.approvalIds,
                         transactionId = event.transactionId,
                         categoryId = prompt.selectedCategoryId ?: prompt.defaultCategoryId,
+                        subcategoryId = prompt.selectedSubcategoryId,
                         useLedgerCategory = prompt.useLedgerCategory,
                     )
                 }
 
-                is ApprovalCenterUiEvent.OnMergeCategorySelected -> {
+                is ApprovalCenterUiEvent.OnLinkToExisting -> {
+                    viewModelScope.launch {
+                        val approval = approvalRepository.getApprovalById(event.id)
+                        if (approval?.approvalKind == SmsApprovalKind.CARD_REFUND) {
+                            beginApplyRefund(event.id)
+                        } else {
+                            beginLinkToExisting(listOf(event.id), userInitiated = true)
+                        }
+                    }
+                }
+
+                is ApprovalCenterUiEvent.OnApprovalLongPress -> {
+                    if (!_isSelectionMode.value) {
+                        _isSelectionMode.value = true
+                        _selectedApprovalIds.value = setOf(event.id)
+                    }
+                }
+
+                is ApprovalCenterUiEvent.OnApprovalSelectionToggle -> {
+                    if (!_isSelectionMode.value) return
+                    _selectedApprovalIds.update { current ->
+                        if (event.id in current) current - event.id else current + event.id
+                    }
+                }
+
+                ApprovalCenterUiEvent.OnExitApprovalSelection -> clearApprovalSelection()
+
+                ApprovalCenterUiEvent.OnApprovalSelectAll -> {
+                    if (!_isSelectionMode.value) return
+                    val allIds =
+                        uiState.value.candidates
+                            .map { it.id }
+                            .toSet()
+                    _selectedApprovalIds.value =
+                        if (_selectedApprovalIds.value.size == allIds.size) {
+                            emptySet()
+                        } else {
+                            allIds
+                        }
+                }
+
+                ApprovalCenterUiEvent.OnLinkSelectedApprovals -> {
+                    val ids = _selectedApprovalIds.value.toList()
+                    if (ids.isEmpty()) return
+                    beginLinkToExisting(ids, userInitiated = true)
+                }
+
+                is ApprovalCenterUiEvent.OnMergePickerParentSelected -> {
                     _pendingSmsMerge.value =
                         _pendingSmsMerge.value?.copy(
-                            selectedCategoryId = event.categoryId,
+                            mergePickerHighlightedCategoryId = event.categoryId,
                             useLedgerCategory = false,
                         )
+                }
+
+                is ApprovalCenterUiEvent.OnMergePickerSubcategorySelected -> {
+                    _pendingSmsMerge.value =
+                        _pendingSmsMerge.value?.let { current ->
+                            current.copy(
+                                selectedCategoryId = current.mergePickerHighlightedCategoryId,
+                                selectedSubcategoryId = event.subcategoryId,
+                                useLedgerCategory = false,
+                            )
+                        }
+                }
+
+                ApprovalCenterUiEvent.OnMergePickerConfirmParentOnly -> {
+                    _pendingSmsMerge.value =
+                        _pendingSmsMerge.value?.let { current ->
+                            current.copy(
+                                selectedCategoryId = current.mergePickerHighlightedCategoryId,
+                                selectedSubcategoryId = null,
+                                useLedgerCategory = false,
+                            )
+                        }
                 }
 
                 ApprovalCenterUiEvent.OnMergeUseLedgerCategory -> {
@@ -169,6 +343,23 @@ class ApprovalCenterViewModel
                         _pendingSmsMerge.value?.copy(
                             useLedgerCategory = true,
                         )
+                }
+
+                ApprovalCenterUiEvent.OnLinkPickerPreviousMonth -> {
+                    shiftLinkPickerMonth(-1)
+                }
+
+                ApprovalCenterUiEvent.OnLinkPickerNextMonth -> {
+                    shiftLinkPickerMonth(1)
+                }
+
+                is ApprovalCenterUiEvent.OnLinkPickerNoteQueryChanged -> {
+                    val current = _pendingSmsMerge.value ?: return
+                    viewModelScope.launch {
+                        val next = current.copy(noteQuery = event.query, isLoadingCandidates = true)
+                        _pendingSmsMerge.value = next
+                        _pendingSmsMerge.value = refreshLinkPickerLedger(next)
+                    }
                 }
 
                 is ApprovalCenterUiEvent.OnRejectQuick -> {
@@ -315,63 +506,167 @@ class ApprovalCenterViewModel
         }
 
         private fun beginApprove(id: Long) {
+            approveCandidate(id)
+        }
+
+        private fun beginLinkToExisting(
+            approvalIds: List<Long>,
+            userInitiated: Boolean,
+        ) {
             viewModelScope.launch {
                 try {
-                    val mergeCandidates = approvalRepository.findMergeCandidatesForApproval(id)
-                    if (mergeCandidates.isEmpty()) {
-                        approveCandidate(id)
-                    } else {
-                        val dateFormat = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
-                        val approval = approvalRepository.getApprovalById(id)
-                        val defaultCategoryId = approval?.extractedCategoryId
-                        val categoryList = categoryRepository.getActiveCategories().first()
-                        val defaultCategoryName =
-                            defaultCategoryId?.let { catId ->
-                                categoryList.find { it.id == catId }?.name
-                            } ?: "Uncategorized"
-                        _pendingSmsMerge.value =
-                            PendingSmsMergePrompt(
-                                approvalId = id,
-                                defaultCategoryId = defaultCategoryId,
-                                defaultCategoryName = defaultCategoryName,
-                                selectedCategoryId = defaultCategoryId,
-                                candidates =
-                                    mergeCandidates.map { candidate ->
-                                        SmsMergeCandidateUi(
-                                            transactionId = candidate.transactionId,
-                                            amountFormatted = "₹${"%.2f".format(candidate.amount)}",
-                                            dateLabel = dateFormat.format(Date(candidate.dateTimeMillis)),
-                                            note = candidate.note,
-                                        )
-                                    },
-                            )
-                    }
+                    openSmsLinkPicker(approvalIds = approvalIds, userInitiated = userInitiated)
                 } catch (e: Exception) {
                     _scanResultMessage.value = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_ACTION)
                 }
             }
         }
 
-        private fun mergeCandidate(
-            approvalId: Long,
+        private suspend fun openSmsLinkPicker(
+            approvalIds: List<Long>,
+            userInitiated: Boolean,
+        ) {
+            val primaryId = approvalIds.firstOrNull() ?: return
+            val approval = approvalRepository.getApprovalById(primaryId)
+            val defaultCategoryId = approval?.extractedCategoryId
+            val mergeType = approval?.extractedType ?: TransactionType.EXPENSE
+            val tree = categoryRepository.observeActiveCategoryTree().first()
+            val mergeCategories = categoriesForType(tree, mergeType)
+            val resolvedCategoryId = resolveCategorySelection(mergeCategories, defaultCategoryId)
+            val defaultCategoryName =
+                mergeCategories.firstOrNull { it.id == resolvedCategoryId }?.name ?: "Uncategorized"
+            val anchorMillis =
+                approval?.extractedDateTime?.takeIf { MmrValidation.isValidEpochMillis(it) }
+                    ?: System.currentTimeMillis()
+            val yearMonth = YearMonth.from(Instant.ofEpochMilli(anchorMillis).atZone(zoneId).toLocalDate())
+            val loading =
+                PendingSmsMergePrompt(
+                    approvalIds = approvalIds,
+                    defaultCategoryId = defaultCategoryId,
+                    defaultCategoryName = defaultCategoryName,
+                    selectedCategoryId = resolvedCategoryId,
+                    selectedSubcategoryId = null,
+                    mergePickerHighlightedCategoryId = resolvedCategoryId,
+                    mergeCategories = mergeCategories,
+                    userInitiatedLink = userInitiated,
+                    isLoadingCandidates = true,
+                    pickerYear = yearMonth.year,
+                    pickerMonth = yearMonth.monthValue,
+                    monthTitle = HomePeriodUtils.monthTitle(yearMonth),
+                )
+            _pendingSmsMerge.value = loading
+            _pendingSmsMerge.value = refreshLinkPickerLedger(loading)
+        }
+
+        private fun shiftLinkPickerMonth(delta: Int) {
+            val current = _pendingSmsMerge.value ?: return
+            val yearMonth = YearMonth.of(current.pickerYear, current.pickerMonth).plusMonths(delta.toLong())
+            viewModelScope.launch {
+                val loading =
+                    current.copy(
+                        pickerYear = yearMonth.year,
+                        pickerMonth = yearMonth.monthValue,
+                        monthTitle = HomePeriodUtils.monthTitle(yearMonth),
+                        isLoadingCandidates = true,
+                    )
+                _pendingSmsMerge.value = loading
+                _pendingSmsMerge.value = refreshLinkPickerLedger(loading)
+            }
+        }
+
+        private suspend fun refreshLinkPickerLedger(prompt: PendingSmsMergePrompt): PendingSmsMergePrompt {
+            val display = displaySettingsStore.snapshot()
+            val yearMonth = YearMonth.of(prompt.pickerYear, prompt.pickerMonth)
+            val (start, end) =
+                HomePeriodUtils.epochRangeMillis(
+                    yearMonth,
+                    zoneId,
+                    display.monthStartDay,
+                )
+            val items =
+                transactionRepository
+                    .getFilteredTransactions(
+                        startDate = start,
+                        endDate = end,
+                        accountId = null,
+                        categoryId = null,
+                        subcategoryId = null,
+                        type = null,
+                    ).first()
+            val needle = prompt.noteQuery.trim().lowercase(Locale.getDefault())
+            val filtered = items.filter { matchesLinkPickerNote(it, needle) }
+            val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+            val grouped =
+                TransactionGrouping.groupByDate(
+                    items = filtered,
+                    zoneId = zoneId,
+                    withinDayAscending = display.timeDisplay.ascending,
+                    rowMapper = { item ->
+                        TransactionRowMapping.fromDetails(
+                            item = item,
+                            timeFormat = timeFormat,
+                            showDescription = display.showDescription,
+                            showTime = display.timeDisplay.showTime,
+                            currencySymbol = display.mainCurrencySymbol,
+                        )
+                    },
+                )
+            return prompt.copy(
+                groupedTransactions = grouped,
+                isEmptyMonth = grouped.isEmpty(),
+                isLoadingCandidates = false,
+                monthTitle = HomePeriodUtils.monthTitle(yearMonth),
+            )
+        }
+
+        private fun matchesLinkPickerNote(
+            item: TransactionWithDetails,
+            needle: String,
+        ): Boolean {
+            if (needle.isEmpty()) return true
+            val hay =
+                buildString {
+                    append(item.transaction.note.orEmpty())
+                    append(' ')
+                    append(item.category?.name.orEmpty())
+                    append(' ')
+                    append(item.account?.name.orEmpty())
+                }.lowercase(Locale.getDefault())
+            return hay.contains(needle)
+        }
+
+        private fun mergeApprovals(
+            approvalIds: List<Long>,
             transactionId: Long,
             categoryId: Long?,
+            subcategoryId: Long?,
             useLedgerCategory: Boolean,
         ) {
             viewModelScope.launch {
                 try {
-                    approvalRepository.mergeCandidateWithTransaction(
-                        approvalId = approvalId,
+                    approvalRepository.mergeApprovalsWithTransaction(
+                        approvalIds = approvalIds,
                         transactionId = transactionId,
                         categoryId = categoryId,
-                        subcategoryId = null,
+                        subcategoryId = subcategoryId,
                         useLedgerCategory = useLedgerCategory,
                     )
-                    _scanResultMessage.value = "SMS merged into existing transaction."
+                    val count = approvalIds.size
+                    _scanResultMessage.value =
+                        if (count > 1) {
+                            "$count SMS linked to the same transaction."
+                        } else {
+                            "SMS linked to existing transaction."
+                        }
                 } catch (e: Exception) {
                     _scanResultMessage.value = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_ACTION)
                 }
             }
+        }
+
+        private fun clearApprovalSelection() {
+            _isSelectionMode.value = false
+            _selectedApprovalIds.value = emptySet()
         }
 
         private fun approveCandidate(id: Long) {
@@ -406,16 +701,21 @@ class ApprovalCenterViewModel
                     val months = smsScanSettingsStore.getScanMonths()
                     val scanSummary = smsScannerService.scanInbox(monthsBack = months)
                     val parsedCandidates = scanSummary.transactions
-                    if (parsedCandidates.isEmpty() && scanSummary.informationalCount == 0) {
+                    if (
+                        parsedCandidates.isEmpty() &&
+                        scanSummary.cardRefunds.isEmpty() &&
+                        scanSummary.informationalCount == 0
+                    ) {
                         _scanResultMessage.value =
                             "No transaction SMS found in the last $months month(s)."
                     } else {
                         val cleared = approvalRepository.reconcilePendingWithCurrentParser()
-                        val added = approvalRepository.insertCandidates(parsedCandidates)
+                        val addedTxn = approvalRepository.insertCandidates(parsedCandidates)
+                        val addedRefund = approvalRepository.insertCandidates(scanSummary.cardRefunds)
                         _scanResultMessage.value =
                             buildScanResultMessage(
-                                added = added,
-                                txnCount = parsedCandidates.size,
+                                added = addedTxn + addedRefund,
+                                txnCount = parsedCandidates.size + scanSummary.cardRefunds.size,
                                 summary = scanSummary,
                                 clearedPending = cleared,
                             )
@@ -457,6 +757,9 @@ class ApprovalCenterViewModel
             if (summary.cardPaymentNotices > 0) {
                 parts.add("${summary.cardPaymentNotices} credit card payment(s) skipped.")
             }
+            if (summary.cardRefundNotices > 0) {
+                parts.add("${summary.cardRefundNotices} card refund(s) queued to apply.")
+            }
             if (summary.duplicateSuppressed > 0) {
                 parts.add("${summary.duplicateSuppressed} duplicate HP Pay/card SMS merged.")
             }
@@ -477,10 +780,15 @@ class ApprovalCenterViewModel
                     entity.confidenceScore >= 50 -> "Medium (${entity.confidenceScore}%)"
                     else -> "Low (${entity.confidenceScore}%)"
                 }
+            val isCardRefund = entity.approvalKind == SmsApprovalKind.CARD_REFUND
             val typeLabel =
-                entity.extractedType.name
-                    .lowercase(Locale.getDefault())
-                    .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+                if (isCardRefund) {
+                    "Card refund"
+                } else {
+                    entity.extractedType.name
+                        .lowercase(Locale.getDefault())
+                        .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+                }
             val statusLabel =
                 entity.approvalState.name
                     .lowercase(Locale.getDefault())
@@ -504,9 +812,16 @@ class ApprovalCenterViewModel
             return ApprovalCandidateUi(
                 id = entity.id,
                 sender = entity.extractedSender,
-                amountFormatted = "$sign₹${"%.2f".format(entity.extractedAmount)}",
+                amountFormatted =
+                    if (isCardRefund) {
+                        com.mmr.core.common.display.MmrMoneyFormat
+                            .format(entity.extractedAmount, "₹")
+                    } else {
+                        "$sign${com.mmr.core.common.display.MmrMoneyFormat.format(entity.extractedAmount, "₹")}"
+                    },
                 amount = entity.extractedAmount,
                 type = entity.extractedType,
+                isCardRefund = isCardRefund,
                 typeLabel = typeLabel,
                 merchant = entity.extractedMerchant,
                 note = entity.extractedNote ?: entity.extractedMerchant ?: entity.extractedSender,
@@ -526,6 +841,158 @@ class ApprovalCenterViewModel
                 state = entity.approvalState,
             )
         }
+
+        private fun categoriesForType(
+            tree: List<CategoryWithChildren>,
+            transactionType: TransactionType,
+        ): List<CategoryUi> {
+            val filtered =
+                when (transactionType) {
+                    TransactionType.EXPENSE -> tree.filter { it.category.type == CategoryType.EXPENSE }
+                    TransactionType.INCOME -> tree.filter { it.category.type == CategoryType.INCOME }
+                    TransactionType.TRANSFER -> tree.filter { it.category.type == CategoryType.EXPENSE }
+                    else -> tree
+                }
+            return filtered.map { node ->
+                CategoryUi(
+                    id = node.category.id.value,
+                    name = node.category.name,
+                    colorHex = node.category.color.hex,
+                    iconName = node.category.iconName,
+                    subcategories =
+                        node.subcategories.map { sub ->
+                            SubcategoryUi(id = sub.id.value, name = sub.name)
+                        },
+                )
+            }
+        }
+
+        private fun resolveCategorySelection(
+            categories: List<CategoryUi>,
+            preferredId: Long?,
+        ): Long? {
+            if (preferredId != null && categories.any { it.id == preferredId }) return preferredId
+            return categories.firstOrNull()?.id
+        }
+
+        private suspend fun beginApplyRefund(approvalId: Long) {
+            val approval = approvalRepository.getApprovalById(approvalId) ?: return
+            if (approval.approvalKind != SmsApprovalKind.CARD_REFUND) return
+            val anchorMillis =
+                approval.extractedDateTime.takeIf { MmrValidation.isValidEpochMillis(it) }
+                    ?: System.currentTimeMillis()
+            val yearMonth = YearMonth.from(Instant.ofEpochMilli(anchorMillis).atZone(zoneId).toLocalDate())
+            val loading =
+                PendingCardRefundApplyPrompt(
+                    approvalId = approvalId,
+                    refundAmount = approval.extractedAmount,
+                    refundAmountLabel =
+                        com.mmr.core.common.display.MmrMoneyFormat
+                            .format(approval.extractedAmount, "₹"),
+                    smsSnippet = approval.rawBodySnippet,
+                    pickerYear = yearMonth.year,
+                    pickerMonth = yearMonth.monthValue,
+                    monthTitle = HomePeriodUtils.monthTitle(yearMonth),
+                    partialRefundAmountText = approval.extractedAmount.toString(),
+                    isLoadingCandidates = true,
+                )
+            _pendingCardRefundApply.value = loading
+            _pendingCardRefundApply.value = refreshCardRefundPickerLedger(loading)
+        }
+
+        private fun shiftCardRefundPickerMonth(delta: Int) {
+            val current = _pendingCardRefundApply.value ?: return
+            val yearMonth = YearMonth.of(current.pickerYear, current.pickerMonth).plusMonths(delta.toLong())
+            viewModelScope.launch {
+                val loading =
+                    current.copy(
+                        pickerYear = yearMonth.year,
+                        pickerMonth = yearMonth.monthValue,
+                        monthTitle = HomePeriodUtils.monthTitle(yearMonth),
+                        isLoadingCandidates = true,
+                    )
+                _pendingCardRefundApply.value = loading
+                _pendingCardRefundApply.value = refreshCardRefundPickerLedger(loading)
+            }
+        }
+
+        private suspend fun refreshCardRefundPickerLedger(
+            prompt: PendingCardRefundApplyPrompt,
+        ): PendingCardRefundApplyPrompt {
+            val display = displaySettingsStore.snapshot()
+            val yearMonth = YearMonth.of(prompt.pickerYear, prompt.pickerMonth)
+            val (start, end) =
+                HomePeriodUtils.epochRangeMillis(
+                    yearMonth,
+                    zoneId,
+                    display.monthStartDay,
+                )
+            val items =
+                transactionRepository
+                    .getFilteredTransactions(
+                        startDate = start,
+                        endDate = end,
+                        accountId = null,
+                        categoryId = null,
+                        subcategoryId = null,
+                        type = TransactionType.EXPENSE,
+                    ).first()
+            val needle = prompt.noteQuery.trim().lowercase(Locale.getDefault())
+            val filtered = items.filter { matchesLinkPickerNote(it, needle) }
+            val timeFormat = SimpleDateFormat("h:mm a", Locale.getDefault())
+            val grouped =
+                TransactionGrouping.groupByDate(
+                    items = filtered,
+                    zoneId = zoneId,
+                    withinDayAscending = display.timeDisplay.ascending,
+                    rowMapper = { item ->
+                        TransactionRowMapping.fromDetails(
+                            item = item,
+                            timeFormat = timeFormat,
+                            showDescription = display.showDescription,
+                            showTime = display.timeDisplay.showTime,
+                            currencySymbol = display.mainCurrencySymbol,
+                        )
+                    },
+                )
+            return prompt.copy(
+                groupedTransactions = grouped,
+                isEmptyMonth = grouped.isEmpty(),
+                isLoadingCandidates = false,
+                monthTitle = HomePeriodUtils.monthTitle(yearMonth),
+            )
+        }
+
+        private fun confirmCardRefundApply() {
+            val prompt = _pendingCardRefundApply.value ?: return
+            val purchaseId = prompt.selectedPurchaseId ?: return
+            val amount =
+                if (prompt.applyFullRefund) {
+                    prompt.refundAmount
+                } else {
+                    prompt.partialRefundAmountText
+                        .replace(",", "")
+                        .trim()
+                        .toDoubleOrNull()
+                        ?: run {
+                            _scanResultMessage.value = "Enter a valid refund amount."
+                            return
+                        }
+                }
+            viewModelScope.launch {
+                try {
+                    approvalRepository.applyCardRefund(
+                        approvalId = prompt.approvalId,
+                        purchaseTransactionId = purchaseId,
+                        refundAmount = amount,
+                    )
+                    _pendingCardRefundApply.value = null
+                    _scanResultMessage.value = "Refund applied to purchase."
+                } catch (e: Exception) {
+                    _scanResultMessage.value = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_ACTION)
+                }
+            }
+        }
     }
 
 private data class ApprovalCenterMeta(
@@ -540,4 +1007,15 @@ private data class ManualEntryMeta(
     val error: String?,
     val duplicateDraft: PendingManualSmsDraft?,
     val smsMerge: PendingSmsMergePrompt?,
+    val cardRefundApply: PendingCardRefundApplyPrompt?,
+)
+
+private data class SelectionMeta(
+    val isSelectionMode: Boolean,
+    val selectedIds: Set<Long>,
+)
+
+private data class OverlayMeta(
+    val manual: ManualEntryMeta,
+    val selection: SelectionMeta,
 )

@@ -13,20 +13,21 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.ui.adaptive.mmrScreenHorizontalPadding
+import com.mmr.app.ui.components.MmrAddListFab
 import com.mmr.app.ui.components.MmrDimens
-import com.mmr.app.ui.components.MmrMmHeaderBar
+import com.mmr.app.ui.components.MmrDualSummaryStrip
+import com.mmr.app.ui.components.MmrHeaderBar
 import com.mmr.app.ui.state.MmrEmptyState
 import com.mmr.app.ui.state.MmrErrorState
 import com.mmr.app.ui.state.MmrLoadingState
 import com.mmr.app.ui.state.MmrStatusBanner
-import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.app.ui.theme.MmrBrandColors
 import com.mmr.feature.recurring.model.RecurringFilterType
 import com.mmr.feature.recurring.model.RecurringListUiEvent
 import com.mmr.feature.recurring.model.RecurringRuleItemUi
@@ -46,24 +47,31 @@ fun RecurringListScreen(
     val horizontalPadding = mmrScreenHorizontalPadding()
 
     Scaffold(
-        containerColor = MmrMmColors.ListBackground,
+        containerColor = MmrBrandColors.ListBackground,
         contentWindowInsets = com.mmr.app.ui.components.MmrNestedScaffoldInsets,
         topBar = {
-            MmrMmHeaderBar(
-                title = "Recurring",
-                showBack = showBackNavigation,
-                onBack = onNavigateBack,
-            )
+            Column(modifier = Modifier.fillMaxWidth()) {
+                MmrHeaderBar(
+                    title = "Recurring",
+                    showBack = showBackNavigation,
+                    onBack = onNavigateBack,
+                )
+                MmrDualSummaryStrip(
+                    leftLabel = "Active rules",
+                    leftAmount = uiState.activeRulesCount.toString(),
+                    leftAmountColor = MmrBrandColors.Active,
+                    rightLabel = "Reminders",
+                    rightAmount = uiState.reminders.size.toString(),
+                    rightAmountColor = MmrBrandColors.TextStrong,
+                )
+            }
         },
         floatingActionButton = {
-            FloatingActionButton(
+            MmrAddListFab(
                 modifier = Modifier.testTag(MmrTestTags.recurringFabAdd),
+                contentDescription = "Add recurring rule",
                 onClick = onNavigateToAddRule,
-                containerColor = MmrMmColors.Active,
-                contentColor = Color.White,
-            ) {
-                Text("+", style = MaterialTheme.typography.titleLarge)
-            }
+            )
         },
     ) { innerPadding ->
         Column(
@@ -77,13 +85,13 @@ fun RecurringListScreen(
                     Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState())
-                        .padding(horizontal = horizontalPadding, vertical = MmrDimens.spaceSm),
+                        .padding(horizontal = horizontalPadding, vertical = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(MmrDimens.spaceSm),
             ) {
                 FilterChip(
                     selected = uiState.selectedFilter == RecurringFilterType.ALL,
                     onClick = { viewModel.onEvent(RecurringListUiEvent.OnFilterSelected(RecurringFilterType.ALL)) },
-                    label = { Text("All (${uiState.rules.size})") },
+                    label = { Text("All (${uiState.totalRulesCount})") },
                 )
                 FilterChip(
                     selected = uiState.selectedFilter == RecurringFilterType.ACTIVE,
@@ -93,7 +101,7 @@ fun RecurringListScreen(
                 FilterChip(
                     selected = uiState.selectedFilter == RecurringFilterType.PAUSED,
                     onClick = { viewModel.onEvent(RecurringListUiEvent.OnFilterSelected(RecurringFilterType.PAUSED)) },
-                    label = { Text("Paused") },
+                    label = { Text("Paused (${uiState.pausedRulesCount})") },
                 )
             }
 
@@ -105,6 +113,33 @@ fun RecurringListScreen(
                         message = uiState.errorMessage ?: "Failed to load recurring rules.",
                         onRetry = { viewModel.onEvent(RecurringListUiEvent.OnRetryClick) },
                     )
+                }
+
+                uiState.isFilteredEmpty -> {
+                    Column(
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = horizontalPadding),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        MmrEmptyState(
+                            message =
+                                when (uiState.selectedFilter) {
+                                    RecurringFilterType.ACTIVE ->
+                                        "No active recurring rules.\nTurn a rule on with the switch, or tap Paused to see paused rules."
+                                    RecurringFilterType.PAUSED ->
+                                        "No paused recurring rules.\nTurn a rule off with the switch to pause auto-posting."
+                                    RecurringFilterType.ALL -> "No rules match this filter."
+                                },
+                        )
+                        TextButton(
+                            onClick = { viewModel.onEvent(RecurringListUiEvent.OnResetFilters) },
+                        ) {
+                            Text("Show all rules")
+                        }
+                    }
                 }
 
                 uiState.isEmpty -> {
@@ -254,10 +289,19 @@ private fun RecurringRuleCard(
                     )
                 }
 
-                Switch(
-                    checked = rule.isEnabled,
-                    onCheckedChange = onToggleEnabled,
-                )
+                Column(horizontalAlignment = Alignment.End) {
+                    Switch(
+                        checked = rule.isEnabled,
+                        onCheckedChange = onToggleEnabled,
+                    )
+                    if (!rule.isEnabled) {
+                        Text(
+                            text = "Paused",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MmrBrandColors.TextMedium,
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(MmrDimens.spaceMd))
@@ -271,7 +315,7 @@ private fun RecurringRuleCard(
                     text = rule.amountFormatted,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
-                    color = if (rule.isExpense) Color(0xFFEF4444) else Color(0xFF10B981),
+                    color = if (rule.isExpense) MmrBrandColors.AmountNegative else MmrBrandColors.AmountPositive,
                 )
 
                 Surface(

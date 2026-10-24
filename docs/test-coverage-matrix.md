@@ -23,6 +23,7 @@ Status keys used in tables: `Done` | `Partial` | `Todo`
 |---------|------------|--------|
 | App launch + bottom nav (Home, Stats) | `MainActivityLaunchUiTest` | Done |
 | Bottom nav (Loans, Recurring, Settings) | `MainNavigationUiTest` | Done |
+| Bottom nav (home selected, Ledger label) | `BottomNavUiTest`, `MainActivityLaunchUiTest` | Done |
 | Add manual expense | `AddTransactionFlowUiTest` | Done |
 | Add transfer (account → account) | `TransferTransactionFlowUiTest` | Done |
 | Search by note | `TransactionSearchFlowUiTest` | Done |
@@ -34,9 +35,12 @@ Status keys used in tables: `Done` | `Partial` | `Todo`
 | Home multi-select merge | `HomeMergeFlowUiTest` | Done |
 | Home multi-select delete | `HomeDeleteFlowUiTest` | Done |
 | Home Excel export period dialog | `HomeTabsUiTest` (Total tab) | Partial (no share intent assert) |
+| Home LAN sync suggest banner | Removed (2026-10-23); manual sync only via Settings | N/A |
 | Transaction detail edit / delete / duplicate | `TransactionDetailFlowUiTest` | Done (duplicate via Today) |
-| Category add (Settings) | `CategoryAddFlowUiTest` | Partial |
-| Settings → Accounts / Categories / Backup | `SettingsNavigationUiTest` | Done |
+| Category add (Settings app bar) | `CategoryAddFlowUiTest` | Done |
+| Account add (Settings app bar) | `AccountAddFlowUiTest` | Done |
+| Settings → Accounts / Categories / Backup / Peer Device Sync / Web Manage | `SettingsNavigationUiTest` | Done |
+| Web Manage ↔ Peer Device Sync mutual exclusion | `WebManageMutualExclusionUiTest` | Done |
 | Account CRUD | — | Partial (list nav only) |
 | Loan create (flexible) | `LoanCreateFlowUiTest` | Done |
 | Loan repayment dialog | `LoanRepaymentFlowUiTest` | Done |
@@ -62,6 +66,14 @@ Status keys used in tables: `Done` | `Partial` | `Todo`
 | EMI auto-post coordinator | `EmiAutoPostCoordinatorInstrumentedTest` | Done |
 | Loan top-up / flexible EMI schedule | — | Partial (JVM loan tests) |
 | Backup import merge mode (repository) | — | Partial (`BackupImportPlannerTest` JVM) |
+| LAN sync JSON codec (settings + recurring) | `LanSyncJsonCodecTest` | Done |
+| LAN sync merge conflict flags | `LanSyncMergeConflictsTest` | Done |
+| LAN sync conflict detection (SMS scan, duplicate names) | `LanSyncConflictDetectorInstrumentedTest` | Done |
+| LAN sync post-merge balance warnings | `LanSyncAccountBalanceValidatorInstrumentedTest` | Done |
+| Backup JSON `appSettings` round-trip | `BackupJsonCodecInstrumentedTest` | Done |
+| LAN sync merge (account + transaction) | `LanSyncMergerInstrumentedTest` | Done |
+| LAN sync HTTP server handler | `LanSyncHttpServerInstrumentedTest` | Done (loopback; no NSD) |
+| Web Manage HTTP API (status, login, chart) | `WebManageHttpServerInstrumentedTest` | Done (loopback) |
 
 ---
 
@@ -78,6 +90,10 @@ Status keys used in tables: `Done` | `Partial` | `Todo`
 | Excel export writer / periods | `PeriodExcelWriterTest`, `HomeExcelExportPeriodsTest` | Done |
 | Home total utils | `HomeTotalUtilsTest` | Done |
 | Search period presets | `SearchPeriodPresetsTest` | Done |
+| LAN sync pairing QR/string codec | `LanSyncPairingCodecTest` | Done |
+| LAN sync port binding | `LanSyncPortBinderTest` | Done |
+| Web Manage password + pie chart JSON | `WebManagePasswordHasherTest`, `WebManageChartJsonBuilderTest` | Done |
+| LAN server mode coordinator | `LocalLanServerCoordinatorTest` | Done |
 | Repository guards | `RepositoryGuardsTest` | Done |
 | Home / Stats ViewModels | `HomeViewModelTest`, `StatsViewModelTest` | Partial |
 | Stats period utils | `StatsPeriodUtilsTest` | Done |
@@ -100,7 +116,7 @@ Status keys used in tables: `Done` | `Partial` | `Todo`
 | `transaction.type.*` | Transfer test |
 | `home.tab.*`, `home.calendar.*`, `home.total.export_excel` | `HomeTabsUiTest` |
 | `home.selection.merge`, `transaction.row.*` | `HomeMergeFlowUiTest` |
-| `settings.nav.*` | `SettingsNavigationUiTest`, `CategoryAddFlowUiTest` |
+| `settings.nav.*` (incl. `lan_sync`, `web_manage`), `web_manage.switch.enabled`, `lan_sync.switch.enabled` | `SettingsNavigationUiTest`, `WebManageMutualExclusionUiTest`, `CategoryAddFlowUiTest` |
 | `loan.fab.add`, `loan.field.*` | `LoanCreateFlowUiTest` |
 | `recurring.fab.add` | `RecurringAddFlowUiTest` |
 | `approval.fab.manual_sms` | `ApprovalManualSmsFlowUiTest` |

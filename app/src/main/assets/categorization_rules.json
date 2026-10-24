@@ -13,6 +13,18 @@
     { "priority": 80, "matchType": "SMS_BODY_CONTAINS", "pattern": "payroll", "categoryName": "Salary" },
     { "priority": 75, "matchType": "SMS_BODY_CONTAINS", "pattern": "mutual fund", "categoryName": "Investment / Return" },
     { "priority": 70, "matchType": "SMS_BODY_CONTAINS", "pattern": "electricity", "categoryName": "Bills & Utilities" },
-    { "priority": 70, "matchType": "SMS_BODY_CONTAINS", "pattern": "bescom", "categoryName": "Bills & Utilities" }
+    { "priority": 70, "matchType": "SMS_BODY_CONTAINS", "pattern": "bescom", "categoryName": "Bills & Utilities" },
+    { "priority": 88, "matchType": "MERCHANT_OR_NOTE_CONTAINS", "pattern": "zudio", "categoryName": "Shopping" },
+    { "priority": 88, "matchType": "MERCHANT_OR_NOTE_CONTAINS", "pattern": "myntra", "categoryName": "Shopping" },
+    { "priority": 88, "matchType": "MERCHANT_OR_NOTE_CONTAINS", "pattern": "meesho", "categoryName": "Shopping" },
+    { "priority": 88, "matchType": "MERCHANT_OR_NOTE_CONTAINS", "pattern": "ajio", "categoryName": "Shopping" },
+    { "priority": 87, "matchType": "MERCHANT_OR_NOTE_CONTAINS", "pattern": "bookmyshow", "categoryName": "Entertainment" },
+    { "priority": 87, "matchType": "MERCHANT_OR_NOTE_CONTAINS", "pattern": "pharmeasy", "categoryName": "Healthcare" },
+    { "priority": 87, "matchType": "MERCHANT_OR_NOTE_CONTAINS", "pattern": "netmeds", "categoryName": "Healthcare" },
+    { "priority": 86, "matchType": "MERCHANT_OR_NOTE_CONTAINS", "pattern": "yesmadam", "categoryName": "Shopping" },
+    { "priority": 86, "matchType": "MERCHANT_OR_NOTE_CONTAINS", "pattern": "dunzo", "categoryName": "Groceries" },
+    { "priority": 85, "matchType": "MERCHANT_OR_NOTE_CONTAINS", "pattern": "irctc", "categoryName": "Transport & Fuel" },
+    { "priority": 85, "matchType": "MERCHANT_OR_NOTE_CONTAINS", "pattern": "makemytrip", "categoryName": "Travel" },
+    { "priority": 84, "matchType": "SMS_BODY_CONTAINS", "pattern": "towards interest", "categoryName": "Investment / Return" }
   ]
 }

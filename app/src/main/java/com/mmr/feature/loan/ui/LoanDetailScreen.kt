@@ -2,12 +2,10 @@ package com.mmr.feature.loan.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.PlayArrow
@@ -15,25 +13,25 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mmr.app.testing.MmrTestTags
-import com.mmr.app.ui.adaptive.MmrAdaptiveWidthBox
-import com.mmr.app.ui.adaptive.mmrScreenHorizontalPadding
 import com.mmr.app.ui.components.MmrConfirmDialog
 import com.mmr.app.ui.components.MmrContentDialog
+import com.mmr.app.ui.components.MmrDeleteIcon
+import com.mmr.app.ui.components.MmrDetailOverviewCard
+import com.mmr.app.ui.components.MmrDetailProgressStrip
+import com.mmr.app.ui.components.MmrDetailScreenScaffold
+import com.mmr.app.ui.components.MmrDetailSectionTitle
+import com.mmr.app.ui.components.MmrDetailStatusBadge
+import com.mmr.app.ui.components.MmrDialogBodyNote
+import com.mmr.app.ui.components.MmrDialogDetailLine
 import com.mmr.app.ui.components.MmrDimens
 import com.mmr.app.ui.components.MmrInputDialog
-import com.mmr.app.ui.components.MmrTopAppBar
-import com.mmr.app.ui.state.MmrErrorState
-import com.mmr.app.ui.state.MmrLoadingState
 import com.mmr.app.ui.state.MmrStatusBanner
-import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.app.ui.theme.MmrBrandColors
 import com.mmr.core.loan.LoanDisplayFormat
 import com.mmr.core.model.enums.LoanPaymentType
 import com.mmr.core.model.enums.LoanRepaymentMode
@@ -69,12 +67,12 @@ fun LoanDetailScreen(
             onConfirm = { viewModel.onEvent(LoanDetailUiEvent.OnDismissRevisionDetail) },
             showDismissButton = false,
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Before: ${detail.beforeRateLabel}")
-                Text("After: ${detail.afterRateLabel}")
-                detail.emiBeforeFormatted?.let { Text("EMI before: $it") }
-                detail.emiAfterFormatted?.let { Text("EMI after: $it") }
-                detail.note?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                MmrDialogDetailLine("Before", detail.beforeRateLabel)
+                MmrDialogDetailLine("After", detail.afterRateLabel)
+                detail.emiBeforeFormatted?.let { MmrDialogDetailLine("EMI before", it) }
+                detail.emiAfterFormatted?.let { MmrDialogDetailLine("EMI after", it) }
+                detail.note?.let { MmrDialogBodyNote(it) }
             }
         }
     }
@@ -86,456 +84,382 @@ fun LoanDetailScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            MmrTopAppBar(
-                title = uiState.loan?.name?.let { LoanDisplayFormat.displayName(it) } ?: "Loan details",
-                showBackNavigation = true,
-                onNavigateBack = onNavigateBack,
-                useMmHeaderStyle = true,
-                useMmCompactTitle = true,
-                actions = {
-                    uiState.loan?.let { loan ->
-                        Box {
-                            IconButton(onClick = { overflowMenuExpanded = true }) {
-                                Icon(
-                                    imageVector = Icons.Filled.MoreVert,
-                                    contentDescription = "Loan options",
-                                    tint = MmrMmColors.HeaderIcon,
-                                )
-                            }
-                            DropdownMenu(
-                                expanded = overflowMenuExpanded,
-                                onDismissRequest = { overflowMenuExpanded = false },
-                                shape = RoundedCornerShape(12.dp),
-                                containerColor = MmrMmColors.SurfaceWhite,
-                                tonalElevation = 6.dp,
-                                shadowElevation = 6.dp,
-                                modifier = Modifier.widthIn(min = 220.dp),
-                            ) {
-                                if (loan.status != LoanStatus.CLOSED) {
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(
-                                                "Edit loan",
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                color = MmrMmColors.Reversal,
-                                            )
-                                        },
-                                        leadingIcon = {
-                                            Icon(Icons.Outlined.Edit, contentDescription = null)
-                                        },
-                                        onClick = {
-                                            overflowMenuExpanded = false
-                                            onNavigateToEditLoan(loan.id)
-                                        },
+    val loan = uiState.loan
+    val showLoanFooter =
+        loan != null &&
+            loan.status != LoanStatus.CLOSED &&
+            loan.outstandingAmount > 0.0 &&
+            !uiState.isLoading
+
+    MmrDetailScreenScaffold(
+        title = loan?.name?.let { LoanDisplayFormat.displayName(it) } ?: "Loan details",
+        onNavigateBack = onNavigateBack,
+        useCompactHeaderTitle = true,
+        isLoading = uiState.isLoading,
+        errorMessage = if (loan == null) uiState.errorMessage else null,
+        onRetry = { viewModel.onEvent(LoanDetailUiEvent.OnRetryClick) },
+        footerPrimaryLabel = if (showLoanFooter) "Record repayment" else null,
+        onFooterPrimary =
+            if (showLoanFooter) {
+                { showRepaymentDialog = true }
+            } else {
+                null
+            },
+        footerPrimaryTestTag = MmrTestTags.loanDetailFabRepayment,
+        footerSecondaryLabel =
+            if (showLoanFooter && loan?.status != LoanStatus.CLOSED) {
+                "Add top-up"
+            } else {
+                null
+            },
+        onFooterSecondary =
+            if (showLoanFooter) {
+                { viewModel.onEvent(LoanDetailUiEvent.OnOpenTopUpDialog) }
+            } else {
+                null
+            },
+        topBarActions = {
+            loan?.let { loanEntity ->
+                Box {
+                    IconButton(onClick = { overflowMenuExpanded = true }) {
+                        Icon(
+                            imageVector = Icons.Filled.MoreVert,
+                            contentDescription = "Loan options",
+                            tint = MmrBrandColors.HeaderIcon,
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = overflowMenuExpanded,
+                        onDismissRequest = { overflowMenuExpanded = false },
+                        shape = RoundedCornerShape(12.dp),
+                        containerColor = MmrBrandColors.SurfaceWhite,
+                        tonalElevation = 6.dp,
+                        shadowElevation = 6.dp,
+                        modifier = Modifier.widthIn(min = 220.dp),
+                    ) {
+                        if (loanEntity.status != LoanStatus.CLOSED) {
+                            DropdownMenuItem(
+                                text = {
+                                    Text(
+                                        "Edit loan",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MmrBrandColors.Reversal,
                                     )
-                                }
-                                when (loan.status) {
-                                    LoanStatus.ACTIVE -> {
-                                        DropdownMenuItem(
-                                            text = {
-                                                Text(
-                                                    "Pause loan",
-                                                    style = MaterialTheme.typography.bodyLarge,
-                                                    color = MmrMmColors.Reversal,
-                                                )
-                                            },
-                                            leadingIcon = {
-                                                Icon(Icons.Outlined.Pause, contentDescription = null)
-                                            },
-                                            onClick = {
-                                                overflowMenuExpanded = false
-                                                viewModel.onEvent(LoanDetailUiEvent.OnStatusChanged(LoanStatus.PAUSED))
-                                            },
-                                        )
-                                    }
-                                    LoanStatus.PAUSED -> {
-                                        DropdownMenuItem(
-                                            text = {
-                                                Text(
-                                                    "Resume loan",
-                                                    style = MaterialTheme.typography.bodyLarge,
-                                                    color = MmrMmColors.Reversal,
-                                                )
-                                            },
-                                            leadingIcon = {
-                                                Icon(Icons.Outlined.PlayArrow, contentDescription = null)
-                                            },
-                                            onClick = {
-                                                overflowMenuExpanded = false
-                                                viewModel.onEvent(LoanDetailUiEvent.OnStatusChanged(LoanStatus.ACTIVE))
-                                            },
-                                        )
-                                    }
-                                    else -> Unit
-                                }
-                                if (loan.status != LoanStatus.CLOSED) {
-                                    DropdownMenuItem(
-                                        text = {
-                                            Text(
-                                                "Add top-up",
-                                                style = MaterialTheme.typography.bodyLarge,
-                                                color = MmrMmColors.Reversal,
-                                            )
-                                        },
-                                        onClick = {
-                                            overflowMenuExpanded = false
-                                            viewModel.onEvent(LoanDetailUiEvent.OnOpenTopUpDialog)
-                                        },
-                                    )
-                                    HorizontalDivider(color = MmrMmColors.BorderMain)
-                                }
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Outlined.Edit, contentDescription = null)
+                                },
+                                onClick = {
+                                    overflowMenuExpanded = false
+                                    onNavigateToEditLoan(loanEntity.id)
+                                },
+                            )
+                        }
+                        when (loanEntity.status) {
+                            LoanStatus.ACTIVE -> {
                                 DropdownMenuItem(
                                     text = {
                                         Text(
-                                            "Delete loan",
+                                            "Pause loan",
                                             style = MaterialTheme.typography.bodyLarge,
-                                            color = MaterialTheme.colorScheme.error,
+                                            color = MmrBrandColors.Reversal,
                                         )
                                     },
                                     leadingIcon = {
-                                        Icon(
-                                            Icons.Outlined.Delete,
-                                            contentDescription = null,
-                                            tint = MaterialTheme.colorScheme.error,
-                                        )
+                                        Icon(Icons.Outlined.Pause, contentDescription = null)
                                     },
                                     onClick = {
                                         overflowMenuExpanded = false
-                                        showDeleteLoanDialog = true
+                                        viewModel.onEvent(LoanDetailUiEvent.OnStatusChanged(LoanStatus.PAUSED))
                                     },
                                 )
                             }
+                            LoanStatus.PAUSED -> {
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            "Resume loan",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MmrBrandColors.Reversal,
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Outlined.PlayArrow, contentDescription = null)
+                                    },
+                                    onClick = {
+                                        overflowMenuExpanded = false
+                                        viewModel.onEvent(LoanDetailUiEvent.OnStatusChanged(LoanStatus.ACTIVE))
+                                    },
+                                )
+                            }
+                            else -> Unit
                         }
-                    }
-                },
-            )
-        },
-        floatingActionButton = {
-            uiState.loan?.let { loan ->
-                if (loan.status != LoanStatus.CLOSED && loan.outstandingAmount > 0.0) {
-                    SmallFloatingActionButton(
-                        onClick = { showRepaymentDialog = true },
-                        containerColor = MmrMmColors.Active,
-                        contentColor = Color.White,
-                        modifier = Modifier.testTag(MmrTestTags.loanDetailFabRepayment),
-                    ) {
-                        Text("+", style = MaterialTheme.typography.titleMedium)
+                        HorizontalDivider(color = MmrBrandColors.BorderMain)
+                        DropdownMenuItem(
+                            text = {
+                                Text(
+                                    "Delete loan",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.error,
+                                )
+                            },
+                            leadingIcon = {
+                                MmrDeleteIcon(contentDescription = null)
+                            },
+                            onClick = {
+                                overflowMenuExpanded = false
+                                showDeleteLoanDialog = true
+                            },
+                        )
                     }
                 }
             }
         },
-    ) { innerPadding ->
-        when {
-            uiState.isLoading -> {
-                MmrLoadingState(modifier = Modifier.fillMaxSize().padding(innerPadding))
+    ) {
+        if (loan != null) {
+            val isBorrowed = loan.loanType == LoanType.BORROWED
+            val directionColor = if (isBorrowed) MmrBrandColors.AmountNegative else MmrBrandColors.AmountPositive
+            uiState.statusMessage?.let { message ->
+                item {
+                    MmrStatusBanner(
+                        message = message,
+                        onDismiss = { viewModel.onEvent(LoanDetailUiEvent.OnDismissStatus) },
+                    )
+                }
             }
 
-            uiState.errorMessage != null && uiState.loan == null -> {
-                MmrErrorState(
-                    message = uiState.errorMessage ?: "Failed to load loan details.",
-                    onRetry = { viewModel.onEvent(LoanDetailUiEvent.OnRetryClick) },
-                    modifier = Modifier.fillMaxSize().padding(innerPadding),
-                )
-            }
-
-            uiState.loan != null -> {
-                val loan = uiState.loan!!
-                val isBorrowed = loan.loanType == LoanType.BORROWED
-                val directionColor = if (isBorrowed) Color(0xFFEF4444) else Color(0xFF10B981)
-                val horizontalPadding = mmrScreenHorizontalPadding()
-
-                MmrAdaptiveWidthBox(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                ) {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontalPadding, vertical = 16.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
+            item {
+                MmrDetailOverviewCard {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        uiState.statusMessage?.let { message ->
-                            item {
-                                MmrStatusBanner(
-                                    message = message,
-                                    onDismiss = { viewModel.onEvent(LoanDetailUiEvent.OnDismissStatus) },
-                                )
-                            }
-                        }
-
-                        // 1. Overview Card
-                        item {
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors =
-                                    CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                    ),
-                                shape = RoundedCornerShape(16.dp),
-                            ) {
-                                Column(modifier = Modifier.padding(MmrDimens.cardPadding)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        Column {
-                                            Text(
-                                                text = if (isBorrowed) "I Owe (Borrowed)" else "Owed to Me (Lent)",
-                                                style = MaterialTheme.typography.labelMedium,
-                                                color = directionColor,
-                                                fontWeight = FontWeight.Bold,
-                                            )
-                                            Text(
-                                                text = loan.lenderName,
-                                                style = MaterialTheme.typography.titleMedium,
-                                                fontWeight = FontWeight.SemiBold,
-                                            )
-                                        }
-
-                                        Surface(
-                                            shape = RoundedCornerShape(8.dp),
-                                            color = MaterialTheme.colorScheme.primaryContainer,
-                                        ) {
-                                            Text(
-                                                text = loan.statusLabel,
-                                                style = MaterialTheme.typography.labelMedium,
-                                                fontWeight = FontWeight.Bold,
-                                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                            )
-                                        }
-                                    }
-
-                                    HorizontalDivider(
-                                        modifier = Modifier.padding(vertical = 12.dp),
-                                        color = MaterialTheme.colorScheme.outlineVariant,
-                                    )
-
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                    ) {
-                                        Column {
-                                            Text("Outstanding", style = MaterialTheme.typography.labelSmall)
-                                            Text(
-                                                text = loan.outstandingFormatted,
-                                                style = MaterialTheme.typography.titleLarge,
-                                                fontWeight = FontWeight.Bold,
-                                                color = directionColor,
-                                            )
-                                        }
-                                        Column(horizontalAlignment = Alignment.End) {
-                                            Text("Principal", style = MaterialTheme.typography.labelSmall)
-                                            Text(
-                                                text = loan.principalFormatted,
-                                                style = MaterialTheme.typography.titleMedium,
-                                                fontWeight = FontWeight.SemiBold,
-                                            )
-                                        }
-                                    }
-
-                                    Spacer(modifier = Modifier.height(12.dp))
-
-                                    LinearProgressIndicator(
-                                        progress = { loan.progressPercentage },
-                                        modifier =
-                                            Modifier
-                                                .fillMaxWidth()
-                                                .height(8.dp)
-                                                .clip(RoundedCornerShape(4.dp)),
-                                        color = directionColor,
-                                        trackColor = MaterialTheme.colorScheme.surface,
-                                    )
-
-                                    Spacer(modifier = Modifier.height(6.dp))
-
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                    ) {
-                                        Text(
-                                            text = "${loan.progressFormatted} repaid",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = FontWeight.Medium,
-                                        )
-                                        Column(horizontalAlignment = Alignment.End) {
-                                            Text(
-                                                text = "Disbursed ${loan.disbursalDateFormatted}",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.outline,
-                                            )
-                                            Text(
-                                                text = loan.dueDateFormatted?.let { "Due: $it" } ?: "No due date set",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = MaterialTheme.colorScheme.outline,
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        item {
-                            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Text(
-                                    text = "Reducing-balance interest at ${loan.interestRateFormatted} p.a. (floating revisions keep past payments unchanged).",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                uiState.fixedEmiFormatted?.let { emi ->
-                                    Text(
-                                        text = "Current EMI: $emi • ${uiState.remainingTenureMonths ?: "?"} month(s) remaining",
-                                        style = MaterialTheme.typography.labelMedium,
-                                        fontWeight = FontWeight.SemiBold,
-                                    )
-                                }
-                                if (uiState.repaymentMode == LoanRepaymentMode.FLEXIBLE) {
-                                    uiState.flexibleInterestPendingFormatted?.let { pending ->
-                                        Text(
-                                            text = "Accrued interest (pending): $pending",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            fontWeight = FontWeight.SemiBold,
-                                            color = MaterialTheme.colorScheme.primary,
-                                        )
-                                    }
-                                    uiState.flexibleInterestAccrualFromLabel?.let { from ->
-                                        Text(
-                                            text = "Accruing since $from on current outstanding (actual/365). Payments clear interest first, then principal.",
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                    }
-                                }
-                                Row(horizontalArrangement = Arrangement.spacedBy(MmrDimens.spaceMd)) {
-                                    Text(
-                                        text = "Change rate",
-                                        modifier =
-                                            Modifier.clickable {
-                                                viewModel.onEvent(LoanDetailUiEvent.OnOpenRateChangeDialog)
-                                            },
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = MmrMmColors.Active,
-                                        fontWeight = FontWeight.Medium,
-                                    )
-                                    if (uiState.repaymentMode == LoanRepaymentMode.FIXED_EMI) {
-                                        Text(
-                                            text = "Change EMI",
-                                            modifier =
-                                                Modifier.clickable {
-                                                    viewModel.onEvent(LoanDetailUiEvent.OnOpenEmiChangeDialog)
-                                                },
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = MmrMmColors.Active,
-                                            fontWeight = FontWeight.Medium,
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        if (uiState.interestRevisions.isNotEmpty()) {
-                            item {
-                                Text(
-                                    text = "Interest rate history",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                            }
-                            items(uiState.interestRevisions, key = { it.id }) { revision ->
-                                Card(
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .clickable {
-                                                viewModel.onEvent(
-                                                    LoanDetailUiEvent.OnInterestRevisionClick(revision.id),
-                                                )
-                                            },
-                                ) {
-                                    Column(Modifier.padding(12.dp)) {
-                                        Text(revision.effectiveDateLabel, fontWeight = FontWeight.SemiBold)
-                                        Text(revision.rateLabel, style = MaterialTheme.typography.bodySmall)
-                                        revision.note?.let {
-                                            Text(it, style = MaterialTheme.typography.labelSmall)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        if (uiState.upcomingSchedule.isNotEmpty()) {
-                            item {
-                                Text(
-                                    text = "Upcoming EMIs",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                )
-                            }
-                            items(uiState.upcomingSchedule.size) { index ->
-                                val entry = uiState.upcomingSchedule[index]
-                                Card(modifier = Modifier.fillMaxWidth()) {
-                                    Row(
-                                        modifier =
-                                            Modifier
-                                                .fillMaxWidth()
-                                                .padding(12.dp),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                    ) {
-                                        Column {
-                                            Text(entry.dueDateLabel, fontWeight = FontWeight.SemiBold)
-                                            Text(
-                                                "Principal ${entry.principalFormatted} • Interest ${entry.interestFormatted}",
-                                                style = MaterialTheme.typography.labelSmall,
-                                            )
-                                        }
-                                        Text(entry.emiFormatted, fontWeight = FontWeight.Bold)
-                                    }
-                                }
-                            }
-                        }
-
-                        // 2. Repayment History Section Header
-                        item {
+                        Column {
                             Text(
-                                text = "Repayment History",
-                                style = MaterialTheme.typography.titleMedium,
+                                text = if (isBorrowed) "I Owe (Borrowed)" else "Owed to Me (Lent)",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = directionColor,
                                 fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                text = loan.lenderName,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
                             )
                         }
 
-                        // 3. Payment history list or empty
-                        if (uiState.payments.isEmpty()) {
-                            item {
-                                Card(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors =
-                                        CardDefaults.cardColors(
-                                            containerColor = MaterialTheme.colorScheme.surface,
-                                        ),
-                                ) {
-                                    Text(
-                                        text = "No repayments recorded yet.\nTap 'Record Payment' to add one.",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.padding(MmrDimens.cardPadding),
+                        MmrDetailStatusBadge(text = loan.statusLabel)
+                    }
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 12.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column {
+                            Text("Outstanding", style = MaterialTheme.typography.labelSmall)
+                            Text(
+                                text = loan.outstandingFormatted,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = directionColor,
+                            )
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text("Principal", style = MaterialTheme.typography.labelSmall)
+                            Text(
+                                text = loan.principalFormatted,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    MmrDetailProgressStrip(
+                        progress = loan.progressPercentage,
+                        color = directionColor,
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text(
+                            text = "${loan.progressFormatted} repaid",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Medium,
+                        )
+                        Column(horizontalAlignment = Alignment.End) {
+                            Text(
+                                text = "Disbursed ${loan.disbursalDateFormatted}",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.outline,
+                            )
+                            Text(
+                                text = loan.dueDateFormatted?.let { "Due: $it" } ?: "No due date set",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.outline,
+                            )
+                        }
+                    }
+                }
+            }
+
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        text = "Reducing-balance interest at ${loan.interestRateFormatted} p.a. (floating revisions keep past payments unchanged).",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    uiState.fixedEmiFormatted?.let { emi ->
+                        Text(
+                            text = "Current EMI: $emi • ${uiState.remainingTenureMonths ?: "?"} month(s) remaining",
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                    if (uiState.repaymentMode == LoanRepaymentMode.FLEXIBLE) {
+                        uiState.flexibleInterestPendingFormatted?.let { pending ->
+                            Text(
+                                text = "Accrued interest (pending): $pending",
+                                style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                        uiState.flexibleInterestAccrualFromLabel?.let { from ->
+                            Text(
+                                text = "Accruing since $from on current outstanding (actual/365). Payments clear interest first, then principal.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(MmrDimens.spaceMd)) {
+                        Text(
+                            text = "Change rate",
+                            modifier =
+                                Modifier.clickable {
+                                    viewModel.onEvent(LoanDetailUiEvent.OnOpenRateChangeDialog)
+                                },
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MmrBrandColors.Active,
+                            fontWeight = FontWeight.Medium,
+                        )
+                        if (uiState.repaymentMode == LoanRepaymentMode.FIXED_EMI) {
+                            Text(
+                                text = "Change EMI",
+                                modifier =
+                                    Modifier.clickable {
+                                        viewModel.onEvent(LoanDetailUiEvent.OnOpenEmiChangeDialog)
+                                    },
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MmrBrandColors.Active,
+                                fontWeight = FontWeight.Medium,
+                            )
+                        }
+                    }
+                }
+            }
+
+            if (uiState.interestRevisions.isNotEmpty()) {
+                item {
+                    MmrDetailSectionTitle("Interest rate history")
+                }
+                items(uiState.interestRevisions, key = { "revision-${it.id}" }) { revision ->
+                    Card(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.onEvent(
+                                        LoanDetailUiEvent.OnInterestRevisionClick(revision.id),
                                     )
-                                }
-                            }
-                        } else {
-                            items(uiState.payments, key = { it.id }) { payment ->
-                                PaymentHistoryCard(
-                                    payment = payment,
-                                    onClick =
-                                        payment.linkedTransactionId?.let { txnId ->
-                                            { onNavigateToEditTransaction(txnId) }
-                                        },
-                                )
+                                },
+                    ) {
+                        Column(Modifier.padding(12.dp)) {
+                            Text(revision.effectiveDateLabel, fontWeight = FontWeight.SemiBold)
+                            Text(revision.rateLabel, style = MaterialTheme.typography.bodySmall)
+                            revision.note?.let {
+                                Text(it, style = MaterialTheme.typography.labelSmall)
                             }
                         }
                     }
+                }
+            }
+
+            if (uiState.upcomingSchedule.isNotEmpty()) {
+                item {
+                    MmrDetailSectionTitle("Upcoming EMIs")
+                }
+                items(
+                    uiState.upcomingSchedule.size,
+                    key = { index -> "upcoming-$index" },
+                ) { index ->
+                    val entry = uiState.upcomingSchedule[index]
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(12.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
+                            Column {
+                                Text(entry.dueDateLabel, fontWeight = FontWeight.SemiBold)
+                                Text(
+                                    "Principal ${entry.principalFormatted} • Interest ${entry.interestFormatted}",
+                                    style = MaterialTheme.typography.labelSmall,
+                                )
+                            }
+                            Text(entry.emiFormatted, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+
+            // 2. Repayment History Section Header
+            item {
+                MmrDetailSectionTitle("Repayment History")
+            }
+
+            // 3. Payment history list or empty
+            if (uiState.payments.isEmpty()) {
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors =
+                            CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                            ),
+                    ) {
+                        Text(
+                            text = "No repayments recorded yet.\nTap 'Record Payment' to add one.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(MmrDimens.cardPadding),
+                        )
+                    }
+                }
+            } else {
+                items(uiState.payments, key = { "payment-${it.id}" }) { payment ->
+                    PaymentHistoryCard(
+                        payment = payment,
+                        onClick =
+                            payment.linkedTransactionId?.let { txnId ->
+                                { onNavigateToEditTransaction(txnId) }
+                            },
+                    )
                 }
             }
         }
@@ -682,7 +606,7 @@ private fun PaymentHistoryCard(
                         text = payment.paymentAmountFormatted,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color(0xFF10B981),
+                        color = MmrBrandColors.AmountPositive,
                     )
                     Text(
                         text = payment.paymentDateFormatted,

@@ -9,7 +9,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
- * MM `ExcelExportDialog` period choices (month / last month / year / last year / total).
+ * Period export choices (month / last month / year / last year / total).
  */
 object HomeExcelExportPeriods {
     private val shortRangeFormat: DateTimeFormatter =

@@ -4,13 +4,15 @@ import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextClearance
-import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mmr.app.testing.MmrHiltUiTest
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.testing.MmrUiTestFixtures
+import com.mmr.app.testing.traceClickTag
+import com.mmr.app.testing.traceClickText
+import com.mmr.app.testing.traceTextClearanceTag
+import com.mmr.app.testing.traceTextInputTag
+import com.mmr.app.testing.traceWaitUntil
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
@@ -28,20 +30,19 @@ class TransactionDetailFlowUiTest : MmrHiltUiTest() {
                 MmrUiTestFixtures.seedSingleExpense(database, note = originalNote, amount = 99.0)
             }
 
-        composeRule.activityRule.scenario.recreate()
-        composeRule.waitForIdle()
+        traceActivityRecreate()
 
-        composeRule.onNodeWithTag(MmrTestTags.transactionRow(fixture.transactionId)).performClick()
+        composeRule.traceClickTag(MmrTestTags.transactionRow(fixture.transactionId))
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Transaction").assertExists()
 
-        composeRule.onNodeWithTag(MmrTestTags.transactionDetailEdit).performClick()
+        composeRule.traceClickTag(MmrTestTags.transactionDetailEdit)
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag(MmrTestTags.transactionNote).performTextClearance()
-        composeRule.onNodeWithTag(MmrTestTags.transactionNote).performTextInput(updatedNote)
-        composeRule.onNodeWithTag(MmrTestTags.appBarSave).performClick()
+        composeRule.traceTextClearanceTag(MmrTestTags.transactionNote)
+        composeRule.traceTextInputTag(MmrTestTags.transactionNote, updatedNote)
+        composeRule.traceClickTag(MmrTestTags.appBarSave)
 
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 10_000) {
             composeRule.onAllNodesWithText(updatedNote).fetchSemanticsNodes().isNotEmpty()
         }
     }
@@ -54,23 +55,22 @@ class TransactionDetailFlowUiTest : MmrHiltUiTest() {
                 MmrUiTestFixtures.seedSingleExpense(database, note = note, amount = 99.0)
             }
 
-        composeRule.activityRule.scenario.recreate()
-        composeRule.waitForIdle()
+        traceActivityRecreate()
 
-        composeRule.onNodeWithTag(MmrTestTags.transactionRow(fixture.transactionId)).performClick()
+        composeRule.traceClickTag(MmrTestTags.transactionRow(fixture.transactionId))
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Transaction").assertExists()
 
-        composeRule.onNodeWithTag(MmrTestTags.transactionDetailDuplicate).performClick()
+        composeRule.traceClickTag(MmrTestTags.transactionDetailDuplicate)
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Duplicate transaction").assertExists()
-        composeRule.onNodeWithTag(MmrTestTags.transactionDuplicateToday).performClick()
+        composeRule.traceClickTag(MmrTestTags.transactionDuplicateToday)
 
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(MmrTestTags.transactionNote).assertTextContains(note)
-        composeRule.onNodeWithTag(MmrTestTags.appBarSave).performClick()
+        composeRule.traceClickTag(MmrTestTags.appBarSave)
 
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 10_000) {
             composeRule.onAllNodesWithText(note).fetchSemanticsNodes().size >= 2
         }
     }
@@ -83,14 +83,13 @@ class TransactionDetailFlowUiTest : MmrHiltUiTest() {
                 MmrUiTestFixtures.seedSingleExpense(database, note = note, amount = 11.0)
             }
 
-        composeRule.activityRule.scenario.recreate()
-        composeRule.waitForIdle()
+        traceActivityRecreate()
 
-        composeRule.onNodeWithTag(MmrTestTags.transactionRow(fixture.transactionId)).performClick()
-        composeRule.onNodeWithTag(MmrTestTags.transactionDetailDelete).performClick()
-        composeRule.onNodeWithText("Delete").performClick()
+        composeRule.traceClickTag(MmrTestTags.transactionRow(fixture.transactionId))
+        composeRule.traceClickTag(MmrTestTags.transactionDetailDelete)
+        composeRule.traceClickText("Delete")
 
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 10_000) {
             runCatching {
                 composeRule.onNodeWithText(note).assertDoesNotExist()
                 true

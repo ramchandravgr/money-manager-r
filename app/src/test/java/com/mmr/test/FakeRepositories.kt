@@ -1,5 +1,6 @@
 package com.mmr.test
 
+import com.mmr.core.data.preferences.LanSyncPeerMode
 import com.mmr.core.database.entity.CategoryEntity
 import com.mmr.core.database.entity.LoanEntity
 import com.mmr.core.database.entity.LoanPaymentEntity
@@ -11,8 +12,14 @@ import com.mmr.core.database.relation.LoanWithPayments
 import com.mmr.core.database.relation.TransactionWithDetails
 import com.mmr.core.domain.repository.ApprovalRepository
 import com.mmr.core.domain.repository.CategoryRepository
+import com.mmr.core.domain.repository.LanSyncNowResult
+import com.mmr.core.domain.repository.LanSyncRepository
+import com.mmr.core.domain.repository.LanSyncSessionState
 import com.mmr.core.domain.repository.LoanRepository
 import com.mmr.core.domain.repository.TransactionRepository
+import com.mmr.core.lansync.LanSyncMergeOptions
+import com.mmr.core.lansync.LanSyncMergeSummary
+import com.mmr.core.lansync.LanSyncPairingOffer
 import com.mmr.core.model.category.CategoryWithChildren
 import com.mmr.core.model.enums.CategoryType
 import com.mmr.core.model.enums.LoanPaymentType
@@ -68,6 +75,7 @@ class FakeTransactionRepository : TransactionRepository {
     override suspend fun mergeTransactions(
         transactionIds: List<Long>,
         mergedName: String,
+        mergedDateTime: Long?,
     ): Long = 0L
 
     override fun getLinkedSmsForTransaction(
@@ -136,6 +144,8 @@ class FakeApprovalRepository(
 
     override fun getPendingCount(): Flow<Int> = pendingCountFlow
 
+    override suspend fun getPendingCountOnce(): Int = pendingCountFlow.value
+
     override suspend fun getApprovalById(id: Long): TransactionApprovalEntity? = null
 
     override suspend fun insertCandidates(candidates: List<ParsedSmsCandidate>): Int = 0
@@ -160,10 +170,26 @@ class FakeApprovalRepository(
         id: Long,
         fallbackAccountId: Long,
         fallbackCategoryId: Long?,
+        subcategoryId: Long?,
+        relatedAccountId: Long?,
     ): Long = 0L
 
     override suspend fun mergeCandidateWithTransaction(
         approvalId: Long,
+        transactionId: Long,
+        categoryId: Long?,
+        subcategoryId: Long?,
+        useLedgerCategory: Boolean,
+    ): Long = transactionId
+
+    override suspend fun applyCardRefund(
+        approvalId: Long,
+        purchaseTransactionId: Long,
+        refundAmount: Double,
+    ): Long = purchaseTransactionId
+
+    override suspend fun mergeApprovalsWithTransaction(
+        approvalIds: List<Long>,
         transactionId: Long,
         categoryId: Long?,
         subcategoryId: Long?,
@@ -219,7 +245,13 @@ class FakeCategoryRepository(
 
     override suspend fun updateCategory(category: CategoryEntity) = Unit
 
-    override suspend fun deleteCategory(categoryId: Long) = Unit
+    override suspend fun countTransactionsForCategory(categoryId: Long): Int = 0
+
+    override suspend fun deleteCategory(
+        categoryId: Long,
+        transactionMode: com.mmr.core.domain.model.CategoryDeleteTransactionMode,
+        migrateToCategoryId: Long?,
+    ) = Unit
 
     override suspend fun createSubcategory(subcategory: SubcategoryEntity): Long = subcategory.id
 
@@ -325,5 +357,65 @@ class FakeLoanRepository : LoanRepository {
     override fun getLoanSummary(): Flow<LoanSummaryAggregate> =
         flowOf(
             LoanSummaryAggregate(0.0, 0.0, 0.0, 0.0, 0),
+        )
+}
+
+class FakeLanSyncRepository : LanSyncRepository {
+    private val stateFlow = MutableStateFlow(LanSyncSessionState())
+
+    override val sessionState: MutableStateFlow<LanSyncSessionState> = stateFlow
+
+    override suspend fun refreshSessionState() = Unit
+
+    override fun setLanSyncEnabled(enabled: Boolean) = Unit
+
+    override fun setDisplayName(name: String) = Unit
+
+    override fun pairingOffer(): LanSyncPairingOffer =
+        LanSyncPairingOffer(deviceId = "test", displayName = "Test", inboundAuthToken = "token")
+
+    override suspend fun resolvePairingInput(raw: String): LanSyncPairingOffer {
+        val trimmed = raw.trim()
+        if (trimmed.startsWith(com.mmr.core.lansync.LanSyncPairingCodec.LEGACY_PREFIX)) {
+            return com.mmr.core.lansync.LanSyncPairingCodec
+                .decode(trimmed)
+        }
+        return pairingOffer()
+    }
+
+    override suspend fun trustDeviceFromPairingOffer(offer: LanSyncPairingOffer) = Unit
+
+    override suspend fun removeTrustedDevice(deviceId: String) = Unit
+
+    override suspend fun markCurrentWifiTrusted() = Unit
+
+    override suspend fun clearSyncLog() = Unit
+
+    override fun setPeerMode(mode: LanSyncPeerMode) = Unit
+
+    override fun setSelectedPeerDeviceId(deviceId: String?) = Unit
+
+    override fun setIncludeAttachments(enabled: Boolean) = Unit
+
+    override suspend fun syncNow(mergeOptions: LanSyncMergeOptions): LanSyncNowResult =
+        LanSyncNowResult(summary = emptyMergeSummary(), peerFailures = emptyList())
+
+    override suspend fun restoreFromPeer(
+        remoteDeviceId: String,
+        mergeOptions: LanSyncMergeOptions,
+    ): LanSyncMergeSummary = emptyMergeSummary()
+
+    private fun emptyMergeSummary(): LanSyncMergeSummary =
+        LanSyncMergeSummary(
+            categoriesInserted = 0,
+            categoriesUpdated = 0,
+            subcategoriesInserted = 0,
+            subcategoriesUpdated = 0,
+            accountsInserted = 0,
+            accountsUpdated = 0,
+            loansInserted = 0,
+            loansUpdated = 0,
+            transactionsInserted = 0,
+            transactionsUpdated = 0,
         )
 }

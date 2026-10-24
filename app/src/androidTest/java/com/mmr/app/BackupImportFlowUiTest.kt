@@ -1,12 +1,11 @@
 package com.mmr.app
 
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mmr.app.testing.MmrHiltUiTest
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.testing.MmrUiTestFixtures
+import com.mmr.app.testing.traceClickTag
 import com.mmr.core.backup.BackupImportMode
 import com.mmr.core.domain.repository.BackupRepository
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -31,8 +30,7 @@ class BackupImportFlowUiTest : MmrHiltUiTest() {
             backupRepository.importBackupJson(json, BackupImportMode.REPLACE)
         }
 
-        composeRule.activityRule.scenario.recreate()
-        composeRule.waitForIdle()
+        traceActivityRecreate()
         composeRule.onNodeWithText(marker).assertExists()
     }
 
@@ -52,14 +50,13 @@ class BackupImportFlowUiTest : MmrHiltUiTest() {
             }
         }
 
-        composeRule.activityRule.scenario.recreate()
-        composeRule.waitForIdle()
+        traceActivityRecreate()
         composeRule.onNodeWithText(marker).assertExists()
 
-        composeRule.onNodeWithTag(MmrTestTags.navSettings).performClick()
-        composeRule.onNodeWithTag(MmrTestTags.settingsNavBackup).performClick()
+        composeRule.traceClickTag(MmrTestTags.navSettings)
+        composeRule.traceClickTag(MmrTestTags.settingsNavBackup)
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Transactions", substring = true).assertExists()
-        composeRule.onNodeWithText("total records", substring = true).assertExists()
+        composeRule.onNodeWithText("Total records", substring = true).assertExists()
     }
 }

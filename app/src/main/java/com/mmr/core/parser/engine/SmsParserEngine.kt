@@ -1,5 +1,6 @@
 package com.mmr.core.parser.engine
 
+import com.mmr.core.model.enums.SmsApprovalKind
 import com.mmr.core.model.enums.TransactionType
 import com.mmr.core.parser.duplicate.SmsMessageHasher
 import com.mmr.core.parser.model.ParsedSmsCandidate
@@ -47,6 +48,32 @@ class SmsParserEngine
                         templateMatched = false,
                         categoryHintOverride = "Cashback (confirm)",
                         confidenceCap = 45,
+                    ),
+                )
+            }
+
+            val cardRefundMatch =
+                templateRegistry.matchWithIntent(sms, normalized, SmsParseIntent.CARD_REFUND)
+            if (cardRefundMatch != null) {
+                return SmsParseResult.CardRefund(
+                    buildCandidate(
+                        sms = sms,
+                        normalized = normalized,
+                        amount = cardRefundMatch.amount,
+                        type = TransactionType.EXPENSE,
+                        merchant = cardRefundMatch.merchant ?: MerchantRule.extractMerchant(sms.body),
+                        accountDigits =
+                            cardRefundMatch.accountLastDigits
+                                ?: MerchantRule.extractAccountLastDigits(sms.body),
+                        referenceNumber =
+                            cardRefundMatch.referenceNumber
+                                ?: MerchantRule.extractReference(sms.body),
+                        balance = cardRefundMatch.balanceAfter ?: BalanceRule.extractBalance(normalized),
+                        templateId = cardRefundMatch.template.id,
+                        paymentChannel = cardRefundMatch.template.paymentChannel,
+                        instrument = cardRefundMatch.template.instrument,
+                        templateMatched = true,
+                        approvalKind = SmsApprovalKind.CARD_REFUND,
                     ),
                 )
             }
@@ -154,6 +181,7 @@ class SmsParserEngine
             templateMatched: Boolean,
             categoryHintOverride: String? = null,
             confidenceCap: Int? = null,
+            approvalKind: SmsApprovalKind = SmsApprovalKind.TRANSACTION,
         ): ParsedSmsCandidate {
             val categoryHint = categoryHintOverride ?: MerchantRule.inferCategoryHint(normalized, merchant)
 
@@ -202,6 +230,7 @@ class SmsParserEngine
                 templateId = templateId,
                 paymentChannel = paymentChannel,
                 instrument = instrument,
+                approvalKind = approvalKind,
             )
         }
     }

@@ -1,27 +1,25 @@
 package com.mmr.app.navigation
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
-import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.ui.adaptive.currentMmrWidthSizeClass
 import com.mmr.app.ui.adaptive.isCompactWidth
-import com.mmr.app.ui.components.MmrDimens
+import com.mmr.app.ui.theme.MmrBrandColors
 
 @Composable
 fun MmrMainNavigationScaffold(
@@ -39,27 +37,22 @@ fun MmrMainNavigationScaffold(
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.safeDrawing),
         ) {
-            NavigationRail {
-                MmrMainDestinations.forEach { destination ->
-                    val selected = currentRoute == destination.route
-                    NavigationRailItem(
-                        modifier = Modifier.testTag(MmrTestTags.navTab(destination.route)),
-                        selected = selected,
-                        onClick = { onDestinationSelected(destination.route) },
-                        icon = {
-                            Icon(
-                                imageVector = destination.icon,
-                                contentDescription = destination.label,
-                                modifier = Modifier.size(MmrDimens.iconMd),
-                            )
-                        },
-                        label = {
-                            Text(
-                                text = destination.label,
-                                style = MaterialTheme.typography.labelSmall,
-                            )
-                        },
-                    )
+            NavigationRail(containerColor = MmrBrandColors.NavBackground) {
+                Column(modifier = Modifier.padding(vertical = 8.dp)) {
+                    MmrMainDestinations.forEach { destination ->
+                        val selected = currentRoute == destination.route
+                        MmrMainNavItem(
+                            modifier =
+                                Modifier
+                                    .testTag(MmrTestTags.navTab(destination.route))
+                                    .padding(vertical = 4.dp),
+                            selected = selected,
+                            onClick = { onDestinationSelected(destination.route) },
+                            iconPair = destination.icons,
+                            label = destination.label,
+                            showLabel = true,
+                        )
+                    }
                 }
             }
             Box(
@@ -95,8 +88,15 @@ fun MmrSecondaryScaffold(
 ) {
     Scaffold(
         modifier = modifier,
-        contentWindowInsets = WindowInsets.safeDrawing,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
     ) { innerPadding ->
-        content(Modifier.padding(innerPadding))
+        Box(
+            modifier =
+                Modifier
+                    .padding(innerPadding)
+                    .windowInsetsPadding(WindowInsets.navigationBars),
+        ) {
+            content(Modifier.fillMaxSize())
+        }
     }
 }

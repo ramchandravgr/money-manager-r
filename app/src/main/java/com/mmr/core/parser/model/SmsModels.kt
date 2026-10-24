@@ -1,5 +1,6 @@
 package com.mmr.core.parser.model
 
+import com.mmr.core.model.enums.SmsApprovalKind
 import com.mmr.core.model.enums.TransactionType
 
 data class RawSmsMessage(
@@ -35,4 +36,5 @@ data class ParsedSmsCandidate(
     val templateId: String? = null,
     val paymentChannel: SmsPaymentChannel? = null,
     val instrument: SmsInstrument? = null,
+    val approvalKind: SmsApprovalKind = SmsApprovalKind.TRANSACTION,
 )

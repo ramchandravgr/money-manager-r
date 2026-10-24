@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MMR — Detail screen alternatives (15 × 3)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --header: #3f4671;
+      --header-text: #fff;
+      --accent: #ff6255;
+      --bg: #f7f7fa;
+      --surface: #fff;
+      --border: #e2e6ee;
+      --text: #1a2332;
+      --muted: #6b7280;
+      --danger: #dc2626;
+      --income: #059669;
+      --radius: 14px;
+      --phone-w: 272px;
+      --phone-h: 600px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      background: linear-gradient(160deg, #dce3ef, #f4f6fa);
+      color: var(--text);
+    }
+    .page { max-width: 1500px; margin: 0 auto; padding: 20px 16px 56px; }
+    .intro { margin-bottom: 20px; max-width: 85ch; }
+    .intro h1 { font-size: 1.35rem; margin: 0 0 8px; }
+    .intro p, .intro li { color: var(--muted); font-size: 0.9rem; line-height: 1.55; }
+    .intro ul { margin: 8px 0 0; padding-left: 1.2rem; }
+
+    .layout { display: grid; grid-template-columns: 270px 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 1000px) { .layout { grid-template-columns: 1fr; } }
+
+    .nav {
+      position: sticky; top: 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 10px; max-height: calc(100vh - 24px); overflow-y: auto;
+    }
+    .nav button {
+      display: block; width: 100%; text-align: left; border: none; background: transparent;
+      font: inherit; font-size: 0.8rem; padding: 8px 10px; border-radius: 10px; cursor: pointer;
+    }
+    .nav button:hover { background: var(--bg); }
+    .nav button.active { background: rgba(255,98,85,.12); color: #b91c1c; font-weight: 600; }
+    .nav button small { display: block; color: var(--muted); font-weight: 400; font-size: 0.7rem; margin-top: 2px; }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .panel-head h2 { margin: 0 0 4px; font-size: 1.15rem; }
+    .panel-head p { margin: 0 0 14px; color: var(--muted); font-size: 0.86rem; line-height: 1.45; }
+
+    .triple {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 16px;
+    }
+    .slot { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 10px; }
+    .slot h3 { margin: 0 0 8px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    .slot h3 span { display: block; text-transform: none; letter-spacing: 0; color: var(--text); font-size: 0.9rem; margin-top: 2px; }
+
+    /* —— Phone chrome —— */
+    .phone {
+      width: var(--phone-w); height: var(--phone-h); margin: 0 auto;
+      border-radius: 28px; border: 8px solid #1a1a1a; background: var(--bg);
+      overflow: hidden; display: flex; flex-direction: column; position: relative;
+      box-shadow: 0 12px 40px rgba(0,0,0,.12); font-size: 11px;
+    }
+    .bar {
+      background: var(--header); color: var(--header-text);
+      padding: 10px 10px 8px; display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+    }
+    .bar .back { width: 26px; height: 26px; border-radius: 8px; background: rgba(255,255,255,.12); border: none; color: #fff; }
+    .bar .title { flex: 1; font-weight: 600; font-size: 12px; }
+    .bar .icons { display: flex; gap: 2px; opacity: .9; font-size: 10px; }
+    .body {
+      flex: 1; overflow-x: hidden; overflow-y: auto; padding: 8px 10px;
+      display: flex; flex-direction: column; gap: 6px; min-height: 0;
+    }
+    .body-scroll-gap { gap: 5px; }
+    .badge {
+      font-size: 8px; font-weight: 700; padding: 3px 7px; border-radius: 6px;
+      background: #e0e4f0; color: var(--header); white-space: nowrap;
+    }
+    .badge.pay { background: #ede9fe; color: #5b21b6; }
+    .progress { height: 5px; background: #e8eaef; border-radius: 4px; margin: 5px 0; overflow: hidden; }
+    .progress > i { display: block; height: 100%; width: 12%; background: var(--danger); border-radius: 4px; }
+    .overview { background: #eceef4; border-radius: 12px; padding: 8px 10px; border: 1px solid var(--border); }
+    .overview .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; }
+    .overview .dir { font-size: 9px; font-weight: 700; color: var(--danger); }
+    .sms-card, .pay-card, .list-card {
+      background: #f4f5f8; border-radius: 10px; padding: 7px 9px; border: 1px solid var(--border);
+      margin-top: 3px;
+    }
+    .sms-card .from { font-weight: 600; font-size: 10px; }
+    .sms-card .meta { font-size: 8px; color: var(--muted); }
+    .sms-card .amt { font-size: 9px; color: var(--header); font-weight: 600; }
+    .sms-card .snippet { font-size: 8px; color: var(--text); line-height: 1.35; margin-top: 3px; }
+    .pay-card .amt { font-size: 12px; font-weight: 700; color: var(--income); }
+    .pay-card .row2 { display: flex; justify-content: space-between; align-items: center; margin-top: 2px; }
+    .link { color: var(--accent); font-size: 9px; font-weight: 600; }
+    .status { background: #e8f5e9; color: #166534; font-size: 8px; padding: 5px 8px; border-radius: 8px; }
+    .txn-dual { display: flex; flex-direction: column; gap: 10px; }
+    .txn-dual .sub { font-size: 0.72rem; color: var(--muted); margin: 0 0 4px; text-align: center; }
+    .phone.compact { height: 220px; }
+    .phone.compact .body { font-size: 10px; }
+    .hero-title { font-size: 13px; font-weight: 600; margin: 0; line-height: 1.25; }
+    .hero-amt { font-size: 18px; font-weight: 700; margin: 2px 0 0; }
+    .hero-amt.neg { color: var(--danger); }
+    .hero-amt.pos { color: var(--income); }
+    .card {
+      background: var(--surface); border-radius: 12px; padding: 8px 10px;
+      border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,.04);
+    }
+    .row { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; font-size: 10px; }
+    .row .k { color: var(--muted); }
+    .row .v { text-align: right; font-weight: 500; max-width: 58%; }
+    .sect { font-size: 11px; font-weight: 700; margin: 4px 0 2px; }
+    .muted { color: var(--muted); font-size: 9px; line-height: 1.35; }
+    .pill {
+      background: var(--surface); border-radius: 14px; padding: 8px 10px; margin-bottom: 4px;
+      border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;
+    }
+    .footer-cta {
+      flex-shrink: 0; background: var(--bg); border-top: 1px solid var(--border);
+      padding: 8px 10px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .btn-p {
+      width: 100%; border: none; border-radius: 10px; padding: 9px;
+      background: var(--accent); color: #fff; font: inherit; font-weight: 600; font-size: 11px;
+    }
+    .btn-o {
+      width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 8px;
+      background: #fff; font: inherit; font-size: 10px;
+    }
+    .btn-t { border: none; background: transparent; color: var(--muted); font: inherit; font-size: 10px; padding: 4px; }
+    .btn-d { color: var(--danger); }
+    .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .metric { background: var(--surface); border-radius: 10px; padding: 8px; border: 1px solid var(--border); }
+    .metric .l { font-size: 8px; color: var(--muted); text-transform: uppercase; }
+    .metric .n { font-size: 13px; font-weight: 700; margin-top: 2px; }
+    .tabs { display: flex; gap: 4px; margin-bottom: 4px; }
+    .tab { flex: 1; text-align: center; padding: 5px; border-radius: 8px; font-size: 9px; background: #e8eaef; }
+    .tab.on { background: var(--header); color: #fff; font-weight: 600; }
+    .stripe { border-left: 4px solid var(--accent); padding-left: 8px; }
+
+    /* Theme modifiers */
+    .t01 .body { /* current */ }
+    .t02 .bar .icons { display: none; }
+    .t02 .body { padding-bottom: 0; }
+    .t03 { background: var(--bg); }
+    .t03 .body { padding: 6px; gap: 8px; }
+    .t03 .card { border: none; box-shadow: none; }
+    .t03 .hero-title, .t03 .hero-amt { padding: 0 4px; }
+    .t04 .bar { flex-direction: column; align-items: stretch; padding-bottom: 10px; }
+    .t04 .bar .hero-amt { color: #fff; margin-top: 4px; }
+    .t04 .body .hero-title, .t04 .body .hero-amt { display: none; }
+    .t05 .body .card { flex: 1; overflow: hidden; }
+    .t06 .card { display: none; }
+    .t06 .pill { font-size: 10px; }
+    .t07 .card { border: none; box-shadow: none; background: transparent; padding: 0; }
+    .t07 .row { border-bottom: 1px solid var(--border); padding: 6px 0; }
+    .t08 .card { background: #eceef4; border: none; }
+    .t08 .hero-title { font-size: 15px; }
+    .t09 .rows-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+    .t09 .row { flex-direction: column; align-items: flex-start; padding: 4px 0; }
+    .t09 .row .v { text-align: left; max-width: 100%; }
+    .t10 .card { border-left: 4px solid var(--accent); }
+    .t11 .metric-grid { margin-bottom: 4px; }
+    .t11 .card .row { display: none; }
+    .t11 .card .metric-show { display: block; }
+    .t11 .fab { position: absolute; right: 14px; bottom: 14px; width: 36px; height: 36px; border-radius: 50%; background: var(--header); color: #fff; border: none; font-size: 18px; }
+    .t11 .slot { position: relative; }
+    .t13 .tabs { display: flex; }
+    .t13 .tab-panel { display: none; }
+    .t13 .tab-panel.on { display: block; }
+    .t14 .body { padding: 14px 16px; gap: 10px; }
+    .t14 .hero-title { font-size: 15px; letter-spacing: -0.02em; }
+    .t14 .card { border-radius: 4px; }
+    .t15 .banner {
+      background: linear-gradient(135deg, var(--header), #5a6294); color: #fff;
+      margin: -8px -10px 6px; padding: 12px 10px; border-radius: 0 0 16px 16px;
+    }
+    .t15 .banner .hero-amt { color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="intro">
+      <h1>MMR detail-screen alternatives</h1>
+      <p>
+        Full-screen <strong>read-only detail</strong> layouts for the three flows you care about.
+        Each design shows <strong>Transaction</strong> (empty + <strong>linked SMS</strong> states), <strong>Loan</strong> (full sections),
+        and <strong>Recurring</strong> (all summary fields + schedule list) — <strong>15 × 3 columns</strong>, transaction column has 2 phones.
+        Includes <strong>12 — Footer CTA bar</strong>.
+      </p>
+      <ul>
+        <li><strong>Transaction</strong> — meta (Type…Card), receipts, <strong>Linked SMS (0)</strong> and <strong>Linked SMS (1+)</strong> cards</li>
+        <li><strong>Loan</strong> — overview + progress, interest/EMI/flexible accrual, rate history, upcoming EMIs, repayment history, FAB</li>
+        <li><strong>Recurring</strong> — amount, category/account, enabled switch, interval, next run, reminder, template note, skip, 5 dates</li>
+      </ul>
+    </div>
+    <div class="layout">
+      <nav class="nav" id="nav"></nav>
+      <main id="main"></main>
+    </div>
+  </div>
+  <script>
+    const themes = [
+      { id: "01", name: "Current baseline", note: "Title + amount above white meta card; actions in app bar (today)." },
+      { id: "12", name: "Footer CTA bar", note: "Design 12 adapted: Edit/Repay primary in gray footer; bar icons reduced." },
+      { id: "02", name: "iOS inset grouped", note: "Gray screen; multiple white grouped blocks, no heavy shadows." },
+      { id: "03", name: "Hero in header", note: "Amount + subtitle live in navy app bar; body is fields only." },
+      { id: "04", name: "Single consolidated card", note: "One card holds meta + linked SMS teaser." },
+      { id: "05", name: "Home ledger pills", note: "Meta as stacked pills like transaction list rows." },
+      { id: "06", name: "Minimal hairlines", note: "No cards; label/value rows with dividers only." },
+      { id: "07", name: "Material tonal", note: "Tonal surfaces, larger type, soft cards." },
+      { id: "08", name: "Two-column meta", note: "Compact grid for Type/Date/Category/Account." },
+      { id: "09", name: "Accent stripe card", note: "Coral left border on primary detail card." },
+      { id: "10", name: "Dashboard tiles", note: "Loan-style 2×2 metrics on all three screens." },
+      { id: "11", name: "FAB + compact body", note: "Loan repay FAB; transaction actions stay in bar." },
+      { id: "13", name: "Segmented tabs", note: "Details | Linked | Schedule (content switches)." },
+      { id: "14", name: "Editorial spacing", note: "Wider padding, calmer hierarchy." },
+      { id: "15", name: "Summary banner", note: "Gradient banner with title/amount; cards below." },
+    ];
+
+    const TXN_ROWS = [
+      ["Type", "Expense"],
+      ["Date", "18 Oct 2026, 01:13 pm"],
+      ["Category", "Food & Dining · Restaurants"],
+      ["Account", "Cash · Savings"],
+      ["Note", "m/s.sai ram tyre tech"],
+      ["Channel", "UPI"],
+      ["Instrument", "YES BANK Card"],
+      ["Card", "X4668"],
+    ];
+
+    function rowsHtml(rows, themeId, cardClass) {
+      const cc = cardClass || "";
+      const grid = themeId === "08" ? '<div class="rows-grid">' : "";
+      const end = themeId === "08" ? "</div>" : "";
+      const inner = rows.map(([k, v]) => `<div class="row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join("");
+      if (themeId === "05") return rows.map(([k,v]) => `<div class="pill"><span>${k}</span><strong>${v}</strong></div>`).join("");
+      if (themeId === "06") return inner;
+      return `${grid}<div class="card ${cc}">${inner}</div>${end}`;
+    }
+
+    function smsBlock(count, withCard) {
+      if (!withCard) {
+        return `<div class="sect">Linked SMS (0)</div><p class="muted">No SMS messages are linked to this transaction.</p>`;
+      }
+      return `<div class="sect">Linked SMS (1)</div>
+        <div class="sms-card">
+          <div class="from">VA-YESBNK-S</div>
+          <div class="meta">18 Oct 2026, 01:13 pm</div>
+          <div class="amt">₹ 380.00</div>
+          <div class="snippet">INR 380.00 spent on YES BANK Card X4668 @UPI_OM SRI SAI… Avl Lmt INR 299,824.56.</div>
+        </div>`;
+    }
+
+    function buildTxnBody(themeId, linkedSms) {
+      const hero = themeId === "03" || themeId === "04" || themeId === "15" ? "" : `
+        <p class="hero-title">m/s.sai ram tyre tech</p>
+        <p class="hero-amt neg">−₹ 600.00</p>
+        <p class="muted">Synced from Kitchen tablet</p>`;
+      const metrics = themeId === "10" ? `<div class="metric-grid">
+          <div class="metric"><div class="l">Amount</div><div class="n">₹600</div></div>
+          <div class="metric"><div class="l">Type</div><div class="n">Expense</div></div>
+          <div class="metric"><div class="l">Linked SMS</div><div class="n">${linkedSms ? 1 : 0}</div></div>
+          <div class="metric"><div class="l">Date</div><div class="n">18 Oct</div></div>
+        </div>` : "";
+      const receipt = `<div class="sect">Receipt</div><p class="muted">1 attachment (read-only preview)</p>`;
+      const meta = rowsHtml(TXN_ROWS, themeId, themeId === "09" ? "stripe" : "");
+      const banner = themeId === "15" ? `<div class="banner"><p class="hero-title">m/s.sai ram tyre tech</p><p class="hero-amt neg">−₹ 600.00</p></div>` : "";
+      return `${banner}${metrics}${hero}${meta}${receipt}${smsBlock(linkedSms ? 1 : 0, linkedSms)}`;
+    }
+
+    function buildLoanBody(themeId) {
+      const overview = `<div class="overview">
+        <div class="top">
+          <div><div class="dir">I Owe (Borrowed)</div><strong>fwhe</strong></div>
+          <span class="badge">Active</span>
+        </div>
+        <div class="row" style="margin-top:6px"><span class="k">Outstanding</span><span class="v neg" style="color:var(--danger);font-size:12px;font-weight:700">₹8,396.00</span></div>
+        <div class="row"><span class="k">Principal</span><span class="v">₹8,494.00</span></div>
+        <div class="progress"><i></i></div>
+        <div class="row"><span class="k">1.2% repaid</span><span class="v" style="font-size:8px">Disbursed 24 Oct 2026<br/>No due date set</span></div>
+      </div>`;
+      const interest = `<p class="muted">Reducing-balance interest at <strong>0% p.a.</strong> (floating revisions keep past payments unchanged).</p>
+        <p class="muted"><strong>Current EMI:</strong> ₹18,200 • 42 month(s) remaining</p>
+        <p class="muted" style="color:var(--header)"><strong>Accrued interest (pending):</strong> ₹0.00</p>
+        <p class="muted">Accruing since 24 Oct 2026 on current outstanding (actual/365). Payments clear interest first, then principal.</p>
+        <span class="link">Change rate</span> · <span class="link">Change EMI</span>`;
+      const rateHist = `<div class="sect">Interest rate history</div>
+        <div class="list-card"><strong>24 Oct 2026</strong><br/><span class="muted">0% p.a.</span><br/><span class="muted">Opening rate</span></div>
+        <div class="list-card"><strong>01 Jan 2027</strong><br/><span class="muted">10.5% p.a.</span><br/><span class="muted">Rate revision · tap for before/after</span></div>`;
+      const upcoming = `<div class="sect">Upcoming EMIs</div>
+        <div class="list-card"><div class="row"><span><strong>05 Nov 2026</strong><br/><span class="muted">P ₹14,200 · I ₹4,000</span></span><span class="v">₹18,200</span></div></div>
+        <div class="list-card"><div class="row"><span><strong>05 Dec 2026</strong><br/><span class="muted">P ₹14,350 · I ₹3,850</span></span><span class="v">₹18,200</span></div></div>`;
+      const repay = `<div class="sect">Repayment History</div>
+        <div class="pay-card">
+          <div class="row2"><span class="amt">₹98.00</span><span class="badge pay">Part payment</span></div>
+          <div class="muted">24 Oct 2026, 12:00 pm</div>
+          <div class="muted">Principal ₹98.00 • Interest ₹0.00</div>
+          <div class="muted">Remaining balance: ₹8,396.00</div>
+          <div class="link">Tap to edit transaction</div>
+        </div>
+        <div class="pay-card">
+          <div class="row2"><span class="amt" style="color:var(--text)">₹5,000.00</span><span class="badge">Top-up</span></div>
+          <div class="muted">20 Sep 2026, 10:00 am</div>
+          <div class="muted">Principal increase ₹5,000.00</div>
+          <div class="muted">Remaining balance: ₹8,494.00</div>
+          <div class="muted">Note: Emergency draw</div>
+        </div>`;
+      if (themeId === "10") {
+        return `<div class="metric-grid">
+          <div class="metric"><div class="l">Outstanding</div><div class="n">₹8,396</div></div>
+          <div class="metric"><div class="l">Principal</div><div class="n">₹8,494</div></div>
+          <div class="metric"><div class="l">Rate</div><div class="n">0%</div></div>
+          <div class="metric"><div class="l">EMI</div><div class="n">₹18.2k</div></div>
+        </div>${overview}${interest}${rateHist}${upcoming}${repay}`;
+      }
+      return `<div class="status">Payment recorded</div>${overview}${interest}${rateHist}${upcoming}${repay}`;
+    }
+
+    function buildRecurBody(themeId) {
+      const metrics = themeId === "10" ? `<div class="metric-grid">
+          <div class="metric"><div class="l">Amount</div><div class="n">₹649</div></div>
+          <div class="metric"><div class="l">Interval</div><div class="n">Monthly</div></div>
+          <div class="metric"><div class="l">Next</div><div class="n">01 Nov</div></div>
+          <div class="metric"><div class="l">Enabled</div><div class="n">On</div></div>
+        </div>` : "";
+      const card = `<div class="overview">
+        <div class="top">
+          <div>
+            <p class="hero-amt neg" style="font-size:16px;margin:0">−₹ 649.00</p>
+            <span class="muted">Entertainment · HDFC Savings</span>
+          </div>
+          <span class="muted">On ▾</span>
+        </div>
+        <div class="row" style="margin-top:8px"><span class="k">Interval</span><span class="v">Every month (day 1)</span></div>
+        <div class="row"><span class="k">Next run</span><span class="v">01 Nov 2026</span></div>
+        <div class="row"><span class="k">Reminder</span><span class="v">1 day before</span></div>
+        <div class="row"><span class="k">Template note</span><span class="v">Netflix subscription</span></div>
+      </div>
+      <button type="button" class="btn-o" style="width:100%">Skip this occurrence</button>`;
+      const dates = ["01 Nov 2026","01 Dec 2026","01 Jan 2027","01 Feb 2027","01 Mar 2027"]
+        .map(d => `<div class="list-card"><div class="row"><span>${d}</span><span class="v" style="color:var(--header)">Scheduled</span></div></div>`).join("");
+      return `<div class="status">Next occurrence scheduled</div>${metrics}${card}<div class="sect">Next 5 Scheduled Dates</div>${dates}`;
+    }
+
+    function phoneShell(themeId, key, bodyHtml, opts) {
+      const o = opts || {};
+      const useFooter = themeId === "12";
+      const hideBarIcons = themeId === "12";
+      const compact = o.compact ? " compact" : "";
+      const bars = {
+        txn: { t: "Transaction", i: "✎ ⧉ 🗑" },
+        loan: { t: "Wheh", i: "⋮" },
+        recur: { t: "Netflix", i: "✎" },
+      }[key];
+      const footer = useFooter && !o.compact ? `<div class="footer-cta">
+        <button type="button" class="btn-p">${o.footerPrimary || "Edit"}</button>
+        ${o.footerSecondary ? `<button type="button" class="btn-o">${o.footerSecondary}</button>` : ""}
+        ${o.footerText ? `<button type="button" class="btn-t btn-d">${o.footerText}</button>` : ""}
+      </div>` : "";
+      const fab = key === "loan" && themeId === "11" && !o.compact ? `<button type="button" class="fab">+</button>` : "";
+      const tabBlock = themeId === "13" && !o.compact
+        ? `<div class="tabs"><div class="tab on">Details</div><div class="tab">${key === "txn" ? "SMS" : key === "loan" ? "Schedule" : "Dates"}</div></div>` : "";
+      const barHero = key === "txn" && (themeId === "03" || themeId === "04") && !compact
+        ? `<div style="width:100%;margin-top:4px"><div class="hero-title" style="font-size:11px;color:#fff;opacity:.95">m/s.sai ram tyre tech</div><div class="hero-amt neg" style="font-size:15px;color:#fff">−₹ 600.00</div></div>` : "";
+      const barStack = themeId === "04" && key === "txn" && !compact ? " style=\"flex-wrap:wrap\"" : "";
+      return `<div class="phone t${themeId}${compact}">
+        <div class="bar"${barStack}>
+          <button type="button" class="back">‹</button>
+          <span class="title">${bars.t}</span>
+          <span class="icons" style="${hideBarIcons ? "display:none" : ""}">${bars.i}</span>
+          ${barHero}
+        </div>
+        <div class="body body-scroll-gap">${tabBlock}${bodyHtml}</div>
+        ${footer}${fab}
+      </div>`;
+    }
+
+    function txnColumn(themeId) {
+      const rich = buildTxnBody(themeId, true);
+      const empty = buildTxnBody(themeId, false);
+      return `<div class="txn-dual">
+        <p class="sub">Linked SMS empty</p>
+        ${phoneShell(themeId, "txn", empty, { compact: true })}
+        <p class="sub">With linked SMS + full meta</p>
+        ${phoneShell(themeId, "txn", rich, {
+          footerPrimary: "Edit", footerSecondary: "Duplicate", footerText: "Delete",
+        })}
+      </div>`;
+    }
+
+    const nav = document.getElementById("nav");
+    const main = document.getElementById("main");
+
+    themes.forEach((th, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.innerHTML = `${th.id} — ${th.name}<small>${th.note}</small>`;
+      if (i === 0) btn.classList.add("active");
+      btn.addEventListener("click", () => {
+        nav.querySelectorAll("button").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        main.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
+        document.getElementById("panel-" + th.id).classList.add("active");
+      });
+      nav.appendChild(btn);
+
+      const panel = document.createElement("section");
+      panel.className = "panel" + (i === 0 ? " active" : "");
+      panel.id = "panel-" + th.id;
+      panel.innerHTML = `
+        <div class="panel-head">
+          <h2>Design ${th.id} — ${th.name}</h2>
+          <p>${th.note}</p>
+        </div>
+        <div class="triple">
+          <div class="slot"><h3>Transaction <span>TransactionDetailScreen.kt</span></h3>${txnColumn(th.id)}</div>
+          <div class="slot"><h3>Loan <span>LoanDetailScreen.kt</span></h3>${phoneShell(th.id, "loan", buildLoanBody(th.id), { footerPrimary: "Record repayment", footerSecondary: "Add top-up" })}</div>
+          <div class="slot"><h3>Recurring <span>RecurringDetailScreen.kt</span></h3>${phoneShell(th.id, "recur", buildRecurBody(th.id), { footerPrimary: "Edit rule", footerSecondary: "Skip this occurrence" })}</div>
+        </div>`;
+      main.appendChild(panel);
+    });
+  </script>
+</body>
+</html>

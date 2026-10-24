@@ -8,8 +8,17 @@ interface BackupRepository {
 
     suspend fun exportBackupJson(): String
 
+    /** Signed ZIP archive (default export format). */
+    suspend fun exportBackupArchive(): ByteArray
+
     suspend fun importBackupJson(
         json: String,
+        mode: BackupImportMode = BackupImportMode.REPLACE,
+    ): BackupRestoreSummary
+
+    /** Imports legacy `.json` or signed `.mmrbackup` zip. */
+    suspend fun importBackup(
+        data: ByteArray,
         mode: BackupImportMode = BackupImportMode.REPLACE,
     ): BackupRestoreSummary
 }

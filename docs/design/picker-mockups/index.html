@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MMR — Expense entry + picker alignment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --header: #1e3a5f;
+      --header-text: #fff;
+      --accent: #e85d4c;
+      --accent-soft: rgba(232, 93, 76, 0.12);
+      --bg: #eef0f4;
+      --surface: #ffffff;
+      --border: #e2e6ee;
+      --text: #1a2332;
+      --muted: #6b7280;
+      --income: #0d9488;
+      --radius-lg: 16px;
+      --radius-md: 12px;
+      --radius-sm: 10px;
+      --shadow: 0 4px 24px rgba(26, 35, 50, 0.08);
+      --phone-w: 390px;
+      --phone-h: 844px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      background: linear-gradient(145deg, #dce3ef 0%, #f4f6fa 50%, #e8ecf2 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
+    }
+
+    .intro {
+      margin-bottom: 24px;
+    }
+    .intro h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+    .intro p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+      max-width: 72ch;
+    }
+    .intro code {
+      font-size: 0.85em;
+      background: #fff;
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    .nav-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 12px;
+      position: sticky;
+      top: 16px;
+    }
+    .nav-panel h2 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin: 8px 12px 6px;
+      font-weight: 600;
+    }
+    .nav-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      border: none;
+      background: transparent;
+      font: inherit;
+      font-size: 0.88rem;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      color: var(--text);
+      transition: background 0.15s;
+    }
+    .nav-btn:hover { background: var(--bg); }
+    .nav-btn.active {
+      background: var(--accent-soft);
+      color: #b91c1c;
+      font-weight: 600;
+    }
+    .nav-btn small {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    .preview-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .concept-title {
+      text-align: center;
+      max-width: var(--phone-w);
+    }
+    .concept-title h3 {
+      margin: 0 0 4px;
+      font-size: 1.1rem;
+    }
+    .concept-title p {
+      margin: 0;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .phone {
+      width: var(--phone-w);
+      height: var(--phone-h);
+      border-radius: 36px;
+      border: 10px solid #1a1a1a;
+      background: var(--bg);
+      overflow: hidden;
+      box-shadow: var(--shadow), 0 0 0 1px rgba(0,0,0,0.06);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .phone-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 28px;
+      background: #1a1a1a;
+      border-radius: 0 0 16px 16px;
+      z-index: 20;
+    }
+
+    .screen { display: none; flex: 1; flex-direction: column; min-height: 0; }
+    .screen.active { display: flex; }
+
+    /* Shared chrome */
+    .app-bar {
+      background: var(--header);
+      color: var(--header-text);
+      padding: 48px 16px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    .app-bar .back {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.12);
+      border: none;
+      color: #fff;
+      font-size: 1.1rem;
+      cursor: default;
+    }
+    .app-bar h4 {
+      margin: 0;
+      flex: 1;
+      font-size: 1.05rem;
+      font-weight: 600;
+    }
+    .form-dim {
+      flex: 1;
+      background: var(--bg);
+      padding: 12px 16px;
+      opacity: 0.55;
+      pointer-events: none;
+    }
+    /* —— Expense entry (AddEditTransactionScreen) —— */
+    .entry-scroll {
+      flex: 1;
+      overflow-y: auto;
+      background: var(--bg);
+      padding: 12px 16px 24px;
+      min-height: 0;
+    }
+    .entry-scroll.dimmed { opacity: 0.5; pointer-events: none; }
+
+    .type-segment {
+      display: flex;
+      gap: 4px;
+      padding: 4px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+    .type-segment button {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font: inherit;
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 10px 6px;
+      border-radius: 10px;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .type-segment button.on {
+      background: rgba(226, 230, 238, 0.9);
+      font-weight: 700;
+    }
+
+    .field-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      cursor: default;
+    }
+    .field-card.tappable { cursor: pointer; }
+    .field-card.picker-active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(232, 93, 76, 0.25);
+    }
+    .field-icon {
+      width: 22px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .field-body { flex: 1; min-width: 0; }
+    .field-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 3px;
+    }
+    .field-value {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .field-value.muted {
+      font-weight: 500;
+      color: var(--muted);
+    }
+    .field-chevron {
+      color: var(--muted);
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .field-card.single-line .field-value {
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    .map-legend {
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: #fff;
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.68rem;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+    .map-legend strong { color: var(--text); font-weight: 600; }
+    .map-legend code {
+      font-size: 0.65rem;
+      background: var(--bg);
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    .fake-field {
+      background: var(--surface);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    .fake-field strong { color: var(--text); display: block; margin-bottom: 4px; }
+
+    .sheet.shell-shared { max-height: 85%; }
+    .sheet-head .head-actions {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+    .text-btn.ghost {
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .sheet {
+      background: var(--surface);
+      border-radius: 20px 20px 0 0;
+      max-height: 88%;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      animation: slideUp 0.35s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0.9; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      background: #d1d5db;
+      border-radius: 2px;
+      margin: 10px auto 0;
+    }
+    .sheet-head {
+      padding: 12px 16px 8px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .sheet-head h5 {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+    .sheet-head .sub {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .text-btn {
+      border: none;
+      background: none;
+      color: var(--accent);
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      padding: 4px 0;
+    }
+
+    .search {
+      margin: 0 16px 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+    }
+    .search input {
+      border: none;
+      background: transparent;
+      flex: 1;
+      font: inherit;
+      font-size: 0.9rem;
+      outline: none;
+    }
+    .search svg { flex-shrink: 0; opacity: 0.45; }
+
+    .chip-row {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px 10px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .chip-row::-webkit-scrollbar { display: none; }
+    .chip {
+      flex-shrink: 0;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      color: var(--muted);
+    }
+    .chip.on {
+      background: var(--header);
+      color: #fff;
+      border-color: var(--header);
+    }
+
+    .scroll {
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+      padding-bottom: 16px;
+    }
+
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      padding: 8px 16px 6px;
+    }
+
+    .row-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.12s;
+    }
+    .row-item:hover { background: #f8fafc; }
+    .row-item.selected { background: var(--accent-soft); }
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .row-item .meta { flex: 1; min-width: 0; }
+    .row-item .title {
+      font-size: 0.92rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .row-item .hint {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .check {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .row-item.selected .check {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.7rem;
+    }
+
+    /* Account B — cards */
+    .card-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 0 16px 16px;
+    }
+    .acct-card {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .acct-card.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+    .acct-card .type {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+    .acct-card .name {
+      font-size: 0.88rem;
+      font-weight: 700;
+      margin: 6px 0 4px;
+      line-height: 1.25;
+    }
+    .acct-card .bal {
+      font-size: 0.8rem;
+      color: var(--income);
+      font-weight: 600;
+    }
+
+    /* Account C — full screen */
+    .full-picker {
+      flex: 1;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .full-picker .sticky-top {
+      padding: 48px 16px 12px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .full-picker .sticky-top h5 {
+      margin: 0 0 12px;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .radio-card {
+      margin: 0 16px 10px;
+      padding: 14px 16px;
+      border-radius: var(--radius-md);
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+    .radio-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .radio-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid #cbd5e1;
+      flex-shrink: 0;
+    }
+    .radio-card.selected .radio-dot {
+      border-color: var(--accent);
+      box-shadow: inset 0 0 0 5px var(--accent);
+    }
+
+    /* Category A — master detail v2 */
+    .cat-split {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      border-top: 1px solid var(--border);
+    }
+    .cat-left {
+      width: 38%;
+      background: var(--bg);
+      overflow-y: auto;
+      border-right: 1px solid var(--border);
+    }
+    .cat-right {
+      flex: 1;
+      overflow-y: auto;
+      background: var(--surface);
+    }
+    .cat-parent {
+      padding: 12px 10px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid rgba(0,0,0,0.04);
+    }
+    .cat-parent.active {
+      background: var(--surface);
+      font-weight: 700;
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .breadcrumb {
+      padding: 10px 14px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    .breadcrumb strong { color: var(--text); }
+    .sub-row {
+      padding: 14px 14px;
+      font-size: 0.88rem;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .sub-row:hover { background: #fafbfc; }
+    .sub-row.picked { color: var(--accent); font-weight: 600; }
+    .pill-action {
+      margin: 12px 14px;
+      padding: 10px;
+      text-align: center;
+      border-radius: var(--radius-sm);
+      border: 1px dashed var(--border);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* Category B — stepped */
+    .step-bar {
+      display: flex;
+      gap: 6px;
+      padding: 0 16px 12px;
+    }
+    .step {
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border);
+    }
+    .step.done { background: var(--accent); }
+    .sub-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 0 16px 16px;
+    }
+    .sub-tile {
+      padding: 14px 12px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      background: var(--surface);
+    }
+    .sub-tile.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    /* Category C — chips */
+    .parent-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 8px 16px 12px;
+    }
+    .parent-chip {
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .parent-chip.on {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .footer-hint {
+      text-align: center;
+      font-size: 0.72rem;
+      color: var(--muted);
+      padding: 8px 16px 20px;
+      flex-shrink: 0;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #f1f5f9;
+      color: var(--muted);
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="intro">
+      <h1>Expense entry + picker alignment (MMR)</h1>
+      <p>
+        Browser-only mockups aligned to <strong>AddEditTransactionScreen</strong>: same field order
+        (type → date → amount → category → account → note), two-line labeled pickers, shared
+        <strong>MmrLedgerPickerSheetShell</strong> (handle · title · subtitle · search · Done).
+        Recommended path: <strong>Category A + Account A</strong>. Open
+        <code>docs/design/picker-mockups/index.html</code>. Delete this folder when done reviewing.
+      </p>
+    </div>
+
+    <div class="layout">
+      <nav class="nav-panel" aria-label="Concepts">
+        <h2>Recommended</h2>
+        <button type="button" class="nav-btn active" data-screen="reco-form">
+          Expense entry form
+          <small>Labeled pickers · maps to form chrome</small>
+        </button>
+        <button type="button" class="nav-btn" data-screen="reco-cat">
+          + Category sheet (A)
+          <small>Split pane + search + breadcrumb</small>
+        </button>
+        <button type="button" class="nav-btn" data-screen="reco-acc">
+          + Account sheet (A)
+          <small>Expense · chips · grouped list</small>
+        </button>
+        <button type="button" class="nav-btn" data-screen="reco-xfer">
+          Transfer entry + sheet
+          <small>From / To rows · transfer from picker</small>
+        </button>
+        <h2>Alternatives</h2>
+        <button type="button" class="nav-btn" data-screen="acc-b">
+          Account B · Card grid
+          <small>Few accounts only</small>
+        </button>
+        <button type="button" class="nav-btn" data-screen="acc-c">
+          Account C · Full screen
+          <small>Separate nav route</small>
+        </button>
+        <button type="button" class="nav-btn" data-screen="cat-b">
+          Category B · Two-step
+        </button>
+        <button type="button" class="nav-btn" data-screen="cat-c">
+          Category C · Chip parents
+        </button>
+      </nav>
+
+      <div class="preview-col">
+        <div class="concept-title" id="concept-blurb"></div>
+
+        <div class="phone" id="phone">
+          <div class="phone-notch" aria-hidden="true"></div>
+
+          <!-- Recommended: expense entry form -->
+          <div class="screen active" id="reco-form" data-blurb-title="Expense entry form (baseline)" data-blurb-text="Matches AddEditTransactionScreen field order. Two-line labeled pickers extend MmrTransactionFormPickerRow. Date/amount stay single-line cards. Save stays in top app bar (not shown).">
+            <div class="app-bar">
+              <button type="button" class="back" aria-label="Back">←</button>
+              <h4>Expense</h4>
+            </div>
+            <div class="entry-scroll">
+              <div class="type-segment" data-type-segment>
+                <button type="button" data-type="income">Income</button>
+                <button type="button" class="on" data-type="expense">Expense</button>
+                <button type="button" data-type="transfer">Transfer</button>
+              </div>
+              <div class="field-card tappable single-line">
+                <span class="field-icon">📅</span>
+                <div class="field-body"><div class="field-value">25 Oct 2026</div></div>
+                <span class="field-chevron">▾</span>
+              </div>
+              <div class="field-card single-line">
+                <span class="field-icon">#</span>
+                <div class="field-body"><div class="field-value">2,450</div></div>
+              </div>
+              <div class="field-card tappable">
+                <span class="field-icon">▦</span>
+                <div class="field-body">
+                  <div class="field-label">Category</div>
+                  <div class="field-value">Shopping · Clothing</div>
+                </div>
+                <span class="field-chevron">▾</span>
+              </div>
+              <div class="field-card tappable">
+                <span class="field-icon">👛</span>
+                <div class="field-body">
+                  <div class="field-label">Account</div>
+                  <div class="field-value">ICICI Salary</div>
+                </div>
+                <span class="field-chevron">▾</span>
+              </div>
+              <div class="field-card single-line">
+                <span class="field-icon">✎</span>
+                <div class="field-body"><div class="field-value muted">Note</div></div>
+              </div>
+              <div class="map-legend">
+                <strong>Compose mapping</strong><br />
+                Shell: <code>MmrTransactionFormScreenBackground</code> +
+                <code>MmrImeAwareScrollColumn</code><br />
+                Type: <code>MmrTransactionTypeSegment</code> · Pickers:
+                <code>MmrTransactionFormPickerRowLabeled</code> (proposed)<br />
+                Events: unchanged (<code>OnCategoryRowClick</code>,
+                <code>OnAccountRowClick</code>, …)
+              </div>
+            </div>
+          </div>
+
+          <!-- Recommended: category sheet A -->
+          <div class="screen" id="reco-cat" data-blurb-title="Category picker A on expense entry" data-blurb-text="CategorySubcategoryPickerSheet inside shared sheet shell. Search filters both panes. Breadcrumb on right. Header: type subtitle + Use parent only. Form behind stays visible (dimmed).">
+            <div class="app-bar"><button type="button" class="back">←</button><h4>Expense</h4></div>
+            <div class="entry-scroll dimmed">
+              <div class="type-segment"><button type="button">Income</button><button type="button" class="on">Expense</button><button type="button">Transfer</button></div>
+              <div class="field-card tappable single-line"><span class="field-icon">📅</span><div class="field-body"><div class="field-value">25 Oct 2026</div></div></div>
+              <div class="field-card single-line"><span class="field-icon">#</span><div class="field-body"><div class="field-value">2,450</div></div></div>
+              <div class="field-card tappable picker-active">
+                <span class="field-icon">▦</span>
+                <div class="field-body">
+                  <div class="field-label">Category</div>
+                  <div class="field-value muted">Select category</div>
+                </div>
+                <span class="field-chevron">▾</span>
+              </div>
+              <div class="field-card tappable">
+                <span class="field-icon">👛</span>
+                <div class="field-body">
+                  <div class="field-label">Account</div>
+                  <div class="field-value muted">Select account</div>
+                </div>
+                <span class="field-chevron">▾</span>
+              </div>
+            </div>
+            <div class="overlay">
+              <div class="sheet shell-shared">
+                <div class="sheet-handle"></div>
+                <div class="sheet-head">
+                  <div>
+                    <h5>Category</h5>
+                    <div class="sub">Expense · filtered in VM</div>
+                  </div>
+                  <div class="head-actions">
+                    <button type="button" class="text-btn ghost">Use “Shopping” only</button>
+                    <button type="button" class="text-btn">Done</button>
+                  </div>
+                </div>
+                <div class="search">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+                  <input type="search" placeholder="Search category or subcategory" />
+                </div>
+                <div class="cat-split" style="min-height:280px;max-height:360px">
+                  <div class="cat-left">
+                    <div class="cat-parent"><span class="dot" style="background:#f59e0b"></span>Food</div>
+                    <div class="cat-parent active"><span class="dot" style="background:#ef4444"></span>Shopping</div>
+                    <div class="cat-parent"><span class="dot" style="background:#8b5cf6"></span>Transport</div>
+                    <div class="pill-action">+ Add category</div>
+                  </div>
+                  <div class="cat-right">
+                    <div class="breadcrumb">Shopping <strong>›</strong> pick subcategory</div>
+                    <div class="sub-row picked selectable">Clothing &amp; apparel</div>
+                    <div class="sub-row selectable">Electronics</div>
+                    <div class="sub-row selectable">Gifts</div>
+                    <div class="pill-action">+ Add subcategory</div>
+                  </div>
+                </div>
+                <div class="footer-hint"><code>CategorySubcategoryPickerSheet</code> · long-press rename unchanged</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recommended: account sheet A (expense) -->
+          <div class="screen" id="reco-acc" data-blurb-title="Account picker A on expense entry" data-blurb-text="AccountPickerSheet + MmrLedgerPickerSheetShell. Title Account, subtitle Paid from this account. Type chips filter AccountPickerGrouping sections. Row: avatar, balance, check.">
+            <div class="app-bar"><button type="button" class="back">←</button><h4>Expense</h4></div>
+            <div class="entry-scroll dimmed">
+              <div class="type-segment"><button type="button">Income</button><button type="button" class="on">Expense</button><button type="button">Transfer</button></div>
+              <div class="field-card tappable"><span class="field-icon">▦</span><div class="field-body"><div class="field-label">Category</div><div class="field-value">Shopping · Clothing</div></div></div>
+              <div class="field-card tappable picker-active">
+                <span class="field-icon">👛</span>
+                <div class="field-body">
+                  <div class="field-label">Account</div>
+                  <div class="field-value muted">Select account</div>
+                </div>
+                <span class="field-chevron">▾</span>
+              </div>
+            </div>
+            <div class="overlay">
+              <div class="sheet shell-shared">
+                <div class="sheet-handle"></div>
+                <div class="sheet-head">
+                  <div>
+                    <h5>Account</h5>
+                    <div class="sub">Paid from this account</div>
+                  </div>
+                  <button type="button" class="text-btn">Done</button>
+                </div>
+                <div class="search">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+                  <input type="search" placeholder="Search accounts" />
+                </div>
+                <div class="chip-row" data-chip-group="reco-acc-type">
+                  <button type="button" class="chip on" data-chip>All</button>
+                  <button type="button" class="chip" data-chip>Bank</button>
+                  <button type="button" class="chip" data-chip>Cash</button>
+                  <button type="button" class="chip" data-chip>Card</button>
+                  <button type="button" class="chip" data-chip>Wallet</button>
+                </div>
+                <div class="scroll">
+                  <div class="section-label">Bank accounts</div>
+                  <div class="row-item selectable" data-select="single">
+                    <div class="avatar" style="background:#1e3a5f">HDFC</div>
+                    <div class="meta"><div class="title">HDFC Savings</div><div class="hint">₹ 1,24,580</div></div>
+                    <div class="check"></div>
+                  </div>
+                  <div class="row-item selectable selected" data-select="single">
+                    <div class="avatar" style="background:#0d9488">ICICI</div>
+                    <div class="meta"><div class="title">ICICI Salary</div><div class="hint">₹ 42,100</div></div>
+                    <div class="check">✓</div>
+                  </div>
+                  <div class="section-label">Cash &amp; wallets</div>
+                  <div class="row-item selectable" data-select="single">
+                    <div class="avatar" style="background:#64748b">₹</div>
+                    <div class="meta"><div class="title">Wallet cash</div><div class="hint">₹ 3,200</div></div>
+                    <div class="check"></div>
+                  </div>
+                </div>
+                <div class="footer-hint"><code>AccountPickerMode.AccountsGrouped</code> · nested scroll fix on list</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recommended: transfer -->
+          <div class="screen" id="reco-xfer" data-blurb-title="Transfer entry + from picker" data-blurb-text="Same form shell; Transfer type shows From account + To rows (labeled). Sheets: Transfer from / Transfer to with exclusions &amp; loans on to picker.">
+            <div class="app-bar"><button type="button" class="back">←</button><h4>Transfer</h4></div>
+            <div class="entry-scroll dimmed">
+              <div class="type-segment" data-type-segment>
+                <button type="button" data-type="income">Income</button>
+                <button type="button" data-type="expense">Expense</button>
+                <button type="button" class="on" data-type="transfer">Transfer</button>
+              </div>
+              <div class="field-card tappable single-line"><span class="field-icon">📅</span><div class="field-body"><div class="field-value">25 Oct 2026</div></div></div>
+              <div class="field-card single-line"><span class="field-icon">#</span><div class="field-body"><div class="field-value">10,000</div></div></div>
+              <div class="field-card tappable picker-active">
+                <span class="field-icon">👛</span>
+                <div class="field-body">
+                  <div class="field-label">From account</div>
+                  <div class="field-value muted">Select account</div>
+                </div>
+                <span class="field-chevron">▾</span>
+              </div>
+              <div class="field-card tappable">
+                <span class="field-icon">↗</span>
+                <div class="field-body">
+                  <div class="field-label">To</div>
+                  <div class="field-value muted">Select destination</div>
+                </div>
+                <span class="field-chevron">▾</span>
+              </div>
+            </div>
+            <div class="overlay">
+              <div class="sheet shell-shared">
+                <div class="sheet-handle"></div>
+                <div class="sheet-head">
+                  <div>
+                    <h5>Transfer from</h5>
+                    <div class="sub">Money leaves this account</div>
+                  </div>
+                  <button type="button" class="text-btn">Done</button>
+                </div>
+                <div class="search">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+                  <input type="search" placeholder="Search accounts" />
+                </div>
+                <div class="chip-row" data-chip-group="reco-xfer-type">
+                  <button type="button" class="chip on" data-chip>All</button>
+                  <button type="button" class="chip" data-chip>Bank</button>
+                  <button type="button" class="chip" data-chip>Cash</button>
+                </div>
+                <div class="scroll">
+                  <div class="row-item selectable selected" data-select="single">
+                    <div class="avatar" style="background:#0d9488">ICICI</div>
+                    <div class="meta"><div class="title">ICICI Salary</div><div class="hint">₹ 42,100</div></div>
+                    <div class="check">✓</div>
+                  </div>
+                  <div class="row-item selectable" data-select="single">
+                    <div class="avatar" style="background:#1e3a5f">HDFC</div>
+                    <div class="meta"><div class="title">HDFC Savings</div><div class="hint">₹ 1,24,580</div></div>
+                    <div class="check"></div>
+                  </div>
+                </div>
+                <div class="footer-hint">To picker adds <strong>Loans</strong> section · excludes selected from account</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account B -->
+          <div class="screen" id="acc-b" data-blurb-title="Alternative — Account card grid" data-blurb-text="Not in the recommended expense path. Wallet-style 2-column cards; switch Accounts/Loans chip for transfer to.">
+            <div class="app-bar"><button type="button" class="back">←</button><h4>Transfer</h4></div>
+            <div class="entry-scroll dimmed" style="padding-bottom:0">
+              <div class="field-card tappable"><span class="field-icon">↗</span><div class="field-body"><div class="field-label">To</div><div class="field-value muted">Select destination</div></div></div>
+            </div>
+            <div class="overlay">
+              <div class="sheet shell-shared">
+                <div class="sheet-handle"></div>
+                <div class="sheet-head">
+                  <div><h5>Transfer to</h5><div class="sub">Account or loan</div></div>
+                  <button type="button" class="text-btn">Close</button>
+                </div>
+                <div class="chip-row" data-chip-group="acc-b-type">
+                  <button type="button" class="chip on" data-chip>Accounts</button>
+                  <button type="button" class="chip" data-chip>Loans</button>
+                </div>
+                <div class="scroll">
+                  <div class="card-grid">
+                    <div class="acct-card selectable selected" data-select="single">
+                      <div class="type">Bank</div>
+                      <div class="name">SBI PPF</div>
+                      <div class="bal">₹ 8,40,000</div>
+                    </div>
+                    <div class="acct-card selectable" data-select="single">
+                      <div class="type">Bank</div>
+                      <div class="name">HDFC Savings</div>
+                      <div class="bal">₹ 1,24,580</div>
+                    </div>
+                    <div class="acct-card selectable" data-select="single">
+                      <div class="type">Card</div>
+                      <div class="name">Axis Credit</div>
+                      <div class="bal" style="color:var(--muted)">—</div>
+                    </div>
+                    <div class="acct-card selectable" data-select="single">
+                      <div class="type">Cash</div>
+                      <div class="name">Petty cash</div>
+                      <div class="bal">₹ 1,500</div>
+                    </div>
+                  </div>
+                  <div class="section-label" style="padding-top:0">Loans (switch chip)</div>
+                  <div class="row-item selectable" data-select="single">
+                    <div class="avatar" style="background:#7c3aed">L</div>
+                    <div class="meta"><div class="title">Home loan</div><div class="hint">Outstanding · EMI active</div></div>
+                    <div class="check"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account C -->
+          <div class="screen" id="acc-c" data-blurb-title="Alternative — Full-screen account route" data-blurb-text="New Screen.PickAccount instead of ModalBottomSheet. Confirm button; optional Recent section. Not needed for the recommended expense path.">
+            <div class="full-picker">
+              <div class="sticky-top">
+                <button type="button" class="back" style="margin-bottom:8px;background:var(--bg);color:var(--text)">←</button>
+                <h5>Choose account</h5>
+                <div class="search" style="margin:0">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg>
+                  <input type="search" placeholder="Search" />
+                </div>
+              </div>
+              <div class="scroll">
+                <div class="section-label">Recent</div>
+                <div class="radio-card selectable selected" data-select="single">
+                  <div class="radio-dot"></div>
+                  <div><div class="title" style="font-weight:700">ICICI Salary</div><div class="hint">Bank · ₹ 42,100</div></div>
+                </div>
+                <div class="section-label">All accounts</div>
+                <div class="radio-card selectable" data-select="single">
+                  <div class="radio-dot"></div>
+                  <div><div class="title" style="font-weight:700">HDFC Savings</div><div class="hint">Bank · ₹ 1,24,580</div></div>
+                </div>
+                <div class="radio-card selectable" data-select="single">
+                  <div class="radio-dot"></div>
+                  <div><div class="title" style="font-weight:700">Wallet cash</div><div class="hint">Cash · ₹ 3,200</div></div>
+                </div>
+                <div class="section-label">Loans</div>
+                <div class="radio-card selectable" data-select="single">
+                  <div class="radio-dot"></div>
+                  <div><div class="title" style="font-weight:700">Car loan<span class="tag">Loan</span></div><div class="hint">Repayment destination</div></div>
+                </div>
+              </div>
+              <div style="padding:12px 16px 28px;border-top:1px solid var(--border)">
+                <button type="button" style="width:100%;padding:14px;border:none;border-radius:12px;background:var(--header);color:#fff;font:inherit;font-weight:700;font-size:0.95rem">Confirm</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Category B -->
+          <div class="screen" id="cat-b" data-blurb-title="Alternative — Category two-step flow" data-blurb-text="Replaces split pane in CategorySubcategoryPickerSheet. Step 1 parent grid → step 2 subcategory tiles.">
+            <div class="full-picker">
+              <div class="sticky-top">
+                <div class="app-bar" style="padding:0 0 12px;background:transparent;color:var(--text)">
+                  <button class="back" style="background:var(--bg);color:var(--text)">←</button>
+                  <h4 style="color:var(--text)">Category</h4>
+                </div>
+                <div class="step-bar"><div class="step done"></div><div class="step done"></div></div>
+                <h5 style="margin:0 0 4px;font-size:1.1rem">Shopping</h5>
+                <p style="margin:0;font-size:0.8rem;color:var(--muted)">Step 2 of 2 · Subcategory</p>
+              </div>
+              <div class="scroll">
+                <div class="sub-grid">
+                  <div class="sub-tile selectable selected" data-select="single">Clothing</div>
+                  <div class="sub-tile selectable" data-select="single">Electronics</div>
+                  <div class="sub-tile selectable" data-select="single">Home</div>
+                  <div class="sub-tile selectable" data-select="single">Gifts</div>
+                  <div class="sub-tile selectable" data-select="single">Online</div>
+                  <div class="sub-tile selectable" data-select="single">Other</div>
+                </div>
+                <button type="button" class="text-btn" style="display:block;width:100%;text-align:center;padding:12px">← Back to categories</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Category C -->
+          <div class="screen" id="cat-c" data-blurb-title="Alternative — Category chip parents" data-blurb-text="Single-column sheet: horizontal parent chips + sub list. Good one-handed use; different from today’s split pane.">
+            <div class="app-bar"><button type="button" class="back">←</button><h4>Expense</h4></div>
+            <div class="entry-scroll dimmed">
+              <div class="field-card tappable picker-active"><span class="field-icon">▦</span><div class="field-body"><div class="field-label">Category</div><div class="field-value muted">Select category</div></div></div>
+            </div>
+            <div class="overlay">
+              <div class="sheet shell-shared">
+                <div class="sheet-handle"></div>
+                <div class="sheet-head">
+                  <div><h5>Category</h5><div class="sub">Expense</div></div>
+                  <button type="button" class="text-btn">Done</button>
+                </div>
+                <div class="parent-chips" data-chip-group="cat-c-parent">
+                  <button type="button" class="parent-chip" data-chip><span class="dot" style="background:#f59e0b"></span> Food</button>
+                  <button type="button" class="parent-chip on" data-chip><span class="dot" style="background:#ef4444"></span> Shopping</button>
+                  <button type="button" class="parent-chip" data-chip><span class="dot" style="background:#8b5cf6"></span> Transport</button>
+                </div>
+                <div class="section-label">Subcategories</div>
+                <div class="scroll" style="max-height:320px">
+                  <div class="row-item selectable selected" data-select="single">
+                    <div class="meta"><div class="title">Clothing &amp; apparel</div></div>
+                    <div class="check">✓</div>
+                  </div>
+                  <div class="row-item selectable" data-select="single">
+                    <div class="meta"><div class="title">Electronics</div></div>
+                    <div class="check"></div>
+                  </div>
+                  <div class="row-item selectable" data-select="single">
+                    <div class="meta"><div class="title">Gifts</div></div>
+                    <div class="check"></div>
+                  </div>
+                </div>
+                <div class="footer-hint">Tap parent chip to switch group</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const navBtns = document.querySelectorAll(".nav-btn");
+    const screens = document.querySelectorAll(".screen");
+    const blurb = document.getElementById("concept-blurb");
+
+    function showScreen(id) {
+      screens.forEach((s) => s.classList.toggle("active", s.id === id));
+      navBtns.forEach((b) => b.classList.toggle("active", b.dataset.screen === id));
+      const active = document.getElementById(id);
+      if (active && blurb) {
+        blurb.innerHTML =
+          "<h3>" + active.dataset.blurbTitle + "</h3><p>" + active.dataset.blurbText + "</p>";
+      }
+    }
+
+    navBtns.forEach((btn) => {
+      btn.addEventListener("click", () => showScreen(btn.dataset.screen));
+    });
+    showScreen("reco-form");
+
+    document.querySelectorAll("[data-type-segment]").forEach((seg) => {
+      seg.querySelectorAll("button[data-type]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          seg.querySelectorAll("button").forEach((b) => b.classList.remove("on"));
+          btn.classList.add("on");
+        });
+      });
+    });
+
+    document.querySelectorAll("[data-chip-group]").forEach((group) => {
+      group.querySelectorAll("[data-chip]").forEach((chip) => {
+        chip.addEventListener("click", () => {
+          group.querySelectorAll(".chip, .parent-chip").forEach((c) => {
+            c.classList.remove("on");
+          });
+          chip.classList.add("on");
+        });
+      });
+    });
+
+    document.querySelectorAll(".selectable").forEach((el) => {
+      el.addEventListener("click", () => {
+        const parent = el.closest(".scroll, .card-grid, .sub-grid, .full-picker, .sheet");
+        const scope = parent || el.parentElement;
+        const isCard = el.classList.contains("acct-card") || el.classList.contains("radio-card") || el.classList.contains("sub-tile");
+        const siblings = scope.querySelectorAll(".selectable");
+        siblings.forEach((s) => {
+          s.classList.remove("selected");
+          s.classList.remove("picked");
+          const check = s.querySelector(".check");
+          if (check) check.textContent = "";
+        });
+        el.classList.add("selected");
+        if (el.classList.contains("sub-row")) el.classList.add("picked");
+        const check = el.querySelector(".check");
+        if (check) check.textContent = "✓";
+      });
+    });
+  </script>
+</body>
+</html>

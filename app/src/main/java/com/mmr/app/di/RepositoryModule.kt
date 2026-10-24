@@ -2,11 +2,12 @@ package com.mmr.app.di
 
 import com.mmr.core.data.repository.AccountRepositoryImpl
 import com.mmr.core.data.repository.CategoryRepositoryImpl
+import com.mmr.core.data.repository.TransactionAttachmentRepositoryImpl
 import com.mmr.core.data.repository.TransactionRepositoryImpl
 import com.mmr.core.domain.repository.AccountRepository
 import com.mmr.core.domain.repository.BackupRepository
 import com.mmr.core.domain.repository.CategoryRepository
-import com.mmr.core.domain.repository.LanSyncRepository
+import com.mmr.core.domain.repository.TransactionAttachmentRepository
 import com.mmr.core.domain.repository.TransactionRepository
 import dagger.Binds
 import dagger.Module
@@ -20,6 +21,12 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindTransactionRepository(impl: TransactionRepositoryImpl): TransactionRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindTransactionAttachmentRepository(
+        impl: TransactionAttachmentRepositoryImpl,
+    ): TransactionAttachmentRepository
 
     @Binds
     @Singleton
@@ -53,5 +60,7 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindLanSyncRepository(impl: com.mmr.core.data.repository.LanSyncRepositoryImpl): LanSyncRepository
+    abstract fun bindGoogleDriveBackupRepository(
+        impl: com.mmr.core.data.repository.GoogleDriveBackupRepositoryImpl,
+    ): com.mmr.core.domain.repository.GoogleDriveBackupRepository
 }

@@ -14,6 +14,7 @@ import com.mmr.feature.backup.ui.BackupScreen
 import com.mmr.feature.category.ui.AddEditCategoryScreen
 import com.mmr.feature.category.ui.AddEditSubcategoryScreen
 import com.mmr.feature.category.ui.CategoryListScreen
+import com.mmr.feature.drivebackup.ui.GoogleDriveBackupScreen
 import com.mmr.feature.home.HomePeriodUtils
 import com.mmr.feature.home.HomeScreen
 import com.mmr.feature.lansync.ui.LanSyncScreen
@@ -26,11 +27,13 @@ import com.mmr.feature.recurring.ui.RecurringListScreen
 import com.mmr.feature.search.ui.TransactionSearchScreen
 import com.mmr.feature.settings.ui.ConfigurationScreen
 import com.mmr.feature.settings.ui.SettingsScreen
+import com.mmr.feature.settings.ui.SmsTemplateOverlayScreen
 import com.mmr.feature.stats.model.StatsCategoryDrillDown
 import com.mmr.feature.stats.ui.StatsCategoryDetailScreen
 import com.mmr.feature.stats.ui.StatsScreen
 import com.mmr.feature.transaction.ui.AddEditTransactionRoute
 import com.mmr.feature.transaction.ui.TransactionDetailScreen
+import com.mmr.feature.webmanage.ui.WebManageScreen
 
 @Composable
 fun MmrNavGraph(
@@ -56,7 +59,7 @@ fun MmrNavGraph(
                     navController.navigate(Screen.TransactionDetail.createRoute(transactionId))
                 },
                 onNavigateToApprovals = {
-                    navController.navigate(Screen.ApprovalCenter.route)
+                    navController.navigate(Screen.ApprovalCenter.createRoute())
                 },
                 onNavigateToSearch = {
                     navController.navigate(Screen.TransactionSearch.createRoute())
@@ -137,13 +140,23 @@ fun MmrNavGraph(
                 onNavigateToLanSync = {
                     navController.navigate(Screen.LanSync.route)
                 },
+                onNavigateToWebManage = {
+                    navController.navigate(Screen.WebManage.route)
+                },
                 onNavigateToCategories = {
                     navController.navigate(Screen.Categories.route)
                 },
                 onNavigateToAccounts = {
                     navController.navigate(Screen.Accounts.route)
                 },
+                onNavigateToSmsTemplateOverlay = {
+                    navController.navigate(Screen.SmsTemplateOverlay.route)
+                },
             )
+        }
+
+        composable(Screen.SmsTemplateOverlay.route) {
+            SmsTemplateOverlayScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable(Screen.Configuration.route) {
@@ -259,11 +272,30 @@ fun MmrNavGraph(
         composable(Screen.Backup.route) {
             BackupScreen(
                 onNavigateBack = { navController.popBackStack() },
+                onNavigateToGoogleDrive = { navController.navigate(Screen.GoogleDriveBackup.route) },
+            )
+        }
+
+        composable(Screen.GoogleDriveBackup.route) {
+            GoogleDriveBackupScreen(
+                onNavigateBack = { navController.popBackStack() },
             )
         }
 
         composable(Screen.LanSync.route) {
-            LanSyncScreen(onNavigateBack = { navController.popBackStack() })
+            LanSyncScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateHomeAfterRestore = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Home.route) { inclusive = false }
+                        launchSingleTop = true
+                    }
+                },
+            )
+        }
+
+        composable(Screen.WebManage.route) {
+            WebManageScreen(onNavigateBack = { navController.popBackStack() })
         }
 
         composable(Screen.Recurring.route) {
@@ -484,10 +516,29 @@ fun MmrNavGraph(
             )
         }
 
-        composable(Screen.ApprovalCenter.route) {
+        composable(
+            route = Screen.ApprovalCenter.routeWithArgs,
+            arguments =
+                listOf(
+                    navArgument(Screen.ApprovalCenter.ARG_APPROVAL_ID) {
+                        type = NavType.LongType
+                        defaultValue = 0L
+                    },
+                    navArgument(Screen.ApprovalCenter.ARG_ACTION) {
+                        type = NavType.StringType
+                        defaultValue = ""
+                    },
+                ),
+        ) { entry ->
+            val launchApprovalId =
+                entry.arguments?.getLong(Screen.ApprovalCenter.ARG_APPROVAL_ID) ?: 0L
+            val launchAction =
+                entry.arguments?.getString(Screen.ApprovalCenter.ARG_ACTION).orEmpty()
             ApprovalCenterScreen(
                 onNavigateBack = { navController.popBackStack() },
                 showBackNavigation = true,
+                launchApprovalId = launchApprovalId,
+                launchAction = launchAction,
                 onNavigateToEditPending = { approvalId ->
                     navController.navigate(Screen.AddTransaction.createRoute(approvalId))
                 },

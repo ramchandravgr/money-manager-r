@@ -69,6 +69,9 @@ sealed interface CategoryUiEvent {
 
     data class OnDeleteCategory(
         val categoryId: Long,
+        val transactionMode: com.mmr.core.domain.model.CategoryDeleteTransactionMode =
+            com.mmr.core.domain.model.CategoryDeleteTransactionMode.NONE,
+        val migrateToCategoryId: Long? = null,
     ) : CategoryUiEvent
 
     data class OnCreateSubcategory(

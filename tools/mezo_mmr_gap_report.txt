@@ -1,0 +1,35 @@
+Mezo AAAA1 rows: 491
+MMR Transaction: 458 (93%)
+MMR Informational: 30 (6%)
+MMR Ignored: 3 (0%)
+Amount mismatch (txn but wrong amt): 0
+--- Informational samples ---
+info mezo=18663.0 (AX-AXISBK-S) Payment of INR 18663 has been received towards your Axis Bank Credit Card XX0099 on 25-09-26 - Axis Bank
+info mezo=1048.0 (AX-HDFCBK-S) DEAR HDFCBANK CARDMEMBER, PAYMENT OF Rs. 1048.00 RECEIVED TOWARDS YOUR CREDIT CARD ENDING WITH 4148 ON 17-9-2026.YOUR AVAILABLE LIMIT IS RS.
+info mezo=1739.32 (JD-ICICIT-S) Payment of Rs 1,739.32 has been received on your ICICI Bank Credit Card XX0006 through Bharat Bill Payment System on 31-AUG-26.
+info mezo=373.0 (AD-AXISBK-S) Payment of INR 373 has been received towards your Axis Bank Credit Card XX0099 on 31-08-26 - Axis Bank
+info mezo=1060.82 (AX-HSBCIM-S) Dear Customer, we have received a payment of INR 1060.82 for credit card ending 7221 on 11-AUG-26. Thank you for using HSBC credit card.
+info mezo=494.0 (AX-HDFCBK-S) DEAR HDFCBANK CARDMEMBER, PAYMENT OF Rs. 494.00 RECEIVED TOWARDS YOUR CREDIT CARD ENDING WITH 4148 ON 31-7-2026.YOUR AVAILABLE LIMIT IS RS. 
+info mezo=869.66 (JM-ICICIT-S) Payment of Rs 869.66 has been received on your ICICI Bank Credit Card XX0006 through Bharat Bill Payment System on 26-JUN-26.
+info mezo=333.68 (VM-HDFCBK-S) DEAR HDFCBANK CARDMEMBER, PAYMENT OF Rs. 333.68 RECEIVED TOWARDS YOUR CREDIT CARD ENDING WITH 4148 ON 26-6-2026.YOUR AVAILABLE LIMIT IS RS. 
+info mezo=956.0 (AD-AXISBK-S) Payment of INR 956 has been received towards your Axis Bank Credit Card XX0099 on 23-06-26 - Axis Bank
+info mezo=77.0 (AD-ICICIT-S) Online Refund For UPI Ecom Trxn refund of Rs 77.00 credited to ICICI Bank Credit Card XX4007 on 26-MAY-26. Revised total due Rs 0, minimum d
+info mezo=76.0 (AD-ICICIT-S) Online Refund For UPI Ecom Trxn refund of Rs 76.00 credited to ICICI Bank Credit Card XX4007 on 26-MAY-26. Revised total due Rs 0, minimum d
+info mezo=370.0 (AX-ICICIT-S) Online Refund For UPI Ecom Trxn refund of Rs 370.00 credited to ICICI Bank Credit Card XX4007 on 25-MAY-26. Revised total due Rs 0, minimum 
+info mezo=110.0 (AX-ICICIT-S) Online Refund For UPI Ecom Trxn refund of Rs 110.00 credited to ICICI Bank Credit Card XX4007 on 25-MAY-26. Revised total due Rs 0, minimum 
+info mezo=2991.0 (AX-ICICIT-S) Payment of Rs 2,991.00 has been received on your ICICI Bank Credit Card XX4007 through Bharat Bill Payment System on 23-MAY-26.
+info mezo=2848.73 (AX-ICICIT-S) Payment of Rs 2,848.73 has been received on your ICICI Bank Credit Card XX0006 through Bharat Bill Payment System on 23-MAY-26.
+info mezo=1861.0 (AD-HDFCBK-S) DEAR HDFCBANK CARDMEMBER, PAYMENT OF Rs. 1861.00 RECEIVED TOWARDS YOUR CREDIT CARD ENDING WITH 4148 ON 23-5-2026.YOUR AVAILABLE LIMIT IS RS.
+info mezo=330.0 (AX-ICICIT-S) Payment of Rs 330.00 has been received on your ICICI Bank Credit Card XX4007 through Bharat Bill Payment System on 27-APR-26.
+info mezo=1113.0 (JD-AXISBK-S) Payment of INR 1113 has been received towards your Axis Bank Credit Card XX0099 on 27-04-26 - Axis Bank
+info mezo=2047.0 (AD-HDFCBK-S) DEAR HDFCBANK CARDMEMBER, PAYMENT OF Rs. 2047.00 RECEIVED TOWARDS YOUR CREDIT CARD ENDING WITH 4148 ON 27-4-2026.YOUR AVAILABLE LIMIT IS RS.
+info mezo=899.16 (JD-ICICIT-S) Payment of Rs 899.16 has been received on your ICICI Bank Credit Card XX0006 through Bharat Bill Payment System on 22-MAR-26.
+info mezo=2172.0 (AX-AXISBK-S) Payment of INR 2172 has been received towards your Axis Bank Credit Card XX0099 on 21-03-26 - Axis Bank
+info mezo=2510.0 (VM-HDFCBK-S) DEAR HDFCBANK CARDMEMBER, PAYMENT OF Rs. 2510.00 RECEIVED TOWARDS YOUR CREDIT CARD ENDING WITH 4148 ON 21-3-2026.YOUR AVAILABLE LIMIT IS RS.
+info mezo=899.16 (AD-ICICIT-S) Payment of Rs 899.16 has been received on your ICICI Bank Credit Card XX0006 through Bharat Bill Payment System on 24-FEB-26.
+info mezo=894.0 (AD-AXISBK-S) Payment of INR 894 has been received towards your Axis Bank Credit Card XX0099 on 24-02-26 - Axis Bank
+info mezo=6219.0 (CP-HDFCBK-S) DEAR HDFCBANK CARDMEMBER, PAYMENT OF Rs. 6219.00 RECEIVED TOWARDS YOUR CREDIT CARD ENDING WITH 4148 ON 15-2-2026.YOUR AVAILABLE LIMIT IS RS.
+--- Ignored samples ---
+ignored mezo=414.0 (JM-AXISBK-T) 093183 is SECRET OTP for txn of INR 414.00 on Axis Bank card XX0099 at Flipkart I on 06-08-26 12:39:46. OTP valid for 5 mins. Please do not 
+ignored mezo=1681.0 (JM-AXISBK-T) 319013 is SECRET OTP for txn of INR 1681.00 on Axis Bank card XX0099 at FlipkartIn on 16-03-26 15:55:20. OTP valid for 5 mins. Please do not
+ignored mezo=767.0 (JM-AXISBK-T) 476103 is SECRET OTP for txn of INR 767.00 on Axis Bank card XX0099 at MYNTRA DES on 12-03-26 13:42:06. OTP valid for 5 mins. Please do not 

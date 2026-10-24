@@ -35,6 +35,9 @@ interface TransactionApprovalDao {
     @Query("SELECT COUNT(*) FROM transaction_approvals WHERE approvalState = 'PENDING'")
     fun getPendingCount(): Flow<Int>
 
+    @Query("SELECT COUNT(*) FROM transaction_approvals WHERE approvalState = 'PENDING'")
+    suspend fun getPendingCountOnce(): Int
+
     @Query("SELECT * FROM transaction_approvals WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): TransactionApprovalEntity?
 

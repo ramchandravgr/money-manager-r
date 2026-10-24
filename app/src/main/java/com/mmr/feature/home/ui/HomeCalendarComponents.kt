@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.ui.components.MmrDimens
-import com.mmr.app.ui.theme.MmrMmColors
+import com.mmr.app.ui.theme.MmrBrandColors
 import com.mmr.feature.home.HomePeriodUtils
 import com.mmr.feature.home.model.CalendarDayUi
 import com.mmr.feature.home.model.TransactionGroupUi
@@ -47,11 +47,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
-
-private val CalendarExpenseColor = Color(0xFF5B8DEF)
-private val CalendarSaturdayColor = Color(0xFF5B8DEF)
-private val CalendarSundayColor = Color(0xFFE57373)
-private val CalendarSelectedDayBg = Color(0xFF1E3A5F)
 
 @Composable
 fun HomeCalendarTabContent(
@@ -120,11 +115,16 @@ fun HomeCalendarTabContent(
                         modifier = Modifier.padding(top = MmrDimens.spaceXs),
                     )
                 }
-                items(selectedDayGroup.items, key = { it.id }) { txn ->
+                items(
+                    count = selectedDayGroup.items.size,
+                    key = { selectedDayGroup.items[it].id },
+                ) { index ->
+                    val txn = selectedDayGroup.items[index]
                     TransactionCompactRow(
                         item = txn,
                         onClick = { onTransactionClick(txn.id) },
                         onLongClick = { onTransactionClick(txn.id) },
+                        isLastInDayGroup = index == selectedDayGroup.items.lastIndex,
                     )
                 }
             } else {
@@ -165,9 +165,9 @@ private fun CalendarWeekdayHeaderRow(weekStart: DayOfWeek) {
         labels.forEach { label ->
             val color =
                 when (label.lowercase(locale).take(3)) {
-                    "sat" -> CalendarSaturdayColor
-                    "sun" -> CalendarSundayColor
-                    else -> MmrMmColors.TextMedium
+                    "sat" -> MmrBrandColors.CalendarSaturday
+                    "sun" -> MmrBrandColors.CalendarSunday
+                    else -> MmrBrandColors.TextMedium
                 }
             Text(
                 text = label,
@@ -192,9 +192,9 @@ private fun CalendarDayCell(
         when {
             selected -> Color.White
             cell.isCurrentMonth -> Color.White
-            else -> MmrMmColors.ListBackground.copy(alpha = 0.65f)
+            else -> MmrBrandColors.ListBackground.copy(alpha = 0.65f)
         }
-    val borderColor = if (selected) CalendarSelectedDayBg else Color(0xFFE8E8E8)
+    val borderColor = if (selected) MmrBrandColors.CalendarSelectedDay else MmrBrandColors.CalendarCellBorder
     val borderWidth = if (selected) 1.5.dp else 0.5.dp
 
     Box(
@@ -214,7 +214,7 @@ private fun CalendarDayCell(
                     .then(
                         if (selected) {
                             Modifier
-                                .background(CalendarSelectedDayBg, RoundedCornerShape(3.dp))
+                                .background(MmrBrandColors.CalendarSelectedDay, RoundedCornerShape(3.dp))
                                 .padding(horizontal = 5.dp, vertical = 1.dp)
                         } else {
                             Modifier
@@ -245,7 +245,7 @@ private fun CalendarDayCell(
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth(),
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, lineHeight = 11.sp),
-                color = CalendarExpenseColor,
+                color = MmrBrandColors.CalendarExpense,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
@@ -289,7 +289,7 @@ private fun CalendarDayNavigationBar(
     }
     HorizontalDivider(
         modifier = Modifier.padding(top = MmrDimens.spaceXs),
-        color = MmrMmColors.BorderMain.copy(alpha = 0.55f),
+        color = MmrBrandColors.BorderMain.copy(alpha = 0.55f),
     )
 }
 

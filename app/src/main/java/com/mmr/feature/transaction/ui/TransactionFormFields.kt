@@ -1,20 +1,12 @@
 package com.mmr.feature.transaction.ui
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -24,10 +16,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.mmr.app.testing.MmrTestTags
+import com.mmr.app.ui.components.MmrTransactionFormAttachIconButton
+import com.mmr.app.ui.components.MmrTransactionFormChipOption
+import com.mmr.app.ui.components.MmrTransactionFormChoiceChips
+import com.mmr.app.ui.components.MmrTransactionFormIcons
+import com.mmr.app.ui.components.MmrTransactionFormPickerRow
+import com.mmr.app.ui.components.MmrTransactionFormPickerRowLabeled
+import com.mmr.app.ui.components.MmrTransactionFormTextRow
+import com.mmr.core.model.enums.RecurrenceInterval
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalTime
@@ -42,49 +41,29 @@ fun TransactionFormPickerField(
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    icon: androidx.compose.ui.graphics.vector.ImageVector = MmrTransactionFormIcons.category,
+    emptyHint: String = "Select ${label.lowercase()}",
+    useLabeledRow: Boolean = false,
 ) {
-    val interactive = enabled && onClick != null
-    val pickerColors =
-        OutlinedTextFieldDefaults.colors(
-            disabledTextColor = MaterialTheme.colorScheme.onSurface,
-            disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            disabledBorderColor = MaterialTheme.colorScheme.outline,
-            disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    Box(
-        modifier =
-            modifier
-                .fillMaxWidth()
-                .then(
-                    if (interactive) {
-                        Modifier.clickable(onClick = onClick!!)
-                    } else {
-                        Modifier
-                    },
-                ),
-    ) {
-        OutlinedTextField(
+    if (useLabeledRow) {
+        MmrTransactionFormPickerRowLabeled(
+            label = label,
             value = value,
-            onValueChange = {},
-            readOnly = true,
-            enabled = false,
-            label = { Text(label) },
-            modifier = Modifier.fillMaxWidth(),
-            colors =
-                if (interactive) {
-                    pickerColors
-                } else {
-                    OutlinedTextFieldDefaults.colors()
-                },
-            trailingIcon =
-                if (interactive) {
-                    {
-                        Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
-                    }
-                } else {
-                    null
-                },
-            singleLine = true,
+            emptyHint = emptyHint,
+            icon = icon,
+            onClick = onClick,
+            modifier = modifier,
+            enabled = enabled,
+        )
+    } else {
+        MmrTransactionFormPickerRow(
+            icon = icon,
+            placeholder = label,
+            value = value.ifBlank { emptyHint },
+            emptyHint = emptyHint,
+            onClick = onClick,
+            modifier = modifier,
+            enabled = enabled,
         )
     }
 }
@@ -98,16 +77,19 @@ fun TransactionDateTimeField(
     zoneId: ZoneId = ZoneId.systemDefault(),
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
-    val label =
+    val formatted =
         remember(dateTimeMillis) {
             SimpleDateFormat("dd MMM yyyy", Locale.getDefault()).format(Date(dateTimeMillis))
         }
 
     TransactionFormPickerField(
         label = "Date",
-        value = label,
+        value = formatted,
+        emptyHint = "",
         onClick = { showDatePicker = true },
         modifier = modifier,
+        icon = MmrTransactionFormIcons.date,
+        useLabeledRow = false,
     )
 
     if (showDatePicker) {
@@ -152,21 +134,40 @@ fun TransactionDateTimeField(
 }
 
 @Composable
+fun TransactionNameField(
+    name: String,
+    onNameChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    testTag: String = MmrTestTags.recurringFieldName,
+    placeholder: String = "Name",
+) {
+    MmrTransactionFormTextRow(
+        value = name,
+        onValueChange = onNameChange,
+        placeholder = placeholder,
+        modifier = modifier,
+        leadingIcon = MmrTransactionFormIcons.name,
+        testTag = testTag,
+        singleLine = true,
+    )
+}
+
+@Composable
 fun TransactionAmountField(
     amount: String,
     onAmountChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    OutlinedTextField(
+    MmrTransactionFormTextRow(
         value = amount,
         onValueChange = onAmountChange,
-        modifier =
-            modifier
-                .testTag(MmrTestTags.transactionAmount)
-                .fillMaxWidth(),
-        label = { Text("Amount") },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        placeholder = "Amount",
+        modifier = modifier,
+        leadingIcon = MmrTransactionFormIcons.amount,
+        testTag = MmrTestTags.transactionAmount,
+        keyboardType = KeyboardType.Decimal,
         singleLine = true,
+        groupedAmountDisplay = true,
     )
 }
 
@@ -176,17 +177,29 @@ fun TransactionNoteField(
     onNoteChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     suggestions: List<String> = emptyList(),
+    onAttachPhotoClick: (() -> Unit)? = null,
+    canAttachMore: Boolean = true,
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        OutlinedTextField(
+        MmrTransactionFormTextRow(
             value = note,
             onValueChange = onNoteChange,
-            modifier =
-                Modifier
-                    .testTag(MmrTestTags.transactionNote)
-                    .fillMaxWidth(),
-            label = { Text("Note") },
+            placeholder = "Note",
+            leadingIcon = MmrTransactionFormIcons.note,
+            testTag = MmrTestTags.transactionNote,
+            singleLine = false,
             minLines = 2,
+            trailingContent =
+                if (onAttachPhotoClick != null) {
+                    {
+                        MmrTransactionFormAttachIconButton(
+                            onClick = onAttachPhotoClick,
+                            enabled = canAttachMore,
+                        )
+                    }
+                } else {
+                    null
+                },
         )
         if (suggestions.isNotEmpty()) {
             Column(
@@ -210,4 +223,117 @@ fun TransactionNoteField(
             }
         }
     }
+}
+
+private val recurrenceIntervalOptions =
+    listOf(
+        MmrTransactionFormChipOption(RecurrenceInterval.DAILY, "Daily"),
+        MmrTransactionFormChipOption(RecurrenceInterval.WEEKLY, "Weekly"),
+        MmrTransactionFormChipOption(RecurrenceInterval.MONTHLY, "Monthly"),
+        MmrTransactionFormChipOption(RecurrenceInterval.YEARLY, "Yearly"),
+    )
+
+@Composable
+fun TransactionCategoryPickerField(
+    value: String,
+    onClick: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    TransactionFormPickerField(
+        label = "Category",
+        value = value,
+        emptyHint = "Select category",
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        icon = MmrTransactionFormIcons.category,
+    )
+}
+
+@Composable
+fun TransactionAccountPickerField(
+    value: String,
+    onClick: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    label: String = "Account",
+    emptyHint: String = "Select account",
+) {
+    TransactionFormPickerField(
+        label = label,
+        value = value,
+        emptyHint = emptyHint,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        icon = MmrTransactionFormIcons.account,
+    )
+}
+
+@Composable
+fun TransactionTransferFromPickerField(
+    value: String,
+    onClick: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+) {
+    TransactionFormPickerField(
+        label = "From account",
+        value = value,
+        emptyHint = "Select account",
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        icon = MmrTransactionFormIcons.transferFrom,
+    )
+}
+
+@Composable
+fun TransactionTransferToPickerField(
+    value: String,
+    onClick: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    emptyHint: String = "Select destination",
+) {
+    TransactionFormPickerField(
+        label = "To",
+        value = value,
+        emptyHint = emptyHint,
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        icon = MmrTransactionFormIcons.transferTo,
+    )
+}
+
+@Composable
+fun TransactionReminderPickerField(
+    value: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    TransactionFormPickerField(
+        label = "Reminder",
+        value = value,
+        emptyHint = "None",
+        onClick = onClick,
+        modifier = modifier,
+        icon = MmrTransactionFormIcons.reminder,
+    )
+}
+
+@Composable
+fun TransactionRecurrenceIntervalChips(
+    selected: RecurrenceInterval,
+    onSelected: (RecurrenceInterval) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    MmrTransactionFormChoiceChips(
+        options = recurrenceIntervalOptions,
+        selected = selected,
+        onSelected = onSelected,
+        modifier = modifier,
+    )
 }

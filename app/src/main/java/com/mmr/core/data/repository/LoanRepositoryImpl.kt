@@ -1,6 +1,7 @@
 package com.mmr.core.data.repository
 
 import androidx.room.withTransaction
+import com.mmr.core.common.display.MmrMoneyFormat
 import com.mmr.core.database.MmrDatabase
 import com.mmr.core.database.dao.LoanDao
 import com.mmr.core.database.dao.LoanInterestRevisionDao
@@ -15,6 +16,8 @@ import com.mmr.core.database.model.LoanSummaryAggregate
 import com.mmr.core.database.relation.LoanWithPayments
 import com.mmr.core.domain.repository.AccountRepository
 import com.mmr.core.domain.repository.LoanRepository
+import com.mmr.core.lansync.LanSyncTombstoneRecorder
+import com.mmr.core.lansync.SyncEntityType
 import com.mmr.core.loan.LoanAmortizationEngine
 import com.mmr.core.loan.LoanDateUtils
 import com.mmr.core.loan.LoanLedgerCoordinator
@@ -51,6 +54,7 @@ class LoanRepositoryImpl
         private val transactionDao: TransactionDao,
         private val loanLedgerCoordinator: LoanLedgerCoordinator,
         private val accountRepository: AccountRepository,
+        private val tombstoneRecorder: LanSyncTombstoneRecorder,
     ) : LoanRepository {
         override fun getAllLoans(): Flow<List<LoanEntity>> = loanDao.getAllLoans()
 
@@ -97,7 +101,18 @@ class LoanRepositoryImpl
                         scheduleAnchorMillis = stored.openingDate,
                     )
                 }
+                postInitialDisbursalLedger(stored)
                 loanId
+            }
+        }
+
+        private suspend fun postInitialDisbursalLedger(loan: LoanEntity) {
+            if (loan.principalAmount <= 0.0 || loan.linkedLoanAccountId == null) return
+            val disbursalMillis = LoanDateUtils.normalizeLoanCalendarDay(loan.openingDate)
+            val ref = LoanLedgerCoordinator.disbursalSourceRef(loan.id, disbursalMillis)
+            if (transactionDao.findIdBySourceReference(ref) != null) return
+            runCatching {
+                loanLedgerCoordinator.createInitialDisbursalTransaction(loan, disbursalMillis)
             }
         }
 
@@ -118,8 +133,13 @@ class LoanRepositoryImpl
 
         override suspend fun deleteLoan(loan: LoanEntity) {
             require(loan.id > 0L) { "Loan id is required." }
+            tombstoneRecorder.recordDeletion(loan.syncId, SyncEntityType.LOAN)
             val liabilityAccountId = loan.linkedLoanAccountId
             database.withTransaction {
+                database.notificationRuleDao().listForLoan(loan.id).forEach { notification ->
+                    tombstoneRecorder.recordDeletion(notification.syncId, SyncEntityType.NOTIFICATION_RULE)
+                }
+                database.notificationRuleDao().deleteForLoan(loan.id)
                 loanScheduleDao.deleteAllForLoan(loan.id)
                 loanPaymentDao.deletePaymentsForLoan(loan.id)
                 loanDao.delete(loan)
@@ -132,6 +152,7 @@ class LoanRepositoryImpl
             if (account.type != AccountType.LOAN || !account.isActive) return
             if (loanDao.countByLinkedLoanAccountId(accountId) > 0) return
             if (transactionDao.countInvolvingAccount(accountId) > 0) return
+            tombstoneRecorder.recordDeletion(account.syncId, SyncEntityType.ACCOUNT)
             database.accountDao().update(
                 account.copy(
                     isActive = false,
@@ -268,7 +289,7 @@ class LoanRepositoryImpl
                                 loan.interestRate,
                             )
                         throw IllegalArgumentException(
-                            "After top-up, current EMI is too low. Raise EMI (≥ ₹${"%.2f".format(
+                            "After top-up, current EMI is too low. Raise EMI (≥ ${MmrMoneyFormat.formatInr(
                                 minEmi,
                             )}) or choose increase EMI.",
                         )
@@ -480,7 +501,7 @@ class LoanRepositoryImpl
                             loan.interestRate,
                         )
                     throw IllegalArgumentException(
-                        "EMI must be at least ₹1 above monthly interest (≥ ₹${"%.2f".format(minEmi)}).",
+                        "EMI must be at least ₹1 above monthly interest (≥ ${MmrMoneyFormat.formatInr(minEmi)}).",
                     )
                 }
                 loanDao.update(

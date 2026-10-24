@@ -11,6 +11,7 @@ import com.mmr.core.database.entity.TransactionApprovalEntity
 import com.mmr.core.database.entity.TransactionEntity
 import com.mmr.core.database.model.ExactBodyDuplicateRow
 import com.mmr.core.model.enums.SmsApprovalState
+import com.mmr.core.model.enums.SmsLinkRole
 
 /**
  * Multi-table approval flows executed atomically.
@@ -97,6 +98,7 @@ interface ApprovalLedgerDao {
             approvedSms.copy(
                 approvalState = SmsApprovalState.APPROVED,
                 matchedTransactionId = transactionId,
+                linkRole = approvedSms.linkRole ?: SmsLinkRole.PURCHASE,
             ),
         )
         return transactionId
@@ -118,9 +120,31 @@ interface ApprovalLedgerDao {
             approvedSms.copy(
                 approvalState = SmsApprovalState.APPROVED,
                 matchedTransactionId = mergedTransaction.id,
+                linkRole = approvedSms.linkRole ?: SmsLinkRole.PURCHASE,
             ),
         )
         return mergedTransaction.id
+    }
+
+    @Transaction
+    suspend fun applyCardRefundToPurchase(
+        approvalId: Long,
+        updatedPurchase: TransactionEntity,
+        refundSms: SmsMessageRecordEntity,
+    ): Long {
+        val updated = markApprovalStateIfPending(approvalId, SmsApprovalState.APPROVED)
+        if (updated == 0) {
+            throw IllegalStateException("This entry is no longer pending.")
+        }
+        updateTransaction(updatedPurchase)
+        updateSmsRecord(
+            refundSms.copy(
+                approvalState = SmsApprovalState.APPROVED,
+                matchedTransactionId = updatedPurchase.id,
+                linkRole = SmsLinkRole.REFUND,
+            ),
+        )
+        return updatedPurchase.id
     }
 
     @Transaction

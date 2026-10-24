@@ -28,4 +28,6 @@ sealed interface AddEditSubcategoryUiEvent {
     data object OnSaveClick : AddEditSubcategoryUiEvent
 
     data object OnDismissError : AddEditSubcategoryUiEvent
+
+    data object OnDeleteClick : AddEditSubcategoryUiEvent
 }

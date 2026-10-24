@@ -4,16 +4,20 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mmr.app.ui.state.MmrUiMessages
+import com.mmr.core.common.display.MmrMoneyFormat
 import com.mmr.core.common.display.TransactionCategoryLabels
+import com.mmr.core.domain.repository.TransactionAttachmentRepository
 import com.mmr.core.domain.repository.TransactionRepository
 import com.mmr.core.loan.LoanLinkedTransactionDeleteMode
 import com.mmr.core.model.enums.CardNetwork
+import com.mmr.core.model.enums.SmsLinkRole
 import com.mmr.core.model.enums.TransactionType
 import com.mmr.core.parser.model.SmsInstrument
 import com.mmr.core.parser.model.SmsPaymentChannel
 import com.mmr.feature.transaction.model.LinkedSmsItemUi
 import com.mmr.feature.transaction.model.TransactionDetailUiEvent
 import com.mmr.feature.transaction.model.TransactionDetailUiState
+import com.mmr.feature.transaction.model.TransactionReceiptUi
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +26,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -36,6 +42,7 @@ class TransactionDetailViewModel
     @Inject
     constructor(
         private val transactionRepository: TransactionRepository,
+        private val attachmentRepository: TransactionAttachmentRepository,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val transactionId: Long = checkNotNull(savedStateHandle["transactionId"])
@@ -91,14 +98,27 @@ class TransactionDetailViewModel
             return parts.takeIf { it.isNotEmpty() }?.joinToString(" · ")
         }
 
+        private val receiptsFlow =
+            transactionRepository.getApprovedTransactionsDetailed().flatMapLatest {
+                flow {
+                    emit(
+                        attachmentRepository.listForTransaction(transactionId).mapNotNull { entity ->
+                            val path = attachmentRepository.localFile(entity)?.absolutePath ?: return@mapNotNull null
+                            TransactionReceiptUi(id = entity.id, filePath = path)
+                        },
+                    )
+                }
+            }
+
         val uiState: StateFlow<TransactionDetailUiState> =
             combine(
                 transactionRepository.getApprovedTransactionsDetailed().map { list ->
                     list.find { it.transaction.id == transactionId }
                 },
                 transactionRepository.getLinkedSmsForTransaction(transactionId),
+                receiptsFlow,
                 _overlays,
-            ) { details, smsRecords, overlays ->
+            ) { details, smsRecords, receipts, overlays ->
                 if (details == null) {
                     TransactionDetailUiState(
                         isLoading = false,
@@ -118,6 +138,17 @@ class TransactionDetailViewModel
                         txn.type.name
                             .lowercase(Locale.getDefault())
                             .replaceFirstChar { it.titlecase(Locale.getDefault()) }
+                    val refundSummary =
+                        txn.originalAmount?.let { original ->
+                            val refunded = txn.refundedTotal
+                            if (refunded > 0.0) {
+                                "Original ${MmrMoneyFormat.format(original, "₹")} · Refunded " +
+                                    "${MmrMoneyFormat.format(refunded, "₹")} · Net " +
+                                    "${MmrMoneyFormat.format(txn.amount, "₹")}"
+                            } else {
+                                null
+                            }
+                        }
                     val smsUi =
                         smsRecords.map { sms ->
                             LinkedSmsItemUi(
@@ -125,7 +156,14 @@ class TransactionDetailViewModel
                                 sender = sms.sender,
                                 snippet = sms.messageBodySnippet,
                                 receivedLabel = dateFormat.format(Date(sms.receivedTime)),
-                                amountFormatted = sms.parsedAmount?.let { "₹${"%.2f".format(it)}" },
+                                amountFormatted =
+                                    sms.parsedAmount?.let { MmrMoneyFormat.format(it, "₹") },
+                                roleLabel =
+                                    when (sms.linkRole) {
+                                        SmsLinkRole.REFUND -> "Refund"
+                                        SmsLinkRole.PURCHASE -> "Purchase"
+                                        null -> null
+                                    },
                             )
                         }
                     TransactionDetailUiState(
@@ -134,7 +172,12 @@ class TransactionDetailViewModel
                         title =
                             txn.note?.trim()?.takeIf { it.isNotEmpty() }
                                 ?: details.category?.name ?: "Transaction",
-                        amountFormatted = "$sign₹${"%.2f".format(txn.amount)}",
+                        amountFormatted =
+                            if (sign.isEmpty()) {
+                                MmrMoneyFormat.formatWithSpace(txn.amount, "₹")
+                            } else {
+                                "$sign${MmrMoneyFormat.format(txn.amount, "₹")}"
+                            },
                         typeLabel = typeLabel,
                         dateTimeLabel = dateFormat.format(Date(txn.dateTime)),
                         dateTimeMillis = txn.dateTime,
@@ -148,7 +191,15 @@ class TransactionDetailViewModel
                         paymentChannelLabel = formatPaymentChannel(txn.paymentChannel),
                         paymentInstrumentLabel = formatPaymentInstrument(txn.paymentInstrument),
                         cardMetadataLabel = formatCardMetadata(txn.cardLastFour, txn.cardNetwork),
+                        syncedFromLabel =
+                            txn.syncedFromDeviceName
+                                ?.trim()
+                                ?.takeIf { it.isNotEmpty() }
+                                ?.let { "From $it" }
+                                ?: txn.syncedFromDeviceId?.take(8)?.let { "From device $it…" },
+                        refundSummaryLabel = refundSummary,
                         linkedSms = smsUi,
+                        receipts = receipts,
                         showDeleteConfirmDialog = overlays.showDeleteConfirmDialog,
                         showLoanDeleteDialog = overlays.showLoanDeleteDialog,
                         showDuplicateDateDialog = overlays.showDuplicateDateDialog,

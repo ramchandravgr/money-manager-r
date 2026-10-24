@@ -29,6 +29,7 @@ class LocalSmsScannerService
             withContext(Dispatchers.IO) {
                 val sinceTimestamp = SmsScanPeriod.sinceTimestampMillis(monthsBack)
                 val candidates = mutableListOf<com.mmr.core.parser.model.ParsedSmsCandidate>()
+                val cardRefunds = mutableListOf<com.mmr.core.parser.model.ParsedSmsCandidate>()
                 var mandateNotices = 0
                 var statementNotices = 0
                 var investmentNotices = 0
@@ -71,12 +72,14 @@ class LocalSmsScannerService
 
                             when (val result = smsParserEngine.parseResult(raw)) {
                                 is SmsParseResult.Transaction -> candidates.add(result.candidate)
+                                is SmsParseResult.CardRefund -> cardRefunds.add(result.candidate)
                                 is SmsParseResult.Informational ->
                                     when (result.intent) {
                                         SmsParseIntent.MANDATE -> mandateNotices++
                                         SmsParseIntent.STATEMENT -> statementNotices++
                                         SmsParseIntent.INVESTMENT -> investmentNotices++
                                         SmsParseIntent.CARD_PAYMENT -> cardPaymentNotices++
+                                        SmsParseIntent.CARD_REFUND -> Unit
                                         SmsParseIntent.SETTLED -> Unit
                                     }
                                 SmsParseResult.Ignored -> Unit
@@ -90,13 +93,15 @@ class LocalSmsScannerService
                 }
 
                 val deduped = SmsCrossChannelDedup.deduplicate(candidates)
+                val dedupedRefunds = SmsCrossChannelDedup.deduplicate(cardRefunds)
                 SmsInboxScanSummary(
                     transactions = deduped.kept,
                     mandateNotices = mandateNotices,
                     statementNotices = statementNotices,
                     investmentNotices = investmentNotices,
                     cardPaymentNotices = cardPaymentNotices,
-                    duplicateSuppressed = deduped.suppressedCount,
+                    cardRefunds = dedupedRefunds.kept,
+                    duplicateSuppressed = deduped.suppressedCount + dedupedRefunds.suppressedCount,
                 )
             }
     }

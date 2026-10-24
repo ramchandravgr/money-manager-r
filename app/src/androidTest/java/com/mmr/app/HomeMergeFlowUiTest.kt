@@ -3,19 +3,20 @@ package com.mmr.app
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
-import androidx.compose.ui.test.performTouchInput
 import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mmr.app.testing.MmrHiltUiTest
 import com.mmr.app.testing.MmrTestTags
 import com.mmr.app.testing.MmrUiTestFixtures
 import com.mmr.app.testing.assertTransactionRowShowsExpense
+import com.mmr.app.testing.traceAction
+import com.mmr.app.testing.traceClickTag
+import com.mmr.app.testing.traceLongClickTag
+import com.mmr.app.testing.traceMatcherClick
+import com.mmr.app.testing.traceNodeTextInput
+import com.mmr.app.testing.traceWaitUntil
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -33,27 +34,27 @@ class HomeMergeFlowUiTest : MmrHiltUiTest() {
                 MmrUiTestFixtures.seedTwoMergeableExpenses(database, accountId, 10.0, 20.0)
             }
 
-        composeRule.activityRule.scenario.recreate()
-        composeRule.waitForIdle()
+        traceActivityRecreate()
 
-        composeRule.onNodeWithTag(MmrTestTags.transactionRow(idA)).performTouchInput { longClick() }
-        composeRule.onNodeWithTag(MmrTestTags.transactionRow(idB)).performClick()
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.traceLongClickTag(MmrTestTags.transactionRow(idA))
+        composeRule.traceClickTag(MmrTestTags.transactionRow(idB))
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 10_000) {
             composeRule.onAllNodesWithTag(MmrTestTags.homeSelectionMerge).fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithTag(MmrTestTags.homeSelectionMerge).performClick()
+        composeRule.traceClickTag(MmrTestTags.homeSelectionMerge)
 
         val mergedName = "Merged UI ${System.nanoTime()}"
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 10_000) {
             composeRule.onAllNodesWithText("Merge transactions").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNode(hasSetTextAction()).performTextInput(mergedName)
-        composeRule.onNode(hasText("Merge") and hasClickAction()).performClick()
+        composeRule.traceNodeTextInput("set_text_action", { composeRule.onNode(hasSetTextAction()) }, mergedName)
+        composeRule.traceMatcherClick(hasText("Merge") and hasClickAction(), "merge_confirm")
         composeRule.waitForIdle()
-        Espresso.pressBack()
-        composeRule.waitForIdle()
+        composeRule.traceAction("system_back") {
+            Espresso.pressBack()
+        }
 
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+        composeRule.traceWaitUntil("wait_until", timeoutMillis = 10_000) {
             runBlocking {
                 database
                     .transactionDao()

@@ -84,4 +84,12 @@ class EnumConverters {
     @TypeConverter fun fromCardNetwork(value: CardNetwork?): String? = value?.name
 
     @TypeConverter fun toCardNetwork(value: String?): CardNetwork? = value?.let { CardNetwork.valueOf(it) }
+
+    @TypeConverter fun fromSmsApprovalKind(value: SmsApprovalKind?): String? = value?.name
+
+    @TypeConverter fun toSmsApprovalKind(value: String?): SmsApprovalKind? = value?.let { SmsApprovalKind.valueOf(it) }
+
+    @TypeConverter fun fromSmsLinkRole(value: SmsLinkRole?): String? = value?.name
+
+    @TypeConverter fun toSmsLinkRole(value: String?): SmsLinkRole? = value?.let { SmsLinkRole.valueOf(it) }
 }

@@ -10,6 +10,7 @@ data class ApprovalCandidateUi(
     val amountFormatted: String,
     val amount: Double,
     val type: TransactionType,
+    val isCardRefund: Boolean = false,
     val typeLabel: String,
     val merchant: String?,
     val note: String,
@@ -45,14 +46,12 @@ data class ApprovalCenterUiState(
     val manualEntryError: String? = null,
     val pendingManualDuplicate: PendingManualSmsDraft? = null,
     val pendingSmsMerge: PendingSmsMergePrompt? = null,
+    val pendingCardRefundApply: PendingCardRefundApplyPrompt? = null,
     val mergeCategoryOptions: List<ApprovalCategoryOptionUi> = emptyList(),
-)
-
-data class SmsMergeCandidateUi(
-    val transactionId: Long,
-    val amountFormatted: String,
-    val dateLabel: String,
-    val note: String?,
+    val isSelectionMode: Boolean = false,
+    val selectedApprovalIds: Set<Long> = emptySet(),
+    val canLinkSelection: Boolean = false,
+    val allPendingSelected: Boolean = false,
 )
 
 data class ApprovalCategoryOptionUi(
@@ -61,12 +60,47 @@ data class ApprovalCategoryOptionUi(
 )
 
 data class PendingSmsMergePrompt(
-    val approvalId: Long,
-    val candidates: List<SmsMergeCandidateUi>,
+    val approvalIds: List<Long>,
     val defaultCategoryId: Long?,
     val defaultCategoryName: String,
     val selectedCategoryId: Long? = null,
+    val selectedSubcategoryId: Long? = null,
+    val mergePickerHighlightedCategoryId: Long? = null,
+    val mergeCategories: List<com.mmr.feature.transaction.model.CategoryUi> = emptyList(),
     val useLedgerCategory: Boolean = false,
+    val userInitiatedLink: Boolean = false,
+    val isLoadingCandidates: Boolean = false,
+    val pickerYear: Int,
+    val pickerMonth: Int,
+    val monthTitle: String,
+    val noteQuery: String = "",
+    val groupedTransactions: List<com.mmr.feature.home.model.TransactionGroupUi> = emptyList(),
+    val isEmptyMonth: Boolean = false,
+) {
+    val allowCreateNew: Boolean = approvalIds.size == 1
+}
+
+enum class CardRefundApplyStep {
+    PICK_PURCHASE,
+    CONFIRM_AMOUNT,
+}
+
+data class PendingCardRefundApplyPrompt(
+    val approvalId: Long,
+    val refundAmount: Double,
+    val refundAmountLabel: String,
+    val smsSnippet: String,
+    val step: CardRefundApplyStep = CardRefundApplyStep.PICK_PURCHASE,
+    val selectedPurchaseId: Long? = null,
+    val isLoadingCandidates: Boolean = false,
+    val pickerYear: Int,
+    val pickerMonth: Int,
+    val monthTitle: String,
+    val noteQuery: String = "",
+    val groupedTransactions: List<com.mmr.feature.home.model.TransactionGroupUi> = emptyList(),
+    val isEmptyMonth: Boolean = false,
+    val partialRefundAmountText: String = "",
+    val applyFullRefund: Boolean = true,
 )
 
 sealed interface ApprovalCenterUiEvent {
@@ -129,9 +163,71 @@ sealed interface ApprovalCenterUiEvent {
         val transactionId: Long,
     ) : ApprovalCenterUiEvent
 
-    data class OnMergeCategorySelected(
-        val categoryId: Long?,
+    data class OnMergePickerParentSelected(
+        val categoryId: Long,
     ) : ApprovalCenterUiEvent
 
+    data class OnMergePickerSubcategorySelected(
+        val subcategoryId: Long,
+    ) : ApprovalCenterUiEvent
+
+    object OnMergePickerConfirmParentOnly : ApprovalCenterUiEvent
+
     object OnMergeUseLedgerCategory : ApprovalCenterUiEvent
+
+    object OnLinkPickerPreviousMonth : ApprovalCenterUiEvent
+
+    object OnLinkPickerNextMonth : ApprovalCenterUiEvent
+
+    data class OnLinkPickerNoteQueryChanged(
+        val query: String,
+    ) : ApprovalCenterUiEvent
+
+    data class OnLinkToExisting(
+        val id: Long,
+    ) : ApprovalCenterUiEvent
+
+    data class OnApprovalLongPress(
+        val id: Long,
+    ) : ApprovalCenterUiEvent
+
+    data class OnApprovalSelectionToggle(
+        val id: Long,
+    ) : ApprovalCenterUiEvent
+
+    object OnExitApprovalSelection : ApprovalCenterUiEvent
+
+    object OnApprovalSelectAll : ApprovalCenterUiEvent
+
+    object OnLinkSelectedApprovals : ApprovalCenterUiEvent
+
+    object OnDismissCardRefundApply : ApprovalCenterUiEvent
+
+    data class OnCardRefundSelectPurchase(
+        val transactionId: Long,
+    ) : ApprovalCenterUiEvent
+
+    object OnCardRefundBackToPicker : ApprovalCenterUiEvent
+
+    data class OnCardRefundToggleFull(
+        val full: Boolean,
+    ) : ApprovalCenterUiEvent
+
+    data class OnCardRefundPartialAmountChanged(
+        val text: String,
+    ) : ApprovalCenterUiEvent
+
+    object OnCardRefundConfirmApply : ApprovalCenterUiEvent
+
+    object OnCardRefundPickerPreviousMonth : ApprovalCenterUiEvent
+
+    object OnCardRefundPickerNextMonth : ApprovalCenterUiEvent
+
+    data class OnCardRefundPickerNoteQueryChanged(
+        val query: String,
+    ) : ApprovalCenterUiEvent
+
+    data class OnApplyRefundQuick(
+        val id: Long,
+    ) : ApprovalCenterUiEvent
 }

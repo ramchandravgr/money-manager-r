@@ -29,6 +29,9 @@ enum class SmsParseIntent {
 
     /** Credit card bill payment (already counted when spent on the card). */
     CARD_PAYMENT,
+
+    /** Merchant refund / reversal credited to the card — apply to an existing card spend. */
+    CARD_REFUND,
 }
 
 data class SmsTemplate(

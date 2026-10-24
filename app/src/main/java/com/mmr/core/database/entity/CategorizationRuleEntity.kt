@@ -7,11 +7,18 @@ import com.mmr.core.model.enums.CategorizationMatchType
 
 @Entity(
     tableName = "categorization_rules",
-    indices = [Index(value = ["priority"]), Index(value = ["isEnabled"])],
+    indices = [
+        Index(value = ["priority"]),
+        Index(value = ["isEnabled"]),
+        Index(value = ["syncId"], unique = true),
+    ],
 )
 data class CategorizationRuleEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
+    val syncId: String =
+        com.mmr.core.common.sync.MmrSyncId
+            .newId(),
     val priority: Int = 50,
     val matchType: CategorizationMatchType,
     val pattern: String,

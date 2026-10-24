@@ -12,7 +12,16 @@ import com.mmr.core.model.enums.TransactionType
  */
 object TransactionCashFlow {
     fun isLoanTopUp(transaction: TransactionEntity): Boolean =
-        transaction.sourceReferenceId?.startsWith("loan_topup:") == true
+        transaction.sourceReferenceId?.startsWith(LOAN_TOP_UP_REF_PREFIX) == true
+
+    /** Opening disbursal or additional top-up — visible in the ledger, not income/expense. */
+    fun isLoanPrincipalMovement(transaction: TransactionEntity): Boolean {
+        val ref = transaction.sourceReferenceId ?: return false
+        return ref.startsWith(LOAN_TOP_UP_REF_PREFIX) || ref.startsWith(LOAN_DISBURSAL_REF_PREFIX)
+    }
+
+    /** These transfers are informational for cash-flow; liability is on account opening balance (+ top-up bumps). */
+    fun skipsAccountBalanceRecompute(transaction: TransactionEntity): Boolean = isLoanPrincipalMovement(transaction)
 
     fun expenseAmount(
         transaction: TransactionEntity,
@@ -76,7 +85,10 @@ object TransactionCashFlow {
         val loanId = transaction.loanId ?: return false
         if (loanId <= 0L) return false
         if (loanType != expectedType) return false
-        if (isLoanTopUp(transaction)) return false
+        if (isLoanPrincipalMovement(transaction)) return false
         return transaction.type == TransactionType.TRANSFER
     }
+
+    private const val LOAN_TOP_UP_REF_PREFIX = "loan_topup:"
+    private const val LOAN_DISBURSAL_REF_PREFIX = "loan_disbursal:"
 }

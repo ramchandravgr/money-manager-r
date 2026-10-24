@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.mmr.core.data.preferences.AppDisplaySettingsSnapshot
 import com.mmr.core.data.preferences.AppDisplaySettingsStore
 import com.mmr.core.model.settings.MmrAmountColorScheme
+import com.mmr.core.model.settings.MmrAppColorTheme
 import com.mmr.core.model.settings.MmrInputOrder
 import com.mmr.core.model.settings.MmrStartScreenTab
 import com.mmr.core.model.settings.MmrSwipeBehavior
@@ -40,4 +41,6 @@ class ConfigurationViewModel
         fun setAutocomplete(enabled: Boolean) = displaySettingsStore.setAutocompleteEnabled(enabled)
 
         fun setInputOrder(order: MmrInputOrder) = displaySettingsStore.setInputOrder(order)
+
+        fun setAppColorTheme(theme: MmrAppColorTheme) = displaySettingsStore.setAppColorTheme(theme)
     }

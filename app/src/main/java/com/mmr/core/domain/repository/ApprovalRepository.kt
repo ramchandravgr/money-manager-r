@@ -17,6 +17,8 @@ interface ApprovalRepository {
 
     fun getPendingCount(): Flow<Int>
 
+    suspend fun getPendingCountOnce(): Int
+
     suspend fun getApprovalById(id: Long): TransactionApprovalEntity?
 
     suspend fun insertCandidates(candidates: List<ParsedSmsCandidate>): Int
@@ -40,6 +42,8 @@ interface ApprovalRepository {
         id: Long,
         fallbackAccountId: Long,
         fallbackCategoryId: Long?,
+        subcategoryId: Long? = null,
+        relatedAccountId: Long? = null,
     ): Long
 
     suspend fun mergeCandidateWithTransaction(
@@ -48,6 +52,24 @@ interface ApprovalRepository {
         categoryId: Long? = null,
         subcategoryId: Long? = null,
         useLedgerCategory: Boolean = false,
+    ): Long
+
+    suspend fun mergeApprovalsWithTransaction(
+        approvalIds: List<Long>,
+        transactionId: Long,
+        categoryId: Long? = null,
+        subcategoryId: Long? = null,
+        useLedgerCategory: Boolean = false,
+    ): Long
+
+    /**
+     * Applies a pending [SmsApprovalKind.CARD_REFUND] to an existing card purchase.
+     * Reduces purchase net amount and links refund SMS to the same transaction.
+     */
+    suspend fun applyCardRefund(
+        approvalId: Long,
+        purchaseTransactionId: Long,
+        refundAmount: Double,
     ): Long
 
     suspend fun rejectCandidate(id: Long)
