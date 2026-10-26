@@ -23,6 +23,9 @@ object MmrBrandColors {
     val SurfaceWhite: Color get() = p.surface
     val BorderMain: Color get() = p.borderMain
 
+    /** Selected row fill on grouped lists (safe when list and surface match, e.g. OLED). */
+    val RowSelectionFill: Color get() = p.active.copy(alpha = 0.16f)
+
     /** Soft gray fill for settings subsection headers (between screen bg and white rows). */
     val SettingsSectionHeaderFill: Color
         get() {

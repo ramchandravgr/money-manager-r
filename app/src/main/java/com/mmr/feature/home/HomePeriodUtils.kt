@@ -17,11 +17,10 @@ object HomePeriodUtils {
         return "$month ${yearMonth.year}"
     }
 
-    /** Compact label for narrow home-screen widgets (e.g. 1×2). */
+    /** Full month + year for home-screen month summary widget. */
     fun widgetMonthLabel(yearMonth: YearMonth): String {
-        val month = yearMonth.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())
-        val yearSuffix = (yearMonth.year % 100).toString().padStart(2, '0')
-        return "$month '$yearSuffix"
+        val month = yearMonth.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
+        return "$month ${yearMonth.year}"
     }
 
     /**

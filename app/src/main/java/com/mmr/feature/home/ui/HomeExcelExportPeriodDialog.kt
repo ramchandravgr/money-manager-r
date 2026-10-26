@@ -39,7 +39,7 @@ fun HomeExcelExportPeriodDialog(
                 Modifier
                     .fillMaxWidth(0.92f)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color.White),
+                    .background(MmrBrandColors.SurfaceWhite),
         ) {
             Text(
                 text = title,

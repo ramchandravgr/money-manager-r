@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.mmr.app.ui.copy.mmrStaticLabelCase
 import com.mmr.app.ui.theme.MmrBrandColors
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,15 +38,15 @@ fun MmrTopAppBar(
     onNavigateBack: (() -> Unit)? = null,
     /** When set with back navigation, shows a text action (e.g. "Cancel") instead of the back icon. */
     navigationLabel: String? = null,
-    /** @deprecated Use [useBrandHeaderStyle] — kept for call sites; enables brand indigo header when true. */
-    usePrimaryContainerColors: Boolean = false,
     /** Indigo header that extends under the status bar (matches Transactions / Home). */
     useBrandHeaderStyle: Boolean = false,
     /** Lighter header title (15sp, normal weight). Default true when [useBrandHeaderStyle]. */
     useCompactHeaderTitle: Boolean? = null,
+    /** When false, [title] is shown verbatim (user-entered names, etc.). */
+    applyStaticLabelCaseToTitle: Boolean = true,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
-    val brandHeader = useBrandHeaderStyle || usePrimaryContainerColors
+    val brandHeader = useBrandHeaderStyle
     val compactTitle = useCompactHeaderTitle ?: brandHeader
 
     val colors: TopAppBarColors =
@@ -67,7 +68,7 @@ fun MmrTopAppBar(
                 val compact = brandHeader && compactTitle
                 Column {
                     Text(
-                        text = title,
+                        text = if (applyStaticLabelCaseToTitle) title.mmrStaticLabelCase() else title,
                         style =
                             if (compact) {
                                 MaterialTheme.typography.titleMedium
@@ -100,7 +101,7 @@ fun MmrTopAppBar(
                     if (navigationLabel != null) {
                         TextButton(onClick = onNavigateBack) {
                             Text(
-                                text = navigationLabel,
+                                text = navigationLabel.mmrStaticLabelCase(),
                                 color =
                                     if (brandHeader) {
                                         MmrBrandColors.HeaderIcon

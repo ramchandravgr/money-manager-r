@@ -7,6 +7,8 @@ import com.mmr.core.model.settings.MmrAppColorTheme
 enum class MmrThemeAppearance {
     LIGHT,
     DARK,
+    /** Dark palette with true-black surfaces (OLED). */
+    OLED,
 }
 
 object MmrThemePresets {
@@ -17,6 +19,7 @@ object MmrThemePresets {
         when (appearance) {
             MmrThemeAppearance.LIGHT -> light(theme)
             MmrThemeAppearance.DARK -> dark(theme)
+            MmrThemeAppearance.OLED -> dark(theme).toOledSurfaces()
         }
 
     fun light(theme: MmrAppColorTheme): MmrBrandPalette =
@@ -34,8 +37,11 @@ object MmrThemePresets {
         }
 
     /** Header, accent, and surface — for settings theme picker previews. */
-    fun appThemePreviewColors(theme: MmrAppColorTheme): List<Color> {
-        val palette = light(theme)
+    fun appThemePreviewColors(
+        theme: MmrAppColorTheme,
+        appearance: MmrThemeAppearance = MmrThemeAppearance.LIGHT,
+    ): List<Color> {
+        val palette = resolve(theme, appearance)
         return listOf(palette.header, palette.active, palette.surface)
     }
 
@@ -43,8 +49,9 @@ object MmrThemePresets {
     fun amountSchemePreviewColors(
         theme: MmrAppColorTheme,
         scheme: MmrAmountColorScheme,
+        appearance: MmrThemeAppearance = MmrThemeAppearance.LIGHT,
     ): List<Color> {
-        val palette = light(theme)
+        val palette = resolve(theme, appearance)
         return listOf(palette.incomeColor(scheme), palette.expenseColor(scheme))
     }
 
@@ -402,7 +409,7 @@ object MmrThemePresets {
                 borderMain = Color(0xFF2E313C),
                 transactionListBorder = Color(0xFF3A3D48),
                 configBackground = Color(0xFF0E1016),
-            )
+            ).withDarkChrome()
         }
 
     private fun oceanDark() = tintDark(oceanLight())
@@ -423,23 +430,55 @@ object MmrThemePresets {
 
     private fun charcoalGoldDark() = tintDark(charcoalGoldLight())
 
-    private fun tintDark(light: MmrBrandPalette): MmrBrandPalette =
-        light.copy(
-            header = light.header.copy(alpha = 1f).let { Color(0xFF101820) },
-            headerSelection = Color(0xFF0A1218),
-            headerBrandTile = Color(0xFF060C10),
-            listBackground = Color(0xFF0F1418),
-            surface = Color(0xFF171D22),
-            navBackground = Color(0xFF12181C),
-            reversal = Color(0xFFE8F4F8),
-            textStrong = Color(0xFFE2E8F0),
-            textMedium = Color(0xFF94A3B8),
-            textLight = Color(0xFF64748B),
-            borderMain = Color(0xFF2A3440),
-            transactionListBorder = Color(0xFF334155),
-            tabText = Color(0xFF94A3B8),
-            configBackground = Color(0xFF0A0E12),
+    private fun MmrBrandPalette.toOledSurfaces(): MmrBrandPalette =
+        copy(
+            listBackground = Color.Black,
+            navBackground = Color.Black,
+            configBackground = Color.Black,
+            surface = Color(0xFF121212),
+            borderMain = Color(0xFF2C2C2C),
+            transactionListBorder = Color(0xFF383838),
+            weekHighlight = blendColors(Color.Black, active, 0.24f),
         )
+
+    private fun MmrBrandPalette.withDarkChrome(): MmrBrandPalette =
+        copy(
+            weekHighlight = blendColors(listBackground, active, 0.22f),
+            calendarCellBorder = borderMain,
+        )
+
+    private fun blendColors(
+        base: Color,
+        tint: Color,
+        fraction: Float,
+    ): Color {
+        val f = fraction.coerceIn(0f, 1f)
+        return Color(
+            red = base.red + (tint.red - base.red) * f,
+            green = base.green + (tint.green - base.green) * f,
+            blue = base.blue + (tint.blue - base.blue) * f,
+            alpha = 1f,
+        )
+    }
+
+    private fun tintDark(light: MmrBrandPalette): MmrBrandPalette =
+        light
+            .copy(
+                header = light.header.copy(alpha = 1f).let { Color(0xFF101820) },
+                headerSelection = Color(0xFF0A1218),
+                headerBrandTile = Color(0xFF060C10),
+                listBackground = Color(0xFF0F1418),
+                surface = Color(0xFF171D22),
+                navBackground = Color(0xFF12181C),
+                reversal = Color(0xFFE8F4F8),
+                textStrong = Color(0xFFE2E8F0),
+                textMedium = Color(0xFF94A3B8),
+                textLight = Color(0xFF64748B),
+                borderMain = Color(0xFF2A3440),
+                transactionListBorder = Color(0xFF334155),
+                tabText = Color(0xFF94A3B8),
+                configBackground = Color(0xFF0A0E12),
+            ).withDarkChrome()
 
     private fun buildPalette(
         header: Color,

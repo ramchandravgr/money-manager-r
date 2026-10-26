@@ -34,12 +34,10 @@ import com.mmr.app.ui.theme.MmrBrandColors
 
 /**
  * Layout for settings flows:
- * - [MmrSettingsScreenLayout.Hub] — full-bleed white rows (legacy).
  * - [MmrSettingsScreenLayout.InsetGrouped] — iOS Settings–style inset groups ([MmrIosSettingsSection]).
  * - [MmrSettingsScreenLayout.Form] — padded scroll body (sub-screens: backup, LAN sync, etc.).
  */
 enum class MmrSettingsScreenLayout {
-    Hub,
     InsetGrouped,
     Form,
 }
@@ -64,7 +62,6 @@ fun MmrSettingsScreenScaffold(
     val resolvedStyle =
         visualStyle
             ?: when (layout) {
-                MmrSettingsScreenLayout.Hub -> MmrSettingsVisualStyle.Standard
                 MmrSettingsScreenLayout.InsetGrouped -> MmrSettingsVisualStyle.Compact
                 MmrSettingsScreenLayout.Form -> MmrSettingsVisualStyle.Compact
             }
@@ -131,7 +128,6 @@ private fun SettingsScreenScaffoldBody(
                     .verticalScroll(scrollState)
                     .then(
                         when (layout) {
-                            MmrSettingsScreenLayout.Hub -> Modifier
                             MmrSettingsScreenLayout.InsetGrouped ->
                                 Modifier.padding(
                                     horizontal = MmrDimens.iosSettingsHorizontalInset,
@@ -154,9 +150,8 @@ private fun SettingsScreenScaffoldBody(
                     ),
             verticalArrangement =
                 when (layout) {
-                    MmrSettingsScreenLayout.Hub -> Arrangement.Top
                     MmrSettingsScreenLayout.InsetGrouped -> Arrangement.Top
-                    else ->
+                    MmrSettingsScreenLayout.Form ->
                         when (visualStyle) {
                             MmrSettingsVisualStyle.Compact ->
                                 Arrangement.spacedBy(MmrDimens.settingsFormItemGapCompact)

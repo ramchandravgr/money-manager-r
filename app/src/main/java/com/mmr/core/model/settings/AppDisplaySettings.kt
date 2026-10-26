@@ -122,3 +122,21 @@ enum class MmrInputOrder {
                 FROM_CATEGORY -> "From Category"
             }
 }
+
+/** Light/dark appearance for app chrome and widget amount colors. */
+enum class MmrThemeMode {
+    SYSTEM,
+    LIGHT,
+    DARK,
+    OLED,
+    ;
+
+    val label: String
+        get() =
+            when (this) {
+                SYSTEM -> "System default"
+                LIGHT -> "Light"
+                DARK -> "Dark"
+                OLED -> "Pure black"
+            }
+}

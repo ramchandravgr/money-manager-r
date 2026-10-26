@@ -4,7 +4,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.mmr.core.backup.model.MmrAppSettingsBackup
 import com.mmr.core.backup.model.MmrBackupPayload
 import com.mmr.core.database.entity.AccountEntity
+import com.mmr.core.database.entity.BudgetEntity
 import com.mmr.core.database.entity.CategoryEntity
+import com.mmr.core.model.enums.BudgetPeriodType
 import com.mmr.core.database.entity.SyncTombstoneEntity
 import com.mmr.core.database.entity.TransactionEntity
 import com.mmr.core.lansync.SyncEntityType
@@ -64,6 +66,45 @@ class BackupJsonCodecInstrumentedTest {
         assertEquals(1, decoded.categories.size)
         assertEquals("Food", decoded.categories.first().name)
         assertEquals(42.5, decoded.transactions.first().amount, 0.001)
+    }
+
+    @Test
+    fun encodeDecode_roundTrip_preservesBudgets() {
+        val now = 1_700_000_000_000L
+        val payload =
+            MmrBackupPayload(
+                formatVersion = BackupJsonCodec.CURRENT_FORMAT_VERSION,
+                appId = BackupJsonCodec.EXPECTED_APP_ID,
+                exportedAtEpochMillis = now,
+                databaseVersion = 19,
+                categories = emptyList(),
+                subcategories = emptyList(),
+                accounts = emptyList(),
+                loans = emptyList(),
+                transactions = emptyList(),
+                loanPayments = emptyList(),
+                recurringRules = emptyList(),
+                budgets =
+                    listOf(
+                        BudgetEntity(
+                            id = 9L,
+                            syncId = "budget-sync-1",
+                            categoryId = 1L,
+                            amountLimit = 5000.0,
+                            periodType = BudgetPeriodType.MONTHLY,
+                            alertOnExceeded = true,
+                            createdAt = now,
+                            updatedAt = now,
+                        ),
+                    ),
+                notificationRules = emptyList(),
+                smsMessageRecords = emptyList(),
+                transactionApprovals = emptyList(),
+            )
+        val decoded = BackupJsonCodec.decode(BackupJsonCodec.encode(payload))
+        assertEquals(1, decoded.budgets.size)
+        assertEquals(5000.0, decoded.budgets.first().amountLimit, 0.001)
+        assertTrue(decoded.budgets.first().alertOnExceeded)
     }
 
     @Test

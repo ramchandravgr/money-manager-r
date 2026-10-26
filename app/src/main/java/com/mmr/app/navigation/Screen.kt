@@ -27,6 +27,14 @@ sealed class Screen(
 
     object Stats : Screen("stats")
 
+    object Budgets : Screen("budgets")
+
+    object AddBudget : Screen("add_budget")
+
+    object EditBudget : Screen("edit_budget/{budgetId}") {
+        fun createRoute(budgetId: Long): String = "edit_budget/$budgetId"
+    }
+
     object StatsCategoryDetail : Screen("stats_category") {
         const val ARG_CATEGORY_ID = "categoryId"
         const val ARG_TRANSACTION_TYPE = "transactionType"
@@ -115,6 +123,14 @@ sealed class Screen(
 
     object EditAccount : Screen("edit_account/{accountId}") {
         fun createRoute(accountId: Long): String = "edit_account/$accountId"
+    }
+
+    object Scheduled : Screen("scheduled") {
+        const val ARG_SECTION = "section"
+
+        val routeWithArgs = "scheduled?${ARG_SECTION}={${ARG_SECTION}}"
+
+        fun createRoute(section: String = "loans"): String = "scheduled?$ARG_SECTION=$section"
     }
 
     object Loans : Screen("loans")

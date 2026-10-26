@@ -11,4 +11,5 @@ object SyncEntityType {
     const val ATTACHMENT = "ATTACHMENT"
     const val CATEGORIZATION_RULE = "CATEGORIZATION_RULE"
     const val NOTIFICATION_RULE = "NOTIFICATION_RULE"
+    const val BUDGET = "BUDGET"
 }

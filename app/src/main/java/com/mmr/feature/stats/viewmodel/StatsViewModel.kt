@@ -162,8 +162,8 @@ class StatsViewModel
                         activeTabTotalFormatted = MmrMoneyFormat.formatInrWithSpace(tabTotal),
                         errorMessage = shell.error,
                         isEmpty = shell.error == null && tabTotal == 0.0 && activeBreakdowns.isEmpty(),
-                        incomeTabEmpty = shell.error == null && income == 0.0 && incomeBreakdowns.isEmpty(),
-                        expenseTabEmpty = shell.error == null && expense == 0.0 && expenseBreakdowns.isEmpty(),
+                        incomeTabEmpty = shell.error == null && income == 0.0,
+                        expenseTabEmpty = shell.error == null && expense == 0.0,
                         showPeriodStartPicker = shell.showStartPicker,
                         showPeriodEndPicker = shell.showEndPicker,
                         showMonthPicker = shell.showMonthPicker,
@@ -302,7 +302,7 @@ class StatsViewModel
             spendings: List<com.mmr.core.database.model.CategorySpending>,
             tabTotal: Double,
         ): List<CategoryBreakdownUi> {
-            if (tabTotal <= 0.0 && spendings.isEmpty()) return emptyList()
+            if (tabTotal <= 0.0) return emptyList()
             val categorizedTotal = spendings.sumOf { it.totalAmount }
             val denominator = if (tabTotal > 0) tabTotal else categorizedTotal
             if (denominator <= 0.0) return emptyList()

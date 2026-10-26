@@ -56,6 +56,17 @@ fun transactionCategoryPickerCallbacks(
         },
     )
 
+fun budgetCategoryPickerCallbacks(
+    onEvent: (com.mmr.feature.budget.model.AddEditBudgetUiEvent) -> Unit,
+): CategoryPickerPanelCallbacks =
+    CategoryPickerPanelCallbacks(
+        onParentSelected = { onEvent(com.mmr.feature.budget.model.AddEditBudgetUiEvent.OnPickerParentSelected(it)) },
+        onSubcategorySelected = {
+            onEvent(com.mmr.feature.budget.model.AddEditBudgetUiEvent.OnPickerSubcategorySelected(it))
+        },
+        onConfirmParentOnly = { onEvent(com.mmr.feature.budget.model.AddEditBudgetUiEvent.OnPickerConfirmParentOnly) },
+    )
+
 fun recurringCategoryPickerCallbacks(
     onEvent: (com.mmr.feature.recurring.model.AddEditRecurringRuleUiEvent) -> Unit,
 ): CategoryPickerPanelCallbacks =

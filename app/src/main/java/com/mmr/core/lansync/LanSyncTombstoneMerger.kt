@@ -89,6 +89,7 @@ class LanSyncTombstoneMerger
                 SyncEntityType.ATTACHMENT -> applyAttachmentTombstone(tombstone)
                 SyncEntityType.CATEGORIZATION_RULE -> applyCategorizationRuleTombstone(tombstone)
                 SyncEntityType.NOTIFICATION_RULE -> applyNotificationRuleTombstone(tombstone)
+                SyncEntityType.BUDGET -> applyBudgetTombstone(tombstone)
                 else -> LanSyncTombstoneMergeStats()
             }
 
@@ -176,6 +177,16 @@ class LanSyncTombstoneMerger
                 return LanSyncTombstoneMergeStats(keptAfterLocalEdit = 1)
             }
             database.categorizationRuleDao().deleteBySyncId(tombstone.syncId)
+            return LanSyncTombstoneMergeStats(applied = 1)
+        }
+
+        private suspend fun applyBudgetTombstone(tombstone: SyncTombstoneEntity): LanSyncTombstoneMergeStats {
+            val budget =
+                database.budgetDao().getBySyncId(tombstone.syncId) ?: return LanSyncTombstoneMergeStats()
+            if (budget.updatedAt > tombstone.deletedAt) {
+                return LanSyncTombstoneMergeStats(keptAfterLocalEdit = 1)
+            }
+            database.budgetDao().deleteBySyncId(tombstone.syncId)
             return LanSyncTombstoneMergeStats(applied = 1)
         }
 

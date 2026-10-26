@@ -66,6 +66,9 @@ object TestDatabaseModule {
     fun provideCategoryDao(database: MmrDatabase): CategoryDao = database.categoryDao()
 
     @Provides
+    fun provideBudgetDao(database: MmrDatabase): com.mmr.core.database.dao.BudgetDao = database.budgetDao()
+
+    @Provides
     fun provideAccountDao(database: MmrDatabase): AccountDao = database.accountDao()
 
     @Provides

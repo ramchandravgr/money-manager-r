@@ -27,4 +27,6 @@ internal fun approvalCenterIntent(
 
 internal fun homeIntent(context: Context): Intent = mainActivityIntent(context, Screen.Home.route)
 
+internal fun budgetsIntent(context: Context): Intent = mainActivityIntent(context, Screen.Budgets.route)
+
 internal val ApprovalWidgetLaunch = ApprovalWidgetLaunchAction

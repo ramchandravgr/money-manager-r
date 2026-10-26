@@ -20,6 +20,7 @@ import com.mmr.core.model.settings.MmrAppColorTheme
 import com.mmr.core.model.settings.MmrInputOrder
 import com.mmr.core.model.settings.MmrStartScreenTab
 import com.mmr.core.model.settings.MmrSwipeBehavior
+import com.mmr.core.model.settings.MmrThemeMode
 import com.mmr.core.model.settings.MmrTimeDisplay
 import com.mmr.core.model.settings.MmrWeekStartDay
 import javax.inject.Inject
@@ -123,6 +124,8 @@ class AppSettingsBackupCoordinator
                 autocompleteEnabled = autocompleteEnabled,
                 inputOrder = inputOrder.name,
                 appColorTheme = appColorTheme.name,
+                themeMode = themeMode.name,
+                hiddenMainNavIds = hiddenMainNavIds.sorted(),
             )
 
         private fun MmrDisplaySettingsBackup.toSnapshot() =
@@ -141,6 +144,8 @@ class AppSettingsBackupCoordinator
                 autocompleteEnabled = autocompleteEnabled,
                 inputOrder = enumOrDefault(inputOrder, MmrInputOrder.FROM_AMOUNT),
                 appColorTheme = enumOrDefault(appColorTheme, MmrAppColorTheme.CLASSIC_CORAL),
+                themeMode = enumOrDefault(themeMode, MmrThemeMode.SYSTEM),
+                hiddenMainNavIds = hiddenMainNavIds.toSet(),
             )
 
         private inline fun <reified T : Enum<T>> enumOrDefault(

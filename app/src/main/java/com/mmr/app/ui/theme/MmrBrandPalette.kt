@@ -1,5 +1,6 @@
 package com.mmr.app.ui.theme
 
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
@@ -81,6 +82,23 @@ data class MmrBrandPalette(
 
     fun toMaterialLight() =
         lightColorScheme(
+            primary = active,
+            onPrimary = headerIcon,
+            primaryContainer = header,
+            onPrimaryContainer = headerIcon,
+            secondary = header,
+            background = listBackground,
+            onBackground = reversal,
+            surface = surface,
+            onSurface = reversal,
+            surfaceVariant = navBackground,
+            onSurfaceVariant = textMedium,
+            outline = borderMain,
+            outlineVariant = borderMain,
+        )
+
+    fun toMaterialDark() =
+        darkColorScheme(
             primary = active,
             onPrimary = headerIcon,
             primaryContainer = header,

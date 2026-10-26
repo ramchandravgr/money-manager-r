@@ -60,12 +60,9 @@ fun ParentCategoryHeader(
 
 @Composable
 fun SubcategoryListSection(
-    parentName: String,
-    @Suppress("UNUSED_PARAMETER") parentColorHex: String,
     subcategories: List<SubcategoryItemUi>,
     onAddSubcategory: () -> Unit,
     onEditSubcategory: (Long) -> Unit,
-    @Suppress("UNUSED_PARAMETER") onDeleteSubcategory: (SubcategoryItemUi) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     MmrIosSettingsSection(

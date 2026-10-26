@@ -92,4 +92,9 @@ class EnumConverters {
     @TypeConverter fun fromSmsLinkRole(value: SmsLinkRole?): String? = value?.name
 
     @TypeConverter fun toSmsLinkRole(value: String?): SmsLinkRole? = value?.let { SmsLinkRole.valueOf(it) }
+
+    @TypeConverter fun fromBudgetPeriodType(value: BudgetPeriodType?): String? = value?.name
+
+    @TypeConverter fun toBudgetPeriodType(value: String?): BudgetPeriodType? =
+        value?.let { BudgetPeriodType.valueOf(it) }
 }

@@ -16,6 +16,7 @@ class PeriodExcelExporter
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
+        private val downloadsSaver: PeriodExcelDownloadsSaver,
     ) {
         suspend fun exportPeriod(
             items: List<TransactionWithDetails>,
@@ -41,4 +42,22 @@ class PeriodExcelExporter
                 }
                 file
             }
+
+        suspend fun exportPeriodToDownloads(
+            items: List<TransactionWithDetails>,
+            fileName: String,
+            zoneId: ZoneId,
+            currencySymbol: String,
+            currencyCode: String,
+        ): String {
+            val cacheFile =
+                exportPeriod(
+                    items = items,
+                    fileName = fileName,
+                    zoneId = zoneId,
+                    currencySymbol = currencySymbol,
+                    currencyCode = currencyCode,
+                )
+            return downloadsSaver.saveToDownloads(cacheFile, fileName)
+        }
     }

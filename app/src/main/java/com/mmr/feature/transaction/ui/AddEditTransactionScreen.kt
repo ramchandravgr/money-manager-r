@@ -1,5 +1,6 @@
 package com.mmr.feature.transaction.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -40,6 +41,13 @@ fun AddEditTransactionRoute(
             uri?.let { viewModel.onEvent(AddEditTransactionUiEvent.OnReceiptPicked(it.toString())) }
         }
     var expandedField by remember { mutableStateOf(TransactionFormExpandedField.None) }
+    var viewingReceiptPath by remember { mutableStateOf<String?>(null) }
+
+    val requestNavigateBack = {
+        viewModel.onEvent(AddEditTransactionUiEvent.OnBackClick)
+    }
+
+    BackHandler(onBack = requestNavigateBack)
 
     LaunchedEffect(state.selectedType) {
         expandedField = TransactionFormExpandedField.None
@@ -49,6 +57,31 @@ fun AddEditTransactionRoute(
         if (state.isSaved) {
             onNavigateBack()
         }
+    }
+
+    LaunchedEffect(state.exitWithoutSaving) {
+        if (state.exitWithoutSaving) {
+            onNavigateBack()
+        }
+    }
+
+    if (state.showUnsavedChangesDialog) {
+        MmrContentDialog(
+            title = "Discard changes?",
+            message = "You have unsaved changes on this transaction. Leave without saving?",
+            onDismiss = { viewModel.onEvent(AddEditTransactionUiEvent.OnDismissUnsavedChangesDialog) },
+            confirmLabel = "Discard",
+            onConfirm = { viewModel.onEvent(AddEditTransactionUiEvent.OnConfirmDiscardChanges) },
+            confirmIsDestructive = true,
+            dismissLabel = "Keep editing",
+        )
+    }
+
+    viewingReceiptPath?.let { path ->
+        TransactionReceiptViewerDialog(
+            filePath = path,
+            onDismiss = { viewingReceiptPath = null },
+        )
     }
 
     if (state.showLoanDeleteDialog) {
@@ -105,7 +138,7 @@ fun AddEditTransactionRoute(
                         else -> "Expense"
                     },
                 showBackNavigation = true,
-                onNavigateBack = onNavigateBack,
+                onNavigateBack = requestNavigateBack,
                 useBrandHeaderStyle = true,
                 actions = {
                     if (state.showDeleteButton) {
@@ -341,6 +374,7 @@ fun AddEditTransactionRoute(
                             canAddMore =
                                 state.receipts.size <
                                     TransactionAttachmentRepositoryImpl.MAX_ATTACHMENTS_PER_TRANSACTION,
+                            onReceiptClick = { viewingReceiptPath = it },
                         )
 
                         state.errorMessage?.let { error ->

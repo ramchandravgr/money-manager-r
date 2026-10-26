@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.room.withTransaction
 import com.mmr.core.attachment.TransactionAttachmentStore
+import com.mmr.core.common.image.MmrReceiptImage
 import com.mmr.core.common.sync.MmrSyncId
 import com.mmr.core.database.MmrDatabase
 import com.mmr.core.database.dao.TransactionAttachmentDao
@@ -46,9 +47,15 @@ class TransactionAttachmentRepositoryImpl
             }
             val resolver = context.contentResolver
             val mimeType = resolver.getType(uri) ?: "image/jpeg"
-            val bytes =
+            val rawBytes =
                 resolver.openInputStream(uri)?.use { it.readBytes() }
                     ?: throw IllegalArgumentException("Could not read image.")
+            val bytes =
+                if (mimeType.startsWith("image/")) {
+                    MmrReceiptImage.normalizeUriBytes(rawBytes)
+                } else {
+                    rawBytes
+                }
             if (bytes.size > MAX_ATTACHMENT_BYTES) {
                 throw IllegalArgumentException("Image is too large (max ${MAX_ATTACHMENT_BYTES / (1024 * 1024)} MB).")
             }

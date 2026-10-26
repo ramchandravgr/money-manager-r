@@ -120,6 +120,16 @@ class StatsCategoryDetailViewModel
                 )
             }
 
+        /** Updates as soon as the anchor changes; do not use [uiState].periodStartMillis for swipe (DB-backed state lags). */
+        val periodSwipeKey: StateFlow<Long> =
+            periodConfig
+                .map { it.startMillis }
+                .stateIn(
+                    viewModelScope,
+                    SharingStarted.WhileSubscribed(5000),
+                    0L,
+                )
+
         private val categoryMeta =
             categoryRepository
                 .getActiveCategories()

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MMR — 3D slice cylinder (per-segment discs)</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: #0b0f17;
+      color: #f1f5f9;
+    }
+    .phone {
+      width: 100%;
+      max-width: 400px;
+      background: #0f1523;
+      border-radius: 24px;
+      border: 1px solid rgba(255,255,255,0.08);
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+    }
+    .hdr {
+      padding: 16px 20px 8px;
+      font-size: 13px;
+      color: #94a3b8;
+    }
+    .hdr strong { color: #f8fafc; font-size: 15px; display: block; margin-top: 4px; }
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 1px solid #1e293b;
+      text-align: center;
+      font-size: 12px;
+    }
+    .tabs div { padding: 10px; color: #64748b; }
+    .tabs .on { color: #fbbf24; border-bottom: 2px solid #fbbf24; font-weight: 600; }
+    .main {
+      display: flex;
+      gap: 12px;
+      padding: 20px 16px;
+      align-items: center;
+    }
+    .cyl { flex: 0 0 150px; }
+    .cyl svg { width: 100%; height: auto; display: block; filter: drop-shadow(0 12px 24px rgba(0,0,0,0.5)); }
+    .card {
+      flex: 1;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 12px;
+      font-size: 12px;
+    }
+    .card .amt { font-size: 20px; font-weight: 700; margin: 6px 0; }
+    .note {
+      padding: 0 20px 16px;
+      font-size: 11px;
+      color: #64748b;
+      line-height: 1.45;
+    }
+    .note code { color: #94a3b8; }
+    button.seg { cursor: pointer; }
+    button.seg.dim { opacity: 0.28; }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <div class="hdr">
+      Expenses · Oct 2026
+      <strong>₹1,782.00</strong>
+    </div>
+    <div class="tabs">
+      <div>Income +₹0</div>
+      <div class="on">Expenses −₹1,782</div>
+    </div>
+    <div class="main">
+      <div class="cyl">
+        <svg id="svg" viewBox="0 0 160 320" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="card" id="focus">
+        <div id="focusName">Food &amp; dining</div>
+        <div class="amt" id="focusAmt">₹520</div>
+        <div id="focusPct">29.2% of expenses</div>
+      </div>
+    </div>
+    <p class="note">
+      <strong>Design:</strong> each category is a <strong>3D disc slice</strong> — side body uses top/bottom
+      <code>A</code> elliptical arcs + a visible <code>&lt;ellipse&gt;</code> cap on that slice (your OneDrive tracker).
+      Not the flat horizontal cuts used on system Storage.
+    </p>
+  </div>
+
+  <script>
+    const CX = 80, RX = 50, RY = 14;
+    const Y_TOP = 36, Y_BOT = 288;
+    const INNER_H = Y_BOT - Y_TOP;
+
+    const categories = [
+      { id: "food", name: "Food & dining", amount: 520, color: "#ff4b60" },
+      { id: "transport", name: "Transport", amount: 340, color: "#5b8def" },
+      { id: "shopping", name: "Shopping", amount: 422, color: "#10b981" },
+      { id: "bills", name: "Bills & utilities", amount: 280, color: "#8b5cf6" },
+      { id: "other", name: "Other", amount: 220, color: "#94a3b8" },
+    ];
+    const total = categories.reduce((s, c) => s + c.amount, 0);
+    const FILL = 0.92;
+
+    let selected = "food";
+
+    function shade(hex, n) {
+      const x = parseInt(hex.slice(1), 16);
+      const ch = (i) => Math.max(0, Math.min(255, ((x >> i) & 255) + n));
+      return "#" + [ch(16), ch(8), ch(0)].map((v) => v.toString(16).padStart(2, "0")).join("");
+    }
+
+    /** One volumetric slice: curved top & bottom (arc), plus elliptical lid. */
+    function slicePath(xL, xR, yTop, yBot) {
+      return [
+        `M ${xL} ${yTop}`,
+        `L ${xL} ${yBot}`,
+        `A ${RX} ${RY} 0 0 0 ${xR} ${yBot}`,
+        `L ${xR} ${yTop}`,
+        `A ${RX} ${RY} 0 0 1 ${xL} ${yTop}`,
+        "Z",
+      ].join(" ");
+    }
+
+    function render() {
+      const svg = document.getElementById("svg");
+      const xL = CX - RX, xR = CX + RX;
+      const fillH = INNER_H * FILL;
+      let y = Y_BOT;
+
+      const bands = [];
+      categories.forEach((c) => {
+        const h = fillH * (c.amount / total);
+        const yTop = y - h;
+        bands.push({ ...c, yTop, yBot: y, h, midY: yTop + h / 2 });
+        y = yTop;
+      });
+      const yStackTop = y;
+
+      let defs = "<defs>";
+      bands.forEach((b, i) => {
+        defs += `<linearGradient id="g${i}" x1="0" x2="1">
+          <stop offset="0%" stop-color="${shade(b.color, -35)}"/>
+          <stop offset="45%" stop-color="${b.color}"/>
+          <stop offset="100%" stop-color="${shade(b.color, -25)}"/>
+        </linearGradient>`;
+      });
+      defs += `<linearGradient id="glass" x1="0" x2="1">
+        <stop offset="0%" stop-color="#fff" stop-opacity=".12"/>
+        <stop offset="50%" stop-color="#fff" stop-opacity=".02"/>
+        <stop offset="100%" stop-color="#000" stop-opacity=".2"/>
+      </linearGradient></defs>`;
+
+      let body = `<path d="M ${xL} ${Y_TOP} L ${xL} ${Y_BOT} A ${RX} ${RY} 0 0 0 ${xR} ${Y_BOT} L ${xR} ${Y_TOP} A ${RX} ${RY} 0 0 1 ${xL} ${Y_TOP} Z" fill="#131b2e"/>`;
+
+      if (yStackTop > Y_TOP + 2) {
+        body += `<path d="${slicePath(xL, xR, Y_TOP, yStackTop)}" fill="rgba(255,255,255,0.06)"/>`;
+      }
+
+      bands.slice().reverse().forEach((b, i) => {
+        const dim = selected && selected !== b.id;
+        body += `<g class="seg" data-id="${b.id}" style="opacity:${dim ? 0.3 : 1}">`;
+        body += `<path d="${slicePath(xL, xR, b.yTop, b.yBot)}" fill="url(#g${bands.length - 1 - i})"/>`;
+        body += `<ellipse cx="${CX}" cy="${b.yTop}" rx="${RX}" ry="${RY}" fill="${b.color}" opacity="0.72"/>`;
+        body += `<ellipse cx="${CX}" cy="${b.yTop}" rx="${RX}" ry="${RY}" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.8"/>`;
+        body += `</g>`;
+      });
+
+      body += `<path d="M ${xL} ${Y_TOP} L ${xL} ${Y_BOT} A ${RX} ${RY} 0 0 0 ${xR} ${Y_BOT} L ${xR} ${Y_TOP} A ${RX} ${RY} 0 0 1 ${xL} ${Y_TOP} Z" fill="url(#glass)" pointer-events="none"/>`;
+      body += `<ellipse cx="${CX}" cy="${Y_BOT}" rx="${RX}" ry="${RY}" fill="${shade(categories[0].color, -40)}" stroke="rgba(255,255,255,0.1)"/>`;
+      body += `<ellipse cx="${CX}" cy="${Y_TOP}" rx="${RX}" ry="${RY}" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.35)" stroke-width="1.2"/>`;
+
+      const sel = bands.find((b) => b.id === selected);
+      if (sel) {
+        body += `<polyline points="${xR},${sel.midY} 138,${sel.midY} 155,${sel.midY - 20}" fill="none" stroke="${sel.color}" stroke-width="2" stroke-linecap="round"/>`;
+        body += `<circle cx="${xR}" cy="${sel.midY}" r="4" fill="#fff" stroke="${sel.color}" stroke-width="2"/>`;
+      }
+
+      svg.innerHTML = defs + body;
+      svg.querySelectorAll(".seg").forEach((g) => {
+        g.style.cursor = "pointer";
+        g.onclick = () => {
+          selected = g.getAttribute("data-id");
+          const c = categories.find((x) => x.id === selected);
+          document.getElementById("focusName").textContent = c.name;
+          document.getElementById("focusAmt").textContent = "₹" + c.amount.toLocaleString("en-IN");
+          document.getElementById("focusPct").textContent = ((c.amount / total) * 100).toFixed(1) + "% of expenses";
+          render();
+        };
+      });
+    }
+
+    render();
+  </script>
+</body>
+</html>

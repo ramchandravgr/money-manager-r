@@ -54,6 +54,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.mmr.app.R
 import com.mmr.app.testing.MmrTestTags
+import com.mmr.app.ui.adaptive.currentMmrWidthSizeClass
+import com.mmr.app.ui.adaptive.isCompactWidth
 import com.mmr.app.ui.theme.MmrBrandColors
 import com.mmr.core.model.settings.MmrAmountColorScheme
 
@@ -153,7 +155,7 @@ fun MmrHomeTopBar(
                 }
             }
             Row(
-                modifier = Modifier.width(96.dp),
+                modifier = Modifier.width(106.dp),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -171,46 +173,67 @@ fun MmrHomeTopBar(
                         modifier = Modifier.size(MmrDimens.chromeHeaderIconSize),
                     )
                 }
-                IconButton(
+                MmrHeaderApprovalsIconButton(
+                    pendingApprovalCount = pendingApprovalCount,
                     onClick = onApprovalsClick,
-                    modifier =
-                        Modifier
-                            .testTag(MmrTestTags.homeTopBarApprovals)
-                            .size(MmrDimens.homeTopBarIconButton),
-                ) {
-                    Box(
-                        modifier = Modifier.size(22.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            Icons.Outlined.Email,
-                            contentDescription = "Approvals",
-                            tint = MmrBrandColors.HeaderIcon,
-                            modifier = Modifier.size(MmrDimens.chromeHeaderIconSize),
-                        )
-                        if (pendingApprovalCount > 0) {
-                            MmrHeaderCountBadge(
-                                count = pendingApprovalCount,
-                                modifier =
-                                    Modifier
-                                        .align(Alignment.TopEnd)
-                                        .offset(x = 6.dp, y = (-4).dp),
-                            )
-                        }
-                    }
-                }
+                    modifier = Modifier.testTag(MmrTestTags.homeTopBarApprovals),
+                )
             }
         }
         HorizontalDivider(color = Color.Black.copy(alpha = 0.12f), thickness = 0.5.dp)
     }
 }
 
+private fun headerApprovalBadgeLabel(count: Int): String =
+    when {
+        count <= 0 -> ""
+        count > 99 -> "99+"
+        else -> count.toString()
+    }
+
+@Composable
+private fun MmrHeaderApprovalsIconButton(
+    pendingApprovalCount: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier =
+            modifier
+                .width(MmrDimens.homeTopBarIconButton + 10.dp)
+                .height(MmrDimens.homeTopBarIconButton + 4.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        IconButton(
+            onClick = onClick,
+            modifier = Modifier.size(MmrDimens.homeTopBarIconButton),
+        ) {
+            Icon(
+                Icons.Outlined.Email,
+                contentDescription = "Approvals",
+                tint = MmrBrandColors.HeaderIcon,
+                modifier = Modifier.size(MmrDimens.chromeHeaderIconSize),
+            )
+        }
+        if (pendingApprovalCount > 0) {
+            MmrHeaderCountBadge(
+                label = headerApprovalBadgeLabel(pendingApprovalCount),
+                modifier =
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .offset(x = 1.dp, y = 0.dp),
+            )
+        }
+    }
+}
+
 /** Corner badge: sits on the outer edge so ~70%+ of the mail icon stays visible. */
 @Composable
 private fun MmrHeaderCountBadge(
-    count: Int,
+    label: String,
     modifier: Modifier = Modifier,
 ) {
+    val compact = label.length > 2
     Surface(
         color = MmrBrandColors.Active,
         shape = RoundedCornerShape(7.dp),
@@ -218,13 +241,13 @@ private fun MmrHeaderCountBadge(
         shadowElevation = 0.dp,
     ) {
         Text(
-            text = count.coerceAtMost(99).toString(),
+            text = label,
             color = Color.White,
-            fontSize = 9.sp,
-            lineHeight = 10.sp,
+            fontSize = if (compact) 8.sp else 9.sp,
+            lineHeight = if (compact) 9.sp else 10.sp,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
-            modifier = Modifier.padding(horizontal = 3.dp, vertical = 1.dp),
+            modifier = Modifier.padding(horizontal = if (compact) 4.dp else 3.dp, vertical = 1.dp),
         )
     }
 }
@@ -240,6 +263,8 @@ fun MmrHeaderBar(
     onBack: (() -> Unit)? = null,
     trailing: @Composable (() -> Unit)? = null,
     modifier: Modifier = Modifier,
+    /** Balanced side slots so prev/title/next sit in the visual center (Stats period chrome). */
+    centerPeriodChrome: Boolean = false,
 ) {
     Column(
         modifier =
@@ -248,13 +273,113 @@ fun MmrHeaderBar(
                 .background(MmrBrandColors.Header)
                 .statusBarsPadding(),
     ) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(MmrDimens.chromeTitleBarHeight)
-                    .padding(end = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        if (centerPeriodChrome) {
+            MmrHeaderBarCenteredPeriodRow(
+                title = title,
+                onPrevious = onPrevious,
+                onNext = onNext,
+                onTitleClick = onTitleClick,
+                titleContent = titleContent,
+                showBack = showBack,
+                onBack = onBack,
+                trailing = trailing,
+            )
+        } else {
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(MmrDimens.chromeTitleBarHeight)
+                        .padding(end = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (showBack && onBack != null) {
+                    IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                            contentDescription = "Back",
+                            tint = MmrBrandColors.HeaderIcon,
+                        )
+                    }
+                } else if (!showBack) {
+                    Spacer(modifier = Modifier.width(12.dp))
+                }
+                if (onPrevious != null) {
+                    IconButton(onClick = onPrevious, modifier = Modifier.size(36.dp)) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                            contentDescription = "Previous",
+                            tint = MmrBrandColors.HeaderIcon,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+                if (titleContent != null) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .weight(1f, fill = false)
+                                .padding(horizontal = 2.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        titleContent()
+                    }
+                } else {
+                    Text(
+                        text = title,
+                        modifier =
+                            Modifier
+                                .then(
+                                    if (onTitleClick != null) Modifier.clickable(onClick = onTitleClick) else Modifier,
+                                ).padding(horizontal = 2.dp),
+                        color = MmrBrandColors.HeaderIcon,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Normal,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (onNext != null) {
+                    IconButton(onClick = onNext, modifier = Modifier.size(36.dp)) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = "Next",
+                            tint = MmrBrandColors.HeaderIcon,
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+                Box(modifier = Modifier.weight(1f))
+                trailing?.invoke()
+            }
+        }
+        HorizontalDivider(color = Color.Black.copy(alpha = 0.12f), thickness = 0.5.dp)
+    }
+}
+
+@Composable
+private fun MmrHeaderBarCenteredPeriodRow(
+    title: String,
+    onPrevious: (() -> Unit)?,
+    onNext: (() -> Unit)?,
+    onTitleClick: (() -> Unit)?,
+    titleContent: (@Composable () -> Unit)?,
+    showBack: Boolean,
+    onBack: (() -> Unit)?,
+    trailing: @Composable (() -> Unit)?,
+) {
+    val sideSlotWidth = 96.dp
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(MmrDimens.chromeTitleBarHeight)
+                .padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier.width(sideSlotWidth),
+            contentAlignment = Alignment.CenterStart,
         ) {
             if (showBack && onBack != null) {
                 IconButton(onClick = onBack, modifier = Modifier.size(40.dp)) {
@@ -264,9 +389,13 @@ fun MmrHeaderBar(
                         tint = MmrBrandColors.HeaderIcon,
                     )
                 }
-            } else if (!showBack) {
-                Spacer(modifier = Modifier.width(12.dp))
             }
+        }
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             if (onPrevious != null) {
                 IconButton(onClick = onPrevious, modifier = Modifier.size(36.dp)) {
                     Icon(
@@ -281,8 +410,8 @@ fun MmrHeaderBar(
                 Box(
                     modifier =
                         Modifier
-                            .weight(1f, fill = false)
-                            .padding(horizontal = 2.dp),
+                            .padding(horizontal = 2.dp)
+                            .widthIn(max = 200.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     titleContent()
@@ -292,9 +421,10 @@ fun MmrHeaderBar(
                     text = title,
                     modifier =
                         Modifier
+                            .widthIn(max = 200.dp)
                             .then(
                                 if (onTitleClick != null) Modifier.clickable(onClick = onTitleClick) else Modifier,
-                            ).padding(horizontal = 2.dp),
+                            ),
                     color = MmrBrandColors.HeaderIcon,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Normal,
@@ -312,10 +442,13 @@ fun MmrHeaderBar(
                     )
                 }
             }
-            Box(modifier = Modifier.weight(1f))
+        }
+        Box(
+            modifier = Modifier.width(sideSlotWidth),
+            contentAlignment = Alignment.CenterEnd,
+        ) {
             trailing?.invoke()
         }
-        HorizontalDivider(color = Color.Black.copy(alpha = 0.12f), thickness = 0.5.dp)
     }
 }
 
@@ -333,7 +466,13 @@ fun MmrHeaderIconActions(
             }
         }
         if (onApprovals != null) {
-            Box {
+            Box(
+                modifier =
+                    Modifier
+                        .width(48.dp)
+                        .height(48.dp),
+                contentAlignment = Alignment.Center,
+            ) {
                 IconButton(onClick = onApprovals, modifier = Modifier.size(44.dp)) {
                     Icon(
                         imageVector = Icons.Outlined.Email,
@@ -343,21 +482,13 @@ fun MmrHeaderIconActions(
                     )
                 }
                 if (pendingApprovals > 0) {
-                    Surface(
-                        color = MmrBrandColors.Active,
-                        shape = RoundedCornerShape(9.dp),
+                    MmrHeaderCountBadge(
+                        label = headerApprovalBadgeLabel(pendingApprovals),
                         modifier =
                             Modifier
                                 .align(Alignment.TopEnd)
-                                .padding(top = 6.dp, end = 8.dp),
-                    ) {
-                        Text(
-                            text = pendingApprovals.coerceAtMost(99).toString(),
-                            color = Color.White,
-                            fontSize = 9.sp,
-                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp),
-                        )
-                    }
+                                .offset(x = 2.dp, y = 4.dp),
+                    )
                 }
             }
         }
@@ -537,6 +668,7 @@ fun MmrDualSummaryStrip(
     rightAmountColor: Color,
     modifier: Modifier = Modifier,
 ) {
+    val wide = !currentMmrWidthSizeClass().isCompactWidth()
     Column(modifier = modifier.fillMaxWidth().background(MmrBrandColors.SurfaceWhite)) {
         Row(
             modifier =
@@ -546,10 +678,17 @@ fun MmrDualSummaryStrip(
                         vertical = MmrDimens.chromeSummaryStripVerticalPadding,
                         horizontal = MmrDimens.listItemPaddingHorizontal,
                     ),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+            horizontalArrangement =
+                if (wide) {
+                    Arrangement.spacedBy(32.dp, Alignment.CenterHorizontally)
+                } else {
+                    Arrangement.SpaceEvenly
+                },
         ) {
-            MmrSummaryCell(leftLabel, leftAmount, leftAmountColor, Modifier.weight(1f))
-            MmrSummaryCell(rightLabel, rightAmount, rightAmountColor, Modifier.weight(1f))
+            val leftMod = if (wide) Modifier else Modifier.weight(1f)
+            val rightMod = if (wide) Modifier else Modifier.weight(1f)
+            MmrSummaryCell(leftLabel, leftAmount, leftAmountColor, leftMod)
+            MmrSummaryCell(rightLabel, rightAmount, rightAmountColor, rightMod)
         }
         HorizontalDivider(color = MmrBrandColors.BorderMain, thickness = 0.5.dp)
     }
@@ -571,6 +710,7 @@ fun MmrSummaryStrip(
 ) {
     val incomeColor = MmrBrandColors.incomeColor(amountColorScheme)
     val expenseColor = MmrBrandColors.expenseColor(amountColorScheme)
+    val wide = !currentMmrWidthSizeClass().isCompactWidth()
     Column(modifier = modifier.fillMaxWidth().background(MmrBrandColors.SurfaceWhite)) {
         Row(
             modifier =
@@ -580,27 +720,33 @@ fun MmrSummaryStrip(
                         vertical = MmrDimens.chromeSummaryStripVerticalPadding,
                         horizontal = MmrDimens.listItemPaddingHorizontal,
                     ),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+            horizontalArrangement =
+                if (wide) {
+                    Arrangement.spacedBy(28.dp, Alignment.CenterHorizontally)
+                } else {
+                    Arrangement.SpaceEvenly
+                },
         ) {
+            val cellMod = if (wide) Modifier else Modifier.weight(1f)
             MmrSummaryCell(
                 incomeLabel,
                 incomeAmount,
                 incomeColor,
-                Modifier.weight(1f),
+                cellMod,
                 amountTestTag = incomeAmountTestTag,
             )
             MmrSummaryCell(
                 expenseLabel,
                 expenseAmount,
                 expenseColor,
-                Modifier.weight(1f),
+                cellMod,
                 amountTestTag = expenseAmountTestTag,
             )
             MmrSummaryCell(
                 totalLabel,
                 totalAmount,
                 MmrBrandColors.Reversal,
-                Modifier.weight(1f),
+                cellMod,
                 amountTestTag = totalAmountTestTag,
             )
         }

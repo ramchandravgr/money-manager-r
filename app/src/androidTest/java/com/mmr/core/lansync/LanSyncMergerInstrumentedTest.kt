@@ -3,11 +3,14 @@ package com.mmr.core.lansync
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.mmr.core.common.widget.NoOpHomeScreenWidgetRefreshTrigger
 import com.mmr.core.data.preferences.LanSyncDuplicateEntityPolicy
 import com.mmr.core.data.repository.MmrInstrumentedRepositoryGraph
 import com.mmr.core.database.entity.TransactionEntity
 import com.mmr.core.lansync.SyncEntityType
 import com.mmr.core.lansync.model.LanAccountRecord
+import com.mmr.core.lansync.model.LanBudgetRecord
+import com.mmr.core.lansync.model.LanCategoryRecord
 import com.mmr.core.lansync.model.LanSyncTombstoneRecord
 import com.mmr.core.lansync.model.LanTransactionRecord
 import com.mmr.core.lansync.model.MmrLanSyncPayload
@@ -41,6 +44,7 @@ class LanSyncMergerInstrumentedTest {
                 database = graph.database,
                 balanceValidator = LanSyncAccountBalanceValidator(graph.database),
                 tombstoneMerger = tombstoneMerger,
+                widgetRefreshTrigger = NoOpHomeScreenWidgetRefreshTrigger,
             )
     }
 
@@ -195,6 +199,66 @@ class LanSyncMergerInstrumentedTest {
             assertEquals(1, summary.transactionsInserted)
             val txns = graph.database.transactionDao().getAllApprovedTransactions()
             assertEquals(localId, txns.single().accountId)
+        }
+
+    @Test
+    fun merge_insertsRemoteBudgetForKnownCategory() =
+        runBlocking {
+            val categorySyncId = "cat-food"
+            val categoryId =
+                graph.database.categoryDao().insert(
+                    com.mmr.core.database.entity.CategoryEntity(
+                        syncId = categorySyncId,
+                        name = "Food",
+                        type = com.mmr.core.model.enums.CategoryType.EXPENSE,
+                    ),
+                )
+            val now = 2_000L
+            val payload =
+                MmrLanSyncPayload(
+                    formatVersion = LanSyncJsonCodec.CURRENT_FORMAT_VERSION,
+                    exportedAtEpochMillis = now,
+                    sourceDeviceId = "peer",
+                    categories =
+                        listOf(
+                            LanCategoryRecord(
+                                syncId = categorySyncId,
+                                name = "Food",
+                                iconName = "food",
+                                colorHex = "#000000",
+                                type = "EXPENSE",
+                                isDefault = false,
+                                isActive = true,
+                                orderIndex = 0,
+                            ),
+                        ),
+                    subcategories = emptyList(),
+                    accounts = emptyList(),
+                    loans = emptyList(),
+                    transactions = emptyList(),
+                    budgets =
+                        listOf(
+                            LanBudgetRecord(
+                                syncId = "budget-remote",
+                                categorySyncId = categorySyncId,
+                                subcategorySyncId = null,
+                                amountLimit = 3000.0,
+                                periodType = "MONTHLY",
+                                customPeriodStartMillis = null,
+                                customPeriodEndMillis = null,
+                                alertOnExceeded = false,
+                                lastAlertPeriodKey = null,
+                                isActive = true,
+                                createdAt = now,
+                                updatedAt = now,
+                            ),
+                        ),
+                )
+            merger.merge(payload)
+            val stored = graph.database.budgetDao().getBySyncId("budget-remote")
+            require(stored != null)
+            assertEquals(3000.0, stored.amountLimit, 0.001)
+            assertEquals(categoryId, stored.categoryId)
         }
 
     @Test

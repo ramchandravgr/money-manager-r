@@ -65,6 +65,13 @@ class WebManageHttpServerInstrumentedTest {
                 accountRepository = graph.accountRepository,
                 categoryRepository = categoryRepository,
                 displaySettingsStore = AppDisplaySettingsStore(context),
+                chartThemeSource =
+                    WebManageChartThemeSource {
+                        WebManageDisplaySnapshot(
+                            chartTheme = WebManageChartTheme.Light,
+                            webAppearance = "light",
+                        )
+                    },
                 ioDispatcher = Dispatchers.IO,
             )
         server =

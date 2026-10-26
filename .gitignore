@@ -16,3 +16,5 @@
 .tmp/
 hs_err_pid*.log
 replay_pid*.log
+window_dump*.xml
+mmr_cap.png

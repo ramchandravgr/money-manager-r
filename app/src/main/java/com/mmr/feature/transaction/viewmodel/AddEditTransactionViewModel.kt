@@ -9,6 +9,7 @@ import com.mmr.app.ui.state.MmrUiMessages
 import com.mmr.core.common.display.MmrDisplayTextFormat
 import com.mmr.core.common.validation.MmrValidation
 import com.mmr.core.data.preferences.AppDisplaySettingsStore
+import com.mmr.core.data.catalog.MmrUncategorisedCategory
 import com.mmr.core.data.repository.TransactionAttachmentRepositoryImpl
 import com.mmr.core.database.entity.CategoryEntity
 import com.mmr.core.database.entity.SubcategoryEntity
@@ -34,6 +35,7 @@ import com.mmr.feature.transaction.model.LoanPickerUi
 import com.mmr.feature.transaction.model.PickerNameEditorKind
 import com.mmr.feature.transaction.model.PickerNameEditorState
 import com.mmr.feature.transaction.model.SubcategoryUi
+import com.mmr.core.common.image.MmrReceiptImage
 import com.mmr.feature.transaction.model.TransactionReceiptUi
 import com.mmr.feature.transaction.model.toAccountUi
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -99,6 +101,23 @@ class AddEditTransactionViewModel
 
         private val categoryTreeCache = MutableStateFlow<List<CategoryWithChildren>>(emptyList())
 
+        private val pendingDeletedAttachmentIds = mutableSetOf<Long>()
+
+        private var baselineSnapshot: TransactionFormSnapshot? = null
+
+        private data class TransactionFormSnapshot(
+            val amount: String,
+            val dateTimeMillis: Long,
+            val selectedType: TransactionType,
+            val selectedCategoryId: Long?,
+            val selectedSubcategoryId: Long?,
+            val selectedAccountId: Long?,
+            val selectedRelatedAccountId: Long?,
+            val selectedTransferLoanId: Long?,
+            val note: String,
+            val receipts: List<String>,
+        )
+
         init {
             loadInitialData()
             viewModelScope.launch {
@@ -111,6 +130,33 @@ class AddEditTransactionViewModel
                     }
                 }
             }
+        }
+
+        private fun snapshotFrom(state: AddEditTransactionUiState): TransactionFormSnapshot =
+            TransactionFormSnapshot(
+                amount = state.amount,
+                dateTimeMillis = state.dateTimeMillis,
+                selectedType = state.selectedType,
+                selectedCategoryId = state.selectedCategoryId,
+                selectedSubcategoryId = state.selectedSubcategoryId,
+                selectedAccountId = state.selectedAccountId,
+                selectedRelatedAccountId = state.selectedRelatedAccountId,
+                selectedTransferLoanId = state.selectedTransferLoanId,
+                note = state.note,
+                receipts = state.receipts.map { "${it.id}:${it.filePath}" }.sorted(),
+            )
+
+        private fun finalizeLoadedState(state: AddEditTransactionUiState): AddEditTransactionUiState {
+            val withCanSave = state.copy(canSave = computeCanSave(state))
+            if (!withCanSave.isLoading && baselineSnapshot == null) {
+                baselineSnapshot = snapshotFrom(withCanSave)
+            }
+            return withCanSave
+        }
+
+        private fun hasUnsavedChanges(): Boolean {
+            val baseline = baselineSnapshot ?: return false
+            return snapshotFrom(_uiState.value) != baseline
         }
 
         private fun refreshNoteSuggestions(query: String) {
@@ -201,7 +247,7 @@ class AddEditTransactionViewModel
                                         dateTimeMillis = prefillDateMillis ?: txn.dateTime,
                                         showDeleteButton = false,
                                     )
-                                loaded.copy(canSave = computeCanSave(loaded))
+                                finalizeLoadedState(loaded)
                             }
                             return@collectLatest
                         } else {
@@ -246,7 +292,7 @@ class AddEditTransactionViewModel
                                         showDeleteButton = true,
                                         receipts = receiptUis,
                                     )
-                                loaded.copy(canSave = computeCanSave(loaded))
+                                finalizeLoadedState(loaded)
                             }
                             return@collectLatest
                         } else {
@@ -282,7 +328,7 @@ class AddEditTransactionViewModel
                                         note = pending.extractedNote ?: "",
                                         dateTimeMillis = pending.extractedDateTime,
                                     )
-                                loaded.copy(canSave = computeCanSave(loaded))
+                                finalizeLoadedState(loaded)
                             }
                             return@collectLatest
                         } else {
@@ -309,7 +355,7 @@ class AddEditTransactionViewModel
                                 selectedAccountId = initialAccId,
                                 dateTimeMillis = prefillDateMillis ?: it.dateTimeMillis,
                             )
-                        next.copy(canSave = computeCanSave(next))
+                        finalizeLoadedState(next)
                     }
                 }
             }
@@ -624,7 +670,7 @@ class AddEditTransactionViewModel
                 }
 
                 is AddEditTransactionUiEvent.OnRemoveReceipt -> {
-                    viewModelScope.launch { removeSavedReceipt(event.attachmentId) }
+                    markSavedReceiptForRemoval(event.attachmentId)
                 }
 
                 is AddEditTransactionUiEvent.OnRemovePendingReceipt -> {
@@ -658,7 +704,27 @@ class AddEditTransactionViewModel
                     deleteTransaction(event.mode)
                 }
 
-                is AddEditTransactionUiEvent.OnBackClick -> {}
+                AddEditTransactionUiEvent.OnBackClick -> {
+                    if (hasUnsavedChanges()) {
+                        _uiState.update { it.copy(showUnsavedChangesDialog = true) }
+                    } else {
+                        _uiState.update { it.copy(exitWithoutSaving = true) }
+                    }
+                }
+
+                AddEditTransactionUiEvent.OnDismissUnsavedChangesDialog -> {
+                    _uiState.update { it.copy(showUnsavedChangesDialog = false) }
+                }
+
+                AddEditTransactionUiEvent.OnConfirmDiscardChanges -> {
+                    discardStagedReceiptChanges()
+                    _uiState.update {
+                        it.copy(
+                            showUnsavedChangesDialog = false,
+                            exitWithoutSaving = true,
+                        )
+                    }
+                }
             }
         }
 
@@ -890,6 +956,7 @@ class AddEditTransactionViewModel
                                 isEdited = true,
                             ),
                         )
+                        applyPendingReceiptDeletions()
                         persistPendingReceipts(transactionId, state.receipts)
                     } else {
                         val savedAt = manualEntryDateTimeMillis(state.dateTimeMillis)
@@ -911,6 +978,7 @@ class AddEditTransactionViewModel
                             )
                         persistPendingReceipts(newId, state.receipts)
                     }
+                    pendingDeletedAttachmentIds.clear()
                     _uiState.update { it.copy(isSaved = true) }
                 } catch (e: Exception) {
                     _uiState.update {
@@ -952,7 +1020,10 @@ class AddEditTransactionViewModel
             if (preferredId != null && categories.any { it.id == preferredId }) {
                 return preferredId
             }
-            return categories.firstOrNull()?.id
+            return categories
+                .find { it.name.equals(MmrUncategorisedCategory.NAME, ignoreCase = true) }
+                ?.id
+                ?: categories.firstOrNull()?.id
         }
 
         private fun resolveSubcategorySelection(
@@ -983,22 +1054,12 @@ class AddEditTransactionViewModel
                 return
             }
             try {
-                if (state.isEditMode && transactionId != null) {
-                    attachmentRepository.addFromUri(transactionId, uri)
-                    _uiState.update {
-                        it.copy(
-                            receipts = loadReceiptsForTransaction(transactionId),
-                            errorMessage = null,
-                        )
-                    }
-                } else {
-                    val staged = stagePendingReceiptFile(uri)
-                    _uiState.update {
-                        it.copy(
-                            receipts = it.receipts + TransactionReceiptUi(id = 0L, filePath = staged.absolutePath),
-                            errorMessage = null,
-                        )
-                    }
+                val staged = stagePendingReceiptFile(uri)
+                _uiState.update {
+                    it.copy(
+                        receipts = it.receipts + TransactionReceiptUi(id = 0L, filePath = staged.absolutePath),
+                        errorMessage = null,
+                    )
                 }
             } catch (e: Exception) {
                 _uiState.update {
@@ -1007,17 +1068,25 @@ class AddEditTransactionViewModel
             }
         }
 
-        private suspend fun removeSavedReceipt(attachmentId: Long) {
-            try {
-                attachmentRepository.delete(attachmentId)
-                if (transactionId != null) {
-                    _uiState.update { it.copy(receipts = loadReceiptsForTransaction(transactionId)) }
-                }
-            } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(errorMessage = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_ACTION))
-                }
+        private fun markSavedReceiptForRemoval(attachmentId: Long) {
+            pendingDeletedAttachmentIds.add(attachmentId)
+            _uiState.update { state ->
+                state.copy(receipts = state.receipts.filterNot { it.id == attachmentId })
             }
+        }
+
+        private suspend fun applyPendingReceiptDeletions() {
+            val ids = pendingDeletedAttachmentIds.toList()
+            for (attachmentId in ids) {
+                attachmentRepository.delete(attachmentId)
+            }
+        }
+
+        private fun discardStagedReceiptChanges() {
+            _uiState.value.receipts.filter { it.id == 0L }.forEach { receipt ->
+                runCatching { File(receipt.filePath).delete() }
+            }
+            pendingDeletedAttachmentIds.clear()
         }
 
         private fun removePendingReceipt(filePath: String) {
@@ -1041,14 +1110,15 @@ class AddEditTransactionViewModel
 
         private fun stagePendingReceiptFile(uri: Uri): File {
             val dir = File(context.cacheDir, "pending_receipts").apply { mkdirs() }
-            val dest = File(dir, "pending_${UUID.randomUUID()}.img")
-            context.contentResolver.openInputStream(uri)?.use { input ->
-                dest.outputStream().use { output -> input.copyTo(output) }
-            } ?: throw IllegalArgumentException("Could not read image.")
-            if (dest.length() > TransactionAttachmentRepositoryImpl.MAX_ATTACHMENT_BYTES) {
-                dest.delete()
+            val dest = File(dir, "pending_${UUID.randomUUID()}.jpg")
+            val rawBytes =
+                context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
+                    ?: throw IllegalArgumentException("Could not read image.")
+            val normalized = MmrReceiptImage.normalizeUriBytes(rawBytes)
+            if (normalized.size > TransactionAttachmentRepositoryImpl.MAX_ATTACHMENT_BYTES) {
                 throw IllegalArgumentException("Image is too large.")
             }
+            dest.writeBytes(normalized)
             return dest
         }
     }

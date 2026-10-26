@@ -2,9 +2,11 @@ package com.mmr.core.lansync
 
 import androidx.room.withTransaction
 import com.mmr.core.common.sync.MmrSyncId
+import com.mmr.core.common.widget.HomeScreenWidgetRefreshTrigger
 import com.mmr.core.data.preferences.LanSyncDuplicateEntityPolicy
 import com.mmr.core.database.MmrDatabase
 import com.mmr.core.database.entity.AccountEntity
+import com.mmr.core.database.entity.BudgetEntity
 import com.mmr.core.database.entity.CategorizationRuleEntity
 import com.mmr.core.database.entity.CategoryEntity
 import com.mmr.core.database.entity.LoanEntity
@@ -18,6 +20,7 @@ import com.mmr.core.database.entity.TransactionAttachmentEntity
 import com.mmr.core.database.entity.TransactionEntity
 import com.mmr.core.lansync.model.LanAccountRecord
 import com.mmr.core.lansync.model.LanAttachmentRecord
+import com.mmr.core.lansync.model.LanBudgetRecord
 import com.mmr.core.lansync.model.LanCategorizationRuleRecord
 import com.mmr.core.lansync.model.LanCategoryRecord
 import com.mmr.core.lansync.model.LanLoanInterestRevisionRecord
@@ -41,6 +44,7 @@ import com.mmr.core.model.enums.NotificationRuleType
 import com.mmr.core.model.enums.RecordStatus
 import com.mmr.core.model.enums.RecurrenceInterval
 import com.mmr.core.model.enums.TransactionSourceType
+import com.mmr.core.model.enums.BudgetPeriodType
 import com.mmr.core.model.enums.TransactionType
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -74,6 +78,7 @@ class LanSyncMerger
         private val database: MmrDatabase,
         private val balanceValidator: LanSyncAccountBalanceValidator,
         private val tombstoneMerger: LanSyncTombstoneMerger,
+        private val widgetRefreshTrigger: HomeScreenWidgetRefreshTrigger,
     ) {
         suspend fun merge(
             payload: MmrLanSyncPayload,
@@ -87,6 +92,7 @@ class LanSyncMerger
             val loanScheduleDao = database.loanScheduleDao()
             val recurringRuleDao = database.recurringRuleDao()
             val categorizationRuleDao = database.categorizationRuleDao()
+            val budgetDao = database.budgetDao()
             val notificationRuleDao = database.notificationRuleDao()
             val backupDao = database.backupDao()
             val transactionDao = database.transactionDao()
@@ -377,6 +383,26 @@ class LanSyncMerger
                     }
                 }
 
+                for (record in payload.budgets) {
+                    if (tombstoneMerger.isDeletedForUpsert(record.syncId, record.updatedAt)) continue
+                    val categoryId =
+                        categorySyncToLocal[record.categorySyncId]
+                            ?: categoryDao.getCategoryBySyncId(record.categorySyncId)?.id
+                            ?: continue
+                    val subcategoryId =
+                        record.subcategorySyncId?.let { syncId ->
+                            subcategorySyncToLocal[syncId] ?: categoryDao.getSubcategoryBySyncId(syncId)?.id
+                        }
+                    val existing = budgetDao.getBySyncId(record.syncId)
+                    if (existing == null) {
+                        budgetDao.insert(record.toEntity(categoryId, subcategoryId))
+                        tombstoneMerger.clearIfSuperseded(record.syncId, record.updatedAt)
+                    } else if (record.updatedAt > existing.updatedAt) {
+                        budgetDao.update(record.toEntity(categoryId, subcategoryId, existing.id))
+                        tombstoneMerger.clearIfSuperseded(record.syncId, record.updatedAt)
+                    }
+                }
+
                 for (record in payload.notificationRules) {
                     if (tombstoneMerger.isDeletedForUpsert(record.syncId, record.createdAt)) continue
                     if (notificationRuleDao.getBySyncId(record.syncId) != null) continue
@@ -401,21 +427,24 @@ class LanSyncMerger
                         )
                     }
                 }
-            return LanSyncMergeSummary(
-                categoriesInserted = categoriesInserted,
-                categoriesUpdated = categoriesUpdated,
-                subcategoriesInserted = subcategoriesInserted,
-                subcategoriesUpdated = subcategoriesUpdated,
-                accountsInserted = accountsInserted,
-                accountsUpdated = accountsUpdated,
-                loansInserted = loansInserted,
-                loansUpdated = loansUpdated,
-                transactionsInserted = transactionsInserted,
-                transactionsUpdated = transactionsUpdated,
-                tombstonesApplied = tombstoneStats.applied,
-                keptAfterRemoteDelete = tombstoneStats.keptAfterLocalEdit,
-                warnings = (tombWarnings + balanceWarnings).distinct(),
-            )
+            val summary =
+                LanSyncMergeSummary(
+                    categoriesInserted = categoriesInserted,
+                    categoriesUpdated = categoriesUpdated,
+                    subcategoriesInserted = subcategoriesInserted,
+                    subcategoriesUpdated = subcategoriesUpdated,
+                    accountsInserted = accountsInserted,
+                    accountsUpdated = accountsUpdated,
+                    loansInserted = loansInserted,
+                    loansUpdated = loansUpdated,
+                    transactionsInserted = transactionsInserted,
+                    transactionsUpdated = transactionsUpdated,
+                    tombstonesApplied = tombstoneStats.applied,
+                    keptAfterRemoteDelete = tombstoneStats.keptAfterLocalEdit,
+                    warnings = (tombWarnings + balanceWarnings).distinct(),
+                )
+            widgetRefreshTrigger.requestRefresh()
+            return summary
         }
 
         private fun LanCategoryRecord.toEntity(existingId: Long = 0L) =
@@ -558,6 +587,26 @@ class LanSyncMerger
             endDate = endDate,
             noteTemplate = noteTemplate,
             reminderMinutesBefore = reminderMinutesBefore,
+            createdAt = createdAt,
+            updatedAt = updatedAt,
+        )
+
+        private fun LanBudgetRecord.toEntity(
+            categoryId: Long,
+            subcategoryId: Long?,
+            existingId: Long = 0L,
+        ) = BudgetEntity(
+            id = existingId,
+            syncId = MmrSyncId.normalize(syncId),
+            categoryId = categoryId,
+            subcategoryId = subcategoryId,
+            amountLimit = amountLimit,
+            periodType = BudgetPeriodType.valueOf(periodType),
+            customPeriodStartMillis = customPeriodStartMillis,
+            customPeriodEndMillis = customPeriodEndMillis,
+            alertOnExceeded = alertOnExceeded,
+            lastAlertPeriodKey = lastAlertPeriodKey,
+            isActive = isActive,
             createdAt = createdAt,
             updatedAt = updatedAt,
         )

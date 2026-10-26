@@ -17,6 +17,7 @@ data class MmrLanSyncPayload(
     val loanInterestRevisions: List<LanLoanInterestRevisionRecord> = emptyList(),
     val loanScheduleEntries: List<LanLoanScheduleEntryRecord> = emptyList(),
     val recurringRules: List<LanRecurringRuleRecord> = emptyList(),
+    val budgets: List<LanBudgetRecord> = emptyList(),
     val categorizationRules: List<LanCategorizationRuleRecord> = emptyList(),
     val notificationRules: List<LanNotificationRuleRecord> = emptyList(),
     val appSettings: MmrAppSettingsBackup? = null,

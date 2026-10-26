@@ -46,38 +46,17 @@ fun LoanListScreen(
     onNavigateToAddLoan: () -> Unit,
     onNavigateToEditLoan: (Long) -> Unit = {},
     showBackNavigation: Boolean = true,
+    embeddedInScheduledHub: Boolean = false,
     viewModel: LoanListViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    Scaffold(
-        containerColor = MmrBrandColors.ListBackground,
-        contentWindowInsets = com.mmr.app.ui.components.MmrNestedScaffoldInsets,
-        topBar = {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                MmrHeaderBar(
-                    title = "Loans",
-                    showBack = showBackNavigation,
-                    onBack = onNavigateBack,
-                )
+    val listBody: @Composable (Modifier) -> Unit = { contentModifier ->
+        val horizontalPadding = mmrScreenHorizontalPadding()
+        Column(modifier = contentModifier.fillMaxSize()) {
+            if (embeddedInScheduledHub) {
                 LoanOutstandingSummaryStrip(summary = uiState.summary)
             }
-        },
-        floatingActionButton = {
-            MmrAddListFab(
-                modifier = Modifier.testTag(MmrTestTags.loanFabAdd),
-                contentDescription = "Add loan",
-                onClick = onNavigateToAddLoan,
-            )
-        },
-    ) { innerPadding ->
-        val horizontalPadding = mmrScreenHorizontalPadding()
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-        ) {
             Row(
                 modifier =
                     Modifier
@@ -207,6 +186,34 @@ fun LoanListScreen(
                     }
                 }
             }
+        }
+    }
+
+    if (embeddedInScheduledHub) {
+        listBody(Modifier)
+    } else {
+        Scaffold(
+            containerColor = MmrBrandColors.ListBackground,
+            contentWindowInsets = com.mmr.app.ui.components.MmrNestedScaffoldInsets,
+            topBar = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    MmrHeaderBar(
+                        title = "Loans",
+                        showBack = showBackNavigation,
+                        onBack = onNavigateBack,
+                    )
+                    LoanOutstandingSummaryStrip(summary = uiState.summary)
+                }
+            },
+            floatingActionButton = {
+                MmrAddListFab(
+                    modifier = Modifier.testTag(MmrTestTags.loanFabAdd),
+                    contentDescription = "Add loan",
+                    onClick = onNavigateToAddLoan,
+                )
+            },
+        ) { innerPadding ->
+            listBody(Modifier.padding(innerPadding))
         }
     }
 }

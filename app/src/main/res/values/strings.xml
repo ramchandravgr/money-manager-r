@@ -3,8 +3,46 @@
     <string name="app_tagline">Scan bank SMS. Approve before recording.</string>
     <string name="notification_channel_sms_approvals">SMS approvals</string>
     <string name="notification_channel_sms_approvals_desc">Summary when new bank SMS are ready to review</string>
+    <string name="notification_channel_budget_alerts">Budget alerts</string>
+    <string name="notification_channel_budget_alerts_desc">When spending crosses a budget limit for the period</string>
     <string name="widget_pending_approvals_title">Pending approvals</string>
     <string name="widget_pending_approvals_description">Review one pending SMS at a time — approve, reject, or open the app for link/edit.</string>
     <string name="widget_month_spend_title">Current month summary</string>
     <string name="widget_month_spend_description">Income, expenses, and total for the current month (same strip as Home).</string>
+    <string name="widget_budgets_title">Budgets</string>
+    <string name="widget_budgets_description">Active budgets with period and percent used. Resize wider or taller; scroll when needed.</string>
+
+    <!-- Static widget-picker previews (sample data only) -->
+    <string name="widget_preview_month_period">October 2025</string>
+    <string name="widget_preview_label_income">Income</string>
+    <string name="widget_preview_label_expense">Expense</string>
+    <string name="widget_preview_label_total">Total</string>
+    <string name="widget_preview_sample_income">+42,500</string>
+    <string name="widget_preview_sample_expense">-18,200</string>
+    <string name="widget_preview_sample_total">24,300</string>
+    <string name="widget_preview_pending_count">2 pending</string>
+    <string name="widget_preview_sample_amount">₹1,250.00</string>
+    <string name="widget_preview_sample_merchant">Coffee shop</string>
+    <string name="widget_preview_sample_meta">HDFC · Debit card</string>
+    <string name="widget_preview_sample_sms">Rs 1,250 spent at Coffee shop on your HDFC card.</string>
+    <string name="widget_preview_action_reject">Reject</string>
+    <string name="widget_preview_action_approve">Approve</string>
+    <string name="widget_preview_action_later">Later</string>
+    <string name="widget_preview_action_view">View</string>
+    <string name="widget_preview_action_edit">Edit</string>
+    <string name="widget_preview_budget_col_name">Category</string>
+    <string name="widget_preview_budget_col_period">Period</string>
+    <string name="widget_preview_budget_col_used">Used</string>
+    <string name="widget_preview_budget_name_travel">Travel</string>
+    <string name="widget_preview_budget_name_food">Food</string>
+    <string name="widget_preview_budget_period_custom">Period</string>
+    <string name="widget_preview_budget_period_month">Month</string>
+    <string name="widget_preview_budget_pct_45">45%</string>
+    <string name="widget_preview_budget_pct_79">79%</string>
+
+    <string name="stats_cylinder_hint_default">Tap a category to inspect. Tap again to open category detail.</string>
+    <string name="stats_cylinder_hint_focused">Tap the same category again for detail, or clear focus.</string>
+    <string name="stats_cylinder_clear_focus">Clear focus</string>
+    <string name="stats_no_transactions_in_period">No transactions available for this period.</string>
+    <string name="home_excel_saved_to_downloads">Saved to Downloads: %1$s</string>
 </resources>

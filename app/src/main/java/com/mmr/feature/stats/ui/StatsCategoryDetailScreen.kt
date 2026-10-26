@@ -3,6 +3,8 @@ package com.mmr.feature.stats.ui
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -15,8 +17,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
+import com.mmr.app.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mmr.app.ui.components.MmrDeleteIconButton
 import com.mmr.app.ui.components.MmrDimens
@@ -34,7 +39,6 @@ import com.mmr.feature.home.ui.TransactionSelectionRowCard
 import com.mmr.feature.stats.StatsPeriodUtils
 import com.mmr.feature.stats.model.StatsCategoryDetailUiEvent
 import com.mmr.feature.stats.model.StatsPeriodMode
-import com.mmr.feature.stats.model.SubcategoryBreakdownUi
 import com.mmr.feature.stats.viewmodel.StatsCategoryDetailViewModel
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -49,6 +53,7 @@ fun StatsCategoryDetailScreen(
     viewModel: StatsCategoryDetailViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val periodSwipeKey by viewModel.periodSwipeKey.collectAsState()
     com.mmr.app.ui.components.MmrSelectionModeBackHandler(
         enabled = uiState.isSelectionMode,
         onExitSelectionMode = { viewModel.onEvent(StatsCategoryDetailUiEvent.OnExitSelectionMode) },
@@ -201,15 +206,18 @@ fun StatsCategoryDetailScreen(
                         viewModel.onEvent(StatsCategoryDetailUiEvent.OnRecategorizeSelected(id))
                     },
                 )
-            } else if (!uiState.isSelectionMode) {
-                StatsCategoryPickerBar(
-                    categories = uiState.siblingCategories,
+            } else if (!uiState.isSelectionMode && !uiState.isEmpty) {
+                StatsCategoryDetailBottomChrome(
+                    categoryName = uiState.categoryName,
+                    categoryColor = categoryColor,
+                    siblingCategories = uiState.siblingCategories,
                     selectedCategoryId = uiState.categoryId,
                     onCategorySelected = { id ->
                         if (id != uiState.categoryId) {
                             onSwitchCategory(id)
                         }
                     },
+                    groupedTransactions = uiState.groupedTransactions,
                 )
             }
         },
@@ -220,22 +228,8 @@ fun StatsCategoryDetailScreen(
                     .fillMaxSize()
                     .padding(innerPadding),
         ) {
-            if (!uiState.isSelectionMode) {
-                Text(
-                    text = uiState.categoryName,
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier =
-                        Modifier.padding(
-                            horizontal = MmrDimens.statsCategoryRowStartMargin,
-                            vertical = MmrDimens.spaceSm,
-                        ),
-                    maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
-                )
-            }
-
             MmrPeriodSwipeBox(
-                periodKey = uiState.periodStartMillis,
+                periodKey = periodSwipeKey,
                 enabled = periodSwipeEnabled,
                 onPrevious = { viewModel.onEvent(StatsCategoryDetailUiEvent.OnPreviousPeriod) },
                 onNext = { viewModel.onEvent(StatsCategoryDetailUiEvent.OnNextPeriod) },
@@ -258,35 +252,52 @@ fun StatsCategoryDetailScreen(
                             onRefresh = { viewModel.onEvent(StatsCategoryDetailUiEvent.OnRefresh) },
                             modifier = Modifier.fillMaxSize(),
                         ) {
+                            val emptyMessage = stringResource(R.string.stats_no_transactions_in_period)
+                            if (uiState.isEmpty && !uiState.isSelectionMode) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    MmrEmptyState(message = emptyMessage)
+                                }
+                            } else {
+                            val txCount =
+                                uiState.groupedTransactions.sumOf { it.items.size }
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
                                 contentPadding = PaddingValues(bottom = MmrDimens.spaceLg),
+                                verticalArrangement = Arrangement.spacedBy(MmrDimens.spaceSm),
                             ) {
-                                item {
-                                    StatsDetailTotalBlock(amountFormatted = uiState.totalFormatted)
+                                if (!uiState.isSelectionMode) {
+                                    item(key = "hero") {
+                                        StatsCategoryDetailHero(
+                                            categoryName = uiState.categoryName,
+                                            categoryColor = categoryColor,
+                                            totalFormatted = uiState.totalFormatted,
+                                        )
+                                    }
                                 }
-                                items(uiState.subcategoryBreakdowns, key = { it.subcategoryId ?: "all" }) { row ->
-                                    StatsMmSubcategoryRow(
-                                        row = row,
-                                        selected = isSubcategorySelected(row, uiState.selectedSubcategoryId),
+                                item(key = "subcats") {
+                                    StatsSubcategoryBreakdownCard(
+                                        rows = uiState.subcategoryBreakdowns,
                                         accentColor = categoryColor,
-                                        onClick = {
-                                            val id = if (row.name == "All") null else row.subcategoryId
+                                        selectedSubcategoryId = uiState.selectedSubcategoryId,
+                                        onSubcategoryClick = { id ->
                                             viewModel.onEvent(StatsCategoryDetailUiEvent.OnSubcategorySelected(id))
                                         },
                                     )
                                 }
-                                item {
-                                    StatsWebLineChart(
+                                item(key = "trend") {
+                                    StatsCategorySpendingBarChart(
                                         points = uiState.chartPoints,
-                                        lineColor = categoryColor,
-                                        modifier = Modifier.padding(vertical = MmrDimens.spaceXs),
+                                        accentColor = categoryColor,
+                                        modifier = Modifier.padding(top = MmrDimens.spaceXs),
                                     )
                                 }
-                                if (uiState.isEmpty) {
-                                    item { MmrEmptyState(message = "No transactions in this period.") }
-                                } else {
-                                    uiState.groupedTransactions.forEach { group ->
+                                item(key = "tx-header") {
+                                    StatsCategoryTransactionsSectionHeader(recordCount = txCount)
+                                }
+                                uiState.groupedTransactions.forEach { group ->
                                         item(key = "header-${group.dateKey}") {
                                             TransactionDayHeaderRow(
                                                 group = group,
@@ -343,7 +354,7 @@ fun StatsCategoryDetailScreen(
                                             }
                                         }
                                     }
-                                }
+                            }
                             }
                         }
                     }
@@ -369,6 +380,7 @@ private fun StatsCategoryDetailTopBar(
         title = if (uiState.periodMode == StatsPeriodMode.PERIOD) "" else uiState.navigationLabel,
         titleContent = periodTitleContent,
         onTitleClick = onTitleClick,
+        centerPeriodChrome = true,
         showBack = true,
         onBack = onNavigateBack,
         onPrevious =
@@ -404,16 +416,6 @@ private fun StatsCategoryDetailTopBar(
         },
     )
 }
-
-private fun isSubcategorySelected(
-    row: SubcategoryBreakdownUi,
-    selectedSubcategoryId: Long?,
-): Boolean =
-    if (row.name == "All") {
-        selectedSubcategoryId == null
-    } else {
-        selectedSubcategoryId == row.subcategoryId
-    }
 
 @Composable
 private fun rememberSlashDateFormatter(): DateTimeFormatter =

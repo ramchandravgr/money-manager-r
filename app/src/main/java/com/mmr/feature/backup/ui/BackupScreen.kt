@@ -195,7 +195,7 @@ private fun BackupContent(
             title = "About backups",
             isFirstInScreen = true,
             footer =
-                "Includes transactions, accounts, categories, loans, recurring rules, processed SMS, " +
+                "Includes transactions, accounts, categories, budgets, loans, recurring rules, processed SMS, " +
                     "approval history, and app settings. Pending approvals are not included.",
         ) {
             if (isEmpty) {
@@ -210,6 +210,7 @@ private fun BackupContent(
                     MmrIosSettingsValueRow(label = "Categories", value = s.categories.toString())
                     MmrIosSettingsValueRow(label = "Loans", value = s.loans.toString())
                     MmrIosSettingsValueRow(label = "Recurring rules", value = s.recurringRules.toString())
+                    MmrIosSettingsValueRow(label = "Budgets", value = s.budgets.toString())
                     MmrIosSettingsValueRow(
                         label = "SMS / approvals",
                         value = (s.smsMessageRecords + s.transactionApprovals).toString(),

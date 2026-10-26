@@ -2,7 +2,9 @@ package com.mmr.core.data.repository
 
 import android.content.Context
 import androidx.room.Room
+import com.mmr.app.budget.BudgetAlertNotifier
 import com.mmr.core.attachment.TransactionAttachmentStore
+import com.mmr.core.data.preferences.AppDisplaySettingsStore
 import com.mmr.core.categorization.CategorizationRuleEngine
 import com.mmr.core.common.widget.NoOpHomeScreenWidgetRefreshTrigger
 import com.mmr.core.data.preferences.LanSyncIdentityStore
@@ -40,6 +42,19 @@ class MmrInstrumentedRepositoryGraph(
         LanSyncTombstoneRecorder(
             tombstoneDao = database.syncTombstoneDao(),
             identityStore = lanSyncIdentityStore,
+        )
+
+    private val displaySettingsStore = AppDisplaySettingsStore(context)
+
+    private val budgetAlertNotifier = BudgetAlertNotifier(context)
+
+    val budgetRepository: BudgetRepositoryImpl =
+        BudgetRepositoryImpl(
+            budgetDao = database.budgetDao(),
+            categoryDao = database.categoryDao(),
+            displaySettingsStore = displaySettingsStore,
+            budgetAlertNotifier = budgetAlertNotifier,
+            tombstoneRecorder = tombstoneRecorder,
         )
 
     val transactionAttachmentRepository: TransactionAttachmentRepositoryImpl =
@@ -90,6 +105,7 @@ class MmrInstrumentedRepositoryGraph(
             transactionMergeCoordinator = transactionMergeCoordinator,
             smsMessageRecordDao = database.smsMessageRecordDao(),
             widgetRefreshTrigger = NoOpHomeScreenWidgetRefreshTrigger,
+            budgetRepository = budgetRepository,
         )
 
     private val loanCategoryResolver = LoanCategoryResolver(categoryDao = database.categoryDao())

@@ -28,6 +28,8 @@ data class MmrDisplaySettingsBackup(
     val autocompleteEnabled: Boolean,
     val inputOrder: String,
     val appColorTheme: String,
+    val themeMode: String = "SYSTEM",
+    val hiddenMainNavIds: List<String> = emptyList(),
 )
 
 data class MmrSmsInboundSettingsBackup(

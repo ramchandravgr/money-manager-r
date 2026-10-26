@@ -109,7 +109,7 @@ internal fun RecurringPickerRow(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .background(if (selected) MmrBrandColors.ListBackground else MmrBrandColors.SurfaceWhite)
+                .background(if (selected) MmrBrandColors.RowSelectionFill else MmrBrandColors.SurfaceWhite)
                 .clickable(onClick = onClick)
                 .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,

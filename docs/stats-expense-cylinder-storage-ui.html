@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Storage-style cylinder — reference replica + MMR expenses</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px 16px 48px;
+      font-family: "Google Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: #e9ebf0;
+      color: #1c1c1e;
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background: #0c0c0e; color: #f5f5f7; }
+      .device { background: #000; }
+      .screen { background: #000; }
+    }
+    h1 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin: 0 0 6px;
+      max-width: 420px;
+    }
+    .page-lead {
+      font-size: 0.8rem;
+      color: #6e6e73;
+      max-width: 420px;
+      margin: 0 auto 20px;
+      line-height: 1.45;
+    }
+    .device {
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto 36px;
+      background: #1a1a1a;
+      border-radius: 36px;
+      padding: 10px 8px 14px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.18);
+    }
+    .screen {
+      background: #fff;
+      border-radius: 28px;
+      overflow: hidden;
+      min-height: 520px;
+      padding: 18px 20px 24px;
+    }
+    .status-dummy {
+      height: 8px;
+      margin-bottom: 12px;
+    }
+    .nav-back {
+      font-size: 1.5rem;
+      line-height: 1;
+      color: #1c1c1e;
+      margin-bottom: 2px;
+    }
+    .screen-title {
+      font-size: 1.65rem;
+      font-weight: 400;
+      letter-spacing: -0.03em;
+      margin: 0 0 6px;
+      color: #1c1c1e;
+    }
+    .screen-sub {
+      font-size: 0.8rem;
+      color: #aeaeb2;
+      margin-bottom: 22px;
+      line-height: 1.35;
+    }
+    .main-row {
+      display: flex;
+      gap: 6px;
+      align-items: stretch;
+    }
+    .cylinder-slot {
+      flex: 0 0 38%;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 8px;
+    }
+    .cylinder-slot svg {
+      width: 100%;
+      max-width: 132px;
+      height: auto;
+      display: block;
+    }
+    .legend-slot {
+      flex: 1;
+      min-width: 0;
+      padding-top: 4px;
+    }
+    .legend-row {
+      display: grid;
+      grid-template-columns: 8px 1fr auto;
+      column-gap: 10px;
+      row-gap: 0;
+      align-items: start;
+      padding: 9px 0;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+      cursor: pointer;
+      font: inherit;
+      color: inherit;
+    }
+    .legend-row .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-top: 6px;
+    }
+    .legend-row .name {
+      font-size: 0.78rem;
+      color: #c7c7cc;
+      line-height: 1.25;
+    }
+    .legend-row .size {
+      font-size: 0.78rem;
+      color: #c7c7cc;
+      grid-column: 2;
+      margin-top: -2px;
+      font-weight: 500;
+    }
+    .legend-row .chev {
+      color: #d1d1d6;
+      font-size: 1rem;
+      line-height: 1;
+      padding-top: 2px;
+    }
+    .legend-row.selected .name,
+    .legend-row.selected .size {
+      color: #1c1c1e;
+      font-weight: 600;
+    }
+    .section-tag {
+      text-align: center;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #8e8e93;
+      margin-bottom: 10px;
+    }
+    .rules {
+      max-width: 400px;
+      margin: 0 auto;
+      font-size: 0.75rem;
+      color: #6e6e73;
+      line-height: 1.5;
+      padding: 14px 16px;
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e5e5ea;
+    }
+    .rules ul { margin: 8px 0 0; padding-left: 1.1rem; }
+    .rules li { margin-bottom: 4px; }
+    @media (prefers-color-scheme: dark) {
+      .screen { background: #000; }
+      .screen-title, .nav-back { color: #f5f5f7; }
+      .rules { background: #1c1c1e; border-color: #333; }
+    }
+  </style>
+</head>
+<body>
+  <h1 style="max-width:400px;margin:0 auto 6px;">Cylinder chart — built to match Storage UI</h1>
+  <p class="page-lead">
+    New mockup (not the older file). Geometry rules from your screenshots:
+    elliptical <strong>glass top</strong> + <strong>base</strong>;
+    <strong>flat</strong> joins between colors;
+    one extra ellipse on the <strong>top of the fill</strong> (liquid surface), not on every layer.
+    Tap a legend row to show the leader line.
+  </p>
+
+  <p class="section-tag">Replica · 116 / 128 GB (screenshot data)</p>
+  <div class="device" id="device-storage"></div>
+
+  <p class="section-tag">MMR · October expenses · ₹1,782</p>
+  <div class="device" id="device-mmr"></div>
+
+  <div class="rules">
+    <strong>Draw order (for Compose / Canvas)</strong>
+    <ul>
+      <li>Frosted glass barrel (full height)</li>
+      <li>Flat gradient rects: stack bottom → top inside inner wall</li>
+      <li>Bottom cap ellipse</li>
+      <li>Meniscus ellipse at fill top (top category color only)</li>
+      <li>Frosted empty rect above meniscus to inner top</li>
+      <li>Glass top ellipse (rim)</li>
+      <li>Leader polyline when a category is selected</li>
+    </ul>
+  </div>
+
+  <script>
+    /**
+     * Vertical storage cylinder renderer.
+     * - Outer glass: curved top & bottom (barrelPath).
+     * - Segments: flat horizontal cuts (rect + lateral gradient).
+     * - Meniscus: single ellipse at yFillTop (top of stack).
+     * - No elliptical rims between intermediate segments.
+     */
+    const CylinderChart = (function () {
+      const defaults = {
+        cx: 66,
+        rx: 46,
+        ry: 11,
+        yTop: 20,
+        yBottom: 332,
+      };
+
+      function barrelPath(xL, xR, cx, y1, y2, ry) {
+        return [
+          "M", xL, y1 + ry,
+          "Q", xL, y1, cx, y1,
+          "Q", xR, y1, xR, y1 + ry,
+          "L", xR, y2 - ry,
+          "Q", xR, y2, cx, y2,
+          "Q", xL, y2, xL, y2 - ry,
+          "Z",
+        ].join(" ");
+      }
+
+      function flatRect(xL, xR, y1, y2) {
+        return ["M", xL, y1, "H", xR, "V", y2, "H", xL, "Z"].join(" ");
+      }
+
+      function darken(hex, amount) {
+        const n = parseInt(hex.slice(1), 16);
+        const r = Math.max(0, (n >> 16) - amount);
+        const g = Math.max(0, ((n >> 8) & 0xff) - amount);
+        const b = Math.max(0, (n & 0xff) - amount);
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+      }
+
+      function lighten(hex, amount) {
+        const n = parseInt(hex.slice(1), 16);
+        const r = Math.min(255, (n >> 16) + amount);
+        const g = Math.min(255, ((n >> 8) & 0xff) + amount);
+        const b = Math.min(255, (n & 0xff) + amount);
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+      }
+
+      function formatSize(gb, unit) {
+        if (unit === "inr") {
+          return "₹" + Math.round(gb).toLocaleString("en-IN");
+        }
+        if (gb >= 1) return gb.toFixed(2) + " GB";
+        if (gb >= 0.001) return (gb * 1024).toFixed(0) + " MB";
+        return "0 B";
+      }
+
+      function buildDefs(stackCategories) {
+        let d = "<defs>";
+        d +=
+          '<linearGradient id="glassSheen" x1="0%" y1="0%" x2="100%" y2="0%">' +
+          '<stop offset="0%" stop-color="#000" stop-opacity="0.14"/>' +
+          '<stop offset="18%" stop-color="#fff" stop-opacity="0.2"/>' +
+          '<stop offset="50%" stop-color="#fff" stop-opacity="0.05"/>' +
+          '<stop offset="82%" stop-color="#000" stop-opacity="0.06"/>' +
+          '<stop offset="100%" stop-color="#000" stop-opacity="0.16"/>' +
+          "</linearGradient>";
+        stackCategories.filter((c) => c.value > 0).forEach((c, i) => {
+          const base = c.color;
+          d +=
+            '<linearGradient id="seg' + i + '" x1="0%" y1="0%" x2="100%" y2="0%">' +
+            '<stop offset="0%" stop-color="' + darken(base, 28) + '"/>' +
+            '<stop offset="40%" stop-color="' + base + '"/>' +
+            '<stop offset="55%" stop-color="' + lighten(base, 22) + '"/>' +
+            '<stop offset="100%" stop-color="' + darken(base, 22) + '"/>' +
+            "</linearGradient>";
+        });
+        d += "</defs>";
+        return d;
+      }
+
+      /**
+       * @param {object} opts
+       * @param {Array<{name:string,value:number,color:string,sizeLabel?:string}>} opts.categories bottom-to-top stack order
+       * @param {number} opts.capacity total cylinder capacity (same unit as value)
+       * @param {number|null} opts.selectedIndex
+       * @param {number|null} opts.leaderTipY svg y for leader line end (legend anchor)
+       */
+      function renderSvg(opts) {
+        const cfg = { ...defaults, ...opts.geom };
+        const { cx, rx, ry, yTop, yBottom } = cfg;
+        const xL = cx - rx;
+        const xR = cx + rx;
+        const yInnerTop = yTop + ry;
+        const yInnerBottom = yBottom - ry;
+        const innerH = yInnerBottom - yInnerTop;
+        const occupied = opts.categories
+          .filter((c) => c.value > 0)
+          .reduce((s, c) => s + c.value, 0);
+        const cap = opts.capacity ?? occupied;
+        const fillRatio = Math.min(1, occupied / cap);
+        const fillH = innerH * fillRatio;
+        const yFillTop = yInnerBottom - fillH;
+
+        const defs = buildDefs(opts.categories);
+
+        let g = "";
+        g +=
+          '<ellipse cx="' + cx + '" cy="' + (yBottom + 6) + '" rx="' + (rx + 4) + '" ry="9" fill="#000" opacity="0.08"/>';
+
+        // Glass container
+        g +=
+          '<path d="' +
+          barrelPath(xL - 1, xR + 1, cx, yTop, yBottom, ry) +
+          '" fill="rgba(245,246,250,0.55)" stroke="rgba(180,186,198,0.65)" stroke-width="1"/>';
+
+        // Segments (bottom → top in data order); values are fractions of occupied total
+        let y = yInnerBottom;
+        const segments = [];
+        const stack = opts.categories.filter((c) => c.value > 0);
+        stack.forEach((cat, stackIdx) => {
+          const h = fillH * (cat.value / occupied);
+          const y1 = y - h;
+          segments.push({ ...cat, stackIdx, legendIndex: cat.legendIndex, y1, y2: y, h });
+          y = y1;
+        });
+
+        for (let s = segments.length - 1; s >= 0; s--) {
+          const seg = segments[s];
+          if (seg.h < 0.4) continue;
+          g +=
+            '<path d="' + flatRect(xL, xR, seg.y1, seg.y2) + '" fill="url(#seg' + seg.stackIdx + ')"/>';
+          if (s < segments.length - 1) {
+            g +=
+              '<line x1="' + xL + '" y1="' + seg.y1 + '" x2="' + xR + '" y2="' + seg.y1 +
+              '" stroke="rgba(0,0,0,0.07)" stroke-width="0.5"/>';
+          }
+        }
+
+        // Base ellipse (whole cylinder foot)
+        const bottomCat = opts.categories[0];
+        g +=
+          '<ellipse cx="' + cx + '" cy="' + yBottom + '" rx="' + rx + '" ry="' + ry +
+          '" fill="' + darken(bottomCat.color, 35) + '" stroke="rgba(0,0,0,0.08)" stroke-width="0.6"/>';
+
+        // Meniscus — only at top of filled volume (liquid surface)
+        if (segments.length > 0 && fillRatio < 0.999) {
+          const topSeg = segments[segments.length - 1];
+          const meniscusY = yFillTop;
+          g +=
+            '<ellipse cx="' + cx + '" cy="' + meniscusY + '" rx="' + rx + '" ry="' + ry +
+            '" fill="' + topSeg.color + '" stroke="' + darken(topSeg.color, 30) + '" stroke-width="0.5"/>';
+          g +=
+            '<ellipse cx="' + cx + '" cy="' + meniscusY + '" rx="' + (rx - 12) + '" ry="' + (ry - 4) +
+            '" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.7"/>';
+        }
+
+        // Empty frosted volume above fill (flat bottom at meniscus)
+        if (fillRatio < 0.999 && yFillTop > yInnerTop + 1) {
+          g +=
+            '<path d="' + flatRect(xL, xR, yInnerTop, yFillTop) +
+            '" fill="rgba(255,255,255,0.42)"/>';
+          g +=
+            '<path d="' + flatRect(xL, xR, yInnerTop, yFillTop) +
+            '" fill="url(#glassSheen)" opacity="0.65"/>';
+        }
+
+        // Glass top rim — full ellipse (container opening)
+        g +=
+          '<ellipse cx="' + cx + '" cy="' + yTop + '" rx="' + rx + '" ry="' + ry +
+          '" fill="rgba(252,252,254,0.95)" stroke="rgba(180,186,198,0.7)" stroke-width="1"/>';
+        g +=
+          '<ellipse cx="' + cx + '" cy="' + yTop + '" rx="' + (rx - 10) + '" ry="' + (ry - 3) +
+          '" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="0.8"/>';
+
+        // Cylinder wall sheen (full height)
+        g +=
+          '<path d="' + barrelPath(xL, xR, cx, yTop, yBottom, ry) +
+          '" fill="url(#glassSheen)" opacity="0.35" pointer-events="none"/>';
+
+        // Leader line
+        const sel = opts.selectedIndex;
+        const seg =
+          sel != null ? segments.find((s) => s.legendIndex === sel) : null;
+        if (seg) {
+          const midY = (seg.y1 + seg.y2) / 2;
+          const col = seg.color;
+          const tipY = opts.leaderTipY ?? midY;
+          g +=
+            '<polyline points="' + xR + "," + midY + " 118," + midY + " 148," + tipY +
+            '" fill="none" stroke="' + col + '" stroke-width="1.5" stroke-linecap="round"/>';
+          g += '<circle cx="' + xR + '" cy="' + midY + '" r="2.8" fill="' + col + '"/>';
+        }
+
+        return (
+          '<svg viewBox="0 0 160 348" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+          defs +
+          g +
+          "</svg>"
+        );
+      }
+
+      function mountScreen(container, config) {
+        let selected = config.initialSelection ?? null;
+        const legend = config.legend ?? config.categories;
+
+        function leaderYForIndex(idx) {
+          const rowH = 42;
+          return 24 + idx * rowH + 20;
+        }
+
+        function paint() {
+          const svg = renderSvg({
+            categories: config.categories,
+            capacity: config.capacity,
+            selectedIndex: selected,
+            leaderTipY: selected != null ? leaderYForIndex(selected) : null,
+          });
+
+          const legendHtml = legend
+            .map((c, i) => {
+              const label = c.sizeLabel ?? formatSize(c.value, config.unit);
+              const sel = i === selected ? " selected" : "";
+              return (
+                '<button type="button" class="legend-row' + sel + '" data-i="' + i + '">' +
+                '<span class="dot" style="background:' + c.color + '"></span>' +
+                '<span class="name">' + c.name + "</span>" +
+                '<span class="chev">›</span>' +
+                '<span class="size">' + label + "</span>" +
+                "</button>"
+              );
+            })
+            .join("");
+
+          container.querySelector(".screen").innerHTML =
+            '<div class="status-dummy"></div>' +
+            '<div class="nav-back">‹</div>' +
+            '<h2 class="screen-title">' + config.title + "</h2>" +
+            '<p class="screen-sub">' + config.subtitle + "</p>" +
+            '<div class="main-row">' +
+            '<div class="cylinder-slot">' + svg + "</div>" +
+            '<div class="legend-slot">' + legendHtml + "</div>" +
+            "</div>";
+
+          container.querySelectorAll(".legend-row").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const i = parseInt(btn.getAttribute("data-i"), 10);
+              selected = selected === i ? null : i;
+              paint();
+            });
+          });
+        }
+
+        container.innerHTML = '<div class="screen"></div>';
+        paint();
+      }
+
+      return { mountScreen };
+    })();
+
+    // Legend order = screenshot list (top to bottom). Cylinder stack = bottom → top.
+    const storageLegend = [
+      { name: "Apps and data", value: 45.8, color: "#F5E6A8", sizeLabel: "45.80 GB" },
+      { name: "Images", value: 3.13, color: "#F5B87A", sizeLabel: "3.13 GB" },
+      { name: "Audio", value: 0.499, color: "#F06A6A", sizeLabel: "499 MB" },
+      { name: "Video", value: 48.03, color: "#C8B4E8", sizeLabel: "48.03 GB" },
+      { name: "APKs", value: 0, color: "#9EC5F0", sizeLabel: "0 B" },
+      { name: "Documents", value: 0.174, color: "#B8E0A8", sizeLabel: "174 MB" },
+      { name: "System files", value: 0, color: "#8E99A3", sizeLabel: "0 B" },
+      { name: "System", value: 13.03, color: "#B8C5D0", sizeLabel: "13.03 GB" },
+    ];
+
+    const storageStack = [
+      { name: "System", value: 13.03, color: "#B8C5D0", legendIndex: 7 },
+      { name: "Documents", value: 0.174, color: "#B8E0A8", legendIndex: 5 },
+      { name: "Video", value: 48.03, color: "#C8B4E8", legendIndex: 3 },
+      { name: "Audio", value: 0.499, color: "#F06A6A", legendIndex: 2 },
+      { name: "Images", value: 3.13, color: "#F5B87A", legendIndex: 1 },
+      { name: "Apps and data", value: 45.8, color: "#F5E6A8", legendIndex: 0 },
+    ];
+
+    CylinderChart.mountScreen(document.getElementById("device-storage"), {
+      title: "Storage space",
+      subtitle: "116.0 GB/128 GB occupied | 12.0 GB available",
+      categories: storageStack,
+      legend: storageLegend,
+      capacity: 128,
+      initialSelection: 2,
+      unit: "gb",
+    });
+
+    const mmrLegend = [
+      { name: "Food & dining", value: 520, color: "#F5E6A8" },
+      { name: "Transport", value: 340, color: "#9EC5F0" },
+      { name: "Shopping", value: 422, color: "#B8E0A8" },
+      { name: "Bills", value: 280, color: "#C8B4E8" },
+      { name: "Other", value: 220, color: "#8E8E93" },
+    ];
+    const mmrStack = [
+      { name: "Other", value: 220, color: "#8E8E93", legendIndex: 4 },
+      { name: "Bills", value: 280, color: "#C8B4E8", legendIndex: 3 },
+      { name: "Shopping", value: 422, color: "#B8E0A8", legendIndex: 2 },
+      { name: "Transport", value: 340, color: "#9EC5F0", legendIndex: 1 },
+      { name: "Food & dining", value: 520, color: "#F5E6A8", legendIndex: 0 },
+    ].map((c) => ({ ...c, sizeLabel: "₹" + c.value.toLocaleString("en-IN") }));
+
+    CylinderChart.mountScreen(document.getElementById("device-mmr"), {
+      title: "Expenses",
+      subtitle: "₹1,782 this month · approved only",
+      categories: mmrStack,
+      legend: mmrLegend.map((c) => ({ ...c, sizeLabel: "₹" + c.value.toLocaleString("en-IN") })),
+      capacity: 1782,
+      initialSelection: null,
+      unit: "inr",
+    });
+  </script>
+</body>
+</html>

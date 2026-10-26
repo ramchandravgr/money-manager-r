@@ -1,6 +1,6 @@
 package com.mmr.feature.home
 
-import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -74,15 +74,13 @@ fun HomeScreen(
     }
 
     LaunchedEffect(Unit) {
-        viewModel.periodExportRequest.collect { request ->
-            val share =
-                Intent(Intent.ACTION_SEND).apply {
-                    type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    putExtra(Intent.EXTRA_STREAM, request.contentUri)
-                    putExtra(Intent.EXTRA_SUBJECT, request.subject)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-            context.startActivity(Intent.createChooser(share, "Export data to Excel"))
+        viewModel.periodExportResult.collect { result ->
+            Toast
+                .makeText(
+                    context,
+                    context.getString(R.string.home_excel_saved_to_downloads, result.savedFileName),
+                    Toast.LENGTH_LONG,
+                ).show()
         }
     }
 
@@ -246,6 +244,20 @@ fun HomeScreen(
                 )
             }
         },
+        bottomBar = {
+            if (!uiState.isSelectionMode) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    HorizontalDivider(
+                        color = MmrBrandColors.TransactionListBorder,
+                        thickness = MmrDimens.transactionListDividerThickness,
+                    )
+                    HomePeriodSummaryStrip(
+                        summary = uiState.summary,
+                        amountColorScheme = uiState.amountColorScheme,
+                    )
+                }
+            }
+        },
     ) { innerPadding ->
         Column(
             modifier =
@@ -258,11 +270,6 @@ fun HomeScreen(
                 HomeViewTabRow(
                     selectedTab = uiState.selectedViewTab,
                     onTabSelected = { viewModel.onEvent(HomeUiEvent.OnViewTabSelected(it)) },
-                )
-
-                HomePeriodSummaryStrip(
-                    summary = uiState.summary,
-                    amountColorScheme = uiState.amountColorScheme,
                 )
 
                 if (uiState.selectedViewTab == HomeViewTab.DAILY || uiState.selectedViewTab == HomeViewTab.TOTAL) {

@@ -1,5 +1,6 @@
 package com.mmr.feature.settings.ui
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,15 +25,19 @@ import com.mmr.app.ui.components.MmrIosSettingsSingleChoiceSheet
 import com.mmr.app.ui.components.MmrIosSettingsSwitchRow
 import com.mmr.app.ui.components.MmrSettingsChoiceLabelWithSwatches
 import com.mmr.app.ui.components.MmrSettingsColorSwatchStrip
+import com.mmr.app.navigation.MmrToggleableMainDestinations
 import com.mmr.app.ui.components.MmrSettingsScreenLayout
 import com.mmr.app.ui.components.MmrSettingsScreenScaffold
 import com.mmr.app.ui.theme.MmrBrandColors
+import com.mmr.app.ui.theme.MmrSystemThemeAppearance
+import com.mmr.app.ui.theme.MmrThemeAppearance
 import com.mmr.app.ui.theme.MmrThemePresets
 import com.mmr.core.data.preferences.AppDisplaySettingsSnapshot
 import com.mmr.core.model.settings.MmrAmountColorScheme
 import com.mmr.core.model.settings.MmrAppColorTheme
 import com.mmr.core.model.settings.MmrStartScreenTab
 import com.mmr.core.model.settings.MmrSwipeBehavior
+import com.mmr.core.model.settings.MmrThemeMode
 import com.mmr.core.model.settings.MmrTimeDisplay
 import com.mmr.core.model.settings.MmrWeekStartDay
 import com.mmr.feature.settings.viewmodel.ConfigurationViewModel
@@ -46,11 +51,17 @@ fun ConfigurationScreen(
     val settings by viewModel.settings.collectAsState()
     var picker by remember { mutableStateOf<ConfigPicker?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val systemInDarkTheme = isSystemInDarkTheme()
+    val previewAppearance =
+        remember(settings.themeMode, systemInDarkTheme) {
+            MmrSystemThemeAppearance.resolve(settings.themeMode, systemInDarkTheme)
+        }
 
     picker?.let { active ->
         ConfigPickerSheet(
             picker = active,
             settings = settings,
+            previewAppearance = previewAppearance,
             sheetState = sheetState,
             onDismiss = { picker = null },
             onSelectStartScreen = {
@@ -79,6 +90,10 @@ fun ConfigurationScreen(
             },
             onSelectAppTheme = {
                 viewModel.setAppColorTheme(it)
+                picker = null
+            },
+            onSelectThemeMode = {
+                viewModel.setThemeMode(it)
                 picker = null
             },
         )
@@ -123,16 +138,41 @@ fun ConfigurationScreen(
         }
 
         MmrIosSettingsSection(
+            title = "Main menu",
+            footer = "Transactions and Settings always stay on the bar. Turn off optional tabs to hide them; remaining items share the space evenly.",
+        ) {
+            MmrToggleableMainDestinations.forEachIndexed { index, destination ->
+                MmrIosSettingsSwitchRow(
+                    label = "Show ${destination.label}",
+                    checked = destination.navId !in settings.hiddenMainNavIds,
+                    onCheckedChange = { visible ->
+                        viewModel.setMainNavVisible(destination.navId, visible)
+                    },
+                    showDividerBelow = index < MmrToggleableMainDestinations.lastIndex,
+                )
+            }
+        }
+
+        MmrIosSettingsSection(
             title = "Appearance",
             footer = "Colors and how transactions look on Home.",
         ) {
+            MmrIosSettingsNavRow(
+                label = "Appearance",
+                value = settings.themeMode.label,
+                onClick = { picker = ConfigPicker.ThemeMode },
+            )
             MmrIosSettingsNavRow(
                 label = "App color theme",
                 onClick = { picker = ConfigPicker.AppTheme },
                 valueContent = {
                     ConfigurationNavValueWithSwatches(
                         title = settings.appColorTheme.label,
-                        swatchColors = MmrThemePresets.appThemePreviewColors(settings.appColorTheme),
+                        swatchColors =
+                            MmrThemePresets.appThemePreviewColors(
+                                settings.appColorTheme,
+                                previewAppearance,
+                            ),
                     )
                 },
             )
@@ -146,6 +186,7 @@ fun ConfigurationScreen(
                             MmrThemePresets.amountSchemePreviewColors(
                                 settings.appColorTheme,
                                 settings.amountColorScheme,
+                                previewAppearance,
                             ),
                     )
                 },
@@ -185,6 +226,7 @@ private enum class ConfigPicker {
     AmountColors,
     TimeDisplay,
     AppTheme,
+    ThemeMode,
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -192,6 +234,7 @@ private enum class ConfigPicker {
 private fun ConfigPickerSheet(
     picker: ConfigPicker,
     settings: AppDisplaySettingsSnapshot,
+    previewAppearance: MmrThemeAppearance,
     sheetState: SheetState,
     onDismiss: () -> Unit,
     onSelectStartScreen: (MmrStartScreenTab) -> Unit,
@@ -201,6 +244,7 @@ private fun ConfigPickerSheet(
     onSelectColors: (MmrAmountColorScheme) -> Unit,
     onSelectTime: (MmrTimeDisplay) -> Unit,
     onSelectAppTheme: (MmrAppColorTheme) -> Unit,
+    onSelectThemeMode: (MmrThemeMode) -> Unit,
 ) {
     val title =
         when (picker) {
@@ -211,6 +255,7 @@ private fun ConfigPickerSheet(
             ConfigPicker.AmountColors -> "Income / expense colors"
             ConfigPicker.TimeDisplay -> "Time on transactions"
             ConfigPicker.AppTheme -> "App color theme"
+            ConfigPicker.ThemeMode -> "Appearance"
         }
     val message =
         when (picker) {
@@ -276,6 +321,7 @@ private fun ConfigPickerSheet(
                                     MmrThemePresets.amountSchemePreviewColors(
                                         settings.appColorTheme,
                                         option,
+                                        previewAppearance,
                                     ),
                                 labelFontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                             )
@@ -291,6 +337,15 @@ private fun ConfigPickerSheet(
                         showDividerBelow = index < MmrTimeDisplay.entries.lastIndex,
                     )
                 }
+            ConfigPicker.ThemeMode ->
+                MmrThemeMode.entries.forEachIndexed { index, option ->
+                    MmrIosSettingsChoiceRow(
+                        label = option.label,
+                        selected = settings.themeMode == option,
+                        onClick = { onSelectThemeMode(option) },
+                        showDividerBelow = index < MmrThemeMode.entries.lastIndex,
+                    )
+                }
             ConfigPicker.AppTheme ->
                 MmrAppColorTheme.entries.forEachIndexed { index, option ->
                     val selected = settings.appColorTheme == option
@@ -302,7 +357,8 @@ private fun ConfigPickerSheet(
                         labelContent = {
                             MmrSettingsChoiceLabelWithSwatches(
                                 label = option.label,
-                                swatchColors = MmrThemePresets.appThemePreviewColors(option),
+                                swatchColors =
+                                    MmrThemePresets.appThemePreviewColors(option, previewAppearance),
                                 labelFontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                             )
                         },

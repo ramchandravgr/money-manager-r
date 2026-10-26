@@ -8,6 +8,7 @@ import com.mmr.core.data.catalog.MmrCategorizationRuleSeeder
 import com.mmr.core.data.catalog.MmrDefaultCatalogSeeder
 import com.mmr.core.database.MmrDatabase
 import com.mmr.core.database.dao.AccountDao
+import com.mmr.core.database.dao.BudgetDao
 import com.mmr.core.database.dao.CategoryDao
 import com.mmr.core.database.dao.TransactionDao
 import com.mmr.core.database.entity.AccountEntity
@@ -70,6 +71,9 @@ object DatabaseModule {
 
     @Provides
     fun provideCategoryDao(database: MmrDatabase): CategoryDao = database.categoryDao()
+
+    @Provides
+    fun provideBudgetDao(database: MmrDatabase): BudgetDao = database.budgetDao()
 
     @Provides
     fun provideAccountDao(database: MmrDatabase): AccountDao = database.accountDao()

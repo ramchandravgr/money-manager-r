@@ -4,6 +4,7 @@ import com.mmr.core.backup.model.MmrAppSettingsBackup
 import com.mmr.core.data.preferences.AppDisplaySettingsSnapshot
 import com.mmr.core.lansync.model.LanAccountRecord
 import com.mmr.core.lansync.model.LanAttachmentRecord
+import com.mmr.core.lansync.model.LanBudgetRecord
 import com.mmr.core.lansync.model.LanCategorizationRuleRecord
 import com.mmr.core.lansync.model.LanCategoryRecord
 import com.mmr.core.lansync.model.LanLoanInterestRevisionRecord
@@ -20,7 +21,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object LanSyncJsonCodec {
-    const val CURRENT_FORMAT_VERSION = 3
+    const val CURRENT_FORMAT_VERSION = 4
 
     fun encode(payload: MmrLanSyncPayload): String =
         JSONObject()
@@ -38,6 +39,7 @@ object LanSyncJsonCodec {
                 put("loanInterestRevisions", payload.loanInterestRevisions.toJsonArray { loanRevisionToJson(it) })
                 put("loanScheduleEntries", payload.loanScheduleEntries.toJsonArray { loanScheduleToJson(it) })
                 put("recurringRules", payload.recurringRules.toJsonArray { recurringToJson(it) })
+                put("budgets", payload.budgets.toJsonArray { budgetToJson(it) })
                 put("categorizationRules", payload.categorizationRules.toJsonArray { categorizationToJson(it) })
                 put("notificationRules", payload.notificationRules.toJsonArray { notificationToJson(it) })
                 payload.appSettings?.let { put("appSettings", appSettingsToJson(it)) }
@@ -70,6 +72,7 @@ object LanSyncJsonCodec {
             loanInterestRevisions = root.readArray("loanInterestRevisions").mapObjects { loanRevisionFromJson(it) },
             loanScheduleEntries = root.readArray("loanScheduleEntries").mapObjects { loanScheduleFromJson(it) },
             recurringRules = root.readArray("recurringRules").mapObjects { recurringFromJson(it) },
+            budgets = root.readArray("budgets").mapObjects { budgetFromJson(it) },
             categorizationRules = root.readArray("categorizationRules").mapObjects { categorizationFromJson(it) },
             notificationRules = root.readArray("notificationRules").mapObjects { notificationFromJson(it) },
             appSettings = root.optJSONObject("appSettings")?.let { appSettingsFromJson(it) },
@@ -409,6 +412,38 @@ object LanSyncJsonCodec {
             endDate = json.optNullableLong("endDate"),
             noteTemplate = json.optNullableString("noteTemplate"),
             reminderMinutesBefore = json.getInt("reminderMinutesBefore"),
+            createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
+        )
+
+    private fun budgetToJson(record: LanBudgetRecord) =
+        JSONObject().apply {
+            put("syncId", record.syncId)
+            put("categorySyncId", record.categorySyncId)
+            putNullableString("subcategorySyncId", record.subcategorySyncId)
+            put("amountLimit", record.amountLimit)
+            put("periodType", record.periodType)
+            putNullableLong("customPeriodStartMillis", record.customPeriodStartMillis)
+            putNullableLong("customPeriodEndMillis", record.customPeriodEndMillis)
+            put("alertOnExceeded", record.alertOnExceeded)
+            putNullableString("lastAlertPeriodKey", record.lastAlertPeriodKey)
+            put("isActive", record.isActive)
+            put("createdAt", record.createdAt)
+            put("updatedAt", record.updatedAt)
+        }
+
+    private fun budgetFromJson(json: JSONObject) =
+        LanBudgetRecord(
+            syncId = json.getString("syncId"),
+            categorySyncId = json.getString("categorySyncId"),
+            subcategorySyncId = json.optNullableString("subcategorySyncId"),
+            amountLimit = json.getDouble("amountLimit"),
+            periodType = json.getString("periodType"),
+            customPeriodStartMillis = json.optNullableLong("customPeriodStartMillis"),
+            customPeriodEndMillis = json.optNullableLong("customPeriodEndMillis"),
+            alertOnExceeded = json.getBoolean("alertOnExceeded"),
+            lastAlertPeriodKey = json.optNullableString("lastAlertPeriodKey"),
+            isActive = json.getBoolean("isActive"),
             createdAt = json.getLong("createdAt"),
             updatedAt = json.getLong("updatedAt"),
         )

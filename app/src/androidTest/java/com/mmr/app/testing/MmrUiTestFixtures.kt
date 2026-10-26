@@ -1,8 +1,12 @@
 package com.mmr.app.testing
 
 import com.mmr.core.database.MmrDatabase
+import com.mmr.core.common.sync.MmrSyncId
+import com.mmr.core.database.entity.BudgetEntity
 import com.mmr.core.database.entity.LoanEntity
 import com.mmr.core.database.entity.TransactionEntity
+import com.mmr.core.model.enums.BudgetPeriodType
+import com.mmr.core.model.enums.CategoryType
 import com.mmr.core.domain.repository.ApprovalRepository
 import com.mmr.core.domain.repository.LoanRepository
 import com.mmr.core.model.enums.LoanRepaymentMode
@@ -52,6 +56,12 @@ object MmrUiTestFixtures {
         val amount: Double,
     )
 
+    data class BudgetProgressFixture(
+        val budgetId: Long,
+        val categoryLabel: String,
+        val percentUsed: Int,
+    )
+
     data class CardRefundApplyFixture(
         val purchaseMerchant: String,
         val purchaseTransactionId: Long,
@@ -84,6 +94,7 @@ object MmrUiTestFixtures {
         database.backupDao().deleteAllLoanInterestRevisions()
         database.backupDao().deleteAllLoans()
         database.backupDao().deleteAllRecurringRules()
+        database.backupDao().deleteAllBudgets()
     }
 
     suspend fun seedTwoMergeableExpenses(
@@ -413,6 +424,46 @@ object MmrUiTestFixtures {
             purchaseAmount = purchaseAmount,
             refundAmount = refundAmount,
             netAmountAfterRefund = purchaseAmount - refundAmount,
+        )
+    }
+
+    suspend fun seedOverBudgetMonthly(
+        database: MmrDatabase,
+        limit: Double = 100.0,
+        spent: Double = 150.0,
+    ): BudgetProgressFixture {
+        val category =
+            database.categoryDao().getActiveCategoriesOnce().first {
+                it.type == CategoryType.EXPENSE && it.name == "Food & Dining"
+            }
+        val accountId = requireDefaultAccountId(database)
+        val now = System.currentTimeMillis()
+        insertApprovedTransaction(
+            database,
+            accountId,
+            spent,
+            TransactionType.EXPENSE,
+            now,
+            categoryId = category.id,
+        )
+        val nowMs = System.currentTimeMillis()
+        val budgetId =
+            database.budgetDao().insert(
+                BudgetEntity(
+                    syncId = MmrSyncId.newId(),
+                    categoryId = category.id,
+                    amountLimit = limit,
+                    periodType = BudgetPeriodType.MONTHLY,
+                    alertOnExceeded = false,
+                    createdAt = nowMs,
+                    updatedAt = nowMs,
+                ),
+            )
+        val percent = ((spent / limit) * 100).toInt()
+        return BudgetProgressFixture(
+            budgetId = budgetId,
+            categoryLabel = category.name,
+            percentUsed = percent,
         )
     }
 }

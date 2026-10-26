@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mmr.app.ui.copy.mmrStaticLabelCase
 import com.mmr.app.ui.theme.MmrBrandColors
 
 @Composable
@@ -102,7 +103,7 @@ fun MmrIosSettingsSection(
                 )
             } else {
                 Text(
-                    text = it.uppercase(),
+                    text = it.mmrStaticLabelCase().uppercase(),
                     modifier =
                         Modifier
                             .fillMaxWidth()
@@ -192,7 +193,7 @@ fun MmrIosSettingsNavRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = label,
+                text = label.mmrStaticLabelCase(),
                 modifier = Modifier.weight(1f),
                 color = MmrBrandColors.Reversal,
                 fontSize = 16.sp,
@@ -248,7 +249,7 @@ fun MmrIosSettingsSwitchRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = label,
+                text = label.mmrStaticLabelCase(),
                 modifier = Modifier.weight(1f),
                 color = MmrBrandColors.Reversal,
                 fontSize = 16.sp,
@@ -281,7 +282,7 @@ fun MmrIosSettingsCaptionRow(
         modifier = modifier,
     ) {
         Text(
-            text = text,
+            text = text.mmrStaticLabelCase(),
             modifier =
                 Modifier
                     .fillMaxWidth()
@@ -319,7 +320,7 @@ fun MmrIosSettingsValueRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = label,
+                text = label.mmrStaticLabelCase(),
                 modifier = Modifier.weight(1f),
                 color = MmrBrandColors.Reversal,
                 fontSize = 16.sp,
@@ -351,7 +352,7 @@ fun MmrIosSettingsDestructiveRow(
                 .clickable(onClick = onClick),
     ) {
         Text(
-            text = label,
+            text = label.mmrStaticLabelCase(),
             modifier =
                 Modifier
                     .fillMaxWidth()

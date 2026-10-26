@@ -262,7 +262,6 @@ sealed interface HomeUiEvent {
     ) : HomeUiEvent
 }
 
-data class HomePeriodExportRequest(
-    val contentUri: android.net.Uri,
-    val subject: String,
+data class HomePeriodExportResult(
+    val savedFileName: String,
 )

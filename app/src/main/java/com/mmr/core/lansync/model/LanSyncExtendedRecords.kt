@@ -57,6 +57,21 @@ data class LanRecurringRuleRecord(
     val updatedAt: Long,
 )
 
+data class LanBudgetRecord(
+    val syncId: String,
+    val categorySyncId: String,
+    val subcategorySyncId: String?,
+    val amountLimit: Double,
+    val periodType: String,
+    val customPeriodStartMillis: Long?,
+    val customPeriodEndMillis: Long?,
+    val alertOnExceeded: Boolean,
+    val lastAlertPeriodKey: String?,
+    val isActive: Boolean,
+    val createdAt: Long,
+    val updatedAt: Long,
+)
+
 data class LanCategorizationRuleRecord(
     val syncId: String,
     val priority: Int,

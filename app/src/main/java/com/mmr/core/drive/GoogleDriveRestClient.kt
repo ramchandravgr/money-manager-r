@@ -31,7 +31,6 @@ class GoogleDriveRestClient
                 .build()
 
         private val jsonMediaType = "application/json; charset=utf-8".toMediaType()
-        private val zipMediaType = "application/zip".toMediaType()
 
         fun findFolderByName(
             accessToken: String,

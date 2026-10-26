@@ -180,9 +180,19 @@
     if (name === 'stats') loadStats();
   }
 
+  function applyWebAppearance(appearance) {
+    const root = document.documentElement;
+    if (appearance === 'dark' || appearance === 'light' || appearance === 'oled') {
+      root.dataset.mmrTheme = appearance;
+    } else {
+      delete root.dataset.mmrTheme;
+    }
+  }
+
   async function boot() {
     try {
       const status = await fetch(API + '/status').then((r) => r.json());
+      applyWebAppearance(status.appearance);
       if (!status.enabled) {
         statusLine.textContent = 'Web Manage is off on the phone. Turn it on in Settings.';
         return;

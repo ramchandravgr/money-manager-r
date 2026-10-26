@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mmr.app.ui.state.MmrUiMessages
 import com.mmr.core.data.preferences.LanSyncPeerMode
-import com.mmr.core.data.preferences.LanSyncPreferencesStore
 import com.mmr.core.domain.repository.LanSyncRepository
 import com.mmr.core.lansync.LanSyncMergeConflicts
 import com.mmr.core.lansync.LanSyncMergeOptions
@@ -68,7 +67,6 @@ class LanSyncViewModel
     @Inject
     constructor(
         private val lanSyncRepository: LanSyncRepository,
-        private val preferencesStore: LanSyncPreferencesStore,
     ) : ViewModel() {
         private val pairingInput = MutableStateFlow("")
         private val isBusy = MutableStateFlow(false)

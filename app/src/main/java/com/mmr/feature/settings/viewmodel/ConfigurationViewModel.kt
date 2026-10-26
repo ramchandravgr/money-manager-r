@@ -1,6 +1,7 @@
 package com.mmr.feature.settings.viewmodel
 
 import androidx.lifecycle.ViewModel
+import com.mmr.core.common.widget.HomeScreenWidgetRefreshTrigger
 import com.mmr.core.data.preferences.AppDisplaySettingsSnapshot
 import com.mmr.core.data.preferences.AppDisplaySettingsStore
 import com.mmr.core.model.settings.MmrAmountColorScheme
@@ -8,6 +9,7 @@ import com.mmr.core.model.settings.MmrAppColorTheme
 import com.mmr.core.model.settings.MmrInputOrder
 import com.mmr.core.model.settings.MmrStartScreenTab
 import com.mmr.core.model.settings.MmrSwipeBehavior
+import com.mmr.core.model.settings.MmrThemeMode
 import com.mmr.core.model.settings.MmrTimeDisplay
 import com.mmr.core.model.settings.MmrWeekStartDay
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,6 +21,7 @@ class ConfigurationViewModel
     @Inject
     constructor(
         private val displaySettingsStore: AppDisplaySettingsStore,
+        private val widgetRefreshTrigger: HomeScreenWidgetRefreshTrigger,
     ) : ViewModel() {
         val settings: StateFlow<AppDisplaySettingsSnapshot> = displaySettingsStore.settings
 
@@ -43,4 +46,14 @@ class ConfigurationViewModel
         fun setInputOrder(order: MmrInputOrder) = displaySettingsStore.setInputOrder(order)
 
         fun setAppColorTheme(theme: MmrAppColorTheme) = displaySettingsStore.setAppColorTheme(theme)
+
+        fun setThemeMode(mode: MmrThemeMode) {
+            displaySettingsStore.setThemeMode(mode)
+            widgetRefreshTrigger.requestRefresh()
+        }
+
+        fun setMainNavVisible(
+            navId: String,
+            visible: Boolean,
+        ) = displaySettingsStore.setMainNavVisible(navId, visible)
     }

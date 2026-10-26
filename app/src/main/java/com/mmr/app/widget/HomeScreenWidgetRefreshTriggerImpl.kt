@@ -13,4 +13,8 @@ class HomeScreenWidgetRefreshTriggerImpl
         override fun requestRefresh() {
             widgetRefresher.refreshAll()
         }
+
+        override suspend fun refreshNow() {
+            widgetRefresher.refreshAllAndWait()
+        }
     }

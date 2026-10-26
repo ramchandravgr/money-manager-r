@@ -24,7 +24,6 @@ class LanSyncNsdHelper
         private val nsdManager: NsdManager = context.getSystemService(Context.NSD_SERVICE) as NsdManager
         private var registrationListener: NsdManager.RegistrationListener? = null
         private var discoveryListener: NsdManager.DiscoveryListener? = null
-        private val resolveListeners = mutableListOf<NsdManager.ResolveListener>()
 
         private val peers = ConcurrentHashMap<String, DiscoveredLanPeer>()
 

@@ -49,6 +49,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mmr.app.ui.copy.mmrStaticLabelCase
 import com.mmr.app.ui.theme.MmrBrandColors
 import com.mmr.core.model.enums.TransactionType
 
@@ -237,7 +238,7 @@ fun MmrTransactionFormExpandablePicker(
         return
     }
     val isPlaceholder = isTransactionFormPickerPlaceholder(value, emptyHint)
-    val displayText = if (isPlaceholder) emptyHint else value
+    val displayText = if (isPlaceholder) emptyHint.mmrStaticLabelCase() else value
     MmrTransactionFormCard(modifier = modifier) {
         Column {
             Row(
@@ -301,7 +302,7 @@ fun MmrTransactionFormPickerRowLabeled(
 ) {
     val interactive = enabled && onClick != null
     val isPlaceholder = isTransactionFormPickerPlaceholder(value, emptyHint)
-    val displayValue = if (isPlaceholder) emptyHint else value
+    val displayValue = if (isPlaceholder) emptyHint.mmrStaticLabelCase() else value
     MmrTransactionFormCard(
         modifier =
             modifier.then(
@@ -328,7 +329,7 @@ fun MmrTransactionFormPickerRowLabeled(
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = label,
+                    text = label.mmrStaticLabelCase(),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = MmrBrandColors.TextMedium,
@@ -367,7 +368,12 @@ fun MmrTransactionFormPickerRow(
 ) {
     val interactive = enabled && onClick != null
     val isPlaceholder = isTransactionFormPickerPlaceholder(value, emptyHint)
-    val displayText = if (isPlaceholder) placeholder else value
+    val displayText =
+        if (isPlaceholder) {
+            placeholder.mmrStaticLabelCase()
+        } else {
+            value
+        }
     MmrTransactionFormCard(
         modifier =
             modifier.then(
@@ -478,7 +484,7 @@ fun MmrTransactionFormTextRow(
                 decorationBox = { inner ->
                     if (value.isEmpty()) {
                         Text(
-                            text = placeholder,
+                            text = placeholder.mmrStaticLabelCase(),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MmrBrandColors.TextMedium,
                         )
@@ -543,7 +549,7 @@ fun MmrTransactionFormFilterChip(
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = label,
+            text = label.mmrStaticLabelCase(),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
             color = MmrBrandColors.Reversal,
@@ -590,7 +596,7 @@ fun <T> MmrTransactionFormChoiceChips(
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    text = option.label,
+                    text = option.label.mmrStaticLabelCase(),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
                     color = MmrBrandColors.Reversal,

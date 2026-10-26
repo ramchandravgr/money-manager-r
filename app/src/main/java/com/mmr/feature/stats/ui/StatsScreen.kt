@@ -17,7 +17,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
+import com.mmr.app.R
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mmr.app.ui.adaptive.MmrAdaptiveWidthBox
 import com.mmr.app.ui.components.MmrHeaderBar
@@ -185,7 +187,7 @@ fun StatsScreen(
                             HorizontalPager(
                                 state = pagerState,
                                 modifier = Modifier.fillMaxSize(),
-                                beyondViewportPageCount = 1,
+                                beyondViewportPageCount = 0,
                                 userScrollEnabled = true,
                             ) { page ->
                                 val tab = if (page == 0) StatsLedgerTab.INCOME else StatsLedgerTab.EXPENSE
@@ -203,32 +205,37 @@ fun StatsScreen(
                                     }
                                 if (empty) {
                                     MmrEmptyState(
-                                        message = "No ${tab.name.lowercase()} in this period.",
+                                        message = stringResource(R.string.stats_no_transactions_in_period),
                                         modifier = Modifier.fillMaxSize(),
                                     )
                                 } else {
                                     MmrAdaptiveWidthBox(modifier = Modifier.fillMaxSize()) {
-                                        StatsCategoryList(
-                                            breakdowns = breakdowns,
-                                            showNativeAdPlaceholder = breakdowns.size > 3,
-                                            headerContent = {
-                                                StatsPieChartSection(
-                                                    breakdowns = breakdowns,
-                                                    modifier = Modifier.fillMaxWidth(),
+                                        Column(modifier = Modifier.fillMaxSize()) {
+                                            StatsCylinderInspectSection(
+                                                breakdowns = breakdowns,
+                                                onNavigateToCategoryDetail = { item ->
+                                                    val drill =
+                                                        viewModel.drillDownFor(item, tab)
+                                                            ?: return@StatsCylinderInspectSection
+                                                    onNavigateToCategoryDetail(drill)
+                                                },
+                                                modifier =
+                                                    Modifier
+                                                        .weight(1f)
+                                                        .fillMaxWidth(),
+                                            )
+                                            if (breakdowns.size > 3) {
+                                                StatsNativeAdPlaceholder(
+                                                    modifier =
+                                                        Modifier.padding(
+                                                            horizontal =
+                                                                com.mmr.app.ui.adaptive.mmrScreenHorizontalPadding(),
+                                                            vertical =
+                                                                com.mmr.app.ui.components.MmrDimens.spaceSm,
+                                                        ),
                                                 )
-                                            },
-                                            onCategoryClick = { item ->
-                                                val drill =
-                                                    viewModel.drillDownFor(item, tab)
-                                                        ?: return@StatsCategoryList
-                                                onNavigateToCategoryDetail(drill)
-                                            },
-                                            modifier = Modifier.fillMaxSize(),
-                                            contentPadding =
-                                                PaddingValues(
-                                                    bottom = com.mmr.app.ui.components.MmrDimens.spaceSm,
-                                                ),
-                                        )
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -295,6 +302,7 @@ private fun StatsTopBar(
             title = if (uiState.periodMode == StatsPeriodMode.PERIOD) "" else uiState.navigationLabel,
             titleContent = periodTitleContent,
             onTitleClick = onTitleClick,
+            centerPeriodChrome = true,
             showBack = showBackNavigation,
             onBack = onNavigateBack,
             onPrevious =

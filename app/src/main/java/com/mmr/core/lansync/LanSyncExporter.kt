@@ -8,6 +8,7 @@ import com.mmr.core.database.dao.CategorizationRuleDao
 import com.mmr.core.database.dao.TransactionAttachmentDao
 import com.mmr.core.database.dao.TransactionDao
 import com.mmr.core.database.entity.AccountEntity
+import com.mmr.core.database.entity.BudgetEntity
 import com.mmr.core.database.entity.CategorizationRuleEntity
 import com.mmr.core.database.entity.CategoryEntity
 import com.mmr.core.database.entity.LoanEntity
@@ -20,6 +21,7 @@ import com.mmr.core.database.entity.SubcategoryEntity
 import com.mmr.core.database.entity.TransactionEntity
 import com.mmr.core.lansync.model.LanAccountRecord
 import com.mmr.core.lansync.model.LanAttachmentRecord
+import com.mmr.core.lansync.model.LanBudgetRecord
 import com.mmr.core.lansync.model.LanCategorizationRuleRecord
 import com.mmr.core.lansync.model.LanCategoryRecord
 import com.mmr.core.lansync.model.LanLoanInterestRevisionRecord
@@ -93,6 +95,10 @@ class LanSyncExporter
                     recurring.map {
                         it.toLanRecord(categorySyncMap, subcategorySyncMap, accountSyncMap, loanSyncMap)
                     },
+                budgets =
+                    backupDao.getAllBudgets().map { budget ->
+                        budget.withSyncId().toLanRecord(categorySyncMap, subcategorySyncMap)
+                    },
                 categorizationRules = categorizationRuleDao.getAll().map { it.withSyncId().toLanRecord() },
                 notificationRules =
                     backupDao.getAllNotificationRules().map {
@@ -162,6 +168,8 @@ class LanSyncExporter
         private fun RecurringRuleEntity.withSyncId() = copy(syncId = MmrSyncId.normalize(syncId))
 
         private fun CategorizationRuleEntity.withSyncId() = copy(syncId = MmrSyncId.normalize(syncId))
+
+        private fun BudgetEntity.withSyncId() = copy(syncId = MmrSyncId.normalize(syncId))
 
         private fun NotificationRuleEntity.withSyncId() = copy(syncId = MmrSyncId.normalize(syncId))
 
@@ -323,6 +331,24 @@ class LanSyncExporter
             endDate = endDate,
             noteTemplate = noteTemplate,
             reminderMinutesBefore = reminderMinutesBefore,
+            createdAt = createdAt,
+            updatedAt = updatedAt,
+        )
+
+        private fun BudgetEntity.toLanRecord(
+            categorySyncMap: Map<Long, String>,
+            subcategorySyncMap: Map<Long, String>,
+        ) = LanBudgetRecord(
+            syncId = syncId,
+            categorySyncId = categorySyncMap[categoryId] ?: error("Missing category sync id"),
+            subcategorySyncId = subcategoryId?.let { subcategorySyncMap[it] },
+            amountLimit = amountLimit,
+            periodType = periodType.name,
+            customPeriodStartMillis = customPeriodStartMillis,
+            customPeriodEndMillis = customPeriodEndMillis,
+            alertOnExceeded = alertOnExceeded,
+            lastAlertPeriodKey = lastAlertPeriodKey,
+            isActive = isActive,
             createdAt = createdAt,
             updatedAt = updatedAt,
         )

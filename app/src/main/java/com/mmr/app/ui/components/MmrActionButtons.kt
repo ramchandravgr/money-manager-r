@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.mmr.app.ui.copy.mmrStaticLabelCase
 import com.mmr.app.ui.theme.MmrBrandColors
 
 private val actionShape = RoundedCornerShape(MmrDimens.actionButtonCorner)
@@ -42,7 +43,7 @@ fun MmrPrimaryActionButton(
                 disabledElevation = 0.dp,
             ),
     ) {
-        Text(text = text, style = MaterialTheme.typography.labelLarge)
+        Text(text = text.mmrStaticLabelCase(), style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -65,7 +66,7 @@ fun MmrSecondaryActionButton(
             ),
         border = BorderStroke(1.dp, borderColor),
     ) {
-        Text(text = text, style = MaterialTheme.typography.labelLarge)
+        Text(text = text.mmrStaticLabelCase(), style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -95,7 +96,7 @@ fun MmrDestructivePrimaryActionButton(
                 disabledElevation = 0.dp,
             ),
     ) {
-        Text(text = text, style = MaterialTheme.typography.labelLarge)
+        Text(text = text.mmrStaticLabelCase(), style = MaterialTheme.typography.labelLarge)
     }
 }
 

@@ -40,6 +40,8 @@ data class AddEditTransactionUiState(
     val autocompleteEnabled: Boolean = true,
     val canSave: Boolean = false,
     val isSaved: Boolean = false,
+    val exitWithoutSaving: Boolean = false,
+    val showUnsavedChangesDialog: Boolean = false,
     val loadErrorMessage: String? = null,
     val errorMessage: String? = null,
     val categoryPickerVisible: Boolean = false,
@@ -191,6 +193,10 @@ sealed interface AddEditTransactionUiEvent {
     object OnSaveClick : AddEditTransactionUiEvent
 
     object OnBackClick : AddEditTransactionUiEvent
+
+    object OnDismissUnsavedChangesDialog : AddEditTransactionUiEvent
+
+    object OnConfirmDiscardChanges : AddEditTransactionUiEvent
 
     object OnDeleteClick : AddEditTransactionUiEvent
 

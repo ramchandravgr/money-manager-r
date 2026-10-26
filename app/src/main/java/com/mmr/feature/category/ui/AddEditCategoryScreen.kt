@@ -162,12 +162,9 @@ fun AddEditCategoryScreen(
 
             if (uiState.isEditMode && uiState.categoryId > 0L) {
                 SubcategoryListSection(
-                    parentName = uiState.name,
-                    parentColorHex = uiState.colorHex,
                     subcategories = uiState.subcategories,
                     onAddSubcategory = { onNavigateToAddSubcategory(uiState.categoryId) },
                     onEditSubcategory = onNavigateToEditSubcategory,
-                    onDeleteSubcategory = { viewModel.deleteSubcategory(it.id) },
                 )
             }
 

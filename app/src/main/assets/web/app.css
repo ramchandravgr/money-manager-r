@@ -10,6 +10,45 @@
   --expense: #dc2626;
   --transfer: #7c3aed;
 }
+
+/* Matches in-app dark palettes when phone reports appearance via /api/status */
+:root[data-mmr-theme="dark"] {
+  --bg: #12141c;
+  --card: #1c1f2a;
+  --text: #f2f2f5;
+  --muted: #ababb3;
+  --border: #2e313c;
+  --danger: #fb923c;
+  --income: #2dd4bf;
+  --expense: #f87171;
+  --transfer: #c4b5fd;
+}
+
+:root[data-mmr-theme="oled"] {
+  --bg: #000000;
+  --card: #121212;
+  --text: #f2f2f5;
+  --muted: #ababb3;
+  --border: #2c2c2c;
+  --danger: #fb923c;
+  --income: #2dd4bf;
+  --expense: #f87171;
+  --transfer: #c4b5fd;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mmr-theme="light"]):not([data-mmr-theme="oled"]) {
+    --bg: #12141c;
+    --card: #1c1f2a;
+    --text: #f2f2f5;
+    --muted: #ababb3;
+    --border: #2e313c;
+    --danger: #fb923c;
+    --income: #2dd4bf;
+    --expense: #f87171;
+    --transfer: #c4b5fd;
+  }
+}
 * { box-sizing: border-box; }
 body {
   margin: 0;

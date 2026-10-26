@@ -2,6 +2,9 @@ package com.mmr.app.widget
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -13,13 +16,19 @@ class MmrWidgetDeferStore
         @ApplicationContext context: Context,
     ) {
         private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        private val revisionState = MutableStateFlow(0)
+
+        /** Bumps when Later or a completed action changes which pending row the widget shows. */
+        val revision: StateFlow<Int> = revisionState.asStateFlow()
 
         fun defer(approvalId: Long) {
             prefs.edit().putLong(deferKey(approvalId), System.currentTimeMillis()).apply()
+            revisionState.value = revisionState.value + 1
         }
 
         fun clearDefer(approvalId: Long) {
             prefs.edit().remove(deferKey(approvalId)).apply()
+            revisionState.value = revisionState.value + 1
         }
 
         fun isDeferred(approvalId: Long): Boolean = prefs.contains(deferKey(approvalId))

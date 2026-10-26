@@ -16,8 +16,10 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Use on inner [androidx.compose.material3.Scaffold]s hosted inside [com.mmr.app.navigation.MmrMainNavigationScaffold].
- * The outer scaffold does not apply status-bar insets; brand headers ([MmrHomeTopBar], [MmrHeaderBar], etc.)
- * call [androidx.compose.foundation.layout.statusBarsPadding] once so the indigo bar draws edge-to-edge.
+ * The outer main nav scaffold does not apply status-bar insets on portrait bottom tabs; brand headers
+ * ([MmrHomeTopBar], [MmrHeaderBar], etc.) call [androidx.compose.foundation.layout.statusBarsPadding] once.
+ * In navigation-rail (medium+ width) mode, the rail uses Material window insets; main content gets horizontal
+ * navigation-bar padding only (see [com.mmr.app.navigation.MmrMainNavigationScaffold]).
  */
 val MmrNestedScaffoldInsets: WindowInsets = WindowInsets(0, 0, 0, 0)
 
@@ -30,6 +32,7 @@ fun MmrImeAwareScrollColumn(
     modifier: Modifier = Modifier,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     horizontalPadding: Dp = 0.dp,
+    extraTopPadding: Dp = 12.dp,
     extraBottomPadding: Dp = 24.dp,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -40,7 +43,7 @@ fun MmrImeAwareScrollColumn(
                 .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = horizontalPadding)
-                .padding(bottom = extraBottomPadding),
+                .padding(top = extraTopPadding, bottom = extraBottomPadding),
         verticalArrangement = verticalArrangement,
         content = content,
     )

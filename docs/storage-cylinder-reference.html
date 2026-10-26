@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Storage cylinder — visual reference</title>
+<style>
+  :root {
+    --ink: #1c1c1e;
+    --mute: #c7c7cc;
+    --mute-2: #aeaeb2;
+    --line: #f2f2f7;
+    --bg: #ffffff;
+    --page: #d8dbe3;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 28px 16px 48px;
+    font-family: "Samsung One", "Google Sans", "Segoe UI", system-ui, sans-serif;
+    background: var(--page);
+    color: var(--ink);
+  }
+  .lead {
+    max-width: 390px;
+    margin: 0 auto 16px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #3a3a3c;
+  }
+  .phone {
+    width: 420px;
+    max-width: 100%;
+    margin: 0 auto 28px;
+    background: #111;
+    border-radius: 36px;
+    padding: 10px;
+    box-shadow: 0 18px 50px rgba(0,0,0,.22);
+  }
+  .screen {
+    background: var(--bg);
+    border-radius: 28px;
+    min-height: 760px;
+    padding: 18px 18px 22px 20px;
+    position: relative;
+  }
+  .back { font-size: 22px; line-height: 1; color: #111; margin: 4px 0 10px; }
+  h1 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 400;
+    letter-spacing: -.03em;
+  }
+  .sub {
+    margin: 8px 0 18px;
+    color: #b0b0b5;
+    font-size: 13px;
+  }
+  .layout {
+    position: relative;
+    display: grid;
+    grid-template-columns: 132px minmax(200px, 1fr);
+    align-items: start;
+    min-height: 520px;
+  }
+  .cyl-wrap { height: 520px; }
+  /* SVG covers cylinder + legend so the leader line is not clipped. */
+  .cyl-wrap svg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 520px;
+    pointer-events: none;
+    z-index: 2;
+    filter: drop-shadow(6px 10px 12px rgba(0,0,0,.07));
+  }
+  .legend { padding-top: 8px; }
+  button.row {
+    display: grid;
+    grid-template-columns: 10px 1fr 16px;
+    grid-template-rows: auto auto;
+    column-gap: 10px;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    padding: 8px 0;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+  }
+  button.row .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
+  button.row .name {
+    grid-column: 2;
+    grid-row: 1;
+    font-size: 13px;
+    color: #d1d1d6;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+  button.row .amt {
+    grid-column: 2;
+    grid-row: 2;
+    font-size: 13px;
+    color: #d1d1d6;
+    font-weight: 500;
+    margin-top: 1px;
+    white-space: nowrap;
+  }
+  button.row .chev {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    align-self: center;
+    color: #e5e5ea;
+    font-size: 18px;
+  }
+  button.row.on .name,
+  button.row.on .amt { color: #111; font-weight: 700; }
+  .hint {
+    max-width: 390px;
+    margin: 0 auto;
+    font-size: 12px;
+    color: #636366;
+    line-height: 1.45;
+  }
+</style>
+</head>
+<body>
+  <p class="lead">
+    Phone chrome is CSS. The tube is SVG: elliptical glass cap and base, flat color cuts, side shading.
+    Tap a row — other bands wash out and a leader line is drawn to that label, same as Storage.
+  </p>
+
+  <div class="phone">
+    <div class="screen">
+      <div class="back">←</div>
+      <h1>Storage space</h1>
+      <p class="sub">116.0 GB/128 GB occupied | 12.0 GB available</p>
+      <div class="layout">
+        <div class="cyl-wrap">
+          <svg id="tube" viewBox="0 0 148 520"></svg>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+    </div>
+  </div>
+  <p class="hint">Starts unselected (full color). Tap Audio to match the highlighted screenshot. Tap again to clear.</p>
+
+<script>
+/* Bottom → top. Values in GB. Colors sampled from the Storage screenshots. */
+const STACK = [
+  { id: "system",   name: "System",        gb: 13.03,  color: "#C5CED6", label: "13.03 GB" },
+  { id: "sysfiles", name: "System files",  gb: 0,      color: "#8E8E93", label: "0 B" },
+  { id: "docs",     name: "Documents",     gb: 0.170,  color: "#7EE0B0", label: "174 MB" },
+  { id: "apks",     name: "APKs",          gb: 0,      color: "#64B5F6", label: "0 B" },
+  { id: "video",    name: "Video",         gb: 48.03,  color: "#C77DFF", label: "48.03 GB" },
+  { id: "audio",    name: "Audio",         gb: 0.487,  color: "#FF3B30", label: "499 MB" },
+  { id: "images",   name: "Images",        gb: 3.13,   color: "#FF9F0A", label: "3.13 GB" },
+  { id: "apps",     name: "Apps and data", gb: 45.80,  color: "#FFD60A", label: "45.80 GB" },
+];
+const CAPACITY = 128;
+const LEGEND_ORDER = ["apps","images","audio","video","apks","docs","sysfiles","system"];
+
+const CX = 62, RX = 42, RY = 13;
+const Y0 = 18, Y1 = 500;
+const INNER0 = Y0 + RY;
+const INNER1 = Y1 - RY;
+const INNER_H = INNER1 - INNER0;
+
+let selected = null;
+
+function mixWhite(hex, t) {
+  const n = parseInt(hex.slice(1), 16);
+  const ch = (i) => Math.round(((n >> i) & 255) * (1 - t) + 255 * t);
+  const r = ch(16), g = ch(8), b = ch(0);
+  return "#" + [r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("");
+}
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  const ch = (i) => Math.max(0, Math.min(255, ((n >> i) & 255) + amt));
+  return "#" + [ch(16), ch(8), ch(0)].map((v) => v.toString(16).padStart(2, "0")).join("");
+}
+
+function layoutBands() {
+  const used = STACK.reduce((s, c) => s + c.gb, 0);
+  const fillH = INNER_H * (used / CAPACITY);
+  const yFill = INNER1 - fillH;
+  /* Minimum visible px so Audio / Documents stay readable. */
+  const positives = STACK.filter((c) => c.gb > 0);
+  const minPx = 7;
+  let raw = positives.map((c) => ({ c, h: fillH * (c.gb / used) }));
+  let extra = 0;
+  raw.forEach((b) => { if (b.h < minPx) { extra += minPx - b.h; b.h = minPx; } });
+  const flex = raw.filter((b) => b.h > minPx + 8);
+  const flexSum = flex.reduce((s, b) => s + b.h, 0);
+  flex.forEach((b) => { b.h -= extra * (b.h / flexSum); });
+  let y = INNER1;
+  const bands = [];
+  raw.slice().reverse().forEach((b) => { /* draw later bottom-up; store top-down after reverse */
+  });
+  /* stack from bottom: first item in STACK is bottom */
+  y = INNER1;
+  STACK.filter((c) => c.gb > 0).forEach((c) => {
+    const h = raw.find((b) => b.c === c).h;
+    const y1 = y - h;
+    bands.push({ ...c, yTop: y1, yBot: y, h });
+    y = y1;
+  });
+  return { bands, yFill, used };
+}
+
+function bandPath(xL, xR, yTop, yBot) {
+  return `M ${xL} ${yTop} H ${xR} V ${yBot} H ${xL} Z`;
+}
+function glassPath() {
+  const xL = CX - RX, xR = CX + RX;
+  return [
+    `M ${xL} ${Y0 + RY}`,
+    `Q ${xL} ${Y0} ${CX} ${Y0}`,
+    `Q ${xR} ${Y0} ${xR} ${Y0 + RY}`,
+    `L ${xR} ${Y1 - RY}`,
+    `Q ${xR} ${Y1} ${CX} ${Y1}`,
+    `Q ${xL} ${Y1} ${xL} ${Y1 - RY}`,
+    "Z",
+  ].join(" ");
+}
+
+function paint() {
+  const { bands, yFill } = layoutBands();
+  const xL = CX - RX, xR = CX + RX;
+  const svg = document.getElementById("tube");
+  const layout = document.querySelector(".layout");
+  const vbW = Math.max(320, layout.clientWidth || 350);
+  svg.setAttribute("viewBox", `0 0 ${vbW} 520`);
+  const uid = "g" + Math.random().toString(36).slice(2, 7);
+
+  let defs = `<defs>
+    <linearGradient id="${uid}-sheen" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#000" stop-opacity=".22"/>
+      <stop offset="18%" stop-color="#fff" stop-opacity=".28"/>
+      <stop offset="48%" stop-color="#fff" stop-opacity=".05"/>
+      <stop offset="100%" stop-color="#000" stop-opacity=".18"/>
+    </linearGradient>
+    <clipPath id="${uid}-clip"><path d="${glassPath()}"/></clipPath>`;
+
+  bands.forEach((b, i) => {
+    const base = selected && selected !== b.id ? mixWhite(b.color, 0.62) : b.color;
+    defs += `<linearGradient id="${uid}-c${i}" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="${shade(base, -40)}"/>
+      <stop offset="42%" stop-color="${base}"/>
+      <stop offset="58%" stop-color="${shade(base, 28)}"/>
+      <stop offset="100%" stop-color="${shade(base, -28)}"/>
+    </linearGradient>`;
+  });
+  defs += `</defs>`;
+
+  let body = `<ellipse cx="${CX}" cy="${Y1 + 8}" rx="${RX + 6}" ry="10" fill="#000" opacity=".06"/>`;
+  body += `<g clip-path="url(#${uid}-clip)">`;
+  /* empty glass above fill */
+  body += `<rect x="${xL}" y="${INNER0}" width="${RX * 2}" height="${Math.max(0, yFill - INNER0)}" fill="#f4f5f8"/>`;
+  bands.forEach((b, i) => {
+    body += `<path d="${bandPath(xL, xR, b.yTop, b.yBot)}" fill="url(#${uid}-c${i})"/>`;
+  });
+  body += `<rect x="${xL}" y="${Y0}" width="${RX * 2}" height="${Y1 - Y0}" fill="url(#${uid}-sheen)" opacity=".55"/>`;
+  body += `</g>`;
+
+  /* bottom foot */
+  const foot = bands[0];
+  const footColor = selected && selected !== foot.id ? mixWhite(foot.color, 0.62) : foot.color;
+  body += `<ellipse cx="${CX}" cy="${Y1}" rx="${RX}" ry="${RY}" fill="${shade(footColor, -24)}"/>`;
+
+  /* glass rim — the only full top ellipse */
+  body += `<ellipse cx="${CX}" cy="${Y0}" rx="${RX}" ry="${RY}" fill="#fbfbfc" stroke="#e6e8ee" stroke-width="1"/>`;
+  body += `<ellipse cx="${CX}" cy="${Y0}" rx="${RX - 8}" ry="${RY - 3}" fill="none" stroke="#fff" stroke-width="1.2" opacity=".9"/>`;
+
+  /* selected rim: thin colored stroke around that band only (screenshot highlight) */
+  if (selected) {
+    const b = bands.find((x) => x.id === selected);
+    if (b) {
+      body += `<line x1="${xL + 1}" y1="${b.yTop}" x2="${xR - 1}" y2="${b.yTop}" stroke="${b.color}" stroke-width="2.4" stroke-linecap="round"/>`;
+      body += `<line x1="${xL + 1}" y1="${b.yBot}" x2="${xR - 1}" y2="${b.yBot}" stroke="${b.color}" stroke-width="2.4" stroke-linecap="round"/>`;
+    }
+  }
+
+  svg.innerHTML = defs + body;
+  svg._bands = bands;
+
+  drawLeader();
+}
+
+function drawLeader() {
+  const svg = document.getElementById("tube");
+  svg.querySelectorAll(".leader").forEach((n) => n.remove());
+  if (!selected) return;
+  const band = (svg._bands || []).find((b) => b.id === selected);
+  const row = document.querySelector(`button.row[data-id="${selected}"]`);
+  if (!band || !row) return;
+
+  const svgBox = svg.getBoundingClientRect();
+  const name = row.querySelector(".name").getBoundingClientRect();
+  const sx = svg.viewBox.baseVal.width / svgBox.width;
+  const sy = svg.viewBox.baseVal.height / svgBox.height;
+
+  const xEdge = CX + RX;
+  const yMid = (band.yTop + band.yBot) / 2;
+  const tipX = (name.left - svgBox.left) * sx - 6;
+  const tipY = (name.top + name.height / 2 - svgBox.top) * sy;
+  const elbowX = Math.min(tipX - 8, xEdge + 28);
+
+  const col = band.color;
+  const ns = "http://www.w3.org/2000/svg";
+  const poly = document.createElementNS(ns, "polyline");
+  poly.setAttribute("class", "leader");
+  poly.setAttribute("points", `${xEdge},${yMid} ${elbowX},${yMid} ${tipX},${tipY}`);
+  poly.setAttribute("fill", "none");
+  poly.setAttribute("stroke", col);
+  poly.setAttribute("stroke-width", "1.6");
+  poly.setAttribute("stroke-linejoin", "round");
+  poly.setAttribute("stroke-linecap", "round");
+  const dot = document.createElementNS(ns, "circle");
+  dot.setAttribute("class", "leader");
+  dot.setAttribute("cx", tipX);
+  dot.setAttribute("cy", tipY);
+  dot.setAttribute("r", "3.2");
+  dot.setAttribute("fill", col);
+  svg.appendChild(poly);
+  svg.appendChild(dot);
+}
+
+function renderLegend() {
+  const root = document.getElementById("legend");
+  root.innerHTML = LEGEND_ORDER.map((id) => {
+    const c = STACK.find((x) => x.id === id);
+    return `<button type="button" class="row${selected === id ? " on" : ""}" data-id="${id}">
+      <span class="dot" style="background:${c.color}"></span>
+      <span class="name">${c.name}</span>
+      <span class="chev">›</span>
+      <span class="amt">${c.label}</span>
+    </button>`;
+  }).join("");
+  root.querySelectorAll("button.row").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      const item = STACK.find((x) => x.id === id);
+      if (!item.gb) return;
+      selected = selected === id ? null : id;
+      renderLegend();
+      paint();
+    });
+  });
+}
+
+renderLegend();
+paint();
+window.addEventListener("resize", drawLeader);
+</script>
+</body>
+</html>

@@ -65,6 +65,7 @@ fun MmrDetailScreenScaffold(
                 onNavigateBack = onNavigateBack,
                 useBrandHeaderStyle = true,
                 useCompactHeaderTitle = useCompactHeaderTitle,
+                applyStaticLabelCaseToTitle = false,
                 actions = topBarActions,
             )
         },

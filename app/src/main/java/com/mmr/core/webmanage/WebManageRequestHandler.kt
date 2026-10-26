@@ -42,6 +42,7 @@ class WebManageRequestHandler
         private val accountRepository: AccountRepository,
         private val categoryRepository: CategoryRepository,
         private val displaySettingsStore: AppDisplaySettingsStore,
+        private val chartThemeSource: WebManageChartThemeSource,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) {
         fun handle(
@@ -131,14 +132,17 @@ class WebManageRequestHandler
             }
         }
 
-        private fun handleStatus(): HttpLanResponse =
-            HttpLanResponse.json(
+        private fun handleStatus(): HttpLanResponse {
+            val display = chartThemeSource.snapshot()
+            return HttpLanResponse.json(
                 200,
                 JSONObject()
                     .put("enabled", preferencesStore.isWebManageEnabled())
                     .put("requiresPassword", preferencesStore.hasAccessPassword())
+                    .put("appearance", display.webAppearance)
                     .toString(),
             )
+        }
 
         private fun handleLogin(body: String): HttpLanResponse {
             if (!preferencesStore.hasAccessPassword()) {
@@ -591,12 +595,14 @@ class WebManageRequestHandler
             val bounds = parseStatsBounds(query)
             val ledger = parseStatsLedger(query)
             val (rows, tabTotal, noDataMessage) = categoryBreakdownForLedger(ledger, bounds.start, bounds.end)
+            val chartTheme = chartThemeSource.snapshot().chartTheme
             val chartPayload =
                 JSONObject(
                     WebManageChartJsonBuilder.expensePieChartJson(
                         spendings = rows,
                         tabTotal = tabTotal,
                         noDataMessage = noDataMessage,
+                        theme = chartTheme,
                     ),
                 )
             chartPayload

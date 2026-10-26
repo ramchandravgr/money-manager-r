@@ -1,6 +1,7 @@
 package com.mmr.core.backup.model
 
 import com.mmr.core.database.entity.AccountEntity
+import com.mmr.core.database.entity.BudgetEntity
 import com.mmr.core.database.entity.CategorizationRuleEntity
 import com.mmr.core.database.entity.CategoryEntity
 import com.mmr.core.database.entity.LoanEntity
@@ -30,6 +31,7 @@ data class MmrBackupPayload(
     val transactions: List<TransactionEntity>,
     val loanPayments: List<LoanPaymentEntity>,
     val recurringRules: List<RecurringRuleEntity>,
+    val budgets: List<BudgetEntity> = emptyList(),
     val notificationRules: List<NotificationRuleEntity>,
     val smsMessageRecords: List<SmsMessageRecordEntity>,
     val transactionApprovals: List<TransactionApprovalEntity>,
@@ -50,6 +52,7 @@ data class BackupRestoreSummary(
     val transactions: Int,
     val loanPayments: Int,
     val recurringRules: Int,
+    val budgets: Int = 0,
     val notificationRules: Int,
     val smsMessageRecords: Int,
     val transactionApprovals: Int,
@@ -59,5 +62,5 @@ data class BackupRestoreSummary(
         get() =
             categories + subcategories + accounts + loans + loanInterestRevisions +
                 loanScheduleEntries + transactions + loanPayments +
-                recurringRules + notificationRules + smsMessageRecords + transactionApprovals
+                recurringRules + budgets + notificationRules + smsMessageRecords + transactionApprovals
 }

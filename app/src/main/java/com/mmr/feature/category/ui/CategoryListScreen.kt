@@ -29,8 +29,6 @@ fun CategoryListScreen(
     onNavigateBack: () -> Unit,
     onNavigateToAddCategory: () -> Unit,
     onNavigateToEditCategory: (Long) -> Unit,
-    @Suppress("UNUSED_PARAMETER") onNavigateToAddSubcategory: (Long) -> Unit,
-    @Suppress("UNUSED_PARAMETER") onNavigateToEditSubcategory: (Long) -> Unit,
     viewModel: CategoryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()

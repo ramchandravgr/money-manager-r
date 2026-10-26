@@ -17,6 +17,7 @@ object BackupImportPlanner {
         val transactions: Set<Long>,
         val smsRecords: Set<Long>,
         val recurringRules: Set<Long>,
+        val budgets: Set<Long> = emptySet(),
         val notificationRules: Set<Long>,
         val loanRevisions: Set<Long>,
         val loanScheduleEntries: Set<Long>,
@@ -158,6 +159,16 @@ object BackupImportPlanner {
             )
         scheduleIds.addAll(newSchedule.map { it.id })
 
+        val budgetIds = existing.budgets.toMutableSet()
+        val newBudgets =
+            payload.budgets.filter { budget ->
+                budget.id > 0L &&
+                    budget.id !in budgetIds &&
+                    budget.categoryId in categoryIds &&
+                    (budget.subcategoryId == null || budget.subcategoryId in subcategoryIds)
+            }
+        budgetIds.addAll(newBudgets.map { it.id })
+
         val notificationIds = existing.notificationRules.toMutableSet()
         val newNotifications =
             payload.notificationRules.filter { rule ->
@@ -209,6 +220,7 @@ object BackupImportPlanner {
             loanPayments = newPayments,
             loanScheduleEntries = newSchedule,
             recurringRules = newRecurring,
+            budgets = newBudgets,
             notificationRules = newNotifications,
             smsMessageRecords = newSms,
             transactionApprovals = newApprovals,
@@ -222,5 +234,6 @@ object BackupImportPlanner {
         payload.categories.size + payload.subcategories.size + payload.accounts.size +
             payload.loans.size + payload.loanInterestRevisions.size + payload.loanScheduleEntries.size +
             payload.transactions.size + payload.loanPayments.size + payload.recurringRules.size +
-            payload.notificationRules.size + payload.smsMessageRecords.size + payload.transactionApprovals.size
+            payload.budgets.size + payload.notificationRules.size + payload.smsMessageRecords.size +
+            payload.transactionApprovals.size
 }

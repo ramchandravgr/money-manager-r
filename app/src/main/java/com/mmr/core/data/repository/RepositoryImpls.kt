@@ -19,12 +19,14 @@ import com.mmr.core.database.relation.TransactionWithDetails
 import com.mmr.core.domain.model.AccountDeletionPreview
 import com.mmr.core.domain.model.CategoryDeleteTransactionMode
 import com.mmr.core.domain.repository.AccountRepository
+import com.mmr.core.domain.repository.BudgetRepository
 import com.mmr.core.domain.repository.CategoryRepository
 import com.mmr.core.domain.repository.TransactionRepository
 import com.mmr.core.loan.LoanLinkedTransactionDeleteMode
 import com.mmr.core.loan.LoanTransactionCoordinator
 import com.mmr.core.model.category.CategoryWithChildren
 import com.mmr.core.model.enums.CategoryType
+import com.mmr.core.model.enums.RecordStatus
 import com.mmr.core.model.enums.TransactionType
 import com.mmr.core.transaction.TransactionCashFlow
 import com.mmr.core.transaction.TransactionMergeCoordinator
@@ -46,6 +48,7 @@ class TransactionRepositoryImpl
         private val transactionMergeCoordinator: TransactionMergeCoordinator,
         private val smsMessageRecordDao: SmsMessageRecordDao,
         private val widgetRefreshTrigger: HomeScreenWidgetRefreshTrigger,
+        private val budgetRepository: BudgetRepository,
     ) : TransactionRepository {
         private fun refreshWidgets() {
             widgetRefreshTrigger.requestRefresh()
@@ -96,6 +99,7 @@ class TransactionRepositoryImpl
             accountDao.getById(validated.accountId)
                 ?: throw IllegalArgumentException("Account not found.")
             val id = transactionDao.insert(validated)
+            maybeEvaluateBudgetAlerts(validated)
             refreshWidgets()
             return id
         }
@@ -107,7 +111,18 @@ class TransactionRepositoryImpl
                 ?: throw IllegalArgumentException("Account not found.")
             transactionDao.update(transaction)
             loanTransactionCoordinator.syncPaymentFromTransaction(transaction)
+            maybeEvaluateBudgetAlerts(transaction)
             refreshWidgets()
+        }
+
+        private suspend fun maybeEvaluateBudgetAlerts(transaction: TransactionEntity) {
+            if (transaction.type != TransactionType.EXPENSE) return
+            if (transaction.status != RecordStatus.APPROVED) return
+            budgetRepository.evaluateAlertsForTransaction(
+                categoryId = transaction.categoryId,
+                subcategoryId = transaction.subcategoryId,
+                transactionMillis = transaction.dateTime,
+            )
         }
 
         override suspend fun hasLinkedLoanPayment(transactionId: Long): Boolean =

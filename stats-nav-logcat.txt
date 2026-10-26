@@ -1,0 +1,17 @@
+﻿--------- beginning of main
+10-25 19:23:27.452 I/WebViewFactory( 9924): Loading com.google.android.webview version 155.0.8059.43 (code 805904303)
+10-25 19:23:27.465 E/chromium( 9924): [1025/192327.465330:ERROR:android_webview/browser/variations/variations_seed_loader.cc:36] Seed missing signature.
+10-25 19:23:27.512 W/chromium(10122): [WARNING:content/app/android/content_main_android.cc:82] android_setCpu already initialized
+10-25 19:23:27.518 W/chromium(10122): [WARNING:content/child/runtime_features.cc:476] Fenced frames cannot be enabled in this configuration. Use --enable-features=FencedFrames instead.
+10-25 19:23:27.612 I/MmrStatsCylinder( 9924): drawChart categories=3
+10-25 19:23:27.615 I/MmrStatsCylinder( 9924): drawChart categories=1
+10-25 19:23:27.615 I/MmrStatsCylinder( 9924): drawChart categories=3
+10-25 19:23:27.617 I/MmrStatsCylinder( 9924): drawChart categories=1
+10-25 19:23:27.618 I/MmrStatsCylinder( 9924): drawChart categories=3
+10-25 19:23:27.618 I/MmrStatsCylinder( 9924): drawChart categories=1
+10-25 19:23:27.618 I/MmrStatsCylinder( 9924): drawChart categories=3
+10-25 19:23:27.621 I/MmrStatsCylinder( 9924): drawChart categories=1
+10-25 19:23:27.637 I/MmrStatsCylinder( 9924): drawChart categories=3
+10-25 19:23:27.637 I/MmrStatsCylinder( 9924): drawChart categories=1
+10-25 19:23:27.638 I/MmrStatsCylinder( 9924): drawChart categories=3
+10-25 19:23:27.638 I/MmrStatsCylinder( 9924): drawChart categories=1

@@ -2,6 +2,7 @@ package com.mmr.feature.home
 
 import com.mmr.app.ui.state.MmrUiMessages
 import com.mmr.core.database.entity.CategoryEntity
+import com.mmr.core.export.PeriodExcelDownloadsSaver
 import com.mmr.core.export.PeriodExcelExporter
 import com.mmr.feature.home.model.HomeUiEvent
 import com.mmr.test.FakeApprovalRepository
@@ -47,7 +48,7 @@ class HomeViewModelTest {
                     categories,
                     approvals,
                     robolectricDisplaySettingsStore(),
-                    PeriodExcelExporter(context),
+                    PeriodExcelExporter(context, PeriodExcelDownloadsSaver(context)),
                     FakeLanSyncRepository(),
                 )
 
@@ -73,7 +74,7 @@ class HomeViewModelTest {
                     categories,
                     approvals,
                     robolectricDisplaySettingsStore(),
-                    PeriodExcelExporter(context),
+                    PeriodExcelExporter(context, PeriodExcelDownloadsSaver(context)),
                     FakeLanSyncRepository(),
                 )
 

@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Glass Cylinder Expense Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #080c14;
+            color: #f1f5f9;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Smooth segment transitions */
+        .cylinder-segment {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease, filter 0.3s ease;
+            cursor: pointer;
+        }
+
+        .cylinder-segment:hover {
+            filter: brightness(1.25) drop-shadow(0 0 12px rgba(255, 255, 255, 0.25));
+        }
+
+        /* Right side Category Cards Styling */
+        .category-card {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-left: 3px solid transparent;
+        }
+
+        .category-card:hover {
+            background-color: rgba(30, 41, 59, 0.9);
+            transform: translateX(3px);
+        }
+
+        .category-card.active {
+            background-color: rgba(30, 41, 59, 1) !important;
+            border-left-color: var(--accent-color) !important;
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.5), 0 0 15px var(--accent-alpha);
+            transform: translateX(6px);
+        }
+
+        .category-card.dimmed {
+            opacity: 0.35;
+            transform: scale(0.98);
+        }
+
+        /* Smooth Pointer Line transition */
+        .callout-line-path {
+            transition: opacity 0.3s ease, stroke-width 0.3s ease, d 0.2s ease;
+        }
+
+        /* Custom Dropdown Styling */
+        select option {
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.4);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-2 sm:p-6">
+
+    <!-- Mobile Screen Device Frame -->
+    <div class="w-full max-w-md bg-[#0D121D] rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-800 flex flex-col justify-between relative min-h-[820px]">
+        
+        <!-- Header Controls & Summary -->
+        <div class="bg-[#0D121D] z-20 sticky top-0 border-b border-slate-800/80 pt-4">
+            <!-- Top Navigation & Period Filter Dropdown Bar -->
+            <div class="px-5 pb-3 flex items-center justify-between text-slate-300">
+                <!-- Left: Date Range Navigator -->
+                <div class="flex items-center space-x-2">
+                    <button id="prevPeriod" class="text-slate-400 hover:text-white transition p-1 text-xs">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <span id="dateRangeDisplay" class="text-sm font-semibold tracking-tight text-slate-100 min-w-[130px]">
+                        19.10.26 ~ 25.10.26
+                    </span>
+                    <button id="nextPeriod" class="text-slate-400 hover:text-white transition p-1 text-xs">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+
+                <!-- Right: Pill-Shaped Filter Select Box -->
+                <div class="flex items-center space-x-2">
+                    <div class="relative">
+                        <select id="periodFilter" class="appearance-none bg-slate-900/90 hover:bg-slate-800 text-slate-200 text-xs font-medium pl-3 pr-7 py-1.5 rounded-lg border border-slate-700/80 focus:outline-none cursor-pointer transition">
+                            <option value="weekly" selected>Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                        <i class="fa-solid fa-caret-down absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 pointer-events-none"></i>
+                    </div>
+
+                    <button id="openDataModal" class="w-7 h-7 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30 transition" title="Edit Expenses">
+                        <i class="fa-solid fa-sliders text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Financial Summary Bar (Matching Screenshot Tabs) -->
+            <div class="grid grid-cols-2 text-center text-sm font-medium border-t border-slate-800/70 pt-2 pb-0">
+                <div class="pb-2.5 text-slate-400 hover:text-slate-200 cursor-pointer transition">
+                    Income <span class="text-slate-400 font-normal">+₹0.00</span>
+                </div>
+                <div class="pb-2.5 text-slate-100 font-bold relative cursor-pointer">
+                    Expenses <span class="font-normal text-slate-200">-₹1,782.00</span>
+                    <!-- Yellow Active Indicator Line -->
+                    <div class="absolute bottom-0 left-0 right-0 h-[2.5px] bg-amber-400 rounded-t-md"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area: Left 3D Cylinder | Right Category Stack -->
+        <div class="relative flex-1 grid grid-cols-12 gap-2 px-4 py-4 items-center select-none overflow-hidden">
+            
+            <!-- LEFT COLUMN: 3D Cylinder SVG Container (5 Cols) -->
+            <div class="col-span-5 relative h-[380px] flex items-center justify-center">
+                <svg viewBox="0 0 150 380" class="w-full h-full filter drop-shadow-[0_20px_30px_rgba(0,0,0,0.85)] overflow-visible" id="cylinderSvg">
+                    <defs>
+                        <!-- Glass Tube Body Gradient -->
+                        <linearGradient id="glassBodyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.22" />
+                            <stop offset="25%" stop-color="#ffffff" stop-opacity="0.03" />
+                            <stop offset="70%" stop-color="#000000" stop-opacity="0.4" />
+                            <stop offset="100%" stop-color="#ffffff" stop-opacity="0.25" />
+                        </linearGradient>
+
+                        <!-- Glass Top Cap Surface -->
+                        <linearGradient id="glassCapGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45" />
+                            <stop offset="100%" stop-color="#ffffff" stop-opacity="0.08" />
+                        </linearGradient>
+
+                        <!-- Empty Top Portion Gradient -->
+                        <linearGradient id="grad-empty" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.07" />
+                            <stop offset="50%" stop-color="#ffffff" stop-opacity="0.01" />
+                            <stop offset="100%" stop-color="#000000" stop-opacity="0.35" />
+                        </linearGradient>
+
+                        <!-- Surface Specular Highlights -->
+                        <linearGradient id="lightHighlight" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35" />
+                            <stop offset="15%" stop-color="#ffffff" stop-opacity="0.08" />
+                            <stop offset="50%" stop-color="#ffffff" stop-opacity="0" />
+                            <stop offset="85%" stop-color="#000000" stop-opacity="0.45" />
+                            <stop offset="100%" stop-color="#ffffff" stop-opacity="0.3" />
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Bottom Cylinder Base Blur Shadow -->
+                    <ellipse cx="75" cy="335" rx="52" ry="16" fill="rgba(0,0,0,0.7)" filter="blur(6px)" />
+
+                    <!-- Outer Glass Tube Dark Cavity -->
+                    <path d="M 23 45 L 23 335 A 52 16 0 0 0 127 335 L 127 45 A 52 16 0 0 0 23 45 Z" fill="#0b1019" />
+
+                    <!-- Dynamic Stacked Color Slices -->
+                    <g id="cylinderSegmentsContainer"></g>
+
+                    <!-- Glass Cylinder Walls and Metallic Light Rim Overlays -->
+                    <ellipse cx="75" cy="335" rx="52" ry="16" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" />
+                    <path d="M 23 45 L 23 335 A 52 16 0 0 0 127 335 L 127 45 A 52 16 0 0 0 23 45 Z" fill="url(#glassBodyGrad)" pointer-events="none" />
+                    <path d="M 23 45 L 23 335 A 52 16 0 0 0 127 335 L 127 45 A 52 16 0 0 0 23 45 Z" fill="url(#lightHighlight)" pointer-events="none" />
+
+                    <!-- Top Glass Surface Rim -->
+                    <ellipse cx="75" cy="45" rx="52" ry="16" fill="url(#glassCapGrad)" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" pointer-events="none" />
+                    <ellipse cx="75" cy="45" rx="44" ry="13" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1" pointer-events="none" />
+
+                    <!-- Interactive Callout Connecting Pointer Line -->
+                    <g id="calloutLineContainer" pointer-events="none"></g>
+                </svg>
+            </div>
+
+            <!-- RIGHT COLUMN: Clean Stacked Category Cards List (7 Cols) -->
+            <div class="col-span-7 flex flex-col justify-center space-y-2.5 py-2 pl-1 z-10" id="categoryCardsContainer">
+                <!-- Stacked Category Cards rendered via JavaScript -->
+            </div>
+
+        </div>
+
+        <!-- Quick Reset Helper Toolbar -->
+        <div class="px-5 py-2 bg-slate-900/90 border-t border-slate-800/80 flex items-center justify-between text-xs z-20">
+            <span class="text-slate-400 flex items-center">
+                <i class="fa-solid fa-circle-dot text-amber-400 text-xs mr-2 animate-pulse"></i>
+                Select category to inspect
+            </span>
+            <button id="resetSelectionBtn" class="text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded-lg border border-slate-700 transition hidden text-[11px]">
+                Clear Focus
+            </button>
+        </div>
+
+        <!-- Bottom Navigation Bar (Matching App Screenshots) -->
+        <div class="bg-[#0b0f19] border-t border-slate-800/80 px-2 py-3 grid grid-cols-5 text-center text-slate-500 text-xs z-20">
+            <button class="flex flex-col items-center space-y-1 hover:text-slate-300">
+                <i class="fa-regular fa-file-lines text-base"></i>
+                <span class="text-[10px]">Ledger</span>
+            </button>
+            <button class="flex flex-col items-center space-y-1 text-slate-100 font-semibold">
+                <i class="fa-solid fa-chart-simple text-base text-slate-300"></i>
+                <span class="text-[10px] text-slate-300">Stats</span>
+            </button>
+            <button class="flex flex-col items-center space-y-1 hover:text-slate-300">
+                <i class="fa-solid fa-building-columns text-base"></i>
+                <span class="text-[10px]">Loans</span>
+            </button>
+            <button class="flex flex-col items-center space-y-1 hover:text-slate-300">
+                <i class="fa-solid fa-arrows-rotate text-base"></i>
+                <span class="text-[10px]">Recurring</span>
+            </button>
+            <button class="flex flex-col items-center space-y-1 hover:text-slate-300">
+                <i class="fa-solid fa-gear text-base"></i>
+                <span class="text-[10px]">Settings</span>
+            </button>
+        </div>
+
+        <!-- Data Customization Modal -->
+        <div id="dataModal" class="absolute inset-0 bg-slate-950/85 backdrop-blur-md z-30 hidden flex-col justify-end transition-all">
+            <div class="bg-[#0f172a] border-t border-slate-700 rounded-t-3xl p-5 max-h-[85%] overflow-y-auto">
+                <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-800">
+                    <h3 class="text-base font-bold text-white flex items-center">
+                        <i class="fa-solid fa-sliders text-amber-400 mr-2"></i> Manage Expenses
+                    </h3>
+                    <button id="closeDataModal" class="text-slate-400 hover:text-white p-1">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-3" id="modalCategoryInputs">
+                    <!-- Dynamic Inputs -->
+                </div>
+
+                <div class="mt-5 flex gap-2">
+                    <button id="addCategoryBtn" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition">
+                        + Add Category
+                    </button>
+                    <button id="saveDataBtn" class="flex-1 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl transition shadow-lg shadow-amber-500/20">
+                        Apply Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Preset Datasets corresponding to Filter Options
+        const PERIOD_DATASETS = {
+            weekly: {
+                dateRange: '19.10.26 ~ 25.10.26',
+                categories: [
+                    { id: 'food', name: 'Food & Dining', amount: 932.00, color: '#ff4b60' },
+                    { id: 'bills', name: 'Bills & Utilities', amount: 850.00, color: '#8b5cf6' }
+                ]
+            },
+            monthly: {
+                dateRange: 'Oct 2026',
+                categories: [
+                    { id: 'food', name: 'Food & Dining', amount: 3420.00, color: '#ff4b60' },
+                    { id: 'bills', name: 'Bills & Utilities', amount: 2850.00, color: '#8b5cf6' },
+                    { id: 'shopping', name: 'Shopping & Gear', amount: 1650.00, color: '#f59e0b' },
+                    { id: 'transport', name: 'Transport', amount: 980.00, color: '#10b981' }
+                ]
+            },
+            yearly: {
+                dateRange: '2026',
+                categories: [
+                    { id: 'food', name: 'Food & Dining', amount: 38400.00, color: '#ff4b60' },
+                    { id: 'bills', name: 'Bills & Utilities', amount: 29500.00, color: '#8b5cf6' },
+                    { id: 'shopping', name: 'Shopping & Gear', amount: 18200.00, color: '#f59e0b' },
+                    { id: 'transport', name: 'Transport', amount: 11400.00, color: '#10b981' },
+                    { id: 'health', name: 'Health & Medical', amount: 8500.00, color: '#3b82f6' }
+                ]
+            }
+        };
+
+        const COLOR_PALETTE = ['#ff4b60', '#8b5cf6', '#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#06b6d4'];
+        
+        let currentPeriod = 'weekly';
+        let trackerCategories = [];
+        let activeCategoryId = null;
+
+        // SVG Metrics
+        const CYL_TOP_Y = 45;
+        const CYL_BOTTOM_Y = 335;
+        const CYL_HEIGHT = CYL_BOTTOM_Y - CYL_TOP_Y;
+        const CYL_RX = 52;
+        const CYL_RY = 16;
+        const CYL_CX = 75;
+
+        function loadPeriodData(periodKey) {
+            currentPeriod = periodKey;
+            const data = PERIOD_DATASETS[periodKey];
+            document.getElementById('dateRangeDisplay').innerText = data.dateRange;
+            trackerCategories = JSON.parse(JSON.stringify(data.categories));
+            calculatePercentages();
+            renderCylinderAndCards();
+            updateTotalDisplays();
+        }
+
+        function calculatePercentages() {
+            const total = trackerCategories.reduce((sum, item) => sum + item.amount, 0);
+            trackerCategories.forEach(item => {
+                item.percentage = total > 0 ? (item.amount / total) * 100 : 0;
+            });
+        }
+
+        function updateTotalDisplays() {
+            const totalSpent = trackerCategories.reduce((sum, item) => sum + item.amount, 0);
+            const expenseElem = document.querySelector('.font-normal.text-slate-200');
+            if (expenseElem) {
+                expenseElem.innerText = `-₹${totalSpent.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+            }
+        }
+
+        // Generate Color Gradients into SVG Defs
+        function ensureGradients() {
+            const defs = document.querySelector('#cylinderSvg defs');
+            document.querySelectorAll('.dynamic-grad').forEach(e => e.remove());
+
+            trackerCategories.forEach(cat => {
+                const grad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+                grad.setAttribute('id', `grad-${cat.id}`);
+                grad.setAttribute('class', 'dynamic-grad');
+                grad.setAttribute('x1', '0%');
+                grad.setAttribute('y1', '0%');
+                grad.setAttribute('x2', '100%');
+                grad.setAttribute('y2', '0%');
+
+                grad.innerHTML = `
+                    <stop offset="0%" stop-color="${adjustColor(cat.color, 45)}" />
+                    <stop offset="40%" stop-color="${cat.color}" />
+                    <stop offset="80%" stop-color="${adjustColor(cat.color, -30)}" />
+                    <stop offset="100%" stop-color="${adjustColor(cat.color, -55)}" />
+                `;
+                defs.appendChild(grad);
+            });
+        }
+
+        // Render both Column Components
+        function renderCylinderAndCards() {
+            ensureGradients();
+
+            const container = document.getElementById('cylinderSegmentsContainer');
+            const cardsContainer = document.getElementById('categoryCardsContainer');
+
+            container.innerHTML = '';
+            cardsContainer.innerHTML = '';
+
+            let currentY = CYL_BOTTOM_Y;
+            const fillHeightRatio = 0.88;
+            const totalUsableHeight = CYL_HEIGHT * fillHeightRatio;
+
+            // Render Stacked Cylinder Slices (Bottom to Top)
+            const stackData = [...trackerCategories].reverse();
+
+            stackData.forEach((item) => {
+                const segmentHeight = (item.percentage / 100) * totalUsableHeight;
+                const topY = currentY - segmentHeight;
+                const bottomY = currentY;
+                const midY = topY + (segmentHeight / 2);
+
+                item.midY = midY;
+                item.topY = topY;
+                item.bottomY = bottomY;
+
+                // 1. Render 3D Cylinder Slice Group
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.setAttribute('class', 'cylinder-segment');
+                g.setAttribute('id', `segment-group-${item.id}`);
+                g.onclick = () => focusCategory(item.id);
+                g.onmouseenter = () => focusCategory(item.id);
+
+                // Wall Path
+                const bodyPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const pathData = `
+                    M ${CYL_CX - CYL_RX} ${topY}
+                    L ${CYL_CX - CYL_RX} ${bottomY}
+                    A ${CYL_RX} ${CYL_RY} 0 0 0 ${CYL_CX + CYL_RX} ${bottomY}
+                    L ${CYL_CX + CYL_RX} ${topY}
+                    A ${CYL_RX} ${CYL_RY} 0 0 1 ${CYL_CX - CYL_RX} ${topY}
+                    Z
+                `;
+                bodyPath.setAttribute('d', pathData);
+                bodyPath.setAttribute('fill', `url(#grad-${item.id})`);
+
+                // Top Cap Ellipse
+                const topCap = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+                topCap.setAttribute('cx', CYL_CX);
+                topCap.setAttribute('cy', topY);
+                topCap.setAttribute('rx', CYL_RX);
+                topCap.setAttribute('ry', CYL_RY);
+                topCap.setAttribute('fill', item.color);
+                topCap.setAttribute('opacity', '0.7');
+
+                // Cap rim stroke
+                const capStroke = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+                capStroke.setAttribute('cx', CYL_CX);
+                capStroke.setAttribute('cy', topY);
+                capStroke.setAttribute('rx', CYL_RX);
+                capStroke.setAttribute('ry', CYL_RY);
+                capStroke.setAttribute('fill', 'none');
+                capStroke.setAttribute('stroke', 'rgba(255,255,255,0.3)');
+                capStroke.setAttribute('stroke-width', '0.8');
+
+                g.appendChild(bodyPath);
+                g.appendChild(topCap);
+                g.appendChild(capStroke);
+                container.appendChild(g);
+
+                currentY = topY;
+            });
+
+            // Empty Glass Segment Fill
+            const emptyHeight = currentY - CYL_TOP_Y;
+            if (emptyHeight > 0) {
+                const emptyG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                const emptyPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                const dEmpty = `
+                    M ${CYL_CX - CYL_RX} ${CYL_TOP_Y}
+                    L ${CYL_CX - CYL_RX} ${currentY}
+                    A ${CYL_RX} ${CYL_RY} 0 0 0 ${CYL_CX + CYL_RX} ${currentY}
+                    L ${CYL_CX + CYL_RX} ${CYL_TOP_Y}
+                    A ${CYL_RX} ${CYL_RY} 0 0 1 ${CYL_CX - CYL_RX} ${CYL_TOP_Y}
+                    Z
+                `;
+                emptyPath.setAttribute('d', dEmpty);
+                emptyPath.setAttribute('fill', 'url(#grad-empty)');
+                emptyG.appendChild(emptyPath);
+                container.prepend(emptyG);
+            }
+
+            // 2. Render Clean Right-Side Category Stacked List
+            trackerCategories.forEach((item) => {
+                const card = document.createElement('div');
+                card.id = `category-card-${item.id}`;
+                card.className = `category-card bg-slate-900/70 border border-slate-800/90 p-2.5 rounded-xl cursor-pointer select-none`;
+                card.style.setProperty('--accent-color', item.color);
+                card.style.setProperty('--accent-alpha', `${item.color}33`);
+                card.onclick = () => focusCategory(item.id);
+                card.onmouseenter = () => focusCategory(item.id);
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${item.color}; box-shadow: 0 0 8px ${item.color}88;"></span>
+                            <span class="text-xs font-semibold text-slate-200 truncate max-w-[100px] sm:max-w-[130px]">${item.name}</span>
+                        </div>
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-md" style="color: ${item.color}; background-color: ${item.color}18;">
+                            ${item.percentage.toFixed(1)}%
+                        </span>
+                    </div>
+                    <div class="flex items-baseline justify-between pl-4">
+                        <span class="text-xs sm:text-sm font-bold text-white tracking-tight">₹${item.amount.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>
+                    </div>
+                `;
+
+                cardsContainer.appendChild(card);
+            });
+
+            // Set default active category focus
+            if (trackerCategories.length > 0) {
+                setTimeout(() => focusCategory(trackerCategories[0].id), 60);
+            }
+        }
+
+        // Draw Callout Line
+        function drawCalloutLine(id) {
+            const lineContainer = document.getElementById('calloutLineContainer');
+            lineContainer.innerHTML = '';
+
+            if (!id) return;
+
+            const item = trackerCategories.find(c => c.id === id);
+            const card = document.getElementById(`category-card-${id}`);
+            const svg = document.getElementById('cylinderSvg');
+
+            if (!item || !card || !svg) return;
+
+            const svgBounds = svg.getBoundingClientRect();
+            const cardBounds = card.getBoundingClientRect();
+
+            const startX = CYL_CX + CYL_RX - 2;
+            const startY = item.midY;
+
+            const cardLeftYInSvg = ((cardBounds.top + cardBounds.height / 2) - svgBounds.top) * (380 / svgBounds.height);
+            const targetX = 148;
+            const elbowX = 136;
+
+            const linePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const d = `M ${startX} ${startY} L ${elbowX} ${startY} L ${targetX} ${cardLeftYInSvg}`;
+
+            linePath.setAttribute('d', d);
+            linePath.setAttribute('fill', 'none');
+            linePath.setAttribute('stroke', item.color);
+            linePath.setAttribute('stroke-width', '2.5');
+            linePath.setAttribute('stroke-linecap', 'round');
+            linePath.setAttribute('stroke-linejoin', 'round');
+            linePath.setAttribute('class', 'callout-line-path');
+            linePath.setAttribute('filter', `drop-shadow(0 0 6px ${item.color}aa)`);
+
+            const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            dot.setAttribute('cx', startX);
+            dot.setAttribute('cy', startY);
+            dot.setAttribute('r', '4');
+            dot.setAttribute('fill', '#ffffff');
+            dot.setAttribute('stroke', item.color);
+            dot.setAttribute('stroke-width', '2');
+
+            lineContainer.appendChild(linePath);
+            lineContainer.appendChild(dot);
+        }
+
+        // Active Focus Logic
+        function focusCategory(id) {
+            activeCategoryId = id;
+            document.getElementById('resetSelectionBtn').classList.remove('hidden');
+
+            trackerCategories.forEach(item => {
+                const group = document.getElementById(`segment-group-${item.id}`);
+                const card = document.getElementById(`category-card-${item.id}`);
+
+                if (item.id === id) {
+                    if (group) {
+                        group.style.opacity = '1';
+                        group.style.filter = 'brightness(1.25) drop-shadow(0 0 14px ' + item.color + 'aa)';
+                    }
+                    if (card) {
+                        card.className = card.className.replace(/ active| dimmed/g, '') + ' active';
+                    }
+                } else {
+                    if (group) {
+                        group.style.opacity = '0.25';
+                        group.style.filter = 'none';
+                    }
+                    if (card) {
+                        card.className = card.className.replace(/ active| dimmed/g, '') + ' dimmed';
+                    }
+                }
+            });
+
+            drawCalloutLine(id);
+        }
+
+        // Reset All Highlights
+        function resetFocus() {
+            activeCategoryId = null;
+            document.getElementById('resetSelectionBtn').classList.add('hidden');
+            document.getElementById('calloutLineContainer').innerHTML = '';
+
+            trackerCategories.forEach(item => {
+                const group = document.getElementById(`segment-group-${item.id}`);
+                const card = document.getElementById(`category-card-${item.id}`);
+
+                if (group) {
+                    group.style.opacity = '1';
+                    group.style.filter = 'none';
+                }
+                if (card) {
+                    card.className = card.className.replace(/ active| dimmed/g, '');
+                }
+            });
+        }
+
+        function adjustColor(hex, percent) {
+            let num = parseInt(hex.replace('#', ''), 16),
+                amt = Math.round(2.55 * percent),
+                R = (num >> 16) + amt,
+                G = (num >> 8 & 0x00FF) + amt,
+                B = (num & 0x0000FF) + amt;
+            return '#' + (0x1000000 + (R<255?R<0?0:R:255)*0x10000 + (G<255?G<0?0:G:255)*0x100 + (B<255?B<0?0:B:255)).toString(16).slice(1);
+        }
+
+        // Data Edit Modal Logic
+        function setupModalInputs() {
+            const container = document.getElementById('modalCategoryInputs');
+            container.innerHTML = '';
+
+            trackerCategories.forEach((cat, index) => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center gap-2 bg-slate-900/70 p-2 rounded-xl border border-slate-800';
+                row.innerHTML = `
+                    <input type="color" value="${cat.color}" onchange="updateCatColor(${index}, this.value)" class="w-7 h-7 rounded bg-transparent cursor-pointer border-0">
+                    <input type="text" value="${cat.name}" onchange="updateCatName(${index}, this.value)" class="flex-1 bg-slate-950 text-xs text-slate-100 px-2 py-1.5 rounded-lg border border-slate-800 focus:outline-none focus:border-amber-400">
+                    <input type="number" value="${cat.amount}" onchange="updateCatAmount(${index}, this.value)" class="w-24 bg-slate-950 text-xs font-bold text-amber-400 px-2 py-1.5 rounded-lg border border-slate-800 focus:outline-none focus:border-amber-400">
+                    <button onclick="removeCategory(${index})" class="text-rose-400 hover:text-rose-300 p-1 text-xs">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function updateCatColor(index, val) { trackerCategories[index].color = val; }
+        function updateCatName(index, val) { trackerCategories[index].name = val; }
+        function updateCatAmount(index, val) { trackerCategories[index].amount = Math.max(0, parseFloat(val) || 0); }
+
+        function removeCategory(index) {
+            if (trackerCategories.length <= 1) return;
+            trackerCategories.splice(index, 1);
+            setupModalInputs();
+        }
+
+        document.getElementById('addCategoryBtn').onclick = () => {
+            const newId = 'cat_' + Date.now();
+            const randomColor = COLOR_PALETTE[trackerCategories.length % COLOR_PALETTE.length];
+            trackerCategories.push({
+                id: newId,
+                name: 'New Expense',
+                amount: 250,
+                color: randomColor
+            });
+            setupModalInputs();
+        };
+
+        const modal = document.getElementById('dataModal');
+        document.getElementById('openDataModal').onclick = () => {
+            setupModalInputs();
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+        document.getElementById('closeDataModal').onclick = () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+        document.getElementById('saveDataBtn').onclick = () => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            calculatePercentages();
+            renderCylinderAndCards();
+            updateTotalDisplays();
+        };
+
+        // Event Listener for Filter Dropdown
+        document.getElementById('periodFilter').addEventListener('change', (e) => {
+            loadPeriodData(e.target.value);
+        });
+
+        document.getElementById('resetSelectionBtn').onclick = resetFocus;
+
+        window.onresize = () => {
+            if (activeCategoryId) drawCalloutLine(activeCategoryId);
+        };
+
+        window.onload = () => {
+            loadPeriodData('weekly');
+        };
+    </script>
+</body>
+</html>

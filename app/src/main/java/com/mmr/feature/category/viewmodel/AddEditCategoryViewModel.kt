@@ -122,18 +122,6 @@ class AddEditCategoryViewModel
             }
         }
 
-        fun deleteSubcategory(subcategoryId: Long) {
-            viewModelScope.launch {
-                runCatching {
-                    categoryRepository.deleteSubcategory(subcategoryId)
-                }.onFailure { e ->
-                    _uiState.update {
-                        it.copy(errorMessage = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_ACTION))
-                    }
-                }
-            }
-        }
-
         private fun observeSubcategories(parentId: Long) {
             viewModelScope.launch {
                 categoryRepository.observeCategoryTree(parentId).collect { tree ->

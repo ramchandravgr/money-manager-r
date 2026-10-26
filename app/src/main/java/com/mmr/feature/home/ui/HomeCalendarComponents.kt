@@ -190,9 +190,8 @@ private fun CalendarDayCell(
 ) {
     val bg =
         when {
-            selected -> Color.White
-            cell.isCurrentMonth -> Color.White
-            else -> MmrBrandColors.ListBackground.copy(alpha = 0.65f)
+            !cell.isCurrentMonth -> MmrBrandColors.ListBackground.copy(alpha = 0.65f)
+            else -> MmrBrandColors.SurfaceWhite
         }
     val borderColor = if (selected) MmrBrandColors.CalendarSelectedDay else MmrBrandColors.CalendarCellBorder
     val borderWidth = if (selected) 1.5.dp else 0.5.dp

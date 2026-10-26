@@ -6,6 +6,7 @@ import com.mmr.core.model.settings.MmrAppColorTheme
 import com.mmr.core.model.settings.MmrInputOrder
 import com.mmr.core.model.settings.MmrStartScreenTab
 import com.mmr.core.model.settings.MmrSwipeBehavior
+import com.mmr.core.model.settings.MmrThemeMode
 import com.mmr.core.model.settings.MmrTimeDisplay
 import com.mmr.core.model.settings.MmrWeekStartDay
 import com.mmr.feature.home.model.HomeViewTab
@@ -31,6 +32,9 @@ data class AppDisplaySettingsSnapshot(
     val autocompleteEnabled: Boolean = true,
     val inputOrder: MmrInputOrder = MmrInputOrder.FROM_AMOUNT,
     val appColorTheme: MmrAppColorTheme = MmrAppColorTheme.CLASSIC_CORAL,
+    val themeMode: MmrThemeMode = MmrThemeMode.SYSTEM,
+    /** [com.mmr.app.navigation.MmrMainNavIds] hidden from bottom/rail navigation. */
+    val hiddenMainNavIds: Set<String> = emptySet(),
 )
 
 @Singleton
@@ -81,6 +85,21 @@ class AppDisplaySettingsStore
 
         fun setAppColorTheme(theme: MmrAppColorTheme) = update { it.copy(appColorTheme = theme) }
 
+        fun setThemeMode(mode: MmrThemeMode) = update { it.copy(themeMode = mode) }
+
+        fun setMainNavVisible(
+            navId: String,
+            visible: Boolean,
+        ) = update { snapshot ->
+            val nextHidden =
+                if (visible) {
+                    snapshot.hiddenMainNavIds - navId
+                } else {
+                    snapshot.hiddenMainNavIds + navId
+                }
+            snapshot.copy(hiddenMainNavIds = nextHidden)
+        }
+
         fun applySnapshot(snapshot: AppDisplaySettingsSnapshot) {
             persist(snapshot)
             _settings.value = snapshot
@@ -102,6 +121,8 @@ class AppDisplaySettingsStore
                 .putBoolean(KEY_AUTOCOMPLETE, snapshot.autocompleteEnabled)
                 .putString(KEY_INPUT_ORDER, snapshot.inputOrder.name)
                 .putString(KEY_APP_COLOR_THEME, snapshot.appColorTheme.name)
+                .putString(KEY_THEME_MODE, snapshot.themeMode.name)
+                .putStringSet(KEY_HIDDEN_MAIN_NAV, snapshot.hiddenMainNavIds)
                 .apply()
         }
 
@@ -149,6 +170,12 @@ class AppDisplaySettingsStore
                         prefs.getString(KEY_APP_COLOR_THEME, null),
                         MmrAppColorTheme.CLASSIC_CORAL,
                     ),
+                themeMode =
+                    enumOrDefault(
+                        prefs.getString(KEY_THEME_MODE, null),
+                        MmrThemeMode.SYSTEM,
+                    ),
+                hiddenMainNavIds = prefs.getStringSet(KEY_HIDDEN_MAIN_NAV, emptySet()) ?: emptySet(),
             )
 
         private inline fun <reified T : Enum<T>> enumOrDefault(
@@ -183,6 +210,8 @@ class AppDisplaySettingsStore
             const val KEY_AUTOCOMPLETE = "autocomplete"
             const val KEY_INPUT_ORDER = "input_order"
             const val KEY_APP_COLOR_THEME = "app_color_theme"
+            const val KEY_THEME_MODE = "theme_mode"
+            const val KEY_HIDDEN_MAIN_NAV = "hidden_main_nav_ids"
         }
     }
 

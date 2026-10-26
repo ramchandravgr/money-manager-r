@@ -7,6 +7,7 @@ import com.mmr.core.database.converter.EnumConverters
 import com.mmr.core.database.dao.AccountDao
 import com.mmr.core.database.dao.ApprovalLedgerDao
 import com.mmr.core.database.dao.BackupDao
+import com.mmr.core.database.dao.BudgetDao
 import com.mmr.core.database.dao.CategorizationRuleDao
 import com.mmr.core.database.dao.CategoryDao
 import com.mmr.core.database.dao.LanSyncDao
@@ -23,6 +24,7 @@ import com.mmr.core.database.dao.TransactionApprovalDao
 import com.mmr.core.database.dao.TransactionAttachmentDao
 import com.mmr.core.database.dao.TransactionDao
 import com.mmr.core.database.entity.AccountEntity
+import com.mmr.core.database.entity.BudgetEntity
 import com.mmr.core.database.entity.CategorizationRuleEntity
 import com.mmr.core.database.entity.CategoryEntity
 import com.mmr.core.database.entity.LanSyncLogEntryEntity
@@ -63,14 +65,15 @@ import com.mmr.core.database.entity.TrustedLanDeviceEntity
         LanSyncLogEntryEntity::class,
         SyncTombstoneEntity::class,
         LanSyncTombstonePeerAckEntity::class,
+        BudgetEntity::class,
     ],
-    version = 18,
+    version = 19,
     exportSchema = false,
 )
 @TypeConverters(EnumConverters::class)
 abstract class MmrDatabase : RoomDatabase() {
     companion object {
-        const val SCHEMA_VERSION = 18
+        const val SCHEMA_VERSION = 19
     }
 
     abstract fun transactionDao(): TransactionDao
@@ -108,4 +111,6 @@ abstract class MmrDatabase : RoomDatabase() {
     abstract fun syncTombstoneDao(): SyncTombstoneDao
 
     abstract fun lanSyncTombstoneAckDao(): LanSyncTombstoneAckDao
+
+    abstract fun budgetDao(): BudgetDao
 }

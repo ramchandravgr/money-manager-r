@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MMR Stats — 3D glass cylinder mockup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #080c14;
+            color: #f1f5f9;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .cylinder-segment {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease, filter 0.3s ease;
+            cursor: pointer;
+        }
+        .cylinder-segment:hover {
+            filter: brightness(1.25) drop-shadow(0 0 12px rgba(255, 255, 255, 0.25));
+        }
+        .category-card {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 3px solid transparent;
+        }
+        .category-card:hover {
+            background-color: rgba(30, 41, 59, 0.9);
+            transform: translateX(3px);
+        }
+        .category-card.active {
+            background-color: rgba(30, 41, 59, 1) !important;
+            border-left-color: var(--accent-color) !important;
+            box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.5), 0 0 15px var(--accent-alpha);
+            transform: translateX(6px);
+        }
+        .category-card.dimmed { opacity: 0.35; transform: scale(0.98); }
+        .callout-line-path { transition: opacity 0.3s ease, d 0.2s ease; }
+        /* Matches MmrPeriodChip: bordered pill, header-toned text */
+        .period-chip {
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            border-radius: 7px;
+            padding: 6px 10px;
+            font-size: 13px;
+            color: #cbd5e1;
+            background: transparent;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .period-menu {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 4px);
+            min-width: 140px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.45);
+            z-index: 40;
+            display: none;
+        }
+        .period-menu.open { display: block; }
+        .period-menu button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 10px 14px;
+            font-size: 14px;
+            color: #e2e8f0;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .period-menu button:hover { background: #334155; }
+        select option { background: #0f172a; color: #f1f5f9; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-2 sm:p-6">
+
+    <div class="w-full max-w-md bg-[#0D121D] rounded-[2.5rem] overflow-hidden shadow-2xl border border-slate-800 flex flex-col justify-between relative min-h-[820px]">
+
+        <!-- Stats header: MmrHeaderBar + MmrPeriodChip (no top-right settings / edit) -->
+        <div class="bg-[#3F4671] z-20 sticky top-0 border-b border-slate-800/50 pt-3 pb-0">
+            <div class="px-4 pb-2 flex items-center justify-between gap-2">
+                <div class="flex items-center flex-1 min-w-0 gap-1">
+                    <button type="button" id="prevPeriod" class="text-slate-200 hover:text-white p-2 text-sm" aria-label="Previous period">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button type="button" id="periodTitle" class="flex-1 text-center text-sm font-medium text-white truncate min-w-0 px-1">
+                        October 2026
+                    </button>
+                    <button type="button" id="nextPeriod" class="text-slate-200 hover:text-white p-2 text-sm" aria-label="Next period">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+                <div class="relative flex-shrink-0">
+                    <button type="button" id="periodChip" class="period-chip">
+                        <span id="periodChipLabel">Monthly</span>
+                        <i class="fa-solid fa-caret-down text-[10px] opacity-80"></i>
+                    </button>
+                    <div id="periodMenu" class="period-menu" role="menu">
+                        <button type="button" data-mode="weekly">Weekly</button>
+                        <button type="button" data-mode="monthly">Monthly</button>
+                        <button type="button" data-mode="annually">Annually</button>
+                        <button type="button" data-mode="period">Period</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 text-center text-sm font-medium bg-[#0D121D] border-t border-slate-800/70">
+                <div class="py-3 text-slate-400 cursor-pointer">
+                    <span class="text-xs text-slate-500 block uppercase tracking-wider font-semibold">Income</span>
+                    <span class="text-emerald-400 font-semibold">+₹0.00</span>
+                </div>
+                <div class="py-3 text-slate-100 relative cursor-pointer">
+                    <span class="text-xs text-slate-400 block uppercase tracking-wider font-semibold">Expenses</span>
+                    <span id="expenseTotal" class="text-slate-100 font-bold">-₹1,782.00</span>
+                    <div class="absolute bottom-0 left-0 right-0 h-[2.5px] bg-amber-400 rounded-t-md"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="relative flex-1 grid grid-cols-12 gap-2 px-4 py-4 items-center select-none overflow-hidden">
+            <div class="col-span-5 relative h-[380px] flex items-center justify-center">
+                <svg viewBox="0 0 150 380" class="w-full h-full filter drop-shadow-[0_20px_30px_rgba(0,0,0,0.85)] overflow-visible" id="cylinderSvg">
+                    <defs>
+                        <linearGradient id="glassBodyGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.22" />
+                            <stop offset="25%" stop-color="#ffffff" stop-opacity="0.03" />
+                            <stop offset="70%" stop-color="#000000" stop-opacity="0.4" />
+                            <stop offset="100%" stop-color="#ffffff" stop-opacity="0.25" />
+                        </linearGradient>
+                        <linearGradient id="glassCapGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.45" />
+                            <stop offset="100%" stop-color="#ffffff" stop-opacity="0.08" />
+                        </linearGradient>
+                        <linearGradient id="grad-empty" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.07" />
+                            <stop offset="50%" stop-color="#ffffff" stop-opacity="0.01" />
+                            <stop offset="100%" stop-color="#000000" stop-opacity="0.35" />
+                        </linearGradient>
+                        <linearGradient id="lightHighlight" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#ffffff" stop-opacity="0.35" />
+                            <stop offset="15%" stop-color="#ffffff" stop-opacity="0.08" />
+                            <stop offset="50%" stop-color="#ffffff" stop-opacity="0" />
+                            <stop offset="85%" stop-color="#000000" stop-opacity="0.45" />
+                            <stop offset="100%" stop-color="#ffffff" stop-opacity="0.3" />
+                        </linearGradient>
+                    </defs>
+                    <ellipse cx="75" cy="335" rx="52" ry="16" fill="rgba(0,0,0,0.7)" filter="blur(6px)" />
+                    <path d="M 23 45 L 23 335 A 52 16 0 0 0 127 335 L 127 45 A 52 16 0 0 0 23 45 Z" fill="#0b1019" />
+                    <g id="cylinderSegmentsContainer"></g>
+                    <ellipse cx="75" cy="335" rx="52" ry="16" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" />
+                    <path d="M 23 45 L 23 335 A 52 16 0 0 0 127 335 L 127 45 A 52 16 0 0 0 23 45 Z" fill="url(#glassBodyGrad)" pointer-events="none" />
+                    <path d="M 23 45 L 23 335 A 52 16 0 0 0 127 335 L 127 45 A 52 16 0 0 0 23 45 Z" fill="url(#lightHighlight)" pointer-events="none" />
+                    <ellipse cx="75" cy="45" rx="52" ry="16" fill="url(#glassCapGrad)" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" pointer-events="none" />
+                    <ellipse cx="75" cy="45" rx="44" ry="13" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1" pointer-events="none" />
+                    <g id="calloutLineContainer" pointer-events="none"></g>
+                </svg>
+            </div>
+            <div class="col-span-7 flex flex-col justify-center space-y-2.5 py-2 pl-1 z-10" id="categoryCardsContainer"></div>
+        </div>
+
+        <div class="px-5 py-2.5 bg-slate-900/90 border-t border-slate-800/80 flex items-start justify-between gap-3 text-xs z-20">
+            <p id="inspectHint" class="text-slate-400 leading-snug flex-1 m-0">
+                <i class="fa-solid fa-circle-dot text-amber-400 text-xs mr-1.5"></i>
+                Tap a category to inspect. Tap the same category again to open category detail.
+            </p>
+            <button type="button" id="resetSelectionBtn" class="text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1 rounded-lg border border-slate-700 transition hidden text-[11px] flex-shrink-0">
+                Clear Focus
+            </button>
+        </div>
+        <div id="detailToast" class="hidden mx-5 mb-2 px-3 py-2 rounded-lg bg-indigo-500/15 border border-indigo-400/30 text-[11px] text-indigo-200 text-center" role="status"></div>
+
+        <div class="bg-[#0b0f19] border-t border-slate-800/80 px-2 py-3 grid grid-cols-5 text-center text-slate-500 text-xs z-20">
+            <button type="button" class="flex flex-col items-center space-y-1 hover:text-slate-300"><i class="fa-regular fa-file-lines text-base"></i><span class="text-[10px]">Ledger</span></button>
+            <button type="button" class="flex flex-col items-center space-y-1 text-slate-100 font-semibold"><i class="fa-solid fa-chart-simple text-base text-slate-300"></i><span class="text-[10px] text-slate-300">Stats</span></button>
+            <button type="button" class="flex flex-col items-center space-y-1 hover:text-slate-300"><i class="fa-solid fa-building-columns text-base"></i><span class="text-[10px]">Loans</span></button>
+            <button type="button" class="flex flex-col items-center space-y-1 hover:text-slate-300"><i class="fa-solid fa-arrows-rotate text-base"></i><span class="text-[10px]">Recurring</span></button>
+            <button type="button" class="flex flex-col items-center space-y-1 hover:text-slate-300"><i class="fa-solid fa-gear text-base"></i><span class="text-[10px]">Settings</span></button>
+        </div>
+    </div>
+
+<script>
+const MODE_LABELS = { weekly: 'Weekly', monthly: 'Monthly', annually: 'Annually', period: 'Period' };
+
+const CATEGORY_BY_MODE = {
+    weekly: [
+        { id: 'food', name: 'Food & Dining', amount: 520, color: '#ff4b60' },
+        { id: 'transport', name: 'Transport', amount: 340, color: '#10b981' },
+        { id: 'shopping', name: 'Shopping', amount: 422, color: '#f59e0b' },
+        { id: 'bills', name: 'Bills & Utilities', amount: 280, color: '#8b5cf6' },
+        { id: 'other', name: 'Other', amount: 220, color: '#94a3b8' },
+    ],
+    monthly: [
+        { id: 'food', name: 'Food & Dining', amount: 3420, color: '#ff4b60' },
+        { id: 'bills', name: 'Bills & Utilities', amount: 2850, color: '#8b5cf6' },
+        { id: 'shopping', name: 'Shopping', amount: 1650, color: '#f59e0b' },
+        { id: 'transport', name: 'Transport', amount: 980, color: '#10b981' },
+    ],
+    annually: [
+        { id: 'food', name: 'Food & Dining', amount: 38400, color: '#ff4b60' },
+        { id: 'bills', name: 'Bills & Utilities', amount: 29500, color: '#8b5cf6' },
+        { id: 'shopping', name: 'Shopping', amount: 18200, color: '#f59e0b' },
+        { id: 'transport', name: 'Transport', amount: 11400, color: '#10b981' },
+        { id: 'health', name: 'Health', amount: 8500, color: '#3b82f6' },
+    ],
+    period: [
+        { id: 'food', name: 'Food & Dining', amount: 932, color: '#ff4b60' },
+        { id: 'bills', name: 'Bills & Utilities', amount: 850, color: '#8b5cf6' },
+    ],
+};
+
+const NAV_LABELS = {
+    weekly: ['13.10.26 ~ 19.10.26', '20.10.26 ~ 26.10.26', '27.10.26 ~ 02.11.26'],
+    monthly: ['September 2026', 'October 2026', 'November 2026'],
+    annually: ['2024', '2025', '2026'],
+    period: ['01/10/26 ~ 15/10/26', '05/10/26 ~ 25/10/26', '10/10/26 ~ 31/10/26'],
+};
+
+let periodMode = 'monthly';
+let navIndex = 1;
+let trackerCategories = [];
+let activeCategoryId = null;
+
+const CYL_TOP_Y = 45, CYL_BOTTOM_Y = 335, CYL_HEIGHT = CYL_BOTTOM_Y - CYL_TOP_Y;
+const CYL_RX = 52, CYL_RY = 16, CYL_CX = 75;
+
+function calculatePercentages() {
+    const total = trackerCategories.reduce((s, i) => s + i.amount, 0);
+    trackerCategories.forEach((item) => {
+        item.percentage = total > 0 ? (item.amount / total) * 100 : 0;
+    });
+}
+
+function updateExpenseTotal() {
+    const total = trackerCategories.reduce((s, i) => s + i.amount, 0);
+    document.getElementById('expenseTotal').textContent =
+        '-₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function updateHeader() {
+    const labels = NAV_LABELS[periodMode];
+    document.getElementById('periodTitle').textContent = labels[navIndex];
+    document.getElementById('periodChipLabel').textContent = MODE_LABELS[periodMode];
+}
+
+function loadMode(mode) {
+    periodMode = mode;
+    trackerCategories = JSON.parse(JSON.stringify(CATEGORY_BY_MODE[mode]));
+    calculatePercentages();
+    updateHeader();
+    updateExpenseTotal();
+    resetFocus();
+    renderCylinderAndCards();
+}
+
+function ensureGradients() {
+    const defs = document.querySelector('#cylinderSvg defs');
+    document.querySelectorAll('.dynamic-grad').forEach((e) => e.remove());
+    trackerCategories.forEach((cat) => {
+        const grad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+        grad.setAttribute('id', `grad-${cat.id}`);
+        grad.setAttribute('class', 'dynamic-grad');
+        grad.setAttribute('x1', '0%');
+        grad.setAttribute('x2', '100%');
+        grad.innerHTML = `
+            <stop offset="0%" stop-color="${adjustColor(cat.color, 45)}" />
+            <stop offset="40%" stop-color="${cat.color}" />
+            <stop offset="80%" stop-color="${adjustColor(cat.color, -30)}" />
+            <stop offset="100%" stop-color="${adjustColor(cat.color, -55)}" />
+        `;
+        defs.appendChild(grad);
+    });
+}
+
+function renderCylinderAndCards() {
+    ensureGradients();
+    const container = document.getElementById('cylinderSegmentsContainer');
+    const cardsContainer = document.getElementById('categoryCardsContainer');
+    container.innerHTML = '';
+    cardsContainer.innerHTML = '';
+
+    let currentY = CYL_BOTTOM_Y;
+    const totalUsableHeight = CYL_HEIGHT * 0.88;
+    const stackData = [...trackerCategories].reverse();
+
+    stackData.forEach((item) => {
+        const segmentHeight = (item.percentage / 100) * totalUsableHeight;
+        const topY = currentY - segmentHeight;
+        const bottomY = currentY;
+        item.midY = topY + segmentHeight / 2;
+
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'cylinder-segment');
+        g.setAttribute('id', `segment-group-${item.id}`);
+        g.onclick = () => handleCategoryTap(item.id);
+
+        const bodyPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        bodyPath.setAttribute('d', `
+            M ${CYL_CX - CYL_RX} ${topY}
+            L ${CYL_CX - CYL_RX} ${bottomY}
+            A ${CYL_RX} ${CYL_RY} 0 0 0 ${CYL_CX + CYL_RX} ${bottomY}
+            L ${CYL_CX + CYL_RX} ${topY}
+            A ${CYL_RX} ${CYL_RY} 0 0 1 ${CYL_CX - CYL_RX} ${topY}
+            Z`);
+        bodyPath.setAttribute('fill', `url(#grad-${item.id})`);
+
+        const topCap = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        topCap.setAttribute('cx', CYL_CX);
+        topCap.setAttribute('cy', topY);
+        topCap.setAttribute('rx', CYL_RX);
+        topCap.setAttribute('ry', CYL_RY);
+        topCap.setAttribute('fill', item.color);
+        topCap.setAttribute('opacity', '0.7');
+
+        const capStroke = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        capStroke.setAttribute('cx', CYL_CX);
+        capStroke.setAttribute('cy', topY);
+        capStroke.setAttribute('rx', CYL_RX);
+        capStroke.setAttribute('ry', CYL_RY);
+        capStroke.setAttribute('fill', 'none');
+        capStroke.setAttribute('stroke', 'rgba(255,255,255,0.3)');
+        capStroke.setAttribute('stroke-width', '0.8');
+
+        g.appendChild(bodyPath);
+        g.appendChild(topCap);
+        g.appendChild(capStroke);
+        container.appendChild(g);
+        currentY = topY;
+    });
+
+    if (currentY > CYL_TOP_Y) {
+        const emptyPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        emptyPath.setAttribute('d', `
+            M ${CYL_CX - CYL_RX} ${CYL_TOP_Y}
+            L ${CYL_CX - CYL_RX} ${currentY}
+            A ${CYL_RX} ${CYL_RY} 0 0 0 ${CYL_CX + CYL_RX} ${currentY}
+            L ${CYL_CX + CYL_RX} ${CYL_TOP_Y}
+            A ${CYL_RX} ${CYL_RY} 0 0 1 ${CYL_CX - CYL_RX} ${CYL_TOP_Y}
+            Z`);
+        emptyPath.setAttribute('fill', 'url(#grad-empty)');
+        container.prepend(emptyPath);
+    }
+
+    trackerCategories.forEach((item) => {
+        const card = document.createElement('div');
+        card.id = `category-card-${item.id}`;
+        card.className = 'category-card bg-slate-900/70 border border-slate-800/90 p-2.5 rounded-xl cursor-pointer';
+        card.style.setProperty('--accent-color', item.color);
+        card.style.setProperty('--accent-alpha', `${item.color}33`);
+        card.onclick = () => handleCategoryTap(item.id);
+        card.innerHTML = `
+            <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center space-x-2">
+                    <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${item.color}"></span>
+                    <span class="text-xs font-semibold text-slate-200 truncate max-w-[120px]">${item.name}</span>
+                </div>
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-md" style="color:${item.color};background:${item.color}18">${item.percentage.toFixed(1)}%</span>
+            </div>
+            <div class="pl-4 text-sm font-bold text-white">₹${item.amount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>`;
+        cardsContainer.appendChild(card);
+    });
+
+    if (activeCategoryId) focusCategory(activeCategoryId);
+}
+
+function drawCalloutLine(id) {
+    const lineContainer = document.getElementById('calloutLineContainer');
+    lineContainer.innerHTML = '';
+    if (!id) return;
+    const item = trackerCategories.find((c) => c.id === id);
+    const card = document.getElementById(`category-card-${id}`);
+    const svg = document.getElementById('cylinderSvg');
+    if (!item || !card || !svg) return;
+
+    const svgBounds = svg.getBoundingClientRect();
+    const cardBounds = card.getBoundingClientRect();
+    const startX = CYL_CX + CYL_RX - 2;
+    const startY = item.midY;
+    const cardLeftYInSvg = ((cardBounds.top + cardBounds.height / 2) - svgBounds.top) * (380 / svgBounds.height);
+
+    const linePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    linePath.setAttribute('d', `M ${startX} ${startY} L 136 ${startY} L 148 ${cardLeftYInSvg}`);
+    linePath.setAttribute('fill', 'none');
+    linePath.setAttribute('stroke', item.color);
+    linePath.setAttribute('stroke-width', '2.5');
+    linePath.setAttribute('stroke-linecap', 'round');
+    linePath.setAttribute('class', 'callout-line-path');
+
+    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dot.setAttribute('cx', startX);
+    dot.setAttribute('cy', startY);
+    dot.setAttribute('r', '4');
+    dot.setAttribute('fill', '#fff');
+    dot.setAttribute('stroke', item.color);
+    dot.setAttribute('stroke-width', '2');
+
+    lineContainer.appendChild(linePath);
+    lineContainer.appendChild(dot);
+}
+
+const HINT_DEFAULT =
+    'Tap a category to inspect. Tap the same category again to open category detail.';
+const HINT_FOCUSED =
+    'Inspecting selection — tap again for category detail, or use Clear Focus.';
+
+function updateInspectHint() {
+    const el = document.getElementById('inspectHint');
+    const text = activeCategoryId ? HINT_FOCUSED : HINT_DEFAULT;
+    el.innerHTML =
+        '<i class="fa-solid fa-circle-dot text-amber-400 text-xs mr-1.5' +
+        (activeCategoryId ? '' : ' animate-pulse') +
+        '"></i>' +
+        text;
+}
+
+function showDetailNavigationMock(name) {
+    const toast = document.getElementById('detailToast');
+    toast.textContent = 'Navigate → Category detail: ' + name + ' (Stats drill-down in app)';
+    toast.classList.remove('hidden');
+    window.clearTimeout(showDetailNavigationMock._t);
+    showDetailNavigationMock._t = window.setTimeout(() => toast.classList.add('hidden'), 2800);
+}
+
+function handleCategoryTap(id) {
+    if (activeCategoryId === id) {
+        const item = trackerCategories.find((c) => c.id === id);
+        if (item) showDetailNavigationMock(item.name);
+        return;
+    }
+    focusCategory(id);
+}
+
+function focusCategory(id) {
+    activeCategoryId = id;
+    document.getElementById('resetSelectionBtn').classList.remove('hidden');
+    updateInspectHint();
+    trackerCategories.forEach((item) => {
+        const group = document.getElementById(`segment-group-${item.id}`);
+        const card = document.getElementById(`category-card-${item.id}`);
+        if (item.id === id) {
+            if (group) { group.style.opacity = '1'; group.style.filter = 'brightness(1.25) drop-shadow(0 0 14px ' + item.color + 'aa)'; }
+            if (card) card.className = card.className.replace(/ active| dimmed/g, '') + ' active';
+        } else {
+            if (group) { group.style.opacity = '0.25'; group.style.filter = 'none'; }
+            if (card) card.className = card.className.replace(/ active| dimmed/g, '') + ' dimmed';
+        }
+    });
+    drawCalloutLine(id);
+}
+
+function resetFocus() {
+    activeCategoryId = null;
+    document.getElementById('resetSelectionBtn').classList.add('hidden');
+    document.getElementById('calloutLineContainer').innerHTML = '';
+    document.getElementById('detailToast').classList.add('hidden');
+    updateInspectHint();
+    trackerCategories.forEach((item) => {
+        const group = document.getElementById(`segment-group-${item.id}`);
+        const card = document.getElementById(`category-card-${item.id}`);
+        if (group) { group.style.opacity = '1'; group.style.filter = 'none'; }
+        if (card) card.className = card.className.replace(/ active| dimmed/g, '');
+    });
+}
+
+function adjustColor(hex, percent) {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+    const G = Math.min(255, Math.max(0, (num >> 8 & 255) + amt));
+    const B = Math.min(255, Math.max(0, (num & 255) + amt));
+    return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+}
+
+document.getElementById('periodChip').onclick = (e) => {
+    e.stopPropagation();
+    document.getElementById('periodMenu').classList.toggle('open');
+};
+document.querySelectorAll('#periodMenu button').forEach((btn) => {
+    btn.onclick = () => {
+        document.getElementById('periodMenu').classList.remove('open');
+        navIndex = 1;
+        loadMode(btn.dataset.mode);
+    };
+});
+document.addEventListener('click', () => document.getElementById('periodMenu').classList.remove('open'));
+
+document.getElementById('prevPeriod').onclick = () => {
+    const labels = NAV_LABELS[periodMode];
+    navIndex = (navIndex - 1 + labels.length) % labels.length;
+    updateHeader();
+};
+document.getElementById('nextPeriod').onclick = () => {
+    const labels = NAV_LABELS[periodMode];
+    navIndex = (navIndex + 1) % labels.length;
+    updateHeader();
+};
+
+document.getElementById('resetSelectionBtn').onclick = resetFocus;
+window.onresize = () => { if (activeCategoryId) drawCalloutLine(activeCategoryId); };
+
+window.onload = () => {
+    updateInspectHint();
+    loadMode('monthly');
+};
+</script>
+</body>
+</html>

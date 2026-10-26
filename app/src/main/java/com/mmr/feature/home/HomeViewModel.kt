@@ -1,7 +1,6 @@
 package com.mmr.feature.home
 
 import android.content.Context
-import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mmr.app.ui.components.MmrMergeDateOption
@@ -69,8 +68,8 @@ class HomeViewModel
         private val _openTransactionId = MutableSharedFlow<Long>(extraBufferCapacity = 1)
         val openTransactionId = _openTransactionId.asSharedFlow()
 
-        private val _periodExportRequest = MutableSharedFlow<HomePeriodExportRequest>(extraBufferCapacity = 1)
-        val periodExportRequest = _periodExportRequest.asSharedFlow()
+        private val _periodExportResult = MutableSharedFlow<HomePeriodExportResult>(extraBufferCapacity = 1)
+        val periodExportResult = _periodExportResult.asSharedFlow()
 
         private val _showExcelExportDialog = MutableStateFlow(false)
         private val _excelExportOptions = MutableStateFlow<List<HomeExcelExportOptionUi>>(emptyList())
@@ -719,26 +718,15 @@ class HomeViewModel
                         }
                     val appName = appContext.getString(com.mmr.app.R.string.app_name)
                     val fileName = HomeExcelExportPeriods.buildFileName(appName, range)
-                    val file =
-                        periodExcelExporter.exportPeriod(
+                    val savedFileName =
+                        periodExcelExporter.exportPeriodToDownloads(
                             items = filtered,
                             fileName = fileName,
                             zoneId = zoneId,
                             currencySymbol = display.mainCurrencySymbol,
                             currencyCode = display.mainCurrencyCode,
                         )
-                    val uri =
-                        FileProvider.getUriForFile(
-                            appContext,
-                            "${appContext.packageName}.exportfileprovider",
-                            file,
-                        )
-                    _periodExportRequest.emit(
-                        HomePeriodExportRequest(
-                            contentUri = uri,
-                            subject = HomeExcelExportPeriods.formatShareSubject(appName, range),
-                        ),
-                    )
+                    _periodExportResult.emit(HomePeriodExportResult(savedFileName = savedFileName))
                 } catch (_: Exception) {
                     _errorMessage.value = "Could not export Excel file. Please try again."
                 } finally {

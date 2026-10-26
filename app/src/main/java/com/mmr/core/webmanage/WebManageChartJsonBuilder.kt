@@ -10,10 +10,11 @@ object WebManageChartJsonBuilder {
         spendings: List<CategorySpending>,
         tabTotal: Double,
         noDataMessage: String = "No expenses in this period",
+        theme: WebManageChartTheme = WebManageChartTheme.Light,
     ): String {
         val breakdowns = buildBreakdowns(spendings, tabTotal)
         if (breakdowns.isEmpty()) {
-            return emptyPie(noDataMessage)
+            return emptyPie(noDataMessage, theme)
         }
         val data = JSONArray()
         val colors = JSONArray()
@@ -34,9 +35,9 @@ object WebManageChartJsonBuilder {
                 .put("data", data),
         )
         return JSONObject()
-            .put("pieBorderColor", "#FFFFFF")
-            .put("pieBackgroundColor", "#FFFFFF")
-            .put("pieTextColor", "#1A1A2E")
+            .put("pieBorderColor", theme.pieBorderColor)
+            .put("pieBackgroundColor", theme.pieBackgroundColor)
+            .put("pieTextColor", theme.pieTextColor)
             .put("pieTextSize", 12)
             .put("colors", colors)
             .put("series", series)
@@ -84,11 +85,14 @@ object WebManageChartJsonBuilder {
         return rows
     }
 
-    private fun emptyPie(message: String): String =
+    private fun emptyPie(
+        message: String,
+        theme: WebManageChartTheme,
+    ): String =
         JSONObject()
-            .put("pieBorderColor", "#FFFFFF")
-            .put("pieBackgroundColor", "#FFFFFF")
-            .put("pieTextColor", "#1A1A2E")
+            .put("pieBorderColor", theme.pieBorderColor)
+            .put("pieBackgroundColor", theme.pieBackgroundColor)
+            .put("pieTextColor", theme.pieTextColor)
             .put("pieTextSize", 12)
             .put("colors", JSONArray())
             .put("series", JSONArray())

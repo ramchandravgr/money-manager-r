@@ -201,6 +201,10 @@ sealed interface ApprovalCenterUiEvent {
 
     object OnLinkSelectedApprovals : ApprovalCenterUiEvent
 
+    object OnApproveSelectedApprovals : ApprovalCenterUiEvent
+
+    object OnRejectSelectedApprovals : ApprovalCenterUiEvent
+
     object OnDismissCardRefundApply : ApprovalCenterUiEvent
 
     data class OnCardRefundSelectPurchase(

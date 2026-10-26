@@ -54,7 +54,7 @@ class ProcessIncomingSmsWorker
                 pendingCount = pendingCount,
                 latestLine = ingestResult.summaryLine,
             )
-            widgetRefresher.refreshAll()
+            widgetRefresher.refreshAllAndWait()
             return Result.success()
         }
 

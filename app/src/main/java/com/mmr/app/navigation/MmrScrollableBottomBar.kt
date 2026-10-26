@@ -41,7 +41,7 @@ fun MmrScrollableBottomBar(
                         .height(MmrDimens.chromeBottomNavHeight),
             ) {
                 destinations.forEach { destination ->
-                    val selected = currentRoute == destination.route
+                    val selected = isMainDestinationSelected(currentRoute, destination)
                     MmrMainNavItem(
                         modifier =
                             Modifier

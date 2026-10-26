@@ -1,6 +1,7 @@
 package com.mmr.core.data.repository
 
 import com.mmr.core.categorization.CategorizationRuleEngine
+import com.mmr.core.data.catalog.MmrUncategorisedCategory
 import com.mmr.core.common.display.MmrDisplayTextFormat
 import com.mmr.core.common.validation.MmrValidation
 import com.mmr.core.common.widget.HomeScreenWidgetRefreshTrigger
@@ -492,7 +493,10 @@ class ApprovalRepositoryImpl
             if (accountId <= 0L) {
                 throw IllegalStateException("No valid account available for approval.")
             }
-            val categoryId = approval.extractedCategoryId ?: fallbackCategoryId
+            val categoryId =
+                approval.extractedCategoryId
+                    ?: fallbackCategoryId
+                    ?: MmrUncategorisedCategory.resolveId(categoryDao, approval.extractedType)
             val dateTime = MmrValidation.normalizeEpochMillis(approval.extractedDateTime)
 
             val smsRecord =

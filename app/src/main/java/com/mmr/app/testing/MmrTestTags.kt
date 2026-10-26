@@ -2,6 +2,7 @@ package com.mmr.app.testing
 
 import com.mmr.app.navigation.Screen
 import com.mmr.feature.home.model.HomeViewTab
+import com.mmr.feature.scheduled.model.ScheduledSection
 
 /**
  * Stable Compose UI test selectors. Use dotted ids: screen.control.role.
@@ -11,8 +12,14 @@ object MmrTestTags {
 
     val navHome = navTab(Screen.Home.route)
     val navStats = navTab(Screen.Stats.route)
-    val navLoans = navTab(Screen.Loans.route)
-    val navRecurring = navTab(Screen.Recurring.route)
+    val navBudgets = navTab(Screen.Budgets.route)
+    val navScheduled = navTab(Screen.Scheduled.route)
+    val navLoans = navScheduled
+    val navRecurring = navScheduled
+
+    const val scheduledScreen = "scheduled.screen"
+
+    fun scheduledSectionTab(section: ScheduledSection): String = "scheduled.tab.${section.name.lowercase()}"
     val navSettings = navTab(Screen.Settings.route)
 
     fun homeViewTab(tab: HomeViewTab): String = "home.tab.${tab.name.lowercase()}"
@@ -61,6 +68,10 @@ object MmrTestTags {
 
     const val approvalSelectionLink = "approval.selection.link"
 
+    const val approvalSelectionApprove = "approval.selection.approve"
+
+    const val approvalSelectionReject = "approval.selection.reject"
+
     const val approvalSelectionSelectAll = "approval.selection.select_all"
 
     const val approvalLinkPickerSearch = "approval.link_picker.search"
@@ -106,6 +117,11 @@ object MmrTestTags {
     const val loanFieldPrincipal = "loan.field.principal"
 
     const val recurringFabAdd = "recurring.fab.add"
+
+    const val budgetListScreen = "budget.screen.list"
+    const val budgetFabAdd = "budget.fab.add"
+
+    fun budgetRow(id: Long): String = "budget.row.$id"
 
     const val appBarSave = "app_bar.save"
 }

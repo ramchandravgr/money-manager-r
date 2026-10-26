@@ -4,7 +4,7 @@
     android:initialLayout="@layout/glance_default_loading_layout"
     android:minWidth="110dp"
     android:minHeight="40dp"
-    android:previewLayout="@layout/glance_default_loading_layout"
+    android:previewLayout="@layout/widget_preview_month_spend"
     android:resizeMode="horizontal|vertical"
     android:targetCellWidth="2"
     android:targetCellHeight="1"

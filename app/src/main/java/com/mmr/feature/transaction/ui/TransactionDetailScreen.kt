@@ -7,6 +7,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mmr.app.testing.MmrTestTags
@@ -33,6 +36,14 @@ fun TransactionDetailScreen(
     viewModel: TransactionDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsState()
+    var viewingReceiptPath by remember { mutableStateOf<String?>(null) }
+
+    viewingReceiptPath?.let { path ->
+        TransactionReceiptViewerDialog(
+            filePath = path,
+            onDismiss = { viewingReceiptPath = null },
+        )
+    }
 
     LaunchedEffect(Unit) {
         viewModel.deleted.collect {
@@ -169,6 +180,7 @@ fun TransactionDetailScreen(
                 onRemoveSaved = {},
                 onRemovePending = {},
                 readOnly = true,
+                onReceiptClick = { viewingReceiptPath = it },
             )
         }
         item {

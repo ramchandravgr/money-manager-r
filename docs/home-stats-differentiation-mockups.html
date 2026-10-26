@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MMR Home &amp; Stats — current vs proposed</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --header: #3F4671;
+      --accent: #FF6255;
+      --list: #f4f5f8;
+      --border: #e2e4ea;
+      --text-muted: #666;
+      --now-badge: #6b7280;
+      --next-badge: #0d9488;
+      --change-bg: #fff8f6;
+      --change-border: #ffc9c3;
+    }
+    body {
+      margin: 0;
+      padding: 24px 20px 48px;
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      background: #eef0f4;
+      color: #1a1a2e;
+      line-height: 1.45;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --list: #1c1f2a;
+        --border: #2e313c;
+        --text-muted: #ababb3;
+        --change-bg: #2a1f1d;
+        --change-border: #6b3a34;
+      }
+      body { background: #0e1016; color: #f2f2f5; }
+      .phone { background: #12141c; }
+      .annot { background: #1a1d28; border-color: var(--border); }
+    }
+    h1 { font-size: 1.35rem; margin: 0 0 6px; font-weight: 650; }
+    .intro {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      max-width: 56rem;
+      margin-bottom: 28px;
+    }
+    h2 {
+      font-size: 1.05rem;
+      margin: 36px 0 10px;
+      padding-top: 8px;
+      border-top: 2px solid var(--border);
+    }
+    h2:first-of-type { border-top: none; margin-top: 8px; }
+    .strategy-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      max-width: 56rem;
+      margin: 0 0 16px;
+    }
+    .compare {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .col {
+      flex: 1 1 280px;
+      max-width: 300px;
+    }
+    .col-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge {
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: #fff;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .badge.now { background: var(--now-badge); }
+    .badge.next { background: var(--next-badge); }
+    .phone {
+      width: 100%;
+      max-width: 280px;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+    .bottom-nav {
+      display: flex;
+      justify-content: space-around;
+      padding: 6px 4px 8px;
+      border-top: 1px solid var(--border);
+      font-size: 8px;
+      color: var(--text-muted);
+      background: #fff;
+    }
+    .bottom-nav .on { color: var(--header); font-weight: 600; }
+    .header {
+      background: var(--header);
+      color: #fff;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 36px;
+    }
+    .header-center { text-align: center; flex: 1; font-weight: 600; font-size: 11px; }
+    .header-icons { display: flex; gap: 4px; align-items: center; font-size: 14px; }
+    .badge-count {
+      background: #ef4444;
+      color: #fff;
+      font-size: 7px;
+      padding: 1px 4px;
+      border-radius: 6px;
+      vertical-align: top;
+    }
+    .tabs-row {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      background: #fff;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 7px 2px;
+      font-size: 9px;
+      color: var(--text-muted);
+    }
+    .tab.on {
+      color: var(--header);
+      font-weight: 600;
+      box-shadow: inset 0 -2px 0 var(--header);
+    }
+    .summary-strip {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      text-align: center;
+      padding: 10px 6px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      gap: 4px;
+    }
+    .summary-strip .lbl { font-size: 8px; color: var(--text-muted); }
+    .summary-strip .amt { font-size: 11px; font-weight: 600; margin-top: 2px; }
+    .inc { color: #0d9488; }
+    .exp { color: #ef4444; }
+    .carry { font-size: 8px; color: var(--text-muted); text-align: center; padding: 0 8px 8px; background: #fff; }
+    .list-area {
+      background: var(--list);
+      min-height: 140px;
+      padding: 8px;
+    }
+    .row-item {
+      background: #fff;
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      border: 1px solid var(--border);
+    }
+    .row-item .sub { font-size: 8px; color: var(--text-muted); }
+    .fab {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin: -20px auto 8px;
+      box-shadow: 0 2px 8px rgba(255,98,85,0.4);
+    }
+    .fab-wrap { text-align: center; background: var(--list); padding-bottom: 4px; }
+    /* Stats */
+    .stats-tabs {
+      display: flex;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+    }
+    .stats-tabs .tab { flex: 1; padding: 10px 4px; }
+    .stats-tabs .tab .tot { display: block; font-size: 10px; font-weight: 600; margin-top: 2px; }
+    .pie-box {
+      height: 72px;
+      margin: 8px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #fbbf24 33%, #22c55e 33% 66%, #3b82f6 66%);
+      opacity: 0.85;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 8px;
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    .pie-box.brand {
+      background: linear-gradient(135deg, var(--header) 40%, var(--accent) 40% 70%, #6366f1 70%);
+    }
+    .cat-row {
+      padding: 8px 10px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+    }
+    .pager-hint {
+      font-size: 8px;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 4px;
+      background: #fff;
+    }
+    /* Proposed-only */
+    .banner-approve {
+      background: rgba(255, 98, 85, 0.14);
+      border-bottom: 1px solid var(--accent);
+      padding: 8px 10px;
+      font-size: 10px;
+      background-color: #fff;
+    }
+    .net-hero {
+      text-align: center;
+      padding: 14px 10px;
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+    }
+    .net-hero .big { font-size: 20px; font-weight: 700; margin: 4px 0; }
+    .net-hero .sub { font-size: 9px; color: var(--text-muted); }
+    .card-elevated {
+      margin: 8px;
+      padding: 10px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .section-label {
+      font-size: 9px;
+      font-weight: 600;
+      padding: 8px 10px 4px;
+      background: var(--list);
+      color: var(--text-muted);
+    }
+    .chart-mini {
+      height: 36px;
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      padding: 0 4px 4px;
+    }
+    .chart-mini span {
+      flex: 1;
+      background: var(--header);
+      border-radius: 2px;
+      opacity: 0.5;
+    }
+    .chart-mini span:nth-child(2) { height: 60%; opacity: 0.75; }
+    .chart-mini span:nth-child(3) { height: 100%; background: var(--accent); opacity: 1; }
+    .cylinder-demo {
+      display: flex;
+      height: 22px;
+      border-radius: 11px;
+      overflow: hidden;
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -2px 4px rgba(0,0,0,0.15);
+    }
+    .cylinder-cap-l, .cylinder-cap-r {
+      width: 8px;
+      flex-shrink: 0;
+      background: #3F4671;
+    }
+    .cylinder-cap-l { border-radius: 11px 0 0 11px; }
+    .cylinder-cap-r { border-radius: 0 11px 11px 0; }
+    .cylinder-segs {
+      flex: 1;
+      display: flex;
+      min-width: 0;
+    }
+    .cylinder-segs span { min-width: 2px; }
+    .unchanged {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      max-width: 280px;
+    }
+    .annot {
+      flex: 1 1 220px;
+      min-width: 200px;
+      max-width: 340px;
+      font-size: 0.82rem;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--change-border);
+      background: var(--change-bg);
+    }
+    .annot ul { margin: 8px 0 0; padding-left: 1.1rem; }
+    .annot li { margin-bottom: 6px; }
+    .annot strong { color: inherit; }
+    .delta-remove { text-decoration: line-through; opacity: 0.65; }
+    .delta-add { color: var(--accent); font-weight: 600; }
+    .combo {
+      margin-top: 32px;
+      padding: 16px 18px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #fff;
+      max-width: 56rem;
+      font-size: 0.9rem;
+    }
+    @media (prefers-color-scheme: dark) {
+      .combo, .tabs-row, .summary-strip, .carry, .row-item, .stats-tabs, .cat-row, .pager-hint, .banner-approve, .net-hero, .card-elevated, .bottom-nav { background: #12141c; }
+    }
+    table.legend {
+      width: 100%;
+      max-width: 56rem;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      margin: 16px 0 24px;
+    }
+    table.legend th, table.legend td {
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    table.legend th { background: rgba(63,70,113,0.12); }
+  </style>
+</head>
+<body>
+  <h1>Home &amp; Stats — what you have now vs what changes</h1>
+  <p class="intro">
+    Each block is a <strong>side-by-side wireframe</strong>. Left = shipped MMR today (from <code>HomeScreen</code>, <code>StatsScreen</code>).
+    Right = the same screen after applying that strategy. Annotations list only the deltas.
+  </p>
+
+  <table class="legend">
+    <thead>
+      <tr><th>Area</th><th>Today (MMR)</th><th>Typical “Money manager” overlap</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Home</strong></td>
+        <td>Month header, search, approvals badge · tabs Daily / Calendar / Monthly / Total · Income | Expenses | Total strip · grouped transaction list · FAB</td>
+        <td>Same tab + summary pattern</td>
+      </tr>
+      <tr>
+        <td><strong>Stats</strong></td>
+        <td>Period header · Income | Expense tabs with totals · swipe pager · pie + category list per tab</td>
+        <td>Same ledger tabs + pie breakdown</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- HOME full comparison -->
+  <h2>Home — full picture (recommended combo: strategies 1 + 2)</h2>
+  <p class="strategy-desc">Keeps your tabs, list, FAB, and month picker. Changes <em>hierarchy</em> (net first) and <em>inbox story</em> (approvals visible).</p>
+  <div class="compare">
+    <div class="col">
+      <div class="col-label"><span class="badge now">Today</span> Home</div>
+      <div class="phone">
+        <div class="header">
+          <span>◀</span>
+          <span class="header-center">October 2026 ▾</span>
+          <span class="header-icons">🔍 ✉<span class="badge-count">3</span></span>
+        </div>
+        <div class="tabs-row">
+          <div class="tab on">Daily</div>
+          <div class="tab">Calendar</div>
+          <div class="tab">Monthly</div>
+          <div class="tab">Total</div>
+        </div>
+        <div class="summary-strip">
+          <div><div class="lbl">Income</div><div class="amt inc">₹0</div></div>
+          <div><div class="lbl">Expenses</div><div class="amt exp">₹1,782</div></div>
+          <div><div class="lbl">Total</div><div class="amt">−₹1,782</div></div>
+        </div>
+        <div class="carry">Includes ₹2,400 carried forward</div>
+        <div class="list-area">
+          <div class="row-item"><div><div>Food</div><div class="sub">Today · Cash</div></div><div class="exp">−₹120</div></div>
+          <div class="row-item"><div><div>Uber</div><div class="sub">Today · Card</div></div><div class="exp">−₹340</div></div>
+        </div>
+        <div class="fab-wrap"><div class="fab"></div></div>
+        <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Loans</span><span>More</span></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="col-label"><span class="badge next">Proposed</span> Home</div>
+      <div class="phone">
+        <div class="header">
+          <span>◀</span>
+          <span class="header-center">October 2026 ▾</span>
+          <span class="header-icons">🔍 ✉<span class="badge-count">3</span></span>
+        </div>
+        <div class="banner-approve"><strong>3 SMS to approve</strong> — tap to open Approval Center</div>
+        <div class="tabs-row">
+          <div class="tab on">Daily</div>
+          <div class="tab">Calendar</div>
+          <div class="tab">Monthly</div>
+          <div class="tab">Total</div>
+        </div>
+        <div class="net-hero">
+          <div class="sub">Net this month</div>
+          <div class="big">−₹1,782</div>
+          <div class="sub">Income ₹0 · Expenses ₹1,782 ▾</div>
+        </div>
+        <div class="carry">Carry-forward ₹2,400 shown on Total tab / accounts card (not repeated here)</div>
+        <div class="list-area">
+          <div class="row-item"><div><div>Food <span class="sub">· pending SMS</span></div><div class="sub">Today</div></div><div class="exp">−₹120</div></div>
+          <div class="row-item"><div><div>Uber</div><div class="sub">Today</div></div><div class="exp">−₹340</div></div>
+        </div>
+        <div class="fab-wrap"><div class="fab"></div></div>
+        <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Loans</span><span>More</span></div>
+      </div>
+    </div>
+    <div class="annot">
+      <strong>What changes on Home</strong>
+      <ul>
+        <li><span class="delta-add">Approval banner</span> under header (badge alone is easy to miss).</li>
+        <li><span class="delta-remove">Equal 3-column summary strip</span> → <span class="delta-add">net-first hero</span>; income/expense tuck under ▾.</li>
+        <li>List rows can show <span class="delta-add">pending SMS</span> state inline.</li>
+        <li><strong>Unchanged:</strong> month picker, 4 view tabs, FAB, bottom nav, selection/merge, calendar/monthly/total content.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- STATS full comparison -->
+  <h2>Stats — full picture (strategy 2 + 1)</h2>
+  <p class="strategy-desc">Same period controls and category drill-down. Changes layout inside the tab: one vertical story instead of “pie island + pager”.</p>
+  <div class="compare">
+    <div class="col">
+      <div class="col-label"><span class="badge now">Today</span> Stats</div>
+      <div class="phone">
+        <div class="header">
+          <span>◀</span>
+          <span class="header-center">October 2026 ▾</span>
+          <span></span>
+        </div>
+        <div class="stats-tabs">
+          <div class="tab">Income<span class="tot inc">₹0</span></div>
+          <div class="tab on">Expenses<span class="tot exp">₹1,782</span></div>
+        </div>
+        <div class="pager-hint">← swipe to switch Income / Expense →</div>
+        <div class="pie-box">Highcharts pie (300dp)</div>
+        <div class="cat-row"><span>Food</span><span>₹520</span></div>
+        <div class="cat-row"><span>Transport</span><span>₹340</span></div>
+        <div class="cat-row"><span>Other</span><span>₹922</span></div>
+        <div class="bottom-nav"><span>Home</span><span class="on">Stats</span><span>Loans</span><span>More</span></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="col-label"><span class="badge next">Proposed</span> Stats</div>
+      <div class="phone">
+        <div class="header">
+          <span>◀</span>
+          <span class="header-center">October 2026 ▾</span>
+          <span></span>
+        </div>
+        <div class="section-label">Expenses · approved only · excludes 3 pending</div>
+        <div class="card-elevated">
+          <div style="font-weight:600;margin-bottom:8px;">₹1,782 total</div>
+          <div class="cylinder-demo" aria-hidden="true">
+            <div class="cylinder-cap-l"></div>
+            <div class="cylinder-segs">
+              <span style="flex:520;background:#FF6255"></span>
+              <span style="flex:340;background:#6366f1"></span>
+              <span style="flex:422;background:#0d9488"></span>
+              <span style="flex:500;background:#94a3b8"></span>
+            </div>
+            <div class="cylinder-cap-r"></div>
+          </div>
+          <div class="sub" style="font-size:8px;color:var(--text-muted);margin-top:6px;">Cylinder split by category (see <code>stats-expense-cylinder-chart-example.html</code>)</div>
+        </div>
+        <div class="section-label">By category</div>
+        <div class="cat-row"><span>Food</span><span>₹520</span></div>
+        <div class="cat-row"><span>Transport</span><span>₹340</span></div>
+        <div class="stats-tabs" style="margin-top:6px;">
+          <div class="tab">Income</div>
+          <div class="tab on">Expenses</div>
+        </div>
+        <div class="pager-hint" style="opacity:0.5;">Tabs become filter chips at bottom OR stay on top — pick one in impl.</div>
+        <div class="bottom-nav"><span>Home</span><span class="on">Stats</span><span>Loans</span><span>More</span></div>
+      </div>
+    </div>
+    <div class="annot">
+      <strong>What changes on Stats</strong>
+      <ul>
+        <li><span class="delta-add">Period subtitle</span> ties stats to inbox (approved vs pending).</li>
+        <li>One <span class="delta-add">continuous scroll</span>: total → chart → categories (less pager-only context).</li>
+        <li>Income/Expense switch can move to <span class="delta-add">chips</span> (optional); drill-down screens stay.</li>
+        <li><strong>Unchanged:</strong> period modes, month picker, pull-to-refresh, category detail + line chart, recategorize.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Strategy 1 -->
+  <h2>Strategy 1 — Inbox anchor (focused diff)</h2>
+  <p class="strategy-desc">MMR-only: SMS approvals should read as part of Home/Stats, not a hidden icon.</p>
+  <div class="compare">
+    <div class="col">
+      <div class="col-label"><span class="badge now">Today</span></div>
+      <div class="phone">
+        <div class="header">
+          <span class="header-center">October 2026</span>
+          <span class="header-icons">✉<span class="badge-count">3</span></span>
+        </div>
+        <div class="list-area" style="min-height:100px;">
+          <div style="padding:8px;color:var(--text-muted);">No mention of pending SMS on list or stats.</div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="col-label"><span class="badge next">Proposed</span></div>
+      <div class="phone">
+        <div class="header">
+          <span class="header-center">October 2026</span>
+          <span class="header-icons">✉<span class="badge-count">3</span></span>
+        </div>
+        <div class="banner-approve">3 to approve · Review SMS inbox</div>
+        <div class="list-area">
+          <div class="row-item"><div>Pending · Food</div><div>₹120</div></div>
+        </div>
+        <div class="section-label">Stats header copy</div>
+        <div class="card-elevated" style="margin-top:0;">Totals = approved transactions only</div>
+      </div>
+    </div>
+    <div class="annot">
+      <ul>
+        <li><strong>Home:</strong> banner + optional pending styling on rows.</li>
+        <li><strong>Stats:</strong> label that pie/list exclude pending approvals.</li>
+        <li><strong>Does not remove</strong> Approval Center or header icon.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Strategy 2 -->
+  <h2>Strategy 2 — Layout grammar (focused diff)</h2>
+  <p class="strategy-desc">Same data; different visual hierarchy so Home feels “net ledger” not “three equal KPIs”.</p>
+  <div class="compare">
+    <div class="col">
+      <div class="col-label"><span class="badge now">Today</span> Summary</div>
+      <div class="phone">
+        <div class="summary-strip">
+          <div><div class="lbl">Income</div><div class="amt inc">₹0</div></div>
+          <div><div class="lbl">Expenses</div><div class="amt exp">₹1,782</div></div>
+          <div><div class="lbl">Total</div><div class="amt">−₹1,782</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="col-label"><span class="badge next">Proposed</span> Summary</div>
+      <div class="phone">
+        <div class="net-hero">
+          <div class="sub">Net this period</div>
+          <div class="big">−₹1,782</div>
+          <div class="sub">Tap ▾ for Income / Expenses breakdown</div>
+        </div>
+      </div>
+    </div>
+    <div class="annot">
+      <ul>
+        <li>Numbers unchanged; only <strong>emphasis</strong> moves to net.</li>
+        <li>Stats: stack chart + list in one <code>LazyColumn</code> header order.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Strategy 3 -->
+  <h2>Strategy 3 — Visual system (focused diff)</h2>
+  <p class="strategy-desc">Brand tiles, card elevation, chart palette tied to <code>MmrBrandColors</code> — not generic rainbow pie.</p>
+  <div class="compare">
+    <div class="col">
+      <div class="col-label"><span class="badge now">Today</span> Chrome</div>
+      <div class="phone">
+        <div class="header"><span class="header-center">October 2026</span></div>
+        <div class="summary-strip" style="border:none;">
+          <div><div class="lbl">Income</div><div class="amt">₹0</div></div>
+          <div><div class="lbl">Expenses</div><div class="amt">₹1.7k</div></div>
+          <div><div class="lbl">Total</div><div class="amt">−₹1.7k</div></div>
+        </div>
+        <div class="pie-box">Multi-color pie</div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="col-label"><span class="badge next">Proposed</span> Chrome</div>
+      <div class="phone">
+        <div class="header">
+          <span style="width:22px;height:22px;background:#1E2445;border-radius:4px;display:inline-block;"></span>
+          <span class="header-center">October 2026</span>
+        </div>
+        <div class="card-elevated">
+          <div class="summary-strip" style="padding:0;border:none;background:transparent;">
+            <div><div class="lbl">Income</div><div class="amt inc">₹0</div></div>
+            <div><div class="lbl">Expenses</div><div class="amt exp">₹1.7k</div></div>
+            <div><div class="lbl">Total</div><div class="amt">−₹1.7k</div></div>
+          </div>
+        </div>
+        <div class="pie-box brand">Header + accent + secondary slices</div>
+      </div>
+    </div>
+    <div class="annot">
+      <ul>
+        <li>Widget-like <strong>elevated card</strong> for summary (matches month widget language).</li>
+        <li>Pie/line JSON uses <strong>theme palette</strong> (already partially wired for Web Manage).</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Strategy 4 -->
+  <h2>Strategy 4 — MMR-only hooks (focused diff)</h2>
+  <p class="strategy-desc">Surface features generic apps don’t have: custom month start, carry-forward, Excel period, SMS provenance.</p>
+  <div class="compare">
+    <div class="col">
+      <div class="col-label"><span class="badge now">Today</span> Total tab</div>
+      <div class="phone">
+        <div class="tabs-row">
+          <div class="tab">Daily</div>
+          <div class="tab">Calendar</div>
+          <div class="tab">Monthly</div>
+          <div class="tab on">Total</div>
+        </div>
+        <div class="list-area">
+          <div class="row-item"><div>Period: 5 Oct – 4 Nov 2026</div></div>
+          <div class="row-item"><div>Accounts summary card</div></div>
+          <div style="text-align:center;padding:8px;">Export data to Excel</div>
+          <div class="carry" style="padding-top:0;">Carry-forward only as small line on other tabs</div>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="col-label"><span class="badge next">Proposed</span> Every tab</div>
+      <div class="phone">
+        <div class="header"><span class="header-center">5 Oct – 4 Nov 2026</span></div>
+        <div class="card-elevated">
+          <div>Carry-forward <strong style="float:right;">+₹2,400</strong></div>
+          <div style="margin-top:6px;font-size:9px;color:var(--text-muted);">2 transactions from SMS today</div>
+        </div>
+        <div class="list-area" style="min-height:60px;"></div>
+        <div style="text-align:center;padding:8px;border-top:1px solid var(--border);">Export period → Excel</div>
+      </div>
+    </div>
+    <div class="annot">
+      <ul>
+        <li><strong>Header</strong> shows custom budget period, not only calendar month.</li>
+        <li><strong>Carry-forward + SMS count</strong> visible on Daily (not only fine print).</li>
+        <li>Export stays; could live on overflow or sticky on Total.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Strategy 5 -->
+  <h2>Strategy 5 — Keep (no visual change)</h2>
+  <p class="strategy-desc">Explicitly <em>do not</em> redesign these — differentiation is chrome around them.</p>
+  <div class="compare">
+    <div class="col">
+      <div class="col-label"><span class="badge now">Today</span> = <span class="badge next">Proposed</span></div>
+      <div class="unchanged">
+        Bottom navigation (Home · Stats · Loans · …)<br />
+        Month picker dialog<br />
+        Category rows &amp; amount colors (Set B)<br />
+        Home view tabs (Daily / Calendar / Monthly / Total)<br />
+        Stats category drill-down + line chart<br />
+        Dark / OLED themes
+      </div>
+    </div>
+  </div>
+
+  <div class="combo">
+    <strong>Suggested implementation order</strong><br />
+    1) Home net hero + approval banner (2 + 1) · 2) Stats approved-only copy + single-scroll header (1 + 2) ·
+    3) Chart palette + summary card elevation (3) · 4) Period / carry / SMS lines on Home header (4).
+  </div>
+</body>
+</html>

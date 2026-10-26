@@ -1,7 +1,7 @@
 package com.mmr.feature.transaction.ui
 
-import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,6 +30,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.mmr.app.ui.components.MmrTransactionFormCard
 import com.mmr.app.ui.components.MmrTransactionFormSectionLabel
+import com.mmr.core.common.image.MmrReceiptImage
 import com.mmr.feature.transaction.model.TransactionReceiptUi
 
 /**
@@ -44,6 +45,7 @@ fun TransactionReceiptSection(
     modifier: Modifier = Modifier,
     canAddMore: Boolean = true,
     readOnly: Boolean = false,
+    onReceiptClick: (filePath: String) -> Unit = {},
 ) {
     if (readOnly && receipts.isEmpty()) return
     if (receipts.isEmpty() && readOnly) return
@@ -64,6 +66,7 @@ fun TransactionReceiptSection(
                 receipts.forEach { receipt ->
                     ReceiptThumbnail(
                         filePath = receipt.filePath,
+                        onClick = { onReceiptClick(receipt.filePath) },
                         onRemove =
                             if (readOnly) {
                                 null
@@ -88,6 +91,7 @@ private val MmrDimensReceiptPadding = 12.dp
 @Composable
 private fun ReceiptThumbnail(
     filePath: String?,
+    onClick: () -> Unit,
     onRemove: (() -> Unit)?,
 ) {
     Box {
@@ -95,13 +99,14 @@ private fun ReceiptThumbnail(
             modifier =
                 Modifier
                     .size(72.dp)
-                    .clip(RoundedCornerShape(8.dp)),
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable(onClick = onClick),
             tonalElevation = 1.dp,
         ) {
             val bitmap =
                 remember(filePath) {
                     filePath?.let { path ->
-                        runCatching { BitmapFactory.decodeFile(path)?.asImageBitmap() }.getOrNull()
+                        runCatching { MmrReceiptImage.decodeBitmapFile(path)?.asImageBitmap() }.getOrNull()
                     }
                 }
             if (bitmap != null) {

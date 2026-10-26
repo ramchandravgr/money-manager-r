@@ -29,6 +29,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.mmr.app.ui.copy.mmrStaticLabelCase
 import com.mmr.app.ui.theme.MmrBrandColors
 
 /** Title + optional message — shared body chrome for [MmrContentDialog] (Design 12 mockup `.t` / `.m`). */
@@ -40,7 +41,7 @@ fun MmrDialogHeader(
 ) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
-            text = title,
+            text = title.mmrStaticLabelCase(),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = MmrBrandColors.TextStrong,
@@ -63,7 +64,7 @@ fun MmrDialogFieldLabel(
     modifier: Modifier = Modifier,
 ) {
     Text(
-        text = text,
+        text = text.mmrStaticLabelCase(),
         modifier = modifier.padding(bottom = 4.dp),
         fontSize = 13.sp,
         fontWeight = FontWeight.SemiBold,

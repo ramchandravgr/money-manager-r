@@ -43,10 +43,17 @@ internal object MmrWidgetApprovalMapper {
             amountFormatted = amountFormatted,
             subtitle = note.take(80),
             metaLine = "$typeLabel · $dateLabel",
+            smsPreview = formatSmsPreview(row.smsBody),
             isCardRefund = isCardRefund,
             canQuickApprove = !isCardRefund,
         )
     }
+
+    private fun formatSmsPreview(body: String): String =
+        body
+            .trim()
+            .replace(Regex("\\s+"), " ")
+            .take(320)
 
     fun pickHeadlineRow(
         pending: List<PendingApprovalWithSms>,

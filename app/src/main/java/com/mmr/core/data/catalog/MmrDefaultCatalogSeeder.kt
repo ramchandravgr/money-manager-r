@@ -18,6 +18,24 @@ object MmrDefaultCatalogSeeder {
         val subcategories: List<String>,
     )
 
+    private val uncategorisedCatalog =
+        listOf(
+            DefaultCategory(
+                name = MmrUncategorisedCategory.NAME,
+                iconName = "help_outline",
+                colorHex = "#9CA3AF",
+                type = CategoryType.EXPENSE,
+                subcategories = emptyList(),
+            ),
+            DefaultCategory(
+                name = MmrUncategorisedCategory.NAME,
+                iconName = "help_outline",
+                colorHex = "#9CA3AF",
+                type = CategoryType.INCOME,
+                subcategories = emptyList(),
+            ),
+        )
+
     private val catalog =
         listOf(
             DefaultCategory(
@@ -89,6 +107,23 @@ object MmrDefaultCatalogSeeder {
         val categoryDao = database.categoryDao()
         val existing = categoryDao.getActiveCategoriesOnce()
         val existingByKey = existing.associateBy { "${it.name}|${it.type}" }
+
+        val uncategorisedToInsert =
+            uncategorisedCatalog
+                .filter { def -> "${def.name}|${def.type}" !in existingByKey }
+                .map { def ->
+                    CategoryEntity(
+                        name = def.name,
+                        iconName = def.iconName,
+                        colorHex = def.colorHex,
+                        type = def.type,
+                        isDefault = true,
+                        orderIndex = 10_000,
+                    )
+                }
+        if (uncategorisedToInsert.isNotEmpty()) {
+            categoryDao.insertCategories(uncategorisedToInsert)
+        }
 
         val toInsertCategories =
             catalog

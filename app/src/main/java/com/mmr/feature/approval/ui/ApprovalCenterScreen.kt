@@ -218,6 +218,28 @@ fun ApprovalCenterScreen(
                             )
                         }
                         IconButton(
+                            onClick = { viewModel.onEvent(ApprovalCenterUiEvent.OnApproveSelectedApprovals) },
+                            enabled = state.canLinkSelection,
+                            modifier = Modifier.testTag(MmrTestTags.approvalSelectionApprove),
+                        ) {
+                            Icon(
+                                Icons.Filled.Check,
+                                contentDescription = "Approve selected",
+                                tint = MmrBrandColors.ApprovalApproveIcon,
+                            )
+                        }
+                        IconButton(
+                            onClick = { viewModel.onEvent(ApprovalCenterUiEvent.OnRejectSelectedApprovals) },
+                            enabled = state.canLinkSelection,
+                            modifier = Modifier.testTag(MmrTestTags.approvalSelectionReject),
+                        ) {
+                            Icon(
+                                Icons.Filled.Close,
+                                contentDescription = "Reject selected",
+                                tint = MmrBrandColors.ApprovalRejectIcon,
+                            )
+                        }
+                        IconButton(
                             onClick = { viewModel.onEvent(ApprovalCenterUiEvent.OnLinkSelectedApprovals) },
                             enabled = state.canLinkSelection,
                             modifier = Modifier.testTag(MmrTestTags.approvalSelectionLink),

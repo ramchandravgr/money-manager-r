@@ -1,11 +1,13 @@
 package com.mmr.app.di
 
 import com.mmr.core.data.repository.AccountRepositoryImpl
+import com.mmr.core.data.repository.BudgetRepositoryImpl
 import com.mmr.core.data.repository.CategoryRepositoryImpl
 import com.mmr.core.data.repository.TransactionAttachmentRepositoryImpl
 import com.mmr.core.data.repository.TransactionRepositoryImpl
 import com.mmr.core.domain.repository.AccountRepository
 import com.mmr.core.domain.repository.BackupRepository
+import com.mmr.core.domain.repository.BudgetRepository
 import com.mmr.core.domain.repository.CategoryRepository
 import com.mmr.core.domain.repository.TransactionAttachmentRepository
 import com.mmr.core.domain.repository.TransactionRepository
@@ -31,6 +33,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindCategoryRepository(impl: CategoryRepositoryImpl): CategoryRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindBudgetRepository(impl: BudgetRepositoryImpl): BudgetRepository
 
     @Binds
     @Singleton

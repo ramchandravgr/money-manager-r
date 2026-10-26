@@ -13,6 +13,7 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.mmr.app.ui.copy.mmrStaticLabelCase
 import com.mmr.app.ui.theme.MmrBrandColors
 
 /** Corner radius for floating white field cards (transaction entry + settings sub-screens). */
@@ -46,7 +47,7 @@ fun MmrGroupedFormCard(
         modifier = modifier.fillMaxWidth(),
         shape = groupedFormCardShape,
         color = MmrBrandColors.SurfaceWhite,
-        shadowElevation = 1.dp,
+        shadowElevation = 2.dp,
         tonalElevation = 0.dp,
     ) {
         Column(modifier = Modifier.fillMaxWidth(), content = content)
@@ -60,7 +61,7 @@ fun MmrFormSectionLabel(
     modifier: Modifier = Modifier,
 ) {
     Text(
-        text = text,
+        text = text.mmrStaticLabelCase(),
         modifier = modifier.padding(start = 4.dp, bottom = 4.dp),
         style = MaterialTheme.typography.labelMedium,
         color = MmrBrandColors.TextMedium,

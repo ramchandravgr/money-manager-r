@@ -308,6 +308,10 @@ class ApprovalCenterViewModel
                     beginLinkToExisting(ids, userInitiated = true)
                 }
 
+                ApprovalCenterUiEvent.OnApproveSelectedApprovals -> bulkApproveSelected()
+
+                ApprovalCenterUiEvent.OnRejectSelectedApprovals -> bulkRejectSelected()
+
                 is ApprovalCenterUiEvent.OnMergePickerParentSelected -> {
                     _pendingSmsMerge.value =
                         _pendingSmsMerge.value?.copy(
@@ -672,20 +676,98 @@ class ApprovalCenterViewModel
         private fun approveCandidate(id: Long) {
             viewModelScope.launch {
                 try {
-                    val accounts = accountRepository.getAccounts().firstOrNull() ?: emptyList()
-                    val fallbackAccountId = accounts.firstOrNull()?.id ?: 1L
-                    val categories = categoryRepository.getActiveCategories().firstOrNull() ?: emptyList()
-                    val fallbackCategoryId = categories.firstOrNull()?.id
-
-                    approvalRepository.approveCandidate(
-                        id = id,
-                        fallbackAccountId = fallbackAccountId,
-                        fallbackCategoryId = fallbackCategoryId,
-                    )
+                    approveCandidateOnce(id)
                 } catch (e: Exception) {
                     _scanResultMessage.value = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_ACTION)
                 }
             }
+        }
+
+        private suspend fun approveCandidateOnce(id: Long) {
+            val accounts = accountRepository.getAccounts().firstOrNull() ?: emptyList()
+            val fallbackAccountId = accounts.firstOrNull()?.id ?: 1L
+            approvalRepository.approveCandidate(
+                id = id,
+                fallbackAccountId = fallbackAccountId,
+                fallbackCategoryId = null,
+            )
+        }
+
+        private fun bulkApproveSelected() {
+            val ids = _selectedApprovalIds.value.toList()
+            if (ids.isEmpty()) return
+            val candidatesById = uiState.value.candidates.associateBy { it.id }
+            viewModelScope.launch {
+                clearApprovalSelection()
+                var approved = 0
+                var skippedCardRefunds = 0
+                var failed = 0
+                for (id in ids) {
+                    if (candidatesById[id]?.isCardRefund == true) {
+                        skippedCardRefunds++
+                        continue
+                    }
+                    try {
+                        approveCandidateOnce(id)
+                        approved++
+                    } catch (_: Exception) {
+                        failed++
+                    }
+                }
+                _scanResultMessage.value = bulkApprovalResultMessage(approved, skippedCardRefunds, failed)
+            }
+        }
+
+        private fun bulkRejectSelected() {
+            val ids = _selectedApprovalIds.value.toList()
+            if (ids.isEmpty()) return
+            viewModelScope.launch {
+                clearApprovalSelection()
+                var rejected = 0
+                var failed = 0
+                for (id in ids) {
+                    try {
+                        approvalRepository.rejectCandidate(id)
+                        rejected++
+                    } catch (_: Exception) {
+                        failed++
+                    }
+                }
+                _scanResultMessage.value =
+                    when {
+                        failed > 0 && rejected > 0 ->
+                            "Rejected $rejected; $failed could not be rejected."
+                        failed > 0 -> MmrUiMessages.GENERIC_ACTION
+                        rejected == 1 -> "1 item rejected."
+                        rejected > 1 -> "$rejected items rejected."
+                        else -> null
+                    }
+            }
+        }
+
+        private fun bulkApprovalResultMessage(
+            approved: Int,
+            skippedCardRefunds: Int,
+            failed: Int,
+        ): String? {
+            if (approved == 0 && skippedCardRefunds == 0 && failed == 0) return null
+            val parts = mutableListOf<String>()
+            if (approved > 0) {
+                parts.add(if (approved == 1) "1 approved" else "$approved approved")
+            }
+            if (skippedCardRefunds > 0) {
+                parts.add(
+                    if (skippedCardRefunds == 1) {
+                        "1 card refund skipped (use Apply refund)"
+                    } else {
+                        "$skippedCardRefunds card refunds skipped (use Apply refund)"
+                    },
+                )
+            }
+            if (failed > 0) {
+                parts.add(if (failed == 1) "1 failed" else "$failed failed")
+            }
+            return parts.joinToString(". ") + "."
         }
 
         private fun scanDeviceSms() {
@@ -872,7 +954,10 @@ class ApprovalCenterViewModel
             preferredId: Long?,
         ): Long? {
             if (preferredId != null && categories.any { it.id == preferredId }) return preferredId
-            return categories.firstOrNull()?.id
+            return categories
+                .find { it.name.equals(com.mmr.core.data.catalog.MmrUncategorisedCategory.NAME, ignoreCase = true) }
+                ?.id
+                ?: categories.firstOrNull()?.id
         }
 
         private suspend fun beginApplyRefund(approvalId: Long) {

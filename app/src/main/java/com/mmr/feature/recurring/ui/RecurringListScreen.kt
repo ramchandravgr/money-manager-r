@@ -41,21 +41,15 @@ fun RecurringListScreen(
     onNavigateToDetail: (Long) -> Unit,
     onNavigateToAddRule: () -> Unit,
     showBackNavigation: Boolean = true,
+    embeddedInScheduledHub: Boolean = false,
     viewModel: RecurringListViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val horizontalPadding = mmrScreenHorizontalPadding()
 
-    Scaffold(
-        containerColor = MmrBrandColors.ListBackground,
-        contentWindowInsets = com.mmr.app.ui.components.MmrNestedScaffoldInsets,
-        topBar = {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                MmrHeaderBar(
-                    title = "Recurring",
-                    showBack = showBackNavigation,
-                    onBack = onNavigateBack,
-                )
+    val listBody: @Composable (Modifier) -> Unit = { contentModifier ->
+        Column(modifier = contentModifier.fillMaxSize()) {
+            if (embeddedInScheduledHub) {
                 MmrDualSummaryStrip(
                     leftLabel = "Active rules",
                     leftAmount = uiState.activeRulesCount.toString(),
@@ -65,21 +59,6 @@ fun RecurringListScreen(
                     rightAmountColor = MmrBrandColors.TextStrong,
                 )
             }
-        },
-        floatingActionButton = {
-            MmrAddListFab(
-                modifier = Modifier.testTag(MmrTestTags.recurringFabAdd),
-                contentDescription = "Add recurring rule",
-                onClick = onNavigateToAddRule,
-            )
-        },
-    ) { innerPadding ->
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-        ) {
             Row(
                 modifier =
                     Modifier
@@ -202,6 +181,41 @@ fun RecurringListScreen(
                     }
                 }
             }
+        }
+    }
+
+    if (embeddedInScheduledHub) {
+        listBody(Modifier)
+    } else {
+        Scaffold(
+            containerColor = MmrBrandColors.ListBackground,
+            contentWindowInsets = com.mmr.app.ui.components.MmrNestedScaffoldInsets,
+            topBar = {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    MmrHeaderBar(
+                        title = "Recurring",
+                        showBack = showBackNavigation,
+                        onBack = onNavigateBack,
+                    )
+                    MmrDualSummaryStrip(
+                        leftLabel = "Active rules",
+                        leftAmount = uiState.activeRulesCount.toString(),
+                        leftAmountColor = MmrBrandColors.Active,
+                        rightLabel = "Reminders",
+                        rightAmount = uiState.reminders.size.toString(),
+                        rightAmountColor = MmrBrandColors.TextStrong,
+                    )
+                }
+            },
+            floatingActionButton = {
+                MmrAddListFab(
+                    modifier = Modifier.testTag(MmrTestTags.recurringFabAdd),
+                    contentDescription = "Add recurring rule",
+                    onClick = onNavigateToAddRule,
+                )
+            },
+        ) { innerPadding ->
+            listBody(Modifier.padding(innerPadding))
         }
     }
 }

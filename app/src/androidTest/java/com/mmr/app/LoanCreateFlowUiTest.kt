@@ -9,6 +9,7 @@ import com.mmr.app.testing.traceClickTag
 import com.mmr.app.testing.traceClickText
 import com.mmr.app.testing.traceTextInputTag
 import com.mmr.app.testing.traceWaitUntil
+import com.mmr.feature.scheduled.model.ScheduledSection
 import dagger.hilt.android.testing.HiltAndroidTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -20,7 +21,8 @@ class LoanCreateFlowUiTest : MmrHiltUiTest() {
     fun createFlexibleLoan_appearsOnLoanList() {
         val loanName = "UiTest loan ${System.nanoTime()}"
 
-        composeRule.traceClickTag(MmrTestTags.navLoans)
+        composeRule.traceClickTag(MmrTestTags.navScheduled)
+        composeRule.traceClickTag(MmrTestTags.scheduledSectionTab(ScheduledSection.LOANS))
         composeRule.waitForIdle()
         composeRule.traceClickTag(MmrTestTags.loanFabAdd)
         composeRule.waitForIdle()

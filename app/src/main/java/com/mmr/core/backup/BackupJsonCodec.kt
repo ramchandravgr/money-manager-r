@@ -8,6 +8,7 @@ import com.mmr.core.backup.model.MmrLanSyncSettingsBackup
 import com.mmr.core.backup.model.MmrSmsInboundSettingsBackup
 import com.mmr.core.backup.model.MmrWebManageSettingsBackup
 import com.mmr.core.database.entity.AccountEntity
+import com.mmr.core.database.entity.BudgetEntity
 import com.mmr.core.database.entity.CategorizationRuleEntity
 import com.mmr.core.database.entity.CategoryEntity
 import com.mmr.core.database.entity.LoanEntity
@@ -51,6 +52,9 @@ object BackupJsonCodec {
                 put("transactions", payload.transactions.toJsonArray { transactionToJson(it) })
                 put("loanPayments", payload.loanPayments.toJsonArray { loanPaymentToJson(it) })
                 put("recurringRules", payload.recurringRules.toJsonArray { recurringRuleToJson(it) })
+                if (payload.budgets.isNotEmpty()) {
+                    put("budgets", payload.budgets.toJsonArray { budgetToJson(it) })
+                }
                 put("notificationRules", payload.notificationRules.toJsonArray { notificationRuleToJson(it) })
                 put("smsMessageRecords", payload.smsMessageRecords.toJsonArray { smsRecordToJson(it) })
                 put("transactionApprovals", payload.transactionApprovals.toJsonArray { approvalToJson(it) })
@@ -116,6 +120,7 @@ object BackupJsonCodec {
             transactions = root.readArray("transactions").mapObjects { transactionFromJson(it) },
             loanPayments = root.readArray("loanPayments").mapObjects { loanPaymentFromJson(it) },
             recurringRules = root.readArray("recurringRules").mapObjects { recurringRuleFromJson(it) },
+            budgets = root.readArray("budgets").mapObjects { budgetFromJson(it) },
             notificationRules = root.readArray("notificationRules").mapObjects { notificationRuleFromJson(it) },
             smsMessageRecords = root.readArray("smsMessageRecords").mapObjects { smsRecordFromJson(it) },
             transactionApprovals = root.readArray("transactionApprovals").mapObjects { approvalFromJson(it) },
@@ -210,6 +215,11 @@ object BackupJsonCodec {
             put("autocompleteEnabled", settings.autocompleteEnabled)
             put("inputOrder", settings.inputOrder)
             put("appColorTheme", settings.appColorTheme)
+            put("themeMode", settings.themeMode)
+            put(
+                "hiddenMainNavIds",
+                org.json.JSONArray(settings.hiddenMainNavIds),
+            )
         }
 
     private fun displaySettingsBackupFromJson(json: JSONObject) =
@@ -227,6 +237,15 @@ object BackupJsonCodec {
             autocompleteEnabled = json.getBoolean("autocompleteEnabled"),
             inputOrder = json.getString("inputOrder"),
             appColorTheme = json.getString("appColorTheme"),
+            themeMode = json.optString("themeMode", "SYSTEM"),
+            hiddenMainNavIds =
+                json.readArray("hiddenMainNavIds").let { array ->
+                    buildList {
+                        for (index in 0 until array.length()) {
+                            add(array.getString(index))
+                        }
+                    }
+                },
         )
 
     private fun smsInboundSettingsToJson(settings: MmrSmsInboundSettingsBackup) =
@@ -294,6 +313,40 @@ object BackupJsonCodec {
             enabled = json.getBoolean("enabled"),
             passwordSalt = json.optNullableString("passwordSalt"),
             passwordHash = json.optNullableString("passwordHash"),
+        )
+
+    private fun budgetToJson(entity: BudgetEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("syncId", entity.syncId)
+            put("categoryId", entity.categoryId)
+            putNullableLong("subcategoryId", entity.subcategoryId)
+            put("amountLimit", entity.amountLimit)
+            put("periodType", entity.periodType.name)
+            putNullableLong("customPeriodStartMillis", entity.customPeriodStartMillis)
+            putNullableLong("customPeriodEndMillis", entity.customPeriodEndMillis)
+            put("alertOnExceeded", entity.alertOnExceeded)
+            putNullableString("lastAlertPeriodKey", entity.lastAlertPeriodKey)
+            put("isActive", entity.isActive)
+            put("createdAt", entity.createdAt)
+            put("updatedAt", entity.updatedAt)
+        }
+
+    private fun budgetFromJson(json: JSONObject) =
+        BudgetEntity(
+            id = json.getLong("id"),
+            syncId = json.getString("syncId"),
+            categoryId = json.getLong("categoryId"),
+            subcategoryId = json.optNullableLong("subcategoryId"),
+            amountLimit = json.getDouble("amountLimit"),
+            periodType = BudgetPeriodType.valueOf(json.getString("periodType")),
+            customPeriodStartMillis = json.optNullableLong("customPeriodStartMillis"),
+            customPeriodEndMillis = json.optNullableLong("customPeriodEndMillis"),
+            alertOnExceeded = json.getBoolean("alertOnExceeded"),
+            lastAlertPeriodKey = json.optNullableString("lastAlertPeriodKey"),
+            isActive = json.getBoolean("isActive"),
+            createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
         )
 
     private fun categorizationRuleToJson(entity: CategorizationRuleEntity) =

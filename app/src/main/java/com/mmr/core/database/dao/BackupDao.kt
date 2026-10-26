@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import com.mmr.core.database.entity.AccountEntity
+import com.mmr.core.database.entity.BudgetEntity
 import com.mmr.core.database.entity.CategorizationRuleEntity
 import com.mmr.core.database.entity.CategoryEntity
 import com.mmr.core.database.entity.LoanEntity
@@ -46,6 +47,9 @@ interface BackupDao {
 
     @Query("SELECT * FROM recurring_rules")
     suspend fun getAllRecurringRules(): List<RecurringRuleEntity>
+
+    @Query("SELECT * FROM budgets")
+    suspend fun getAllBudgets(): List<BudgetEntity>
 
     @Query("SELECT * FROM notification_rules")
     suspend fun getAllNotificationRules(): List<NotificationRuleEntity>
@@ -99,6 +103,9 @@ interface BackupDao {
     suspend fun insertRecurringRules(rules: List<RecurringRuleEntity>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertBudgets(budgets: List<BudgetEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNotificationRules(rules: List<NotificationRuleEntity>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -144,6 +151,9 @@ interface BackupDao {
     suspend fun insertRecurringRulesIgnore(rules: List<RecurringRuleEntity>)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertBudgetsIgnore(budgets: List<BudgetEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertNotificationRulesIgnore(rules: List<NotificationRuleEntity>)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
@@ -175,6 +185,7 @@ interface BackupDao {
         transactions: List<TransactionEntity>,
         loanPayments: List<LoanPaymentEntity>,
         recurringRules: List<RecurringRuleEntity>,
+        budgets: List<BudgetEntity> = emptyList(),
         notificationRules: List<NotificationRuleEntity>,
         smsMessageRecords: List<SmsMessageRecordEntity>,
         transactionApprovals: List<TransactionApprovalEntity>,
@@ -188,6 +199,7 @@ interface BackupDao {
         if (loans.isNotEmpty()) insertLoansIgnore(loans)
         if (loanInterestRevisions.isNotEmpty()) insertLoanInterestRevisionsIgnore(loanInterestRevisions)
         if (recurringRules.isNotEmpty()) insertRecurringRulesIgnore(recurringRules)
+        if (budgets.isNotEmpty()) insertBudgetsIgnore(budgets)
         if (transactions.isNotEmpty()) insertTransactionsIgnore(transactions)
         if (loanPayments.isNotEmpty()) insertLoanPaymentsIgnore(loanPayments)
         if (loanScheduleEntries.isNotEmpty()) insertLoanScheduleEntriesIgnore(loanScheduleEntries)
@@ -212,6 +224,7 @@ interface BackupDao {
         deleteAllTransactions()
         deleteAllSmsMessageRecords()
         deleteAllRecurringRules()
+        deleteAllBudgets()
         deleteAllLoans()
         deleteAllSubcategories()
         deleteAllCategories()
@@ -229,6 +242,7 @@ interface BackupDao {
         transactions: List<TransactionEntity>,
         loanPayments: List<LoanPaymentEntity>,
         recurringRules: List<RecurringRuleEntity>,
+        budgets: List<BudgetEntity> = emptyList(),
         notificationRules: List<NotificationRuleEntity>,
         smsMessageRecords: List<SmsMessageRecordEntity>,
         transactionApprovals: List<TransactionApprovalEntity>,
@@ -243,6 +257,7 @@ interface BackupDao {
         if (loans.isNotEmpty()) insertLoans(loans)
         if (loanInterestRevisions.isNotEmpty()) insertLoanInterestRevisions(loanInterestRevisions)
         if (recurringRules.isNotEmpty()) insertRecurringRules(recurringRules)
+        if (budgets.isNotEmpty()) insertBudgets(budgets)
         if (transactions.isNotEmpty()) insertTransactions(transactions)
         if (loanPayments.isNotEmpty()) insertLoanPayments(loanPayments)
         if (loanScheduleEntries.isNotEmpty()) insertLoanScheduleEntries(loanScheduleEntries)
@@ -286,6 +301,9 @@ interface BackupDao {
 
     @Query("DELETE FROM recurring_rules")
     suspend fun deleteAllRecurringRules()
+
+    @Query("DELETE FROM budgets")
+    suspend fun deleteAllBudgets()
 
     @Query("DELETE FROM loans")
     suspend fun deleteAllLoans()

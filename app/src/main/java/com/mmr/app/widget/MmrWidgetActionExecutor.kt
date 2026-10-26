@@ -5,7 +5,6 @@ import com.mmr.core.common.widget.HomeScreenWidgetRefreshTrigger
 import com.mmr.core.data.preferences.SmsScanSettingsStore
 import com.mmr.core.domain.repository.AccountRepository
 import com.mmr.core.domain.repository.ApprovalRepository
-import com.mmr.core.domain.repository.CategoryRepository
 import com.mmr.core.model.enums.SmsApprovalKind
 import com.mmr.core.parser.permission.SmsPermissionHelper
 import com.mmr.core.parser.scanner.LocalSmsScannerService
@@ -21,7 +20,6 @@ class MmrWidgetActionExecutor
         @ApplicationContext private val context: Context,
         private val approvalRepository: ApprovalRepository,
         private val accountRepository: AccountRepository,
-        private val categoryRepository: CategoryRepository,
         private val smsScannerService: LocalSmsScannerService,
         private val smsScanSettingsStore: SmsScanSettingsStore,
         private val deferStore: MmrWidgetDeferStore,
@@ -32,27 +30,25 @@ class MmrWidgetActionExecutor
             val approval = approvalRepository.getApprovalById(approvalId) ?: return
             if (approval.approvalKind == SmsApprovalKind.CARD_REFUND) return
             val accounts = accountRepository.getAccounts().first()
-            val categories = categoryRepository.getActiveCategories().first()
             val fallbackAccountId = accounts.firstOrNull()?.id ?: return
-            val fallbackCategoryId = categories.firstOrNull()?.id
             approvalRepository.approveCandidate(
                 id = approvalId,
                 fallbackAccountId = fallbackAccountId,
-                fallbackCategoryId = fallbackCategoryId,
+                fallbackCategoryId = null,
             )
             deferStore.clearDefer(approvalId)
-            widgetRefreshTrigger.requestRefresh()
+            widgetRefreshTrigger.refreshNow()
         }
 
         suspend fun reject(approvalId: Long) {
             approvalRepository.rejectCandidate(approvalId)
             deferStore.clearDefer(approvalId)
-            widgetRefreshTrigger.requestRefresh()
+            widgetRefreshTrigger.refreshNow()
         }
 
-        fun defer(approvalId: Long) {
+        suspend fun defer(approvalId: Long) {
             deferStore.defer(approvalId)
-            widgetRefreshTrigger.requestRefresh()
+            widgetRefreshTrigger.refreshNow()
         }
 
         suspend fun scanInbox() {
@@ -60,7 +56,7 @@ class MmrWidgetActionExecutor
                 return
             }
             scanStateStore.setScanning(true)
-            widgetRefreshTrigger.requestRefresh()
+            widgetRefreshTrigger.refreshNow()
             try {
                 val months = smsScanSettingsStore.getScanMonths()
                 val scanSummary = smsScannerService.scanInbox(monthsBack = months)
@@ -69,7 +65,7 @@ class MmrWidgetActionExecutor
                 approvalRepository.insertCandidates(scanSummary.cardRefunds)
             } finally {
                 scanStateStore.setScanning(false)
-                widgetRefreshTrigger.requestRefresh()
+                widgetRefreshTrigger.refreshNow()
             }
         }
     }
