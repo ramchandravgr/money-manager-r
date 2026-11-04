@@ -1,10 +1,10 @@
 package com.mmr.core.data.repository
 
 import com.mmr.core.categorization.CategorizationRuleEngine
-import com.mmr.core.data.catalog.MmrUncategorisedCategory
 import com.mmr.core.common.display.MmrDisplayTextFormat
 import com.mmr.core.common.validation.MmrValidation
 import com.mmr.core.common.widget.HomeScreenWidgetRefreshTrigger
+import com.mmr.core.data.catalog.MmrUncategorisedCategory
 import com.mmr.core.database.dao.ApprovalLedgerDao
 import com.mmr.core.database.dao.CategoryDao
 import com.mmr.core.database.dao.TransactionApprovalDao
@@ -15,6 +15,7 @@ import com.mmr.core.database.entity.TransactionApprovalEntity
 import com.mmr.core.database.entity.TransactionEntity
 import com.mmr.core.domain.model.ManualSmsDuplicateMatch
 import com.mmr.core.domain.model.ManualSmsDuplicateResolution
+import com.mmr.core.domain.model.ManualSmsParseConstants
 import com.mmr.core.domain.model.ManualSmsSubmitResult
 import com.mmr.core.domain.model.PendingApprovalWithSms
 import com.mmr.core.domain.model.SmsMergeCandidate
@@ -33,9 +34,11 @@ import com.mmr.core.parser.catalog.CardMetadataExtractor
 import com.mmr.core.parser.duplicate.SmsMessageHasher
 import com.mmr.core.parser.engine.SmsParserEngine
 import com.mmr.core.parser.model.ParsedSmsCandidate
+import com.mmr.core.parser.model.ParserConfidence
 import com.mmr.core.parser.model.RawSmsMessage
 import com.mmr.core.parser.model.SmsParseResult
 import com.mmr.core.transaction.CardRefundLedgerMath
+import com.mmr.core.transaction.TransactionMergeAmounts
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
@@ -192,6 +195,7 @@ class ApprovalRepositoryImpl
                         ?: sms.messageBodySnippet.trim().takeIf { it.isNotEmpty() }
                         ?: approval.rawBodySnippet.trim()
                 if (body.isEmpty()) continue
+                if (approval.extractedTemplateId == ManualSmsParseConstants.UNPARSED_TEMPLATE_ID) continue
                 val raw =
                     RawSmsMessage(
                         id = sms.rawMessageId ?: approval.id.toString(),
@@ -389,6 +393,13 @@ class ApprovalRepositoryImpl
                     ?: throw IllegalArgumentException("Ledger transaction not found.")
             MmrValidation.requirePositiveAmount(approval.extractedAmount)
 
+            val mergedAmounts =
+                TransactionMergeAmounts.resolveLedgerWithSmsAmount(
+                    ledger = existing,
+                    smsAmount = approval.extractedAmount,
+                    smsType = approval.extractedType,
+                )
+
             val smsRecord =
                 approvalLedgerDao.getSmsRecordById(approval.smsMessageRecordId)
                     ?: throw IllegalStateException("SMS record missing for this approval.")
@@ -412,7 +423,8 @@ class ApprovalRepositoryImpl
                 }
             val merged =
                 existing.copy(
-                    amount = existing.amount + approval.extractedAmount,
+                    amount = mergedAmounts.amount,
+                    type = mergedAmounts.type,
                     categoryId = resolvedCategoryId,
                     subcategoryId =
                         if (useLedgerCategory) {
@@ -425,7 +437,11 @@ class ApprovalRepositoryImpl
                     updatedAt = now,
                     isEdited = true,
                 )
-            RepositoryGuards.requireValidTransactionEntity(merged)
+            if (merged.amount > 0.0) {
+                RepositoryGuards.requireValidTransactionEntity(merged)
+            } else {
+                RepositoryGuards.requireValidTransactionEntityAllowZeroAmount(merged)
+            }
 
             val txnId =
                 approvalLedgerDao.mergeApprovalWithExistingTransaction(
@@ -475,6 +491,7 @@ class ApprovalRepositoryImpl
             fallbackCategoryId: Long?,
             subcategoryId: Long?,
             relatedAccountId: Long?,
+            loanId: Long?,
         ): Long {
             if (id <= 0L) {
                 throw IllegalArgumentException("Pending entry not found.")
@@ -518,6 +535,12 @@ class ApprovalRepositoryImpl
                 } else {
                     null
                 }
+            val resolvedLoanId =
+                if (approval.extractedType == TransactionType.TRANSFER) {
+                    loanId?.takeIf { it > 0L }
+                } else {
+                    null
+                }
 
             val transaction =
                 TransactionEntity(
@@ -528,6 +551,7 @@ class ApprovalRepositoryImpl
                     categoryId = categoryId,
                     subcategoryId = resolvedSubcategoryId,
                     relatedAccountId = resolvedRelatedAccountId,
+                    loanId = resolvedLoanId,
                     note =
                         MmrDisplayTextFormat.formatStoredTitle(
                             approval.extractedNote ?: approval.extractedMerchant,
@@ -606,12 +630,17 @@ class ApprovalRepositoryImpl
                 when (parseResult) {
                     is SmsParseResult.Transaction -> parseResult.candidate
                     is SmsParseResult.CardRefund -> parseResult.candidate
-                    is SmsParseResult.Informational ->
-                        return ManualSmsSubmitResult.ParseFailed(
-                            parseResult.reason ?: "This SMS is informational, not a transaction.",
+                    is SmsParseResult.Informational,
+                    is SmsParseResult.Ignored,
+                    ->
+                        return queueUnparsedManualSms(
+                            trimmedSender = trimmedSender,
+                            body = body,
+                            timestampMillis = timestampMillis,
+                            rawSmsId = rawSms.id,
+                            resolution = resolution,
+                            existingApprovalIdForRevert = existingApprovalIdForRevert,
                         )
-                    is SmsParseResult.Ignored ->
-                        return ManualSmsSubmitResult.ParseFailed("Could not parse a transaction from this SMS.")
                 }
 
             val duplicate = approvalLedgerDao.findLatestApprovalByExactBody(body)
@@ -659,6 +688,98 @@ class ApprovalRepositoryImpl
                         "This SMS was already imported with the same sender, time, and text.",
                     )
             return ManualSmsSubmitResult.Added(approvalId)
+        }
+
+        private suspend fun queueUnparsedManualSms(
+            trimmedSender: String,
+            body: String,
+            timestampMillis: Long,
+            rawSmsId: String,
+            resolution: ManualSmsDuplicateResolution?,
+            existingApprovalIdForRevert: Long?,
+        ): ManualSmsSubmitResult {
+            val duplicate = approvalLedgerDao.findLatestApprovalByExactBody(body)
+            if (duplicate != null && resolution == null) {
+                return ManualSmsSubmitResult.NeedsDuplicateDecision(
+                    ManualSmsDuplicateMatch(
+                        approvalId = duplicate.approvalId,
+                        priorState = duplicate.approvalState,
+                        priorActionLabel = duplicate.approvalState.toManualPriorActionLabel(),
+                    ),
+                )
+            }
+
+            val hashNonce =
+                when {
+                    resolution == ManualSmsDuplicateResolution.ADD_AS_NEW_TRANSACTION -> ":${UUID.randomUUID()}"
+                    else -> ""
+                }
+            val messageHash =
+                SmsMessageHasher.generateHash(
+                    sender = trimmedSender,
+                    body = body,
+                    timestamp = timestampMillis,
+                    uniquenessNonce = hashNonce,
+                )
+            val manualCandidate =
+                buildUnparsedManualCandidate(
+                    sender = trimmedSender,
+                    body = body,
+                    timestampMillis = timestampMillis,
+                    messageHash = messageHash,
+                    rawMessageId = rawSmsId,
+                )
+
+            if (resolution == ManualSmsDuplicateResolution.REVERT_PRIOR_AND_USE_NEW) {
+                val approvalId =
+                    existingApprovalIdForRevert ?: duplicate?.approvalId
+                        ?: return ManualSmsSubmitResult.ParseFailed("Could not find the prior entry to revert.")
+                revertAndRequeueManual(approvalId, manualCandidate, body)
+                return ManualSmsSubmitResult.RequiresManualEntry(approvalId)
+            }
+
+            val approvalId =
+                insertUnparsedManualCandidate(manualCandidate, body)
+                    ?: return ManualSmsSubmitResult.ParseFailed(
+                        "This SMS was already imported with the same sender, time, and text.",
+                    )
+            return ManualSmsSubmitResult.RequiresManualEntry(approvalId)
+        }
+
+        private fun buildUnparsedManualCandidate(
+            sender: String,
+            body: String,
+            timestampMillis: Long,
+            messageHash: String,
+            rawMessageId: String,
+        ): ParsedSmsCandidate =
+            ParsedSmsCandidate(
+                sender = sender,
+                amount = 0.01,
+                type = TransactionType.EXPENSE,
+                timestamp = timestampMillis,
+                merchant = null,
+                referenceNumber = null,
+                accountLastDigits = null,
+                balanceAfter = null,
+                categoryHint = null,
+                rawMessageId = rawMessageId,
+                messageHash = messageHash,
+                confidenceScore = 0,
+                confidenceBand = ParserConfidence.LOW,
+                rawBody = body,
+                templateId = ManualSmsParseConstants.UNPARSED_TEMPLATE_ID,
+                paymentChannel = null,
+                instrument = null,
+                approvalKind = SmsApprovalKind.TRANSACTION,
+            )
+
+        private suspend fun insertUnparsedManualCandidate(
+            candidate: ParsedSmsCandidate,
+            fullBody: String,
+        ): Long? {
+            val (recordEntity, approvalEntity) = buildEntitiesFromCandidate(candidate, fullBody)
+            return approvalLedgerDao.insertPendingCandidate(recordEntity, approvalEntity)
         }
 
         private suspend fun revertAndRequeueManual(
@@ -725,6 +846,7 @@ class ApprovalRepositoryImpl
             val categoryId = resolveCategoryId(candidate, activeCategories)
             val resolvedAccountId = smsAccountResolver.resolveAccountId(candidate)
             val cardNetwork = CardMetadataExtractor.detectNetwork(candidate.rawBody)
+            val unparsedManual = candidate.templateId == ManualSmsParseConstants.UNPARSED_TEMPLATE_ID
 
             val recordEntity =
                 SmsMessageRecordEntity(
@@ -733,8 +855,8 @@ class ApprovalRepositoryImpl
                     messageBodySnippet = candidate.rawBody.take(150),
                     messageBodyFull = fullBody,
                     receivedTime = candidate.timestamp,
-                    parsedStatus = SmsParsedStatus.MATCHED,
-                    parsedAmount = candidate.amount,
+                    parsedStatus = if (unparsedManual) SmsParsedStatus.FAILED else SmsParsedStatus.MATCHED,
+                    parsedAmount = if (unparsedManual) null else candidate.amount,
                     parsedDateTime = candidate.timestamp,
                     approvalState = SmsApprovalState.PENDING,
                     rawMessageId = candidate.rawMessageId,
@@ -749,9 +871,14 @@ class ApprovalRepositoryImpl
                     extractedMerchant = candidate.merchant,
                     extractedCategoryId = categoryId,
                     extractedAccountId = resolvedAccountId,
-                    extractedNote = candidate.merchant ?: candidate.sender,
+                    extractedNote =
+                        if (unparsedManual) {
+                            fullBody.take(200).ifEmpty { candidate.sender.ifBlank { "Manual SMS" } }
+                        } else {
+                            candidate.merchant ?: candidate.sender
+                        },
                     confidenceScore = candidate.confidenceScore,
-                    userEdited = false,
+                    userEdited = unparsedManual,
                     approvalState = SmsApprovalState.PENDING,
                     rawBodySnippet = candidate.rawBody.take(200),
                     extractedTemplateId = candidate.templateId,

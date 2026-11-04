@@ -18,6 +18,9 @@ object BackupImportPlanner {
         val smsRecords: Set<Long>,
         val recurringRules: Set<Long>,
         val budgets: Set<Long> = emptySet(),
+        val assets: Set<Long> = emptySet(),
+        val assetValuations: Set<Long> = emptySet(),
+        val assetAttachments: Set<Long> = emptySet(),
         val notificationRules: Set<Long>,
         val loanRevisions: Set<Long>,
         val loanScheduleEntries: Set<Long>,
@@ -57,6 +60,7 @@ object BackupImportPlanner {
     fun prepareReplace(payload: MmrBackupPayload): MmrBackupPayload {
         val txnIds = payload.transactions.map { it.id }.toSet()
         val paymentIds = payload.loanPayments.map { it.id }.toSet()
+        val loanIds = payload.loans.map { it.id }.toSet()
         val (payments, schedule) =
             sanitizeLoanLinks(
                 payload.loanPayments,
@@ -64,7 +68,33 @@ object BackupImportPlanner {
                 txnIds,
                 paymentIds,
             )
-        return payload.copy(loanPayments = payments, loanScheduleEntries = schedule)
+        val sanitizedAssets =
+            payload.assets.map { asset ->
+                val loanId = asset.linkedLoanId
+                if (loanId != null && loanId > 0L && loanId !in loanIds) {
+                    asset.copy(linkedLoanId = null)
+                } else {
+                    asset
+                }
+            }
+        val assetIds = sanitizedAssets.map { it.id }.toSet()
+        val sanitizedNotifications =
+            payload.notificationRules.map { rule ->
+                val assetId = rule.targetAssetId
+                if (assetId != null && assetId > 0L && assetId !in assetIds) {
+                    rule.copy(targetAssetId = null)
+                } else {
+                    rule
+                }
+            }
+        return payload.copy(
+            loanPayments = payments,
+            loanScheduleEntries = schedule,
+            assets = sanitizedAssets,
+            assetValuations = payload.assetValuations.filter { it.assetId in assetIds },
+            assetAttachments = payload.assetAttachments.filter { it.assetId in assetIds },
+            notificationRules = sanitizedNotifications,
+        )
     }
 
     fun prepareMerge(
@@ -210,6 +240,43 @@ object BackupImportPlanner {
             }
         attachmentIds.addAll(newAttachments.map { it.id })
 
+        val assetIds = existing.assets.toMutableSet()
+        val newAssets =
+            payload.assets.filter { asset ->
+                asset.id > 0L &&
+                    asset.id !in assetIds &&
+                    (asset.linkedLoanId == null || asset.linkedLoanId in loanIds)
+            }
+        assetIds.addAll(newAssets.map { it.id })
+
+        val valuationIds = existing.assetValuations.toMutableSet()
+        val newValuations =
+            payload.assetValuations.filter { valuation ->
+                valuation.id > 0L &&
+                    valuation.id !in valuationIds &&
+                    valuation.assetId in assetIds
+            }
+        valuationIds.addAll(newValuations.map { it.id })
+
+        val assetAttachmentIds = existing.assetAttachments.toMutableSet()
+        val newAssetAttachments =
+            payload.assetAttachments.filter { attachment ->
+                attachment.id > 0L &&
+                    attachment.id !in assetAttachmentIds &&
+                    attachment.assetId in assetIds
+            }
+        assetAttachmentIds.addAll(newAssetAttachments.map { it.id })
+
+        val newNotificationsFiltered =
+            newNotifications.map { rule ->
+                val assetId = rule.targetAssetId
+                if (assetId != null && assetId > 0L && assetId !in assetIds) {
+                    rule.copy(targetAssetId = null)
+                } else {
+                    rule
+                }
+            }
+
         return payload.copy(
             categories = newCategories,
             subcategories = newSubcategories,
@@ -221,12 +288,15 @@ object BackupImportPlanner {
             loanScheduleEntries = newSchedule,
             recurringRules = newRecurring,
             budgets = newBudgets,
-            notificationRules = newNotifications,
+            assets = newAssets,
+            assetValuations = newValuations,
+            notificationRules = newNotificationsFiltered,
             smsMessageRecords = newSms,
             transactionApprovals = newApprovals,
             categorizationRules = newCategorizationRules,
             trustedLanDevices = newTrustedDevices,
             transactionAttachments = newAttachments,
+            assetAttachments = newAssetAttachments,
         )
     }
 
@@ -234,6 +304,7 @@ object BackupImportPlanner {
         payload.categories.size + payload.subcategories.size + payload.accounts.size +
             payload.loans.size + payload.loanInterestRevisions.size + payload.loanScheduleEntries.size +
             payload.transactions.size + payload.loanPayments.size + payload.recurringRules.size +
-            payload.budgets.size + payload.notificationRules.size + payload.smsMessageRecords.size +
+            payload.budgets.size + payload.assets.size + payload.assetValuations.size +
+            payload.assetAttachments.size + payload.notificationRules.size + payload.smsMessageRecords.size +
             payload.transactionApprovals.size
 }

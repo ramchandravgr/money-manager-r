@@ -7,13 +7,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mmr.app.ui.state.MmrUiMessages
 import com.mmr.core.common.display.MmrDisplayTextFormat
+import com.mmr.core.common.image.MmrReceiptImage
 import com.mmr.core.common.validation.MmrValidation
-import com.mmr.core.data.preferences.AppDisplaySettingsStore
 import com.mmr.core.data.catalog.MmrUncategorisedCategory
+import com.mmr.core.data.preferences.AppDisplaySettingsStore
 import com.mmr.core.data.repository.TransactionAttachmentRepositoryImpl
 import com.mmr.core.database.entity.CategoryEntity
 import com.mmr.core.database.entity.SubcategoryEntity
 import com.mmr.core.database.entity.TransactionEntity
+import com.mmr.core.domain.model.ManualSmsParseConstants
 import com.mmr.core.domain.repository.AccountRepository
 import com.mmr.core.domain.repository.ApprovalRepository
 import com.mmr.core.domain.repository.CategoryRepository
@@ -35,7 +37,6 @@ import com.mmr.feature.transaction.model.LoanPickerUi
 import com.mmr.feature.transaction.model.PickerNameEditorKind
 import com.mmr.feature.transaction.model.PickerNameEditorState
 import com.mmr.feature.transaction.model.SubcategoryUi
-import com.mmr.core.common.image.MmrReceiptImage
 import com.mmr.feature.transaction.model.TransactionReceiptUi
 import com.mmr.feature.transaction.model.toAccountUi
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -312,12 +313,19 @@ class AddEditTransactionViewModel
                         if (pending != null) {
                             val cats = categoriesForType(categoryTree, pending.extractedType)
                             val catId = resolveCategorySelection(cats, pending.extractedCategoryId)
+                            val unparsedManual =
+                                pending.extractedTemplateId == ManualSmsParseConstants.UNPARSED_TEMPLATE_ID
                             _uiState.update {
                                 val loaded =
                                     it.copy(
                                         isEditMode = true,
                                         isLoading = false,
-                                        amount = pending.extractedAmount.toString(),
+                                        amount =
+                                            if (unparsedManual) {
+                                                ""
+                                            } else {
+                                                pending.extractedAmount.toString()
+                                            },
                                         selectedType = pending.extractedType,
                                         categories = cats,
                                         accounts = accountUis,
@@ -927,7 +935,7 @@ class AddEditTransactionViewModel
 
             viewModelScope.launch {
                 try {
-                    if (state.isEditMode && approvalId != null) {
+                    if (approvalId != null) {
                         approvalRepository.updateApproval(
                             id = approvalId,
                             amount = amount,
@@ -937,6 +945,16 @@ class AddEditTransactionViewModel
                             note = note,
                             dateTimeMillis = state.dateTimeMillis,
                         )
+                        val txnId =
+                            approvalRepository.approveCandidate(
+                                id = approvalId,
+                                fallbackAccountId = accountId,
+                                fallbackCategoryId = state.selectedCategoryId,
+                                subcategoryId = subcategoryId,
+                                relatedAccountId = relatedAccountId,
+                                loanId = loanId,
+                            )
+                        persistPendingReceipts(txnId, state.receipts)
                     } else if (state.isEditMode && transactionId != null) {
                         val existing =
                             transactionRepository.getTransactionDetailedById(transactionId)
@@ -1114,10 +1132,11 @@ class AddEditTransactionViewModel
             val rawBytes =
                 context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
                     ?: throw IllegalArgumentException("Could not read image.")
-            val normalized = MmrReceiptImage.normalizeUriBytes(rawBytes)
-            if (normalized.size > TransactionAttachmentRepositoryImpl.MAX_ATTACHMENT_BYTES) {
-                throw IllegalArgumentException("Image is too large.")
-            }
+            val normalized =
+                MmrReceiptImage.normalizeUriBytes(
+                    rawBytes,
+                    TransactionAttachmentRepositoryImpl.MAX_ATTACHMENT_BYTES,
+                )
             dest.writeBytes(normalized)
             return dest
         }

@@ -17,6 +17,7 @@ import com.mmr.core.domain.repository.TransactionRepository
 import com.mmr.core.export.PeriodExcelExporter
 import com.mmr.core.model.enums.TransactionType
 import com.mmr.core.transaction.TransactionCashFlow
+import com.mmr.core.transaction.TransactionMergeAmounts
 import com.mmr.feature.home.model.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -777,7 +778,10 @@ class HomeViewModel
                 val prep =
                     MmrTransactionMergeDialogPrep.fromTransactionDates(
                         dateTimes = transactions.map { it.dateTime },
-                        totalAmount = transactions.sumOf { it.amount },
+                        totalAmount =
+                            TransactionMergeAmounts
+                                .resolve(transactions)
+                                .amount,
                         currencySymbol = displaySettings.value.mainCurrencySymbol,
                         formatDateLabel = { millis -> dateFormat.format(Date(millis)) },
                     )

@@ -5,6 +5,8 @@
     <string name="notification_channel_sms_approvals_desc">Summary when new bank SMS are ready to review</string>
     <string name="notification_channel_budget_alerts">Budget alerts</string>
     <string name="notification_channel_budget_alerts_desc">When spending crosses a budget limit for the period</string>
+    <string name="notification_channel_payment_reminders">Payment reminders</string>
+    <string name="notification_channel_payment_reminders_desc">Upcoming EMI and recurring transaction reminders</string>
     <string name="widget_pending_approvals_title">Pending approvals</string>
     <string name="widget_pending_approvals_description">Review one pending SMS at a time — approve, reject, or open the app for link/edit.</string>
     <string name="widget_month_spend_title">Current month summary</string>
@@ -45,4 +47,21 @@
     <string name="stats_cylinder_clear_focus">Clear focus</string>
     <string name="stats_no_transactions_in_period">No transactions available for this period.</string>
     <string name="home_excel_saved_to_downloads">Saved to Downloads: %1$s</string>
+
+    <string name="asset_type_placeholder">e.g. Real Estate, Vehicle, Gold, …</string>
+    <string name="receipt_attach_dialog_title">Add receipt photo</string>
+    <string name="asset_attach_dialog_title">Add photo</string>
+    <string name="take_photo">Take photo</string>
+    <string name="choose_from_gallery">Choose from gallery</string>
+    <string name="manual_sms_unparsed_toast">Unable to process your transaction message. Please continue with the manual entry</string>
+
+    <string name="amount_calculator_title">Calculator</string>
+    <string name="amount_calculator_close">Close without applying</string>
+    <string name="amount_calculator_open">Open amount calculator</string>
+    <string name="amount_calculator_clear_all">Clear all</string>
+    <string name="amount_calculator_backspace">Backspace</string>
+    <string name="amount_calculator_done">Done</string>
+    <string name="amount_calculator_footnote">Supports + − × ÷ % ^ and ( ). Result rounded to 2 decimals on apply.</string>
+    <string name="amount_calculator_invalid_expression">Invalid expression. Check operators and parentheses.</string>
+    <string name="amount_calculator_too_large">Amount is too large. Use a smaller value.</string>
 </resources>

@@ -52,13 +52,10 @@ class TransactionAttachmentRepositoryImpl
                     ?: throw IllegalArgumentException("Could not read image.")
             val bytes =
                 if (mimeType.startsWith("image/")) {
-                    MmrReceiptImage.normalizeUriBytes(rawBytes)
+                    MmrReceiptImage.normalizeUriBytes(rawBytes, MAX_ATTACHMENT_BYTES)
                 } else {
                     rawBytes
                 }
-            if (bytes.size > MAX_ATTACHMENT_BYTES) {
-                throw IllegalArgumentException("Image is too large (max ${MAX_ATTACHMENT_BYTES / (1024 * 1024)} MB).")
-            }
             return addFromBytes(transactionId, mimeType, bytes)
         }
 
@@ -71,17 +68,23 @@ class TransactionAttachmentRepositoryImpl
             updatedAt: Long,
         ): TransactionAttachmentEntity {
             require(transactionId > 0L) { "Transaction id is required." }
-            if (bytes.size > MAX_ATTACHMENT_BYTES) {
+            val storedBytes =
+                if (mimeType.startsWith("image/") && bytes.size > MAX_ATTACHMENT_BYTES) {
+                    MmrReceiptImage.normalizeUriBytes(bytes, MAX_ATTACHMENT_BYTES)
+                } else {
+                    bytes
+                }
+            if (storedBytes.size > MAX_ATTACHMENT_BYTES) {
                 throw IllegalArgumentException("Attachment is too large.")
             }
             val normalizedSyncId = MmrSyncId.normalize(syncId ?: MmrSyncId.newId())
-            store.writeBytes(normalizedSyncId, bytes)
+            store.writeBytes(normalizedSyncId, storedBytes)
             val entity =
                 TransactionAttachmentEntity(
                     syncId = normalizedSyncId,
                     transactionId = transactionId,
                     mimeType = mimeType,
-                    fileSizeBytes = bytes.size.toLong(),
+                    fileSizeBytes = storedBytes.size.toLong(),
                     createdAt = createdAt,
                     updatedAt = updatedAt,
                 )

@@ -1,8 +1,12 @@
 package com.mmr.core.lansync
 
+import com.mmr.core.attachment.AssetAttachmentStore
 import com.mmr.core.attachment.TransactionAttachmentStore
+import com.mmr.core.database.dao.AssetAttachmentDao
 import com.mmr.core.database.dao.TransactionAttachmentDao
+import com.mmr.core.domain.repository.AssetAttachmentRepository
 import com.mmr.core.domain.repository.TransactionAttachmentRepository
+import com.mmr.core.lansync.model.LanAssetAttachmentRecord
 import com.mmr.core.lansync.model.LanAttachmentRecord
 import com.mmr.core.lansync.transport.LanSyncHttpClient
 import com.mmr.core.lansync.transport.LanSyncHttpConstants
@@ -16,6 +20,9 @@ class LanSyncAttachmentPuller
         private val attachmentDao: TransactionAttachmentDao,
         private val attachmentRepository: TransactionAttachmentRepository,
         private val store: TransactionAttachmentStore,
+        private val assetAttachmentDao: AssetAttachmentDao,
+        private val assetAttachmentRepository: AssetAttachmentRepository,
+        private val assetStore: AssetAttachmentStore,
     ) {
         suspend fun pullMissing(
             host: String,
@@ -46,6 +53,46 @@ class LanSyncAttachmentPuller
                 if (response.statusCode != 200) continue
                 attachmentRepository.importSyncedAttachment(
                     transactionId = txnId,
+                    syncId = record.syncId,
+                    mimeType = record.mimeType,
+                    bytes = response.body,
+                    createdAt = record.createdAt,
+                    updatedAt = record.updatedAt,
+                )
+                pulled++
+            }
+            return pulled
+        }
+
+        suspend fun pullMissingAssetAttachments(
+            host: String,
+            port: Int,
+            deviceId: String,
+            authToken: String,
+            records: List<LanAssetAttachmentRecord>,
+        ): Int {
+            var pulled = 0
+            for (record in records) {
+                val row = assetAttachmentDao.getBySyncId(record.syncId) ?: continue
+                val localBytes = assetStore.readBytes(record.syncId)
+                if (localBytes != null && localBytes.size.toLong() == record.fileSizeBytes) {
+                    continue
+                }
+                val assetId = row.assetId
+                val path = LanSyncHttpConstants.pathAttachment(record.syncId)
+                val response =
+                    runCatching {
+                        LanSyncHttpClient.getBytes(
+                            host = host,
+                            port = port,
+                            path = path,
+                            deviceId = deviceId,
+                            authToken = authToken,
+                        )
+                    }.getOrNull() ?: continue
+                if (response.statusCode != 200) continue
+                assetAttachmentRepository.importSyncedAttachment(
+                    assetId = assetId,
                     syncId = record.syncId,
                     mimeType = record.mimeType,
                     bytes = response.body,

@@ -28,6 +28,7 @@ object TransactionTypeRule {
     private val DEBIT_KEYWORDS =
         listOf(
             "debited",
+            "sent inr",
             "spent",
             "paid",
             "withdrawn",

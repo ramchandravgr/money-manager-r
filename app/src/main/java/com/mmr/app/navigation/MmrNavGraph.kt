@@ -2,8 +2,8 @@ package com.mmr.app.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavHostController
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -11,6 +11,9 @@ import androidx.navigation.navArgument
 import com.mmr.feature.account.ui.AccountListScreen
 import com.mmr.feature.account.ui.AddEditAccountScreen
 import com.mmr.feature.approval.ui.ApprovalCenterScreen
+import com.mmr.feature.asset.ui.AddEditAssetScreen
+import com.mmr.feature.asset.ui.AssetDetailScreen
+import com.mmr.feature.asset.ui.AssetListScreen
 import com.mmr.feature.backup.ui.BackupScreen
 import com.mmr.feature.budget.ui.AddEditBudgetScreen
 import com.mmr.feature.budget.ui.BudgetListScreen
@@ -23,7 +26,6 @@ import com.mmr.feature.home.HomeScreen
 import com.mmr.feature.lansync.ui.LanSyncScreen
 import com.mmr.feature.loan.ui.AddEditLoanScreen
 import com.mmr.feature.loan.ui.LoanDetailScreen
-import com.mmr.feature.loan.ui.LoanListScreen
 import com.mmr.feature.recurring.ui.AddEditRecurringRuleScreen
 import com.mmr.feature.recurring.ui.RecurringDetailScreen
 import com.mmr.feature.scheduled.model.ScheduledSection
@@ -428,6 +430,51 @@ fun MmrNavGraph(
                 onNavigateToAddBudget = { navController.navigate(Screen.AddBudget.route) },
                 onNavigateToEditBudget = { id ->
                     navController.navigate(Screen.EditBudget.createRoute(id))
+                },
+            )
+        }
+
+        composable(Screen.Assets.route) {
+            AssetListScreen(
+                onNavigateBack = { navController.popBackStack() },
+                showBackNavigation = false,
+                onNavigateToAddAsset = { navController.navigate(Screen.AddAsset.route) },
+                onNavigateToAssetDetail = { id ->
+                    navController.navigate(Screen.AssetDetail.createRoute(id))
+                },
+            )
+        }
+
+        composable(Screen.AddAsset.route) {
+            AddEditAssetScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
+        composable(
+            route = Screen.EditAsset.route,
+            arguments =
+                listOf(
+                    navArgument("assetId") {
+                        type = NavType.LongType
+                        defaultValue = 0L
+                    },
+                ),
+        ) {
+            AddEditAssetScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
+        composable(
+            route = Screen.AssetDetail.route,
+            arguments =
+                listOf(
+                    navArgument("assetId") {
+                        type = NavType.LongType
+                    },
+                ),
+        ) {
+            AssetDetailScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToEdit = { assetId ->
+                    navController.navigate(Screen.EditAsset.createRoute(assetId))
                 },
             )
         }

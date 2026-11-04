@@ -172,6 +172,7 @@ class FakeApprovalRepository(
         fallbackCategoryId: Long?,
         subcategoryId: Long?,
         relatedAccountId: Long?,
+        loanId: Long?,
     ): Long = 0L
 
     override suspend fun mergeCandidateWithTransaction(
@@ -358,6 +359,8 @@ class FakeLoanRepository : LoanRepository {
         flowOf(
             LoanSummaryAggregate(0.0, 0.0, 0.0, 0.0, 0),
         )
+
+    override suspend fun reconcileAllEmiReminderNotifications(now: Long) = Unit
 }
 
 class FakeLanSyncRepository : LanSyncRepository {

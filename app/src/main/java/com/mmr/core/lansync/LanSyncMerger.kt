@@ -6,6 +6,9 @@ import com.mmr.core.common.widget.HomeScreenWidgetRefreshTrigger
 import com.mmr.core.data.preferences.LanSyncDuplicateEntityPolicy
 import com.mmr.core.database.MmrDatabase
 import com.mmr.core.database.entity.AccountEntity
+import com.mmr.core.database.entity.AssetAttachmentEntity
+import com.mmr.core.database.entity.AssetEntity
+import com.mmr.core.database.entity.AssetValuationEntity
 import com.mmr.core.database.entity.BudgetEntity
 import com.mmr.core.database.entity.CategorizationRuleEntity
 import com.mmr.core.database.entity.CategoryEntity
@@ -19,6 +22,9 @@ import com.mmr.core.database.entity.SubcategoryEntity
 import com.mmr.core.database.entity.TransactionAttachmentEntity
 import com.mmr.core.database.entity.TransactionEntity
 import com.mmr.core.lansync.model.LanAccountRecord
+import com.mmr.core.lansync.model.LanAssetAttachmentRecord
+import com.mmr.core.lansync.model.LanAssetRecord
+import com.mmr.core.lansync.model.LanAssetValuationRecord
 import com.mmr.core.lansync.model.LanAttachmentRecord
 import com.mmr.core.lansync.model.LanBudgetRecord
 import com.mmr.core.lansync.model.LanCategorizationRuleRecord
@@ -33,6 +39,7 @@ import com.mmr.core.lansync.model.LanSubcategoryRecord
 import com.mmr.core.lansync.model.LanTransactionRecord
 import com.mmr.core.lansync.model.MmrLanSyncPayload
 import com.mmr.core.model.enums.AccountType
+import com.mmr.core.model.enums.BudgetPeriodType
 import com.mmr.core.model.enums.CardNetwork
 import com.mmr.core.model.enums.CategorizationMatchType
 import com.mmr.core.model.enums.CategoryType
@@ -44,7 +51,6 @@ import com.mmr.core.model.enums.NotificationRuleType
 import com.mmr.core.model.enums.RecordStatus
 import com.mmr.core.model.enums.RecurrenceInterval
 import com.mmr.core.model.enums.TransactionSourceType
-import com.mmr.core.model.enums.BudgetPeriodType
 import com.mmr.core.model.enums.TransactionType
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -97,6 +103,9 @@ class LanSyncMerger
             val backupDao = database.backupDao()
             val transactionDao = database.transactionDao()
             val attachmentDao = database.transactionAttachmentDao()
+            val assetDao = database.assetDao()
+            val assetValuationDao = database.assetValuationDao()
+            val assetAttachmentDao = database.assetAttachmentDao()
 
             var categoriesInserted = 0
             var categoriesUpdated = 0
@@ -403,6 +412,46 @@ class LanSyncMerger
                     }
                 }
 
+                val assetSyncToLocal = mutableMapOf<String, Long>()
+                for (record in payload.assets) {
+                    if (tombstoneMerger.isDeletedForUpsert(record.syncId, record.updatedAt)) continue
+                    val linkedLoanId = record.linkedLoanSyncId?.let { loanSyncToLocal[it] }
+                    val existing = assetDao.getBySyncId(record.syncId)
+                    if (existing == null) {
+                        val id = assetDao.insert(record.toEntity(linkedLoanId))
+                        assetSyncToLocal[record.syncId] = id
+                        tombstoneMerger.clearIfSuperseded(record.syncId, record.updatedAt)
+                    } else if (record.updatedAt > existing.updatedAt) {
+                        assetDao.update(record.toEntity(linkedLoanId, existing.id))
+                        assetSyncToLocal[record.syncId] = existing.id
+                        tombstoneMerger.clearIfSuperseded(record.syncId, record.updatedAt)
+                    } else {
+                        assetSyncToLocal[record.syncId] = existing.id
+                    }
+                }
+
+                for (record in payload.assetValuations) {
+                    if (tombstoneMerger.isDeletedForUpsert(record.syncId, record.recordedAt)) continue
+                    val assetId =
+                        assetSyncToLocal[record.assetSyncId]
+                            ?: assetDao.getBySyncId(record.assetSyncId)?.id
+                            ?: continue
+                    val existing = assetValuationDao.getBySyncId(record.syncId)
+                    if (existing == null) {
+                        assetValuationDao.insert(record.toEntity(assetId))
+                        tombstoneMerger.clearIfSuperseded(record.syncId, record.recordedAt)
+                    } else if (record.recordedAt > existing.recordedAt) {
+                        assetValuationDao.delete(existing)
+                        assetValuationDao.insert(record.toEntity(assetId))
+                        tombstoneMerger.clearIfSuperseded(record.syncId, record.recordedAt)
+                    }
+                }
+
+                for (record in payload.assetAttachments) {
+                    val assetId = assetSyncToLocal[record.assetSyncId] ?: continue
+                    mergeAssetAttachmentMetadata(assetAttachmentDao, record, assetId)
+                }
+
                 for (record in payload.notificationRules) {
                     if (tombstoneMerger.isDeletedForUpsert(record.syncId, record.createdAt)) continue
                     if (notificationRuleDao.getBySyncId(record.syncId) != null) continue
@@ -411,7 +460,17 @@ class LanSyncMerger
                         record.targetRecurringRuleSyncId?.let { syncId ->
                             recurringSyncToLocal[syncId] ?: recurringRuleDao.getBySyncId(syncId)?.id
                         }
-                    notificationRuleDao.insert(record.toEntity(loanId = loanId, recurringRuleId = recurringId))
+                    val assetId =
+                        record.targetAssetSyncId?.let { syncId ->
+                            assetSyncToLocal[syncId] ?: assetDao.getBySyncId(syncId)?.id
+                        }
+                    notificationRuleDao.insert(
+                        record.toEntity(
+                            loanId = loanId,
+                            recurringRuleId = recurringId,
+                            assetId = assetId,
+                        ),
+                    )
                 }
             }
 
@@ -510,6 +569,7 @@ class LanSyncMerger
             remainingTenureMonths = remainingTenureMonths,
             fixedEmiAmount = fixedEmiAmount,
             emiDayOfMonth = emiDayOfMonth,
+            emiReminderDaysBefore = emiReminderDaysBefore,
             fixedEmiInputMode = fixedEmiInputMode,
             notes = notes,
             createdAt = createdAt,
@@ -625,9 +685,48 @@ class LanSyncMerger
                 updatedAt = updatedAt,
             )
 
+        private fun LanAssetRecord.toEntity(
+            linkedLoanId: Long?,
+            existingId: Long = 0L,
+        ) = AssetEntity(
+            id = existingId,
+            syncId = MmrSyncId.normalize(syncId),
+            name = name,
+            assetType = assetType,
+            status =
+                com.mmr.core.model.enums
+                    .assetStatusFromStored(status),
+            isInherited = isInherited,
+            purchaseDateMillis = purchaseDateMillis,
+            purchasePrice = purchasePrice,
+            currentValue = currentValue,
+            ownedByName = ownedByName,
+            location = location,
+            identifier = identifier,
+            linkedLoanId = linkedLoanId,
+            nextValuationDueMillis = nextValuationDueMillis,
+            valuationReminderDaysBefore = valuationReminderDaysBefore,
+            saleDateMillis = saleDateMillis,
+            salePrice = salePrice,
+            notes = notes,
+            createdAt = createdAt,
+            updatedAt = updatedAt,
+        )
+
+        private fun LanAssetValuationRecord.toEntity(assetId: Long) =
+            AssetValuationEntity(
+                syncId = MmrSyncId.normalize(syncId),
+                assetId = assetId,
+                amount = amount,
+                recordedAt = recordedAt,
+                notes = notes,
+                createdAt = createdAt,
+            )
+
         private fun LanNotificationRuleRecord.toEntity(
             loanId: Long?,
             recurringRuleId: Long?,
+            assetId: Long?,
         ) = NotificationRuleEntity(
             id = 0L,
             syncId = MmrSyncId.normalize(syncId),
@@ -636,12 +735,43 @@ class LanSyncMerger
             scheduleTime = scheduleTime,
             targetLoanId = loanId,
             targetRecurringRuleId = recurringRuleId,
+            targetAssetId = assetId,
             thresholdValue = thresholdValue,
             title = title,
             message = message,
             isFired = isFired,
             createdAt = createdAt,
         )
+
+        private suspend fun mergeAssetAttachmentMetadata(
+            attachmentDao: com.mmr.core.database.dao.AssetAttachmentDao,
+            record: LanAssetAttachmentRecord,
+            assetId: Long,
+        ) {
+            val syncId = MmrSyncId.normalize(record.syncId)
+            val existing = attachmentDao.getBySyncId(syncId)
+            if (existing == null) {
+                attachmentDao.insert(
+                    AssetAttachmentEntity(
+                        syncId = syncId,
+                        assetId = assetId,
+                        mimeType = record.mimeType,
+                        fileSizeBytes = record.fileSizeBytes,
+                        createdAt = record.createdAt,
+                        updatedAt = record.updatedAt,
+                    ),
+                )
+            } else if (record.updatedAt > existing.updatedAt) {
+                attachmentDao.update(
+                    existing.copy(
+                        assetId = assetId,
+                        mimeType = record.mimeType,
+                        fileSizeBytes = record.fileSizeBytes,
+                        updatedAt = record.updatedAt,
+                    ),
+                )
+            }
+        }
 
         private suspend fun mergeAttachmentMetadata(
             attachmentDao: com.mmr.core.database.dao.TransactionAttachmentDao,

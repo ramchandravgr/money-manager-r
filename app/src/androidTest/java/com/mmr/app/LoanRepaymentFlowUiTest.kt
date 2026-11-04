@@ -9,7 +9,6 @@ import com.mmr.app.testing.traceClickTag
 import com.mmr.app.testing.traceTextInputTag
 import com.mmr.app.testing.traceWaitUntil
 import com.mmr.core.domain.repository.LoanRepository
-import com.mmr.feature.scheduled.model.ScheduledSection
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
 import org.junit.Test

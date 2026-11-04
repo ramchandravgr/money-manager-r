@@ -123,7 +123,9 @@ fun RecurringListScreen(
 
                 uiState.isEmpty -> {
                     MmrEmptyState(
-                        message = "No recurring rules set.\nTap '+' to create recurring bills, salary, or subscriptions.",
+                        message =
+                            "No recurring rules set.\n" +
+                                "Tap '+' to create recurring bills, salary, or subscriptions.",
                     )
                 }
 

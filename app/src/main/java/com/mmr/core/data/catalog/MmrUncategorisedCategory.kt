@@ -19,7 +19,10 @@ object MmrUncategorisedCategory {
             -> CategoryType.EXPENSE
         }
 
-    fun findIn(categories: List<CategoryEntity>, transactionType: TransactionType): CategoryEntity? {
+    fun findIn(
+        categories: List<CategoryEntity>,
+        transactionType: TransactionType,
+    ): CategoryEntity? {
         val type = categoryTypeFor(transactionType)
         return categories.find { it.type == type && it.name.equals(NAME, ignoreCase = true) }
     }

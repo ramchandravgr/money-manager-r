@@ -25,6 +25,11 @@ sealed interface ManualSmsSubmitResult {
     data class ParseFailed(
         val reason: String,
     ) : ManualSmsSubmitResult
+
+    /** SMS stored as pending; open transaction entry to finish (SMS stays linked on save). */
+    data class RequiresManualEntry(
+        val approvalId: Long,
+    ) : ManualSmsSubmitResult
 }
 
 fun SmsApprovalState.toManualPriorActionLabel(): String =

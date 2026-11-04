@@ -99,4 +99,7 @@ interface LoanRepository {
     ): Flow<List<LoanScheduleEntryEntity>>
 
     fun getLoanSummary(): Flow<LoanSummaryAggregate>
+
+    /** Rebuilds [NotificationRuleType.LOAN_DUE] rows for all active fixed-EMI loans. */
+    suspend fun reconcileAllEmiReminderNotifications(now: Long = System.currentTimeMillis())
 }

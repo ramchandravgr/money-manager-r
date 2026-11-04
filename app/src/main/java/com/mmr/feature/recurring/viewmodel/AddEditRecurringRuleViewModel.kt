@@ -13,6 +13,7 @@ import com.mmr.core.domain.repository.RecurringRuleRepository
 import com.mmr.core.model.category.CategoryWithChildren
 import com.mmr.core.model.enums.CategoryType
 import com.mmr.core.model.enums.TransactionType
+import com.mmr.core.reminder.MmrReminderPresets
 import com.mmr.feature.recurring.model.AddEditRecurringRuleUiEvent
 import com.mmr.feature.recurring.model.AddEditRecurringRuleUiState
 import com.mmr.feature.transaction.model.AccountPickerTarget
@@ -317,6 +318,7 @@ class AddEditRecurringRuleViewModel
                 if (!hasDest) return false
                 if (state.relatedAccountId != null && state.relatedAccountId == state.accountId) return false
             }
+            if (!MmrReminderPresets.isValidRecurringReminderMinutes(state.reminderMinutesBefore)) return false
             return true
         }
 

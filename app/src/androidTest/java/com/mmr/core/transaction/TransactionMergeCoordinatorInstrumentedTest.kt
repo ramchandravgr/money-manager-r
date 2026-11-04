@@ -65,4 +65,39 @@ class TransactionMergeCoordinatorInstrumentedTest {
             assertNull(graph.database.transactionDao().getById(idA))
             assertNull(graph.database.transactionDao().getById(idB))
         }
+
+    @Test
+    fun mergeTransactions_netsIncomeAndExpense() =
+        runBlocking {
+            val accountId = MmrUiTestFixtures.requireDefaultAccountId(graph.database)
+            val now = System.currentTimeMillis()
+            val expenseId =
+                MmrUiTestFixtures.insertApprovedTransaction(
+                    graph.database,
+                    accountId,
+                    600.0,
+                    TransactionType.EXPENSE,
+                    now,
+                    note = "Expense",
+                )
+            val incomeId =
+                MmrUiTestFixtures.insertApprovedTransaction(
+                    graph.database,
+                    accountId,
+                    100.0,
+                    TransactionType.INCOME,
+                    now + 1,
+                    note = "Income",
+                )
+
+            val mergedId =
+                graph.transactionMergeCoordinator.mergeTransactions(
+                    transactionIds = listOf(expenseId, incomeId),
+                    mergedName = "Netted",
+                )
+
+            val merged = graph.database.transactionDao().getById(mergedId)!!
+            assertEquals(500.0, merged.amount, 0.001)
+            assertEquals(TransactionType.EXPENSE, merged.type)
+        }
 }

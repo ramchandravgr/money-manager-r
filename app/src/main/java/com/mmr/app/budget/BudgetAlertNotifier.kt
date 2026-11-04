@@ -33,7 +33,10 @@ class BudgetAlertNotifier
                     .setStyle(NotificationCompat.BigTextStyle().bigText(body))
                     .setAutoCancel(true)
                     .build()
-            NotificationManagerCompat.from(context).notify(NOTIFICATION_ID_BASE + snapshot.budgetId.toInt(), notification)
+            NotificationManagerCompat
+                .from(
+                    context,
+                ).notify(NOTIFICATION_ID_BASE + snapshot.budgetId.toInt(), notification)
         }
 
         private fun ensureChannel() {

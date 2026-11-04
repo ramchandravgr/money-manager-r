@@ -3,6 +3,7 @@ package com.mmr.core.lansync
 import com.mmr.core.database.MmrDatabase
 import com.mmr.core.database.dao.SyncTombstoneDao
 import com.mmr.core.database.entity.SyncTombstoneEntity
+import com.mmr.core.domain.repository.AssetAttachmentRepository
 import com.mmr.core.domain.repository.TransactionAttachmentRepository
 import com.mmr.core.lansync.model.LanSyncTombstoneRecord
 import javax.inject.Inject
@@ -20,6 +21,7 @@ class LanSyncTombstoneMerger
         private val database: MmrDatabase,
         private val tombstoneDao: SyncTombstoneDao,
         private val attachmentRepository: TransactionAttachmentRepository,
+        private val assetAttachmentRepository: AssetAttachmentRepository,
     ) {
         suspend fun ingestRemoteTombstones(remote: List<LanSyncTombstoneRecord>): LanSyncTombstoneMergeStats {
             if (remote.isEmpty()) return LanSyncTombstoneMergeStats()
@@ -90,6 +92,9 @@ class LanSyncTombstoneMerger
                 SyncEntityType.CATEGORIZATION_RULE -> applyCategorizationRuleTombstone(tombstone)
                 SyncEntityType.NOTIFICATION_RULE -> applyNotificationRuleTombstone(tombstone)
                 SyncEntityType.BUDGET -> applyBudgetTombstone(tombstone)
+                SyncEntityType.ASSET -> applyAssetTombstone(tombstone)
+                SyncEntityType.ASSET_VALUATION -> applyAssetValuationTombstone(tombstone)
+                SyncEntityType.ASSET_ATTACHMENT -> applyAssetAttachmentTombstone(tombstone)
                 else -> LanSyncTombstoneMergeStats()
             }
 
@@ -207,6 +212,39 @@ class LanSyncTombstoneMerger
                 return LanSyncTombstoneMergeStats(keptAfterLocalEdit = 1)
             }
             attachmentRepository.delete(attachment.id)
+            return LanSyncTombstoneMergeStats(applied = 1)
+        }
+
+        private suspend fun applyAssetTombstone(tombstone: SyncTombstoneEntity): LanSyncTombstoneMergeStats {
+            val asset = database.assetDao().getBySyncId(tombstone.syncId) ?: return LanSyncTombstoneMergeStats()
+            if (asset.updatedAt > tombstone.deletedAt) {
+                return LanSyncTombstoneMergeStats(keptAfterLocalEdit = 1)
+            }
+            database.notificationRuleDao().deleteForAsset(asset.id)
+            database.assetAttachmentDao().getByAssetId(asset.id).forEach { attachment ->
+                assetAttachmentRepository.delete(attachment.id)
+            }
+            database.assetDao().delete(asset)
+            return LanSyncTombstoneMergeStats(applied = 1)
+        }
+
+        private suspend fun applyAssetValuationTombstone(tombstone: SyncTombstoneEntity): LanSyncTombstoneMergeStats {
+            val valuation =
+                database.assetValuationDao().getBySyncId(tombstone.syncId) ?: return LanSyncTombstoneMergeStats()
+            if (valuation.recordedAt > tombstone.deletedAt) {
+                return LanSyncTombstoneMergeStats(keptAfterLocalEdit = 1)
+            }
+            database.assetValuationDao().delete(valuation)
+            return LanSyncTombstoneMergeStats(applied = 1)
+        }
+
+        private suspend fun applyAssetAttachmentTombstone(tombstone: SyncTombstoneEntity): LanSyncTombstoneMergeStats {
+            val attachment =
+                database.assetAttachmentDao().getBySyncId(tombstone.syncId) ?: return LanSyncTombstoneMergeStats()
+            if (attachment.updatedAt > tombstone.deletedAt) {
+                return LanSyncTombstoneMergeStats(keptAfterLocalEdit = 1)
+            }
+            assetAttachmentRepository.delete(attachment.id)
             return LanSyncTombstoneMergeStats(applied = 1)
         }
     }

@@ -35,6 +35,13 @@ val MmrMainDestinations: List<MmrMainDestination> =
             icons = mmrDestinationIconPair(Screen.Budgets.route),
         ),
         MmrMainDestination(
+            navId = MmrMainNavIds.ASSETS,
+            route = Screen.Assets.route,
+            label = "Assets",
+            shortLabel = "Assets",
+            icons = mmrDestinationIconPair(Screen.Assets.route),
+        ),
+        MmrMainDestination(
             navId = MmrMainNavIds.SCHEDULED,
             route = Screen.Scheduled.createRoute("loans"),
             label = "Scheduled",

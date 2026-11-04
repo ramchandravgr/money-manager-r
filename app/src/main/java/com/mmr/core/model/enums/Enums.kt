@@ -122,10 +122,23 @@ enum class RecurrenceInterval {
 enum class NotificationRuleType {
     LOAN_DUE,
     RECURRING_REMINDER,
+    ASSET_VALUATION_REMINDER,
     APPROVAL_PENDING,
     LARGE_SPEND_ALERT,
     BUDGET_THRESHOLD,
 }
+
+enum class AssetStatus {
+    ACTIVE,
+    SOLD,
+}
+
+/** Maps legacy backup/DB values (e.g. removed `DISPOSED`) to current statuses. */
+fun assetStatusFromStored(name: String): AssetStatus =
+    when (name) {
+        "DISPOSED" -> AssetStatus.SOLD
+        else -> AssetStatus.valueOf(name)
+    }
 
 enum class CategorizationMatchType {
     MERCHANT_OR_NOTE_CONTAINS,

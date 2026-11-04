@@ -5,6 +5,7 @@ object MmrMainNavIds {
     const val HOME = "home"
     const val STATS = "stats"
     const val BUDGETS = "budgets"
+    const val ASSETS = "assets"
     const val SCHEDULED = "scheduled"
     const val SETTINGS = "settings"
 }
@@ -15,6 +16,7 @@ fun mainNavIdForRoute(route: String?): String? {
         Screen.Home.route -> MmrMainNavIds.HOME
         Screen.Stats.route -> MmrMainNavIds.STATS
         Screen.Budgets.route -> MmrMainNavIds.BUDGETS
+        Screen.Assets.route -> MmrMainNavIds.ASSETS
         Screen.Settings.route -> MmrMainNavIds.SETTINGS
         Screen.Scheduled.route,
         Screen.Loans.route,

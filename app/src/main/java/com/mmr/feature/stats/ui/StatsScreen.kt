@@ -19,8 +19,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
-import com.mmr.app.R
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mmr.app.R
 import com.mmr.app.ui.adaptive.MmrAdaptiveWidthBox
 import com.mmr.app.ui.components.MmrHeaderBar
 import com.mmr.app.ui.components.MmrNestedScaffoldInsets
@@ -33,7 +33,11 @@ import com.mmr.app.ui.state.MmrLoadingState
 import com.mmr.app.ui.theme.MmrBrandColors
 import com.mmr.feature.home.ui.HomeMonthPickerDialog
 import com.mmr.feature.stats.StatsPeriodUtils
-import com.mmr.feature.stats.model.*
+import com.mmr.feature.stats.model.StatsCategoryDrillDown
+import com.mmr.feature.stats.model.StatsLedgerTab
+import com.mmr.feature.stats.model.StatsPeriodMode
+import com.mmr.feature.stats.model.StatsUiEvent
+import com.mmr.feature.stats.model.StatsUiState
 import com.mmr.feature.stats.viewmodel.StatsViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import java.time.ZoneId
@@ -229,7 +233,8 @@ fun StatsScreen(
                                                     modifier =
                                                         Modifier.padding(
                                                             horizontal =
-                                                                com.mmr.app.ui.adaptive.mmrScreenHorizontalPadding(),
+                                                                com.mmr.app.ui.adaptive
+                                                                    .mmrScreenHorizontalPadding(),
                                                             vertical =
                                                                 com.mmr.app.ui.components.MmrDimens.spaceSm,
                                                         ),

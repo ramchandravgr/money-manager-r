@@ -5,12 +5,27 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SelectAll
-import androidx.compose.material3.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,8 +36,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
-import com.mmr.app.R
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mmr.app.R
 import com.mmr.app.ui.components.MmrDeleteIconButton
 import com.mmr.app.ui.components.MmrDimens
 import com.mmr.app.ui.components.MmrHeaderBar
@@ -261,43 +276,43 @@ fun StatsCategoryDetailScreen(
                                     MmrEmptyState(message = emptyMessage)
                                 }
                             } else {
-                            val txCount =
-                                uiState.groupedTransactions.sumOf { it.items.size }
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(bottom = MmrDimens.spaceLg),
-                                verticalArrangement = Arrangement.spacedBy(MmrDimens.spaceSm),
-                            ) {
-                                if (!uiState.isSelectionMode) {
-                                    item(key = "hero") {
-                                        StatsCategoryDetailHero(
-                                            categoryName = uiState.categoryName,
-                                            categoryColor = categoryColor,
-                                            totalFormatted = uiState.totalFormatted,
+                                val txCount =
+                                    uiState.groupedTransactions.sumOf { it.items.size }
+                                LazyColumn(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = PaddingValues(bottom = MmrDimens.spaceLg),
+                                    verticalArrangement = Arrangement.spacedBy(MmrDimens.spaceSm),
+                                ) {
+                                    if (!uiState.isSelectionMode) {
+                                        item(key = "hero") {
+                                            StatsCategoryDetailHero(
+                                                categoryName = uiState.categoryName,
+                                                categoryColor = categoryColor,
+                                                totalFormatted = uiState.totalFormatted,
+                                            )
+                                        }
+                                    }
+                                    item(key = "subcats") {
+                                        StatsSubcategoryBreakdownCard(
+                                            rows = uiState.subcategoryBreakdowns,
+                                            accentColor = categoryColor,
+                                            selectedSubcategoryId = uiState.selectedSubcategoryId,
+                                            onSubcategoryClick = { id ->
+                                                viewModel.onEvent(StatsCategoryDetailUiEvent.OnSubcategorySelected(id))
+                                            },
                                         )
                                     }
-                                }
-                                item(key = "subcats") {
-                                    StatsSubcategoryBreakdownCard(
-                                        rows = uiState.subcategoryBreakdowns,
-                                        accentColor = categoryColor,
-                                        selectedSubcategoryId = uiState.selectedSubcategoryId,
-                                        onSubcategoryClick = { id ->
-                                            viewModel.onEvent(StatsCategoryDetailUiEvent.OnSubcategorySelected(id))
-                                        },
-                                    )
-                                }
-                                item(key = "trend") {
-                                    StatsCategorySpendingBarChart(
-                                        points = uiState.chartPoints,
-                                        accentColor = categoryColor,
-                                        modifier = Modifier.padding(top = MmrDimens.spaceXs),
-                                    )
-                                }
-                                item(key = "tx-header") {
-                                    StatsCategoryTransactionsSectionHeader(recordCount = txCount)
-                                }
-                                uiState.groupedTransactions.forEach { group ->
+                                    item(key = "trend") {
+                                        StatsCategorySpendingBarChart(
+                                            points = uiState.chartPoints,
+                                            accentColor = categoryColor,
+                                            modifier = Modifier.padding(top = MmrDimens.spaceXs),
+                                        )
+                                    }
+                                    item(key = "tx-header") {
+                                        StatsCategoryTransactionsSectionHeader(recordCount = txCount)
+                                    }
+                                    uiState.groupedTransactions.forEach { group ->
                                         item(key = "header-${group.dateKey}") {
                                             TransactionDayHeaderRow(
                                                 group = group,
@@ -354,7 +369,7 @@ fun StatsCategoryDetailScreen(
                                             }
                                         }
                                     }
-                            }
+                                }
                             }
                         }
                     }

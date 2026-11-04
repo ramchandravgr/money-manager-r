@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MMR — Amount calculator sheet (UI mockup)</title>
+  <style>
+    :root {
+      --bg: light-dark(#ececf1, #121218);
+      --sheet: light-dark(#ffffff, #1c1c22);
+      --text: light-dark(#1c1c1e, #f2f2f7);
+      --muted: light-dark(#6b7280, #9ca3af);
+      --border: light-dark(#e5e7eb, #3f3f46);
+      --primary: light-dark(#4f5bd5, #6b7aef);
+      --primary-pressed: light-dark(#3d48b8, #5563d4);
+      --key: light-dark(#f4f4f6, #2a2a32);
+      --key-op: light-dark(#e8eaf6, #353548);
+      --error: light-dark(#b91c1c, #f87171);
+      --error-bg: light-dark(#fef2f2, #3f1d1d);
+      --toast-bg: light-dark(#1c1c1e, #f2f2f7);
+      --toast-text: light-dark(#f9fafb, #111827);
+      --scrim: rgba(0, 0, 0, 0.45);
+      --radius-sheet: 20px 20px 0 0;
+      --radius-key: 12px;
+      --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font);
+      font-size: 14px;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    /* ——— Page chrome (design notes only) ——— */
+    .page-header {
+      padding: 20px 16px 12px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .page-header h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0 0 6px;
+    }
+    .page-header p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .state-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .state-tabs button {
+      font: inherit;
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--sheet);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .state-tabs button.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    /* ——— Phone frame + dimmed “form behind” ——— */
+    .phone {
+      max-width: 390px;
+      margin: 0 auto 48px;
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      overflow: hidden;
+      background: var(--bg);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+      position: relative;
+      min-height: 720px;
+    }
+    .fake-form {
+      padding: 56px 16px 320px;
+      opacity: 0.55;
+      pointer-events: none;
+    }
+    .fake-bar {
+      height: 48px;
+      background: var(--primary);
+      border-radius: 0;
+      margin: -56px -16px 16px;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      color: #fff;
+      font-weight: 500;
+      font-size: 16px;
+    }
+    .fake-field {
+      background: var(--sheet);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .fake-field.focus {
+      outline: 2px solid var(--primary);
+      outline-offset: -2px;
+    }
+    .fake-field .hint { color: var(--muted); font-size: 13px; }
+    .fake-field .val { flex: 1; text-align: right; font-size: 18px; font-weight: 500; }
+
+    .scrim {
+      position: absolute;
+      inset: 0;
+      background: var(--scrim);
+    }
+
+    /* ——— Bottom sheet (Compose: ModalBottomSheet / full-width dialog) ——— */
+    .sheet {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--sheet);
+      border-radius: var(--radius-sheet);
+      padding: 8px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+      box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+    }
+    .sheet-handle {
+      width: 36px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border);
+      margin: 4px auto 12px;
+    }
+    .sheet-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      gap: 12px;
+    }
+    .sheet-title {
+      font-size: 17px;
+      font-weight: 600;
+      margin: 0;
+    }
+    .btn-close {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 999px;
+      background: var(--key);
+      color: var(--muted);
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .btn-close:hover { background: var(--key-op); }
+
+    /* Display stack */
+    .display {
+      background: var(--key);
+      border-radius: 14px;
+      padding: 12px 14px;
+      min-height: 88px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border);
+    }
+    .display.error {
+      background: var(--error-bg);
+      border-color: color-mix(in srgb, var(--error) 40%, var(--border));
+    }
+    .expr {
+      font-size: 15px;
+      color: var(--muted);
+      word-break: break-all;
+      min-height: 22px;
+      font-variant-numeric: tabular-nums;
+    }
+    .result {
+      font-size: 28px;
+      font-weight: 600;
+      margin-top: 8px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+    .result.placeholder { color: var(--muted); font-weight: 400; font-size: 22px; }
+    .err-msg {
+      display: none;
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--error);
+    }
+    .display.error .err-msg { display: block; }
+
+    /* Toolbar: clear + backspace */
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .tool-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 44px;
+      border-radius: var(--radius-key);
+      border: 1px solid var(--border);
+      background: var(--sheet);
+      font: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .tool-btn svg { width: 18px; height: 18px; opacity: 0.85; }
+    .tool-btn:active { background: var(--key); }
+
+    /* Keypad */
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .key {
+      height: 48px;
+      border: none;
+      border-radius: var(--radius-key);
+      background: var(--key);
+      font: inherit;
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .key.op {
+      background: var(--key-op);
+      color: var(--primary);
+      font-size: 16px;
+    }
+    .key:active { transform: scale(0.97); filter: brightness(0.96); }
+    .key.wide { grid-column: span 2; }
+
+    .btn-done {
+      width: 100%;
+      height: 52px;
+      border: none;
+      border-radius: 14px;
+      background: var(--primary);
+      color: #fff;
+      font: inherit;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-done:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .btn-done:not(:disabled):active { background: var(--primary-pressed); }
+
+    .footnote {
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+
+    /* Toast */
+    .toast {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 340px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: var(--toast-bg);
+      color: var(--toast-text);
+      font-size: 13px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Spec panel below phone */
+    .spec {
+      max-width: 390px;
+      margin: 0 auto 48px;
+      padding: 0 16px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+    .spec h2 { font-size: 14px; color: var(--text); margin: 24px 0 8px; }
+    .spec ul { margin: 0; padding-left: 1.2rem; }
+    .spec code {
+      font-size: 12px;
+      background: var(--key);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-header">
+    <h1>Amount calculator — bottom sheet mockup</h1>
+    <p>
+      Proposed UX for MMR amount fields: tap calculator icon → this sheet.
+      <strong>Done</strong> applies sanitized result to the field; <strong>✕</strong> dismisses without changing the field.
+      Swipe-down / scrim tap = dismiss without apply (same as ✕).
+    </p>
+    <div class="state-tabs" id="demoTabs">
+      <button type="button" class="active" data-demo="live">Interactive demo</button>
+      <button type="button" data-demo="error">Error state</button>
+      <button type="button" data-demo="toast">Overflow toast</button>
+    </div>
+  </div>
+
+  <div class="phone" id="phone">
+    <div class="fake-form">
+      <div class="fake-bar">Add transaction</div>
+      <div class="fake-field focus">
+        <span class="hint">₹</span>
+        <span class="val" id="fieldPreview">—</span>
+        <span class="hint" title="Opens this sheet">🧮</span>
+      </div>
+      <div class="fake-field"><span class="hint">Note</span><span class="val hint">Groceries</span></div>
+    </div>
+    <div class="scrim" id="scrim" hidden></div>
+    <div class="toast" id="toast">Amount is too large. Use a smaller value.</div>
+
+    <div class="sheet" id="sheet">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="sheet-top">
+        <h2 class="sheet-title">Calculator</h2>
+        <button type="button" class="btn-close" id="btnClose" aria-label="Close without applying">✕</button>
+      </div>
+
+      <div class="display" id="display">
+        <div class="expr" id="exprLine">&nbsp;</div>
+        <div class="result placeholder" id="resultLine">0</div>
+        <div class="err-msg" id="errMsg">Invalid expression. Check operators and parentheses.</div>
+      </div>
+
+      <div class="toolbar">
+        <button type="button" class="tool-btn" id="btnClear">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+          Clear all
+        </button>
+        <button type="button" class="tool-btn" id="btnBack">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14l-4-4 4-4M5 10h11a4 4 0 010 8h-1"/></svg>
+          Backspace
+        </button>
+      </div>
+
+      <div class="keypad" id="keypad">
+        <button type="button" class="key op" data-ch="(">(</button>
+        <button type="button" class="key op" data-ch=")">)</button>
+        <button type="button" class="key op" data-ch="^">x^y</button>
+        <button type="button" class="key op" data-ch="/">÷</button>
+        <button type="button" class="key" data-ch="7">7</button>
+        <button type="button" class="key" data-ch="8">8</button>
+        <button type="button" class="key" data-ch="9">9</button>
+        <button type="button" class="key op" data-ch="*">×</button>
+        <button type="button" class="key" data-ch="4">4</button>
+        <button type="button" class="key" data-ch="5">5</button>
+        <button type="button" class="key" data-ch="6">6</button>
+        <button type="button" class="key op" data-ch="-">−</button>
+        <button type="button" class="key" data-ch="1">1</button>
+        <button type="button" class="key" data-ch="2">2</button>
+        <button type="button" class="key" data-ch="3">3</button>
+        <button type="button" class="key op" data-ch="+">+</button>
+        <button type="button" class="key op" data-ch="%">%</button>
+        <button type="button" class="key" data-ch="0">0</button>
+        <button type="button" class="key" data-ch=".">.</button>
+        <button type="button" class="key op" data-ch="+" disabled style="visibility:hidden"> </button>
+      </div>
+
+      <button type="button" class="btn-done" id="btnDone" disabled>Done</button>
+      <p class="footnote">Supports + − × ÷ % ^ and ( ). Result rounded to 2 decimals on apply.</p>
+    </div>
+  </div>
+
+  <div class="spec">
+    <h2>Compose mapping (planned)</h2>
+    <ul>
+      <li><code>MmrAmountCalculatorSheet</code> — ModalBottomSheet + display + keypad + Done.</li>
+      <li><code>MmrAmountExpressionEvaluator</code> — safe parser (no <code>eval</code>); JVM tests for invalid input.</li>
+      <li>Trailing 🧮 on <code>MmrAmountOutlinedTextField</code>, <code>MmrDialogAmountTextField</code>, transaction amount row.</li>
+      <li>Max magnitude e.g. 10<sup>12</sup> → toast, no crash; invalid → inline error, Done stays disabled.</li>
+    </ul>
+  </div>
+
+  <script>
+    (function () {
+      const MAX = 1e12;
+      let expr = "";
+
+      const display = document.getElementById("display");
+      const exprLine = document.getElementById("exprLine");
+      const resultLine = document.getElementById("resultLine");
+      const errMsg = document.getElementById("errMsg");
+      const btnDone = document.getElementById("btnDone");
+      const fieldPreview = document.getElementById("fieldPreview");
+      const toast = document.getElementById("toast");
+
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 2800);
+      }
+
+      function setError(on, message) {
+        display.classList.toggle("error", on);
+        if (message) errMsg.textContent = message;
+        btnDone.disabled = on || !expr.trim();
+      }
+
+      function previewEval() {
+        if (!expr.trim()) {
+          resultLine.textContent = "0";
+          resultLine.classList.add("placeholder");
+          setError(false);
+          btnDone.disabled = true;
+          return null;
+        }
+        exprLine.textContent = expr;
+        try {
+          const normalized = expr.replace(/\^/g, "**");
+          if (!/^[0-9+\-*/().%\s]+$/.test(expr.replace(/\*\*/g, ""))) {
+            throw new Error("bad chars");
+          }
+          const val = Function('"use strict"; return (' + normalized + ')')();
+          if (typeof val !== "number" || !Number.isFinite(val)) throw new Error("nan");
+          resultLine.textContent = "= " + val.toLocaleString(undefined, { maximumFractionDigits: 6 });
+          resultLine.classList.remove("placeholder");
+          setError(false);
+          btnDone.disabled = false;
+          return val;
+        } catch (e) {
+          resultLine.textContent = "—";
+          resultLine.classList.add("placeholder");
+          setError(true, "Invalid expression. Check operators and parentheses.");
+          return null;
+        }
+      }
+
+      function append(ch) {
+        expr += ch;
+        previewEval();
+      }
+
+      document.getElementById("keypad").addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-ch]");
+        if (!btn || btn.disabled) return;
+        append(btn.getAttribute("data-ch"));
+      });
+
+      document.getElementById("btnBack").addEventListener("click", () => {
+        expr = expr.slice(0, -1);
+        previewEval();
+      });
+
+      document.getElementById("btnClear").addEventListener("click", () => {
+        expr = "";
+        exprLine.textContent = "\u00a0";
+        previewEval();
+      });
+
+      document.getElementById("btnDone").addEventListener("click", () => {
+        const val = previewEval();
+        if (val == null) return;
+        if (Math.abs(val) >= MAX) {
+          showToast("Amount is too large. Use a smaller value.");
+          return;
+        }
+        const rounded = Math.round(val * 100) / 100;
+        fieldPreview.textContent = rounded.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        showToast("Applied to amount field (demo only)");
+      });
+
+      document.getElementById("btnClose").addEventListener("click", () => {
+        showToast("Closed — field unchanged (demo)");
+      });
+
+      document.getElementById("demoTabs").addEventListener("click", (e) => {
+        const tab = e.target.closest("[data-demo]");
+        if (!tab) return;
+        document.querySelectorAll(".state-tabs button").forEach((b) => b.classList.remove("active"));
+        tab.classList.add("active");
+        const mode = tab.getAttribute("data-demo");
+        if (mode === "error") {
+          expr = "(100+";
+          previewEval();
+        } else if (mode === "toast") {
+          expr = "999999999999*999";
+          previewEval();
+          showToast("Amount is too large. Use a smaller value.");
+        } else {
+          expr = "13428+16255.49";
+          previewEval();
+        }
+      });
+
+      expr = "13428+16255.49";
+      previewEval();
+    })();
+  </script>
+</body>
+</html>

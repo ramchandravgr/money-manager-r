@@ -138,8 +138,7 @@ private fun StatsCylinderCategoryCard(
                     width = if (focused) 2.dp else 1.dp,
                     color = borderColor,
                     shape = RoundedCornerShape(12.dp),
-                )
-                .clickable(onClick = onClick)
+                ).clickable(onClick = onClick)
                 .padding(horizontal = MmrDimens.spaceMd, vertical = MmrDimens.spaceSm),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {

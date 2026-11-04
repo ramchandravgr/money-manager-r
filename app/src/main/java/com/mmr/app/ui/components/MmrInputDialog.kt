@@ -45,12 +45,21 @@ fun MmrContentDialog(
     confirmIsDestructive: Boolean = false,
     confirmTestTag: String? = null,
     secondaryConfirmTestTag: String? = null,
+    /** When false, body does not scroll (e.g. pinch-zoom inside the dialog). */
+    scrollBody: Boolean = true,
     content: @Composable ColumnScope.() -> Unit = {},
 ) {
     MmrDialogShell(onDismiss = onDismiss, modifier = modifier) {
-        MmrDialogScrollBody {
-            MmrDialogHeader(title = title, message = message)
-            content()
+        if (scrollBody) {
+            MmrDialogScrollBody {
+                MmrDialogHeader(title = title, message = message)
+                content()
+            }
+        } else {
+            MmrDialogStaticBody {
+                MmrDialogHeader(title = title, message = message)
+                content()
+            }
         }
         MmrDialogFooterCtaBar(
             onDismiss = onDismiss,
@@ -227,6 +236,24 @@ private fun MmrDialogScrollBody(content: @Composable ColumnScope.() -> Unit) {
                 .fillMaxWidth()
                 .heightIn(max = 420.dp)
                 .verticalScroll(rememberScrollState())
+                .padding(
+                    start = MmrDimens.cardPadding,
+                    end = MmrDimens.cardPadding,
+                    top = MmrDimens.cardPadding,
+                    bottom = MmrDimens.spaceSm,
+                ),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        content = content,
+    )
+}
+
+@Composable
+private fun MmrDialogStaticBody(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .heightIn(max = 420.dp)
                 .padding(
                     start = MmrDimens.cardPadding,
                     end = MmrDimens.cardPadding,

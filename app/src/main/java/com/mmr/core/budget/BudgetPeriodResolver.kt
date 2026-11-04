@@ -100,7 +100,12 @@ object BudgetPeriodResolver {
     private fun dayEndMillis(
         localDate: LocalDate,
         zoneId: ZoneId,
-    ): Long = localDate.plusDays(1).atStartOfDay(zoneId).toInstant().toEpochMilli() - 1L
+    ): Long =
+        localDate
+            .plusDays(1)
+            .atStartOfDay(zoneId)
+            .toInstant()
+            .toEpochMilli() - 1L
 
     private fun monthTitle(yearMonth: YearMonth): String {
         val month = yearMonth.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())

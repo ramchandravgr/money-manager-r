@@ -4,6 +4,8 @@ import androidx.room.*
 import com.mmr.core.model.enums.*
 import com.mmr.core.model.enums.CardNetwork
 
+// AssetEntity lives in AssetEntities.kt (referenced by notification_rules FK).
+
 @Entity(
     tableName = "accounts",
     indices = [
@@ -78,6 +80,8 @@ data class LoanEntity(
     val remainingTenureMonths: Int? = null,
     val fixedEmiAmount: Double? = null,
     val emiDayOfMonth: Int? = null,
+    /** Days before the next planned EMI due date to fire [NotificationRuleType.LOAN_DUE]. */
+    val emiReminderDaysBefore: Int = 1,
     val fixedEmiInputMode: String? = null,
     val notes: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
@@ -280,12 +284,19 @@ data class RecurringRuleEntity(
             childColumns = ["targetRecurringRuleId"],
             onDelete = ForeignKey.CASCADE,
         ),
+        ForeignKey(
+            entity = AssetEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["targetAssetId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
     ],
     indices = [
         Index(value = ["type"]),
         Index(value = ["enabled"]),
         Index(value = ["targetLoanId"]),
         Index(value = ["targetRecurringRuleId"]),
+        Index(value = ["targetAssetId"]),
         Index(value = ["scheduleTime"]),
         Index(value = ["syncId"], unique = true),
     ],
@@ -301,6 +312,7 @@ data class NotificationRuleEntity(
     val scheduleTime: Long? = null,
     val targetLoanId: Long? = null,
     val targetRecurringRuleId: Long? = null,
+    val targetAssetId: Long? = null,
     val thresholdValue: Double? = null,
     val title: String? = null,
     val message: String? = null,

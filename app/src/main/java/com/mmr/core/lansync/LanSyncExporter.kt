@@ -8,6 +8,8 @@ import com.mmr.core.database.dao.CategorizationRuleDao
 import com.mmr.core.database.dao.TransactionAttachmentDao
 import com.mmr.core.database.dao.TransactionDao
 import com.mmr.core.database.entity.AccountEntity
+import com.mmr.core.database.entity.AssetEntity
+import com.mmr.core.database.entity.AssetValuationEntity
 import com.mmr.core.database.entity.BudgetEntity
 import com.mmr.core.database.entity.CategorizationRuleEntity
 import com.mmr.core.database.entity.CategoryEntity
@@ -20,6 +22,9 @@ import com.mmr.core.database.entity.RecurringRuleEntity
 import com.mmr.core.database.entity.SubcategoryEntity
 import com.mmr.core.database.entity.TransactionEntity
 import com.mmr.core.lansync.model.LanAccountRecord
+import com.mmr.core.lansync.model.LanAssetAttachmentRecord
+import com.mmr.core.lansync.model.LanAssetRecord
+import com.mmr.core.lansync.model.LanAssetValuationRecord
 import com.mmr.core.lansync.model.LanAttachmentRecord
 import com.mmr.core.lansync.model.LanBudgetRecord
 import com.mmr.core.lansync.model.LanCategorizationRuleRecord
@@ -69,6 +74,9 @@ class LanSyncExporter
                 backupDao.getAllTransactions().associate { it.id to MmrSyncId.normalize(it.syncId) }
             val recurring = backupDao.getAllRecurringRules().map { it.withSyncId() }
             val recurringSyncMap = recurring.associate { it.id to it.syncId }
+            val assets = backupDao.getAllAssets().map { it.withSyncId() }
+            val assetSyncMap = assets.associate { it.id to it.syncId }
+            val assetValuations = backupDao.getAllAssetValuations()
             val approved = transactionDao.getAllApprovedTransactions().map { it.withSyncId() }
 
             return MmrLanSyncPayload(
@@ -99,16 +107,28 @@ class LanSyncExporter
                     backupDao.getAllBudgets().map { budget ->
                         budget.withSyncId().toLanRecord(categorySyncMap, subcategorySyncMap)
                     },
+                assets = assets.map { it.toLanRecord(loanSyncMap) },
+                assetValuations =
+                    assetValuations.mapNotNull { valuation ->
+                        val assetSyncId = assetSyncMap[valuation.assetId] ?: return@mapNotNull null
+                        valuation.toLanRecord(assetSyncId)
+                    },
                 categorizationRules = categorizationRuleDao.getAll().map { it.withSyncId().toLanRecord() },
                 notificationRules =
                     backupDao.getAllNotificationRules().map {
-                        it.withSyncId().toLanRecord(loanSyncMap, recurringSyncMap)
+                        it.withSyncId().toLanRecord(loanSyncMap, recurringSyncMap, assetSyncMap)
                     },
                 appSettings = appSettings,
                 displaySettings = displaySettings,
                 attachments =
                     if (includeAttachments) {
                         buildAttachmentRecords(txnSyncById)
+                    } else {
+                        emptyList()
+                    },
+                assetAttachments =
+                    if (includeAttachments) {
+                        buildAssetAttachmentRecords(assetSyncMap)
                     } else {
                         emptyList()
                     },
@@ -122,6 +142,23 @@ class LanSyncExporter
                         )
                     },
             )
+        }
+
+        private suspend fun buildAssetAttachmentRecords(
+            assetSyncMap: Map<Long, String>,
+        ): List<LanAssetAttachmentRecord> {
+            val all = backupDao.getAllAssetAttachments()
+            return all.mapNotNull { entity ->
+                val assetSyncId = assetSyncMap[entity.assetId] ?: return@mapNotNull null
+                LanAssetAttachmentRecord(
+                    syncId = entity.syncId,
+                    assetSyncId = assetSyncId,
+                    mimeType = entity.mimeType,
+                    fileSizeBytes = entity.fileSizeBytes,
+                    createdAt = entity.createdAt,
+                    updatedAt = entity.updatedAt,
+                )
+            }
         }
 
         private suspend fun buildAttachmentRecords(txnSyncById: Map<Long, String>): List<LanAttachmentRecord> {
@@ -172,6 +209,8 @@ class LanSyncExporter
         private fun BudgetEntity.withSyncId() = copy(syncId = MmrSyncId.normalize(syncId))
 
         private fun NotificationRuleEntity.withSyncId() = copy(syncId = MmrSyncId.normalize(syncId))
+
+        private fun AssetEntity.withSyncId() = copy(syncId = MmrSyncId.normalize(syncId))
 
         private fun CategoryEntity.toLanRecord() =
             LanCategoryRecord(
@@ -229,6 +268,7 @@ class LanSyncExporter
                 remainingTenureMonths = remainingTenureMonths,
                 fixedEmiAmount = fixedEmiAmount,
                 emiDayOfMonth = emiDayOfMonth,
+                emiReminderDaysBefore = emiReminderDaysBefore,
                 fixedEmiInputMode = fixedEmiInputMode,
                 notes = notes,
                 createdAt = createdAt,
@@ -366,9 +406,43 @@ class LanSyncExporter
                 updatedAt = updatedAt,
             )
 
+        private fun AssetEntity.toLanRecord(loanSyncMap: Map<Long, String>) =
+            LanAssetRecord(
+                syncId = syncId,
+                name = name,
+                assetType = assetType,
+                status = status.name,
+                isInherited = isInherited,
+                purchaseDateMillis = purchaseDateMillis,
+                purchasePrice = purchasePrice,
+                currentValue = currentValue,
+                ownedByName = ownedByName,
+                location = location,
+                identifier = identifier,
+                linkedLoanSyncId = linkedLoanId?.let { loanSyncMap[it] },
+                nextValuationDueMillis = nextValuationDueMillis,
+                valuationReminderDaysBefore = valuationReminderDaysBefore,
+                saleDateMillis = saleDateMillis,
+                salePrice = salePrice,
+                notes = notes,
+                createdAt = createdAt,
+                updatedAt = updatedAt,
+            )
+
+        private fun AssetValuationEntity.toLanRecord(assetSyncId: String) =
+            LanAssetValuationRecord(
+                syncId = MmrSyncId.normalize(syncId),
+                assetSyncId = assetSyncId,
+                amount = amount,
+                recordedAt = recordedAt,
+                notes = notes,
+                createdAt = createdAt,
+            )
+
         private fun NotificationRuleEntity.toLanRecord(
             loanSyncMap: Map<Long, String>,
             recurringSyncMap: Map<Long, String>,
+            assetSyncMap: Map<Long, String>,
         ) = LanNotificationRuleRecord(
             syncId = syncId,
             type = type.name,
@@ -376,6 +450,7 @@ class LanSyncExporter
             scheduleTime = scheduleTime,
             targetLoanSyncId = targetLoanId?.let { loanSyncMap[it] },
             targetRecurringRuleSyncId = targetRecurringRuleId?.let { recurringSyncMap[it] },
+            targetAssetSyncId = targetAssetId?.let { assetSyncMap[it] },
             thresholdValue = thresholdValue,
             title = title,
             message = message,

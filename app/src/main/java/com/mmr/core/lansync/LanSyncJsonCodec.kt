@@ -3,6 +3,9 @@ package com.mmr.core.lansync
 import com.mmr.core.backup.model.MmrAppSettingsBackup
 import com.mmr.core.data.preferences.AppDisplaySettingsSnapshot
 import com.mmr.core.lansync.model.LanAccountRecord
+import com.mmr.core.lansync.model.LanAssetAttachmentRecord
+import com.mmr.core.lansync.model.LanAssetRecord
+import com.mmr.core.lansync.model.LanAssetValuationRecord
 import com.mmr.core.lansync.model.LanAttachmentRecord
 import com.mmr.core.lansync.model.LanBudgetRecord
 import com.mmr.core.lansync.model.LanCategorizationRuleRecord
@@ -21,7 +24,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object LanSyncJsonCodec {
-    const val CURRENT_FORMAT_VERSION = 4
+    const val CURRENT_FORMAT_VERSION = 5
 
     fun encode(payload: MmrLanSyncPayload): String =
         JSONObject()
@@ -40,12 +43,17 @@ object LanSyncJsonCodec {
                 put("loanScheduleEntries", payload.loanScheduleEntries.toJsonArray { loanScheduleToJson(it) })
                 put("recurringRules", payload.recurringRules.toJsonArray { recurringToJson(it) })
                 put("budgets", payload.budgets.toJsonArray { budgetToJson(it) })
+                put("assets", payload.assets.toJsonArray { assetToJson(it) })
+                put("assetValuations", payload.assetValuations.toJsonArray { assetValuationToJson(it) })
                 put("categorizationRules", payload.categorizationRules.toJsonArray { categorizationToJson(it) })
                 put("notificationRules", payload.notificationRules.toJsonArray { notificationToJson(it) })
                 payload.appSettings?.let { put("appSettings", appSettingsToJson(it)) }
                 payload.displaySettings?.let { put("displaySettings", displaySettingsToJson(it)) }
                 if (payload.attachments.isNotEmpty()) {
                     put("attachments", payload.attachments.toJsonArray { attachmentToJson(it) })
+                }
+                if (payload.assetAttachments.isNotEmpty()) {
+                    put("assetAttachments", payload.assetAttachments.toJsonArray { assetAttachmentToJson(it) })
                 }
                 if (payload.tombstones.isNotEmpty()) {
                     put("tombstones", payload.tombstones.toJsonArray { tombstoneToJson(it) })
@@ -73,11 +81,14 @@ object LanSyncJsonCodec {
             loanScheduleEntries = root.readArray("loanScheduleEntries").mapObjects { loanScheduleFromJson(it) },
             recurringRules = root.readArray("recurringRules").mapObjects { recurringFromJson(it) },
             budgets = root.readArray("budgets").mapObjects { budgetFromJson(it) },
+            assets = root.readArray("assets").mapObjects { assetFromJson(it) },
+            assetValuations = root.readArray("assetValuations").mapObjects { assetValuationFromJson(it) },
             categorizationRules = root.readArray("categorizationRules").mapObjects { categorizationFromJson(it) },
             notificationRules = root.readArray("notificationRules").mapObjects { notificationFromJson(it) },
             appSettings = root.optJSONObject("appSettings")?.let { appSettingsFromJson(it) },
             displaySettings = root.optJSONObject("displaySettings")?.let { displaySettingsFromJson(it) },
             attachments = root.readArray("attachments").mapObjects { attachmentFromJson(it) },
+            assetAttachments = root.readArray("assetAttachments").mapObjects { assetAttachmentFromJson(it) },
             tombstones = root.readArray("tombstones").mapObjects { tombstoneFromJson(it) },
         )
     }
@@ -210,6 +221,7 @@ object LanSyncJsonCodec {
             putNullableInt("remainingTenureMonths", record.remainingTenureMonths)
             putNullableDouble("fixedEmiAmount", record.fixedEmiAmount)
             putNullableInt("emiDayOfMonth", record.emiDayOfMonth)
+            put("emiReminderDaysBefore", record.emiReminderDaysBefore)
             putNullableString("fixedEmiInputMode", record.fixedEmiInputMode)
             putNullableString("notes", record.notes)
             put("createdAt", record.createdAt)
@@ -236,6 +248,7 @@ object LanSyncJsonCodec {
             remainingTenureMonths = json.optNullableInt("remainingTenureMonths"),
             fixedEmiAmount = json.optNullableDouble("fixedEmiAmount"),
             emiDayOfMonth = json.optNullableInt("emiDayOfMonth"),
+            emiReminderDaysBefore = json.optInt("emiReminderDaysBefore", 1),
             fixedEmiInputMode = json.optNullableString("fixedEmiInputMode"),
             notes = json.optNullableString("notes"),
             createdAt = json.getLong("createdAt"),
@@ -448,6 +461,92 @@ object LanSyncJsonCodec {
             updatedAt = json.getLong("updatedAt"),
         )
 
+    private fun assetToJson(record: LanAssetRecord) =
+        JSONObject().apply {
+            put("syncId", record.syncId)
+            put("name", record.name)
+            put("assetType", record.assetType)
+            put("status", record.status)
+            put("isInherited", record.isInherited)
+            putNullableLong("purchaseDateMillis", record.purchaseDateMillis)
+            putNullableDouble("purchasePrice", record.purchasePrice)
+            put("currentValue", record.currentValue)
+            putNullableString("ownedByName", record.ownedByName)
+            putNullableString("location", record.location)
+            putNullableString("identifier", record.identifier)
+            putNullableString("linkedLoanSyncId", record.linkedLoanSyncId)
+            putNullableLong("nextValuationDueMillis", record.nextValuationDueMillis)
+            put("valuationReminderDaysBefore", record.valuationReminderDaysBefore)
+            putNullableLong("saleDateMillis", record.saleDateMillis)
+            putNullableDouble("salePrice", record.salePrice)
+            putNullableString("notes", record.notes)
+            put("createdAt", record.createdAt)
+            put("updatedAt", record.updatedAt)
+        }
+
+    private fun assetFromJson(json: JSONObject) =
+        LanAssetRecord(
+            syncId = json.getString("syncId"),
+            name = json.getString("name"),
+            assetType = json.getString("assetType"),
+            status = json.getString("status"),
+            isInherited = json.getBoolean("isInherited"),
+            purchaseDateMillis = json.optNullableLong("purchaseDateMillis"),
+            purchasePrice = json.optNullableDouble("purchasePrice"),
+            currentValue = json.getDouble("currentValue"),
+            ownedByName = json.optNullableString("ownedByName"),
+            location = json.optNullableString("location"),
+            identifier = json.optNullableString("identifier"),
+            linkedLoanSyncId = json.optNullableString("linkedLoanSyncId"),
+            nextValuationDueMillis = json.optNullableLong("nextValuationDueMillis"),
+            valuationReminderDaysBefore = json.optInt("valuationReminderDaysBefore", 0),
+            saleDateMillis = json.optNullableLong("saleDateMillis"),
+            salePrice = json.optNullableDouble("salePrice"),
+            notes = json.optNullableString("notes"),
+            createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
+        )
+
+    private fun assetValuationToJson(record: LanAssetValuationRecord) =
+        JSONObject().apply {
+            put("syncId", record.syncId)
+            put("assetSyncId", record.assetSyncId)
+            put("amount", record.amount)
+            put("recordedAt", record.recordedAt)
+            putNullableString("notes", record.notes)
+            put("createdAt", record.createdAt)
+        }
+
+    private fun assetValuationFromJson(json: JSONObject) =
+        LanAssetValuationRecord(
+            syncId = json.getString("syncId"),
+            assetSyncId = json.getString("assetSyncId"),
+            amount = json.getDouble("amount"),
+            recordedAt = json.getLong("recordedAt"),
+            notes = json.optNullableString("notes"),
+            createdAt = json.getLong("createdAt"),
+        )
+
+    private fun assetAttachmentToJson(record: LanAssetAttachmentRecord) =
+        JSONObject().apply {
+            put("syncId", record.syncId)
+            put("assetSyncId", record.assetSyncId)
+            put("mimeType", record.mimeType)
+            put("fileSizeBytes", record.fileSizeBytes)
+            put("createdAt", record.createdAt)
+            put("updatedAt", record.updatedAt)
+        }
+
+    private fun assetAttachmentFromJson(json: JSONObject) =
+        LanAssetAttachmentRecord(
+            syncId = json.getString("syncId"),
+            assetSyncId = json.getString("assetSyncId"),
+            mimeType = json.getString("mimeType"),
+            fileSizeBytes = json.getLong("fileSizeBytes"),
+            createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
+        )
+
     private fun categorizationToJson(record: LanCategorizationRuleRecord) =
         JSONObject().apply {
             put("syncId", record.syncId)
@@ -482,6 +581,7 @@ object LanSyncJsonCodec {
             putNullableLong("scheduleTime", record.scheduleTime)
             putNullableString("targetLoanSyncId", record.targetLoanSyncId)
             putNullableString("targetRecurringRuleSyncId", record.targetRecurringRuleSyncId)
+            putNullableString("targetAssetSyncId", record.targetAssetSyncId)
             putNullableDouble("thresholdValue", record.thresholdValue)
             putNullableString("title", record.title)
             putNullableString("message", record.message)
@@ -497,6 +597,7 @@ object LanSyncJsonCodec {
             scheduleTime = json.optNullableLong("scheduleTime"),
             targetLoanSyncId = json.optNullableString("targetLoanSyncId"),
             targetRecurringRuleSyncId = json.optNullableString("targetRecurringRuleSyncId"),
+            targetAssetSyncId = json.optNullableString("targetAssetSyncId"),
             thresholdValue = json.optNullableDouble("thresholdValue"),
             title = json.optNullableString("title"),
             message = json.optNullableString("message"),

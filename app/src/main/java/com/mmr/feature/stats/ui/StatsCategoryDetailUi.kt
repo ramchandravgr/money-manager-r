@@ -190,13 +190,11 @@ private fun StatsSubcategoryMiniRow(
                 .clip(RoundedCornerShape(10.dp))
                 .background(
                     if (selected) tint.copy(alpha = 0.12f) else MmrBrandColors.ListBackground.copy(alpha = 0.6f),
-                )
-                .clickable(
+                ).clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
                     onClick = onClick,
-                )
-                .padding(horizontal = MmrDimens.spaceSm, vertical = 8.dp),
+                ).padding(horizontal = MmrDimens.spaceSm, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(

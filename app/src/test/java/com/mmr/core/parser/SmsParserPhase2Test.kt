@@ -89,4 +89,23 @@ class SmsParserPhase2Test {
             )
         assertNull(parsed)
     }
+
+    @Test
+    fun manualEntry_defaultSender_parsesHdfcSentRs() {
+        val body =
+            "Sent Rs.300.00 From HDFC Bank A/C *3903 To DUDEKULA GAFFUR On 02/11/26 Ref 630690502066 Not You?"
+        val result =
+            engine.parseResult(
+                RawSmsMessage(
+                    id = "manual-test-1",
+                    sender = "Manual",
+                    body = body,
+                    timestamp = 1_762_000_000_000L,
+                ),
+            )
+        val txn = result as? com.mmr.core.parser.model.SmsParseResult.Transaction
+        assertNotNull(txn)
+        assertEquals(300.0, txn!!.candidate.amount, 0.01)
+        assertEquals("hdfc_upi_sent", txn.candidate.templateId)
+    }
 }

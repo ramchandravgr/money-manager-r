@@ -24,15 +24,15 @@ class BudgetListViewModel
     constructor(
         private val budgetRepository: BudgetRepository,
     ) : ViewModel() {
-        private val _loadError = MutableStateFlow<String?>(null)
+        private val loadErrorState = MutableStateFlow<String?>(null)
 
         val uiState: StateFlow<BudgetListUiState> =
             combine(
                 budgetRepository.observeActiveBudgetProgress().catch { e ->
-                    _loadError.value = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_LOAD)
+                    loadErrorState.value = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_LOAD)
                     emit(emptyList())
                 },
-                _loadError,
+                loadErrorState,
             ) { snapshots, loadError ->
                 val items =
                     snapshots.map { snap ->
@@ -63,13 +63,13 @@ class BudgetListViewModel
 
         fun onEvent(event: BudgetListUiEvent) {
             when (event) {
-                BudgetListUiEvent.OnRetryClick -> _loadError.value = null
+                BudgetListUiEvent.OnRetryClick -> loadErrorState.value = null
                 is BudgetListUiEvent.OnDeleteBudget -> {
                     viewModelScope.launch {
                         try {
                             budgetRepository.delete(event.budgetId)
                         } catch (e: Exception) {
-                            _loadError.value = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_ACTION)
+                            loadErrorState.value = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_ACTION)
                         }
                     }
                 }

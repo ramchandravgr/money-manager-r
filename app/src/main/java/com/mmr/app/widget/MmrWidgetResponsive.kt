@@ -45,16 +45,26 @@ internal object MmrWidgetSizes {
             },
         )
 
-    /** Budget list default 3×1; resize 3×1 … 5×6. */
+    /**
+     * Budget list default **4×2** home-grid cells (~**320×207 dp** on One UI; see [budgetsDefaultSize]).
+     * Still resizes down to 3×1 … up to ~5×6. **At most 16** [DpSize] entries — Android's responsive
+     * `RemoteViews` ctor throws `Too many RemoteViews in constructor` above that (Glance `SizeMode.Responsive`).
+     */
+    val budgetsDefaultSize: DpSize = DpSize(320.dp, 207.dp)
+
     val budgetsResponsive: SizeMode.Responsive =
         SizeMode.Responsive(
-            buildSet {
-                for (widthCells in 3..5) {
-                    for (heightCells in 1..6) {
-                        add(rect(widthCells, heightCells))
-                    }
-                }
-            },
+            setOf(
+                budgetsDefaultSize,
+                rect(3, 1),
+                rect(3, 2),
+                rect(3, 4),
+                rect(4, 2),
+                rect(4, 4),
+                rect(5, 2),
+                rect(5, 4),
+                rect(5, 6),
+            ),
         )
 }
 
@@ -103,8 +113,14 @@ internal data class MmrWidgetTextScale(
         }
 
         fun fromMonthSpendSize(size: DpSize): MmrWidgetTextScale {
-            val scaleW = size.width.value.div(MONTH_WIDTH_BASE).coerceIn(1f, 2.5f)
-            val scaleH = size.height.value.div(MONTH_HEIGHT_BASE).coerceIn(1f, 3f)
+            val scaleW =
+                size.width.value
+                    .div(MONTH_WIDTH_BASE)
+                    .coerceIn(1f, 2.5f)
+            val scaleH =
+                size.height.value
+                    .div(MONTH_HEIGHT_BASE)
+                    .coerceIn(1f, 3f)
             val scale = max(scaleW, scaleH)
             return scale(
                 scale,
@@ -128,9 +144,15 @@ internal data class MmrWidgetTextScale(
             size: DpSize,
             rowSlotHeightDp: Float,
         ): MmrWidgetTextScale {
-            val scaleW = size.width.value.div(BUDGET_WIDTH_BASE).coerceIn(1f, 2.2f)
-            val scaleH = (rowSlotHeightDp / 26f).coerceIn(1f, 2.8f)
-            val scale = max(scaleW, scaleH)
+            val scaleW =
+                size.width.value
+                    .div(BUDGET_WIDTH_BASE)
+                    .coerceIn(1f, 1.65f)
+            // Typography must fit the label band (slot minus bar + gap), not grow with tall empty rows.
+            val labelBandDp =
+                rowSlotHeightDp - BUDGET_ROW_PROGRESS_GAP_DP - BUDGET_ROW_PROGRESS_BAR_DP
+            val scaleByLabel = (labelBandDp / 22f).coerceIn(0.9f, 1.65f)
+            val scale = min(scaleW, scaleByLabel)
             return scale(
                 scale,
                 header = 12f,
@@ -145,7 +167,8 @@ internal data class MmrWidgetTextScale(
                 gapSmall = 5f,
                 gapMedium = 5f,
                 chipVerticalPadding = 0f,
-                progressBarHeight = 6f,
+                progressBarHeight = BUDGET_ROW_PROGRESS_BAR_DP,
+                budgetsProgressBar = true,
             )
         }
 
@@ -164,6 +187,7 @@ internal data class MmrWidgetTextScale(
             gapMedium: Float,
             chipVerticalPadding: Float,
             progressBarHeight: Float,
+            budgetsProgressBar: Boolean = false,
         ): MmrWidgetTextScale =
             MmrWidgetTextScale(
                 contentPadding = (contentPadding * factor).dp,
@@ -178,10 +202,23 @@ internal data class MmrWidgetTextScale(
                 chip = (chip * factor).sp,
                 textAction = (textAction * factor).sp,
                 chipVerticalPadding = (chipVerticalPadding * factor).dp,
-                progressBarHeight = (progressBarHeight * factor).coerceAtLeast(3f).dp,
+                progressBarHeight =
+                    if (budgetsProgressBar) {
+                        progressBarHeight.dp
+                    } else {
+                        (progressBarHeight * factor).coerceAtLeast(3f).dp
+                    },
             )
     }
 }
+
+/** Label row + [budgetWidgetLabelToProgressGap] + progress bar — minimum per budget row. */
+internal const val BUDGET_ROW_PROGRESS_GAP_DP = 8f
+internal const val BUDGET_ROW_PROGRESS_BAR_DP = 6f
+internal const val BUDGET_ROW_LABEL_MIN_DP = 14f
+
+internal val BUDGET_WIDGET_MIN_ROW_DP: Float =
+    BUDGET_ROW_LABEL_MIN_DP + BUDGET_ROW_PROGRESS_GAP_DP + BUDGET_ROW_PROGRESS_BAR_DP
 
 /** Split widget height evenly across rows when they fit; otherwise use scroll-friendly row height. */
 internal fun budgetWidgetRowSlotHeight(
@@ -195,11 +232,9 @@ internal fun budgetWidgetRowSlotHeight(
     return if (even >= BUDGET_WIDGET_MIN_ROW_DP) {
         even
     } else {
-        min(BUDGET_WIDGET_MIN_ROW_DP, inner)
+        BUDGET_WIDGET_MIN_ROW_DP
     }
 }
-
-private const val BUDGET_WIDGET_MIN_ROW_DP = 28f
 
 @Composable
 internal fun rememberPendingWidgetTextScale(): MmrWidgetTextScale =

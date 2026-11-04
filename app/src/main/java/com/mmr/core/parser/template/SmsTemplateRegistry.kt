@@ -39,6 +39,8 @@ class SmsTemplateRegistry private constructor(
         normalizedBody: String,
     ): SmsTemplateMatch? = matcher.matchSettled(sms, normalizedBody)
 
+    fun matchSettledBodyOnly(normalizedBody: String): SmsTemplateMatch? = matcher.matchSettledBodyOnly(normalizedBody)
+
     fun matchInformational(
         sms: RawSmsMessage,
         normalizedBody: String,

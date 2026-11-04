@@ -130,4 +130,15 @@ object DatabaseModule {
     @Provides
     fun provideLanSyncTombstoneAckDao(database: MmrDatabase): com.mmr.core.database.dao.LanSyncTombstoneAckDao =
         database.lanSyncTombstoneAckDao()
+
+    @Provides
+    fun provideAssetDao(database: MmrDatabase): com.mmr.core.database.dao.AssetDao = database.assetDao()
+
+    @Provides
+    fun provideAssetValuationDao(database: MmrDatabase): com.mmr.core.database.dao.AssetValuationDao =
+        database.assetValuationDao()
+
+    @Provides
+    fun provideAssetAttachmentDao(database: MmrDatabase): com.mmr.core.database.dao.AssetAttachmentDao =
+        database.assetAttachmentDao()
 }

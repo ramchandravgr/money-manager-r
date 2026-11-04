@@ -57,6 +57,9 @@ interface LoanDao {
     @Query("SELECT * FROM loans WHERE status = 'ACTIVE' ORDER BY dueDate ASC")
     fun getActiveLoans(): Flow<List<LoanEntity>>
 
+    @Query("SELECT * FROM loans WHERE status = 'ACTIVE' ORDER BY dueDate ASC")
+    suspend fun getActiveLoansList(): List<LoanEntity>
+
     @Query("SELECT SUM(outstandingAmount) FROM loans WHERE status = 'ACTIVE' AND loanType = 'BORROWED'")
     fun getTotalBorrowedOutstanding(): Flow<Double?>
 

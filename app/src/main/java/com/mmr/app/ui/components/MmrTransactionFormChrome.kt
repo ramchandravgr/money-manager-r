@@ -31,13 +31,17 @@ import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material.icons.outlined.Percent
 import androidx.compose.material.icons.outlined.PhotoCamera
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -418,6 +422,7 @@ fun MmrTransactionFormPickerRow(
 /**
  * Single-line or multi-line text in a card with optional leading icon and trailing action (e.g. camera).
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MmrTransactionFormTextRow(
     value: String,
@@ -431,7 +436,9 @@ fun MmrTransactionFormTextRow(
     minLines: Int = 1,
     trailingContent: (@Composable () -> Unit)? = null,
     groupedAmountDisplay: Boolean = false,
+    amountCalculatorEnabled: Boolean = groupedAmountDisplay,
 ) {
+    var calculatorOpen by remember { mutableStateOf(false) }
     val amountTransformation =
         if (groupedAmountDisplay) {
             remember { MmrLocaleAmountVisualTransformation() }
@@ -492,8 +499,18 @@ fun MmrTransactionFormTextRow(
                     inner()
                 },
             )
+            if (amountCalculatorEnabled) {
+                MmrAmountCalculatorIconButton(onClick = { calculatorOpen = true })
+            }
             trailingContent?.invoke()
         }
+    }
+    if (calculatorOpen) {
+        MmrAmountCalculatorSheet(
+            initialAmountFieldValue = value,
+            onDismiss = { calculatorOpen = false },
+            onApply = onValueChange,
+        )
     }
 }
 
@@ -525,26 +542,21 @@ fun MmrTransactionFormFilterChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val fill = if (selected) MmrBrandColors.Active else MmrBrandColors.SurfaceWhite
+    val borderColor =
+        if (selected) {
+            MmrBrandColors.Active
+        } else {
+            MmrBrandColors.TransactionListBorder
+        }
+    val labelColor = if (selected) MmrBrandColors.SurfaceWhite else MmrBrandColors.Reversal
     Box(
         modifier =
             modifier
                 .clip(chipShape)
-                .background(
-                    if (selected) {
-                        MmrBrandColors.BorderMain.copy(alpha = 0.45f)
-                    } else {
-                        MmrBrandColors.SurfaceWhite
-                    },
-                ).border(
-                    width = 1.dp,
-                    color =
-                        if (selected) {
-                            MmrBrandColors.BorderMain
-                        } else {
-                            MmrBrandColors.TransactionListBorder
-                        },
-                    shape = chipShape,
-                ).clickable(onClick = onClick)
+                .background(fill)
+                .border(width = 1.dp, color = borderColor, shape = chipShape)
+                .clickable(onClick = onClick)
                 .padding(vertical = 10.dp, horizontal = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -552,7 +564,7 @@ fun MmrTransactionFormFilterChip(
             text = label.mmrStaticLabelCase(),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            color = MmrBrandColors.Reversal,
+            color = labelColor,
         )
     }
 }
@@ -571,27 +583,22 @@ fun <T> MmrTransactionFormChoiceChips(
     ) {
         options.forEach { option ->
             val isSelected = option.value == selected
+            val fill = if (isSelected) MmrBrandColors.Active else MmrBrandColors.SurfaceWhite
+            val borderColor =
+                if (isSelected) {
+                    MmrBrandColors.Active
+                } else {
+                    MmrBrandColors.TransactionListBorder
+                }
+            val labelColor = if (isSelected) MmrBrandColors.SurfaceWhite else MmrBrandColors.Reversal
             Box(
                 modifier =
                     Modifier
                         .weight(1f)
                         .clip(chipShape)
-                        .background(
-                            if (isSelected) {
-                                MmrBrandColors.BorderMain.copy(alpha = 0.45f)
-                            } else {
-                                MmrBrandColors.SurfaceWhite
-                            },
-                        ).border(
-                            width = 1.dp,
-                            color =
-                                if (isSelected) {
-                                    MmrBrandColors.BorderMain
-                                } else {
-                                    MmrBrandColors.TransactionListBorder
-                                },
-                            shape = chipShape,
-                        ).clickable { onSelected(option.value) }
+                        .background(fill)
+                        .border(width = 1.dp, color = borderColor, shape = chipShape)
+                        .clickable { onSelected(option.value) }
                         .padding(vertical = 10.dp, horizontal = 4.dp),
                 contentAlignment = Alignment.Center,
             ) {
@@ -599,7 +606,7 @@ fun <T> MmrTransactionFormChoiceChips(
                     text = option.label.mmrStaticLabelCase(),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                    color = MmrBrandColors.Reversal,
+                    color = labelColor,
                 )
             }
         }

@@ -2,8 +2,8 @@ package com.mmr.app.ui.splash
 
 import android.content.Context
 import android.provider.Settings
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -163,7 +163,9 @@ private fun DrawScope.drawBaseline(scale: Float) {
     drawRect(
         color = accentCoral.copy(alpha = 0.55f),
         topLeft = Offset(57f * scale, 76f * scale),
-        size = androidx.compose.ui.geometry.Size(22f * scale, 2f * scale),
+        size =
+            androidx.compose.ui.geometry
+                .Size(22f * scale, 2f * scale),
     )
 }
 
@@ -181,7 +183,9 @@ private fun DrawScope.drawAnimatedBar(
     drawRect(
         color = accentCoral,
         topLeft = Offset(left, bottom - animatedHeight),
-        size = androidx.compose.ui.geometry.Size(width, animatedHeight),
+        size =
+            androidx.compose.ui.geometry
+                .Size(width, animatedHeight),
     )
 }
 

@@ -96,7 +96,7 @@ class WebManageRepositoryImpl
                         requestHandler.handle(method, path, query, headers, body)
                     },
                 )
-            server.start()
+            server.start(LanSyncHttpConstants.DEFAULT_PORT)
             httpServer = server
             lanServerNotifier.onLanServerStarted(LocalLanServerMode.WEB_MANAGE)
         }
@@ -121,10 +121,10 @@ class WebManageRepositoryImpl
                     wifiSsid = wifi.ssid,
                     lanIpv4 = ipv4,
                     localUrl =
-                        if (listening && ipv4 != null) {
-                            networkUtils.localBaseUrl(port)
-                        } else {
-                            null
+                        when {
+                            !listening -> null
+                            ipv4 != null -> networkUtils.localBaseUrl(port)
+                            else -> "http://<this-phone-ip>:$port"
                         },
                     loopbackUrl = if (listening) "http://127.0.0.1:$port" else null,
                     serverPort = port,

@@ -13,6 +13,14 @@ object MmrValidation {
         return parsed?.takeIf { it.isFinite() && it > 0.0 }
     }
 
+    /** Allows zero (e.g. scrapped/gifted asset marked sold with no proceeds). Empty input → 0. */
+    fun parseNonNegativeAmount(input: String): Double? {
+        val sanitized = sanitizeDecimalInput(input)
+        if (sanitized.isEmpty()) return 0.0
+        val parsed = sanitized.toDoubleOrNull()
+        return parsed?.takeIf { it.isFinite() && it >= 0.0 }
+    }
+
     fun requirePositiveAmount(
         amount: Double,
         fieldName: String = "Amount",

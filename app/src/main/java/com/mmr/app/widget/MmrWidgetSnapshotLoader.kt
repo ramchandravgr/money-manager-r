@@ -4,10 +4,9 @@ import android.content.Context
 import androidx.compose.ui.graphics.toArgb
 import com.mmr.app.ui.theme.MmrSystemThemeAppearance
 import com.mmr.app.ui.theme.MmrThemePresets
-import dagger.hilt.android.qualifiers.ApplicationContext
 import com.mmr.core.common.display.MmrMoneyFormat
-import com.mmr.core.data.preferences.AppDisplaySettingsStore
 import com.mmr.core.data.preferences.AppDisplaySettingsSnapshot
+import com.mmr.core.data.preferences.AppDisplaySettingsStore
 import com.mmr.core.domain.model.BudgetProgressSnapshot
 import com.mmr.core.domain.model.PendingApprovalWithSms
 import com.mmr.core.domain.repository.ApprovalRepository
@@ -15,6 +14,7 @@ import com.mmr.core.domain.repository.BudgetRepository
 import com.mmr.core.domain.repository.TransactionRepository
 import com.mmr.core.model.enums.SmsApprovalState
 import com.mmr.feature.home.HomePeriodUtils
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first

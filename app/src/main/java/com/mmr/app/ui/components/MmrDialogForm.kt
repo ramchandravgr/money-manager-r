@@ -12,13 +12,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
@@ -148,6 +152,7 @@ fun MmrDialogTextField(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MmrDialogAmountTextField(
     value: String,
@@ -158,25 +163,45 @@ fun MmrDialogAmountTextField(
     enabled: Boolean = true,
     isError: Boolean = false,
     errorMessage: String? = null,
+    showCalculator: Boolean = true,
 ) {
+    var calculatorOpen by remember { mutableStateOf(false) }
     val amountTransformation = remember { MmrLocaleAmountVisualTransformation() }
-    MmrDialogTextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = modifier,
-        label = label,
-        placeholder = placeholder,
-        enabled = enabled,
-        isError = isError,
-        errorMessage = errorMessage,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        visualTransformation =
-            if (value.isEmpty()) {
-                VisualTransformation.None
-            } else {
-                amountTransformation
-            },
-    )
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        MmrDialogTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.weight(1f),
+            label = label,
+            placeholder = placeholder,
+            enabled = enabled,
+            isError = isError,
+            errorMessage = errorMessage,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            visualTransformation =
+                if (value.isEmpty()) {
+                    VisualTransformation.None
+                } else {
+                    amountTransformation
+                },
+        )
+        if (showCalculator && enabled) {
+            MmrAmountCalculatorIconButton(
+                onClick = { calculatorOpen = true },
+                modifier = Modifier.padding(start = 4.dp),
+            )
+        }
+    }
+    if (calculatorOpen) {
+        MmrAmountCalculatorSheet(
+            initialAmountFieldValue = value,
+            onDismiss = { calculatorOpen = false },
+            onApply = onValueChange,
+        )
+    }
 }
 
 /** Tappable row styled like mockup `.field` (date pickers, etc.). */

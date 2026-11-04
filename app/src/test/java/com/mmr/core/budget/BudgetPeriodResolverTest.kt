@@ -12,7 +12,8 @@ class BudgetPeriodResolverTest {
     fun monthly_resolve_containsAnchorDate() {
         val zone = ZoneId.of("Asia/Kolkata")
         val anchor =
-            java.time.LocalDate.of(2026, 10, 15)
+            java.time.LocalDate
+                .of(2026, 10, 15)
                 .atStartOfDay(zone)
                 .toInstant()
                 .toEpochMilli()

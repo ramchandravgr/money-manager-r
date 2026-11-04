@@ -96,5 +96,18 @@ class EnumConverters {
     @TypeConverter fun fromBudgetPeriodType(value: BudgetPeriodType?): String? = value?.name
 
     @TypeConverter fun toBudgetPeriodType(value: String?): BudgetPeriodType? =
-        value?.let { BudgetPeriodType.valueOf(it) }
+        value?.let {
+            BudgetPeriodType.valueOf(
+                it,
+            )
+        }
+
+    @TypeConverter fun fromAssetStatus(value: AssetStatus?): String? = value?.name
+
+    @TypeConverter
+    fun toAssetStatus(value: String?): AssetStatus? =
+        value?.let {
+            com.mmr.core.model.enums
+                .assetStatusFromStored(it)
+        }
 }

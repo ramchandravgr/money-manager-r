@@ -44,6 +44,7 @@ interface ApprovalRepository {
         fallbackCategoryId: Long?,
         subcategoryId: Long? = null,
         relatedAccountId: Long? = null,
+        loanId: Long? = null,
     ): Long
 
     suspend fun mergeCandidateWithTransaction(

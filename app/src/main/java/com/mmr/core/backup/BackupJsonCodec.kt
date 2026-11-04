@@ -1,6 +1,7 @@
 package com.mmr.core.backup
 
 import com.mmr.core.backup.model.MmrAppSettingsBackup
+import com.mmr.core.backup.model.MmrBackupAssetAttachmentRecord
 import com.mmr.core.backup.model.MmrBackupAttachmentRecord
 import com.mmr.core.backup.model.MmrBackupPayload
 import com.mmr.core.backup.model.MmrDisplaySettingsBackup
@@ -8,6 +9,8 @@ import com.mmr.core.backup.model.MmrLanSyncSettingsBackup
 import com.mmr.core.backup.model.MmrSmsInboundSettingsBackup
 import com.mmr.core.backup.model.MmrWebManageSettingsBackup
 import com.mmr.core.database.entity.AccountEntity
+import com.mmr.core.database.entity.AssetEntity
+import com.mmr.core.database.entity.AssetValuationEntity
 import com.mmr.core.database.entity.BudgetEntity
 import com.mmr.core.database.entity.CategorizationRuleEntity
 import com.mmr.core.database.entity.CategoryEntity
@@ -23,8 +26,24 @@ import com.mmr.core.database.entity.SyncTombstoneEntity
 import com.mmr.core.database.entity.TransactionApprovalEntity
 import com.mmr.core.database.entity.TransactionEntity
 import com.mmr.core.database.entity.TrustedLanDeviceEntity
-import com.mmr.core.model.enums.*
+import com.mmr.core.model.enums.AccountType
+import com.mmr.core.model.enums.BudgetPeriodType
+import com.mmr.core.model.enums.CardNetwork
 import com.mmr.core.model.enums.CategorizationMatchType
+import com.mmr.core.model.enums.CategoryType
+import com.mmr.core.model.enums.LoanPaymentType
+import com.mmr.core.model.enums.LoanScheduleStatus
+import com.mmr.core.model.enums.LoanStatus
+import com.mmr.core.model.enums.LoanType
+import com.mmr.core.model.enums.NotificationRuleType
+import com.mmr.core.model.enums.RecordStatus
+import com.mmr.core.model.enums.RecurrenceInterval
+import com.mmr.core.model.enums.SmsApprovalKind
+import com.mmr.core.model.enums.SmsApprovalState
+import com.mmr.core.model.enums.SmsLinkRole
+import com.mmr.core.model.enums.SmsParsedStatus
+import com.mmr.core.model.enums.TransactionSourceType
+import com.mmr.core.model.enums.TransactionType
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -55,6 +74,12 @@ object BackupJsonCodec {
                 if (payload.budgets.isNotEmpty()) {
                     put("budgets", payload.budgets.toJsonArray { budgetToJson(it) })
                 }
+                if (payload.assets.isNotEmpty()) {
+                    put("assets", payload.assets.toJsonArray { assetToJson(it) })
+                }
+                if (payload.assetValuations.isNotEmpty()) {
+                    put("assetValuations", payload.assetValuations.toJsonArray { assetValuationToJson(it) })
+                }
                 put("notificationRules", payload.notificationRules.toJsonArray { notificationRuleToJson(it) })
                 put("smsMessageRecords", payload.smsMessageRecords.toJsonArray { smsRecordToJson(it) })
                 put("transactionApprovals", payload.transactionApprovals.toJsonArray { approvalToJson(it) })
@@ -74,6 +99,12 @@ object BackupJsonCodec {
                     put(
                         "transactionAttachments",
                         payload.transactionAttachments.toJsonArray { backupAttachmentToJson(it) },
+                    )
+                }
+                if (payload.assetAttachments.isNotEmpty()) {
+                    put(
+                        "assetAttachments",
+                        payload.assetAttachments.toJsonArray { backupAssetAttachmentToJson(it) },
                     )
                 }
             }.toString(2)
@@ -121,6 +152,8 @@ object BackupJsonCodec {
             loanPayments = root.readArray("loanPayments").mapObjects { loanPaymentFromJson(it) },
             recurringRules = root.readArray("recurringRules").mapObjects { recurringRuleFromJson(it) },
             budgets = root.readArray("budgets").mapObjects { budgetFromJson(it) },
+            assets = root.readArray("assets").mapObjects { assetFromJson(it) },
+            assetValuations = root.readArray("assetValuations").mapObjects { assetValuationFromJson(it) },
             notificationRules = root.readArray("notificationRules").mapObjects { notificationRuleFromJson(it) },
             smsMessageRecords = root.readArray("smsMessageRecords").mapObjects { smsRecordFromJson(it) },
             transactionApprovals = root.readArray("transactionApprovals").mapObjects { approvalFromJson(it) },
@@ -136,6 +169,8 @@ object BackupJsonCodec {
             trustedLanDevices = root.readArray("trustedLanDevices").mapObjects { trustedLanDeviceFromJson(it) },
             transactionAttachments =
                 root.readArray("transactionAttachments").mapObjects { backupAttachmentFromJson(it) },
+            assetAttachments =
+                root.readArray("assetAttachments").mapObjects { backupAssetAttachmentFromJson(it) },
         )
     }
 
@@ -417,6 +452,102 @@ object BackupJsonCodec {
             contentBase64 = json.getString("contentBase64"),
         )
 
+    private fun backupAssetAttachmentToJson(record: MmrBackupAssetAttachmentRecord) =
+        JSONObject().apply {
+            put("id", record.id)
+            put("syncId", record.syncId)
+            put("assetId", record.assetId)
+            put("mimeType", record.mimeType)
+            put("fileSizeBytes", record.fileSizeBytes)
+            put("createdAt", record.createdAt)
+            put("updatedAt", record.updatedAt)
+            put("contentBase64", record.contentBase64)
+        }
+
+    private fun backupAssetAttachmentFromJson(json: JSONObject) =
+        MmrBackupAssetAttachmentRecord(
+            id = json.getLong("id"),
+            syncId = json.getString("syncId"),
+            assetId = json.getLong("assetId"),
+            mimeType = json.getString("mimeType"),
+            fileSizeBytes = json.getLong("fileSizeBytes"),
+            createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
+            contentBase64 = json.getString("contentBase64"),
+        )
+
+    private fun assetToJson(entity: AssetEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("syncId", entity.syncId)
+            put("name", entity.name)
+            put("assetType", entity.assetType)
+            put("status", entity.status.name)
+            put("isInherited", entity.isInherited)
+            putNullableLong("purchaseDateMillis", entity.purchaseDateMillis)
+            putNullableDouble("purchasePrice", entity.purchasePrice)
+            put("currentValue", entity.currentValue)
+            putNullableString("ownedByName", entity.ownedByName)
+            putNullableString("location", entity.location)
+            putNullableString("identifier", entity.identifier)
+            putNullableLong("linkedLoanId", entity.linkedLoanId)
+            putNullableLong("nextValuationDueMillis", entity.nextValuationDueMillis)
+            put("valuationReminderDaysBefore", entity.valuationReminderDaysBefore)
+            putNullableLong("saleDateMillis", entity.saleDateMillis)
+            putNullableDouble("salePrice", entity.salePrice)
+            putNullableString("notes", entity.notes)
+            put("createdAt", entity.createdAt)
+            put("updatedAt", entity.updatedAt)
+        }
+
+    private fun assetFromJson(json: JSONObject) =
+        AssetEntity(
+            id = json.getLong("id"),
+            syncId = syncIdFromJson(json),
+            name = json.getString("name"),
+            assetType = json.getString("assetType"),
+            status =
+                com.mmr.core.model.enums
+                    .assetStatusFromStored(json.getString("status")),
+            isInherited = json.getBoolean("isInherited"),
+            purchaseDateMillis = json.optNullableLong("purchaseDateMillis"),
+            purchasePrice = json.optNullableDouble("purchasePrice"),
+            currentValue = json.getDouble("currentValue"),
+            ownedByName = json.optNullableString("ownedByName"),
+            location = json.optNullableString("location"),
+            identifier = json.optNullableString("identifier"),
+            linkedLoanId = json.optNullableLong("linkedLoanId"),
+            nextValuationDueMillis = json.optNullableLong("nextValuationDueMillis"),
+            valuationReminderDaysBefore = json.optInt("valuationReminderDaysBefore", 0),
+            saleDateMillis = json.optNullableLong("saleDateMillis"),
+            salePrice = json.optNullableDouble("salePrice"),
+            notes = json.optNullableString("notes"),
+            createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
+        )
+
+    private fun assetValuationToJson(entity: AssetValuationEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("syncId", entity.syncId)
+            put("assetId", entity.assetId)
+            put("amount", entity.amount)
+            put("recordedAt", entity.recordedAt)
+            putNullableString("notes", entity.notes)
+            put("createdAt", entity.createdAt)
+        }
+
+    private fun assetValuationFromJson(json: JSONObject) =
+        AssetValuationEntity(
+            id = json.getLong("id"),
+            syncId = syncIdFromJson(json),
+            assetId = json.getLong("assetId"),
+            amount = json.getDouble("amount"),
+            recordedAt = json.getLong("recordedAt"),
+            notes = json.optNullableString("notes"),
+            createdAt = json.getLong("createdAt"),
+        )
+
     private fun loanInterestRevisionToJson(entity: LoanInterestRevisionEntity) =
         JSONObject().apply {
             put("id", entity.id)
@@ -580,6 +711,7 @@ object BackupJsonCodec {
             putNullableInt("remainingTenureMonths", entity.remainingTenureMonths)
             putNullableDouble("fixedEmiAmount", entity.fixedEmiAmount)
             putNullableInt("emiDayOfMonth", entity.emiDayOfMonth)
+            put("emiReminderDaysBefore", entity.emiReminderDaysBefore)
             putNullableString("fixedEmiInputMode", entity.fixedEmiInputMode)
             putNullableString("notes", entity.notes)
             put("createdAt", entity.createdAt)
@@ -607,6 +739,7 @@ object BackupJsonCodec {
             remainingTenureMonths = json.optNullableInt("remainingTenureMonths"),
             fixedEmiAmount = json.optNullableDouble("fixedEmiAmount"),
             emiDayOfMonth = json.optNullableInt("emiDayOfMonth"),
+            emiReminderDaysBefore = json.optInt("emiReminderDaysBefore", 1),
             fixedEmiInputMode = json.optNullableString("fixedEmiInputMode"),
             notes = json.optNullableString("notes"),
             createdAt = json.getLong("createdAt"),
@@ -757,6 +890,7 @@ object BackupJsonCodec {
             putNullableLong("scheduleTime", entity.scheduleTime)
             putNullableLong("targetLoanId", entity.targetLoanId)
             putNullableLong("targetRecurringRuleId", entity.targetRecurringRuleId)
+            putNullableLong("targetAssetId", entity.targetAssetId)
             putNullableDouble("thresholdValue", entity.thresholdValue)
             putNullableString("title", entity.title)
             putNullableString("message", entity.message)
@@ -772,6 +906,7 @@ object BackupJsonCodec {
             scheduleTime = json.optNullableLong("scheduleTime"),
             targetLoanId = json.optNullableLong("targetLoanId"),
             targetRecurringRuleId = json.optNullableLong("targetRecurringRuleId"),
+            targetAssetId = json.optNullableLong("targetAssetId"),
             thresholdValue = json.optNullableDouble("thresholdValue"),
             title = json.optNullableString("title"),
             message = json.optNullableString("message"),

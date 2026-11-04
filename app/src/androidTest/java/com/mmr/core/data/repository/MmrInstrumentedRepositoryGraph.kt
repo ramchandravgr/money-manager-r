@@ -4,9 +4,9 @@ import android.content.Context
 import androidx.room.Room
 import com.mmr.app.budget.BudgetAlertNotifier
 import com.mmr.core.attachment.TransactionAttachmentStore
-import com.mmr.core.data.preferences.AppDisplaySettingsStore
 import com.mmr.core.categorization.CategorizationRuleEngine
 import com.mmr.core.common.widget.NoOpHomeScreenWidgetRefreshTrigger
+import com.mmr.core.data.preferences.AppDisplaySettingsStore
 import com.mmr.core.data.preferences.LanSyncIdentityStore
 import com.mmr.core.data.repository.TransactionAttachmentRepositoryImpl
 import com.mmr.core.database.MmrDatabase
@@ -55,6 +55,7 @@ class MmrInstrumentedRepositoryGraph(
             displaySettingsStore = displaySettingsStore,
             budgetAlertNotifier = budgetAlertNotifier,
             tombstoneRecorder = tombstoneRecorder,
+            widgetRefreshTrigger = NoOpHomeScreenWidgetRefreshTrigger,
         )
 
     val transactionAttachmentRepository: TransactionAttachmentRepositoryImpl =

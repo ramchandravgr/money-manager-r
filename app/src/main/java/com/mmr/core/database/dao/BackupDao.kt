@@ -6,6 +6,9 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import com.mmr.core.database.entity.AccountEntity
+import com.mmr.core.database.entity.AssetAttachmentEntity
+import com.mmr.core.database.entity.AssetEntity
+import com.mmr.core.database.entity.AssetValuationEntity
 import com.mmr.core.database.entity.BudgetEntity
 import com.mmr.core.database.entity.CategorizationRuleEntity
 import com.mmr.core.database.entity.CategoryEntity
@@ -50,6 +53,15 @@ interface BackupDao {
 
     @Query("SELECT * FROM budgets")
     suspend fun getAllBudgets(): List<BudgetEntity>
+
+    @Query("SELECT * FROM assets")
+    suspend fun getAllAssets(): List<AssetEntity>
+
+    @Query("SELECT * FROM asset_valuations")
+    suspend fun getAllAssetValuations(): List<AssetValuationEntity>
+
+    @Query("SELECT * FROM asset_attachments")
+    suspend fun getAllAssetAttachments(): List<AssetAttachmentEntity>
 
     @Query("SELECT * FROM notification_rules")
     suspend fun getAllNotificationRules(): List<NotificationRuleEntity>
@@ -106,6 +118,15 @@ interface BackupDao {
     suspend fun insertBudgets(budgets: List<BudgetEntity>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAssets(assets: List<AssetEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAssetValuations(valuations: List<AssetValuationEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAssetAttachments(attachments: List<AssetAttachmentEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNotificationRules(rules: List<NotificationRuleEntity>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -154,6 +175,15 @@ interface BackupDao {
     suspend fun insertBudgetsIgnore(budgets: List<BudgetEntity>)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAssetsIgnore(assets: List<AssetEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAssetValuationsIgnore(valuations: List<AssetValuationEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertAssetAttachmentsIgnore(attachments: List<AssetAttachmentEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertNotificationRulesIgnore(rules: List<NotificationRuleEntity>)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
@@ -186,12 +216,15 @@ interface BackupDao {
         loanPayments: List<LoanPaymentEntity>,
         recurringRules: List<RecurringRuleEntity>,
         budgets: List<BudgetEntity> = emptyList(),
+        assets: List<AssetEntity> = emptyList(),
+        assetValuations: List<AssetValuationEntity> = emptyList(),
         notificationRules: List<NotificationRuleEntity>,
         smsMessageRecords: List<SmsMessageRecordEntity>,
         transactionApprovals: List<TransactionApprovalEntity>,
         categorizationRules: List<CategorizationRuleEntity> = emptyList(),
         trustedLanDevices: List<TrustedLanDeviceEntity> = emptyList(),
         transactionAttachments: List<TransactionAttachmentEntity> = emptyList(),
+        assetAttachments: List<AssetAttachmentEntity> = emptyList(),
     ) {
         if (categories.isNotEmpty()) insertCategoriesIgnore(categories)
         if (subcategories.isNotEmpty()) insertSubcategoriesIgnore(subcategories)
@@ -200,6 +233,8 @@ interface BackupDao {
         if (loanInterestRevisions.isNotEmpty()) insertLoanInterestRevisionsIgnore(loanInterestRevisions)
         if (recurringRules.isNotEmpty()) insertRecurringRulesIgnore(recurringRules)
         if (budgets.isNotEmpty()) insertBudgetsIgnore(budgets)
+        if (assets.isNotEmpty()) insertAssetsIgnore(assets)
+        if (assetValuations.isNotEmpty()) insertAssetValuationsIgnore(assetValuations)
         if (transactions.isNotEmpty()) insertTransactionsIgnore(transactions)
         if (loanPayments.isNotEmpty()) insertLoanPaymentsIgnore(loanPayments)
         if (loanScheduleEntries.isNotEmpty()) insertLoanScheduleEntriesIgnore(loanScheduleEntries)
@@ -209,10 +244,14 @@ interface BackupDao {
         if (categorizationRules.isNotEmpty()) insertCategorizationRulesIgnore(categorizationRules)
         if (trustedLanDevices.isNotEmpty()) insertTrustedLanDevicesIgnore(trustedLanDevices)
         if (transactionAttachments.isNotEmpty()) insertTransactionAttachmentsIgnore(transactionAttachments)
+        if (assetAttachments.isNotEmpty()) insertAssetAttachmentsIgnore(assetAttachments)
     }
 
     @Transaction
     suspend fun clearAllUserData() {
+        deleteAllAssetAttachments()
+        deleteAllAssetValuations()
+        deleteAllAssets()
         deleteAllTransactionAttachments()
         deleteAllTrustedLanDevices()
         deleteAllCategorizationRules()
@@ -243,12 +282,15 @@ interface BackupDao {
         loanPayments: List<LoanPaymentEntity>,
         recurringRules: List<RecurringRuleEntity>,
         budgets: List<BudgetEntity> = emptyList(),
+        assets: List<AssetEntity> = emptyList(),
+        assetValuations: List<AssetValuationEntity> = emptyList(),
         notificationRules: List<NotificationRuleEntity>,
         smsMessageRecords: List<SmsMessageRecordEntity>,
         transactionApprovals: List<TransactionApprovalEntity>,
         categorizationRules: List<CategorizationRuleEntity> = emptyList(),
         trustedLanDevices: List<TrustedLanDeviceEntity> = emptyList(),
         transactionAttachments: List<TransactionAttachmentEntity> = emptyList(),
+        assetAttachments: List<AssetAttachmentEntity> = emptyList(),
     ) {
         clearAllUserData()
         if (categories.isNotEmpty()) insertCategories(categories)
@@ -258,6 +300,8 @@ interface BackupDao {
         if (loanInterestRevisions.isNotEmpty()) insertLoanInterestRevisions(loanInterestRevisions)
         if (recurringRules.isNotEmpty()) insertRecurringRules(recurringRules)
         if (budgets.isNotEmpty()) insertBudgets(budgets)
+        if (assets.isNotEmpty()) insertAssets(assets)
+        if (assetValuations.isNotEmpty()) insertAssetValuations(assetValuations)
         if (transactions.isNotEmpty()) insertTransactions(transactions)
         if (loanPayments.isNotEmpty()) insertLoanPayments(loanPayments)
         if (loanScheduleEntries.isNotEmpty()) insertLoanScheduleEntries(loanScheduleEntries)
@@ -267,7 +311,17 @@ interface BackupDao {
         if (categorizationRules.isNotEmpty()) insertCategorizationRules(categorizationRules)
         if (trustedLanDevices.isNotEmpty()) insertTrustedLanDevices(trustedLanDevices)
         if (transactionAttachments.isNotEmpty()) insertTransactionAttachments(transactionAttachments)
+        if (assetAttachments.isNotEmpty()) insertAssetAttachments(assetAttachments)
     }
+
+    @Query("DELETE FROM asset_attachments")
+    suspend fun deleteAllAssetAttachments()
+
+    @Query("DELETE FROM asset_valuations")
+    suspend fun deleteAllAssetValuations()
+
+    @Query("DELETE FROM assets")
+    suspend fun deleteAllAssets()
 
     @Query("DELETE FROM transaction_attachments")
     suspend fun deleteAllTransactionAttachments()

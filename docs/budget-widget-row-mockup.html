@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Budget widget row — layout review</title>
+  <style>
+    :root {
+      --bg: light-dark(#f4f4f5, #0f0f12);
+      --surface: light-dark(#ffffff, #1a1a1f);
+      --text: light-dark(#1c1c1e, #f2f2f7);
+      --muted: light-dark(#6b7280, #9ca3af);
+      --sep: light-dark(#e5e7eb, #3f3f46);
+      --bar: light-dark(#5c6bc0, #7c8fd4);
+      --track: light-dark(#e5e7eb, #3f3f46);
+      --accent: light-dark(#b45309, #fbbf24);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px 16px 48px;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.45;
+      color: var(--text);
+      background: var(--bg);
+    }
+    h1 { font-size: 1.15rem; font-weight: 500; margin: 0 0 8px; }
+    p { margin: 0 0 16px; color: var(--muted); max-width: 42rem; }
+    .vis-section-stack { display: flex; flex-direction: column; gap: 24px; max-width: 420px; }
+    .panel {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 12px;
+      border: 1px solid var(--sep);
+    }
+    .panel h2 {
+      font-size: 12px;
+      font-weight: 500;
+      margin: 0 0 10px;
+      color: var(--muted);
+      text-transform: none;
+    }
+    .widget {
+      width: 336px;
+      max-width: 100%;
+      border-radius: 12px;
+      background: var(--surface);
+      border: 1px solid var(--sep);
+      padding: 8px;
+    }
+    .row {
+      padding: 6px 0;
+      border-bottom: 1px solid var(--sep);
+    }
+    .row:last-child { border-bottom: none; }
+    .label-row {
+      display: grid;
+      grid-template-columns: 1fr 8px 9px 40px 9px 36px;
+      align-items: center;
+      min-height: 20px;
+      font-size: 13px;
+    }
+    .label-row.bad {
+      grid-template-columns: 1fr 6px 9px 38px 9px 34px;
+      align-items: start;
+      min-height: 16px;
+      font-size: 12px;
+    }
+    .cat { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .period { text-align: center; color: var(--muted); font-size: 12px; }
+    .pct { text-align: right; font-weight: 500; font-size: 12px; }
+    .vsep {
+      width: 1px;
+      height: 12px;
+      background: var(--sep);
+      margin: 0 auto;
+    }
+    .gap8 { }
+    .bar-gap { height: 8px; }
+    .bar-gap.bad { height: 4px; }
+    .bar {
+      height: 6px;
+      border-radius: 3px;
+      background: var(--track);
+      overflow: hidden;
+    }
+    .bar span {
+      display: block;
+      height: 100%;
+      background: var(--bar);
+      border-radius: 3px;
+    }
+    .tag {
+      display: inline-block;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      background: light-dark(#fef3c7, #422006);
+      color: light-dark(#92400e, #fcd34d);
+      margin-bottom: 8px;
+    }
+    .legend {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 12px;
+      line-height: 1.5;
+    }
+    .legend code { font-size: 11px; }
+  </style>
+</head>
+<body>
+  <div class="vis-section-stack">
+    <div>
+      <h1>Budgets widget — row layout review</h1>
+      <p>
+        Mock width 336px ≈ 180dp widget at ~1.87×. Compare <strong>Option A (proposed)</strong> vs
+        <strong>last build (worse)</strong>. Previews in the picker are unchanged.
+      </p>
+    </div>
+
+    <div class="panel">
+      <span class="tag">Option A — proposed</span>
+      <h2>8dp gap before Month · centered label · 8dp above bar</h2>
+      <div class="widget" aria-label="Proposed budget widget layout">
+        <div class="row">
+          <div class="label-row">
+            <span class="cat">Mobile / internet</span>
+            <span class="gap8" aria-hidden="true"></span>
+            <span class="vsep"></span>
+            <span class="period">Month</span>
+            <span class="vsep"></span>
+            <span class="pct">0%</span>
+          </div>
+          <div class="bar-gap"></div>
+          <div class="bar"><span style="width: 0%"></span></div>
+        </div>
+        <div class="row">
+          <div class="label-row">
+            <span class="cat">Transport &amp; Fuel</span>
+            <span></span>
+            <span class="vsep"></span>
+            <span class="period">Year</span>
+            <span class="vsep"></span>
+            <span class="pct">0%</span>
+          </div>
+          <div class="bar-gap"></div>
+          <div class="bar"><span style="width: 0%"></span></div>
+        </div>
+        <div class="row">
+          <div class="label-row">
+            <span class="cat">Food &amp; Dining</span>
+            <span></span>
+            <span class="vsep"></span>
+            <span class="period">Month</span>
+            <span class="vsep"></span>
+            <span class="pct">79%</span>
+          </div>
+          <div class="bar-gap"></div>
+          <div class="bar"><span style="width: 79%"></span></div>
+        </div>
+      </div>
+      <p class="legend">
+        Category = remainder · Period <code>40dp</code> · % <code>36dp</code> · dividers unchanged ·
+        bar <code>6dp</code>
+      </p>
+    </div>
+
+    <div class="panel">
+      <span class="tag">Last build — problematic</span>
+      <h2>6dp spacer steals category width · top-aligned text</h2>
+      <div class="widget" aria-label="Last build budget widget layout">
+        <div class="row">
+          <div class="label-row bad">
+            <span class="cat">Uncate…</span>
+            <span></span>
+            <span class="vsep"></span>
+            <span class="period">Month</span>
+            <span class="vsep"></span>
+            <span class="pct">0%</span>
+          </div>
+          <div class="bar-gap bad"></div>
+          <div class="bar"><span style="width: 0%"></span></div>
+        </div>
+        <div class="row">
+          <div class="label-row bad">
+            <span class="cat">Mobile…</span>
+            <span></span>
+            <span class="vsep"></span>
+            <span class="period">Month</span>
+            <span class="vsep"></span>
+            <span class="pct">0%</span>
+          </div>
+          <div class="bar-gap bad"></div>
+          <div class="bar"><span style="width: 0%"></span></div>
+        </div>
+        <div class="row">
+          <div class="label-row bad">
+            <span class="cat">Food &amp; D…</span>
+            <span></span>
+            <span class="vsep"></span>
+            <span class="period">Month</span>
+            <span class="vsep"></span>
+            <span class="pct">0%</span>
+          </div>
+          <div class="bar-gap bad"></div>
+          <div class="bar"><span style="width: 0%"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

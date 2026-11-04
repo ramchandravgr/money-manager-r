@@ -119,6 +119,19 @@ interface LoanScheduleDao {
     )
     suspend fun getPlannedDueUntil(upToMillis: Long): List<LoanScheduleEntryEntity>
 
+    @Query(
+        """
+        SELECT * FROM loan_schedule_entries
+        WHERE loanId = :loanId AND status = 'PLANNED' AND dueDateMillis > :afterMillis
+        ORDER BY dueDateMillis ASC, sequenceNumber ASC
+        LIMIT 1
+        """,
+    )
+    suspend fun getNextPlannedAfter(
+        loanId: Long,
+        afterMillis: Long,
+    ): LoanScheduleEntryEntity?
+
     @Query("SELECT * FROM loan_schedule_entries WHERE syncId = :syncId LIMIT 1")
     suspend fun getBySyncId(syncId: String): LoanScheduleEntryEntity?
 }

@@ -2,18 +2,19 @@ package com.mmr.app
 
 import android.app.Application
 import android.content.ComponentCallbacks
-import android.content.res.Configuration as AndroidConfiguration
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.mmr.app.reminder.ScheduledReminderWorkScheduler
 import com.mmr.app.widget.MmrWidgetPreviewRegistrar
 import com.mmr.app.widget.MmrWidgetRefresher
 import com.mmr.core.parser.catalog.UpiDisplayNameTable
 import dagger.hilt.android.HiltAndroidApp
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import android.content.res.Configuration as AndroidConfiguration
 
 @HiltAndroidApp
 class MmrApplication :
@@ -23,10 +24,13 @@ class MmrApplication :
 
     @Inject lateinit var widgetRefresher: MmrWidgetRefresher
 
+    @Inject lateinit var scheduledReminderWorkScheduler: ScheduledReminderWorkScheduler
+
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     override fun onCreate() {
         super.onCreate()
+        scheduledReminderWorkScheduler.ensurePeriodicReminderChecks()
         UpiDisplayNameTable.load(this)
         applicationScope.launch {
             MmrWidgetPreviewRegistrar.registerAll(this@MmrApplication)

@@ -87,7 +87,10 @@ class AddEditBudgetViewModel
                         base.copy(
                             categories = categories,
                             pickerHighlightedCategoryId = catId ?: base.pickerHighlightedCategoryId,
-                            canSave = validate(base.copy(categories = categories, categoryId = catId, subcategoryId = subId)),
+                            canSave =
+                                validate(
+                                    base.copy(categories = categories, categoryId = catId, subcategoryId = subId),
+                                ),
                         )
                     }
                 }
@@ -221,8 +224,11 @@ class AddEditBudgetViewModel
             if (state.periodType == BudgetPeriodType.CUSTOM) {
                 val start = state.customStartMillis
                 val end = state.customEndMillis
-                if (start == null || end == null || !MmrValidation.isValidEpochMillis(start) ||
-                    !MmrValidation.isValidEpochMillis(end) || end < start
+                if (start == null ||
+                    end == null ||
+                    !MmrValidation.isValidEpochMillis(start) ||
+                    !MmrValidation.isValidEpochMillis(end) ||
+                    end < start
                 ) {
                     return false
                 }

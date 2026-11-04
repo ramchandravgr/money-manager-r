@@ -1,5 +1,6 @@
 package com.mmr.core.data.repository
 
+import com.mmr.core.attachment.AssetAttachmentStore
 import com.mmr.core.attachment.TransactionAttachmentStore
 import com.mmr.core.backup.model.MmrAppSettingsBackup
 import com.mmr.core.common.dispatcher.IoDispatcher
@@ -74,6 +75,7 @@ class LanSyncRepositoryImpl
         private val nsdHelper: LanSyncNsdHelper,
         private val attachmentPuller: LanSyncAttachmentPuller,
         private val attachmentStore: TransactionAttachmentStore,
+        private val assetAttachmentStore: AssetAttachmentStore,
         private val tombstoneCoordinator: LanSyncTombstoneCoordinator,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : LanSyncRepository {
@@ -366,6 +368,17 @@ class LanSyncRepositoryImpl
                         )
                     }
                 }
+                if (preferencesStore.includeAttachments && remotePayload.assetAttachments.isNotEmpty()) {
+                    runCatching {
+                        attachmentPuller.pullMissingAssetAttachments(
+                            host = peer.host,
+                            port = peer.port,
+                            deviceId = identityStore.deviceId,
+                            authToken = device.theirAuthToken,
+                            records = remotePayload.assetAttachments,
+                        )
+                    }
+                }
                 val summary = summaryResult.getOrThrow()
                 if (!oneWayLocalPayload) {
                     tombstoneCoordinator.onSuccessfulSyncToPeer(
@@ -597,7 +610,10 @@ class LanSyncRepositoryImpl
             }
             val bytes =
                 runCatching {
-                    kotlinx.coroutines.runBlocking(ioDispatcher) { attachmentStore.readBytes(syncId) }
+                    kotlinx.coroutines.runBlocking(ioDispatcher) {
+                        attachmentStore.readBytes(syncId)
+                            ?: assetAttachmentStore.readBytes(syncId)
+                    }
                 }.getOrNull()
             if (bytes == null) {
                 return HttpLanResponse.json(404, """{"error":"not_found"}""")

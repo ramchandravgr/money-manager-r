@@ -18,9 +18,46 @@ object MmrReceiptImage {
         return applyExifOrientation(path, bitmap)
     }
 
-    fun normalizeUriBytes(bytes: ByteArray): ByteArray {
+    /** Downsampled decode for UI preview / full-screen viewer (avoids OOM on camera originals). */
+    fun decodeBitmapFileForDisplay(
+        path: String,
+        maxEdgePx: Int = 2048,
+    ): Bitmap? {
+        val bounds =
+            BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
+            }
+        BitmapFactory.decodeFile(path, bounds)
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return null
+        var sampleSize = 1
+        while (
+            bounds.outWidth / sampleSize > maxEdgePx ||
+            bounds.outHeight / sampleSize > maxEdgePx
+        ) {
+            sampleSize *= 2
+        }
+        val decodeOpts =
+            BitmapFactory.Options().apply {
+                inSampleSize = sampleSize
+            }
+        val bitmap = BitmapFactory.decodeFile(path, decodeOpts) ?: return null
+        return applyExifOrientation(path, bitmap)
+    }
+
+    /**
+     * Re-encode as JPEG with EXIF orientation applied. When [maxBytes] is set, lowers quality
+     * and scales down until the output fits (used for the 5 MB attachment cap).
+     */
+    fun normalizeUriBytes(
+        bytes: ByteArray,
+        maxBytes: Int = Int.MAX_VALUE,
+    ): ByteArray {
         val bitmap = decodeBitmapBytes(bytes)
-        return compressJpeg(bitmap)
+        return try {
+            encodeBitmapToJpegUnderMax(bitmap, maxBytes)
+        } finally {
+            bitmap.recycle()
+        }
     }
 
     fun writeNormalizedJpeg(
@@ -56,7 +93,11 @@ object MmrReceiptImage {
                     ExifInterface.ORIENTATION_NORMAL,
                 )
             }.getOrDefault(ExifInterface.ORIENTATION_NORMAL)
-        return rotateBitmap(bitmap, orientation) ?: bitmap
+        val rotated = rotateBitmap(bitmap, orientation) ?: bitmap
+        if (rotated !== bitmap) {
+            bitmap.recycle()
+        }
+        return rotated
     }
 
     private fun rotateBitmap(
@@ -87,9 +128,54 @@ object MmrReceiptImage {
         return Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
     }
 
-    private fun compressJpeg(bitmap: Bitmap): ByteArray {
+    private fun encodeBitmapToJpegUnderMax(
+        initial: Bitmap,
+        maxBytes: Int,
+    ): ByteArray {
+        if (maxBytes == Int.MAX_VALUE) {
+            return compressJpeg(initial, JPEG_QUALITY)
+        }
+        var bitmap = initial
+        var ownsScaledBitmap = false
+        val qualities = intArrayOf(92, 85, 75, 65, 55, 45, 35, 28)
+        try {
+            while (true) {
+                for (quality in qualities) {
+                    val encoded = compressJpeg(bitmap, quality)
+                    if (encoded.size <= maxBytes) {
+                        return encoded
+                    }
+                }
+                val minEdge = minOf(bitmap.width, bitmap.height)
+                if (minEdge <= 720) {
+                    val last = compressJpeg(bitmap, 20)
+                    if (last.size <= maxBytes) return last
+                    throw IllegalArgumentException(
+                        "Could not compress this image enough to stay under the size limit.",
+                    )
+                }
+                val newW = (bitmap.width * 0.85f).toInt().coerceAtLeast(1)
+                val newH = (bitmap.height * 0.85f).toInt().coerceAtLeast(1)
+                val scaled = Bitmap.createScaledBitmap(bitmap, newW, newH, true)
+                if (ownsScaledBitmap) {
+                    bitmap.recycle()
+                }
+                bitmap = scaled
+                ownsScaledBitmap = true
+            }
+        } finally {
+            if (ownsScaledBitmap) {
+                bitmap.recycle()
+            }
+        }
+    }
+
+    private fun compressJpeg(
+        bitmap: Bitmap,
+        quality: Int,
+    ): ByteArray {
         val out = ByteArrayOutputStream()
-        if (!bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, out)) {
+        if (!bitmap.compress(Bitmap.CompressFormat.JPEG, quality.coerceIn(1, 100), out)) {
             throw IllegalArgumentException("Could not compress image.")
         }
         return out.toByteArray()

@@ -78,7 +78,7 @@ fun RecurringExpandableReminderField(
     MmrTransactionFormExpandablePicker(
         label = "Reminder",
         value = displayValue,
-        emptyHint = "None",
+        emptyHint = "Select reminder",
         icon = MmrTransactionFormIcons.reminder,
         expanded = expanded,
         onExpandedChange = onExpandedChange,

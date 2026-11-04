@@ -7,6 +7,7 @@ import com.mmr.core.model.settings.MmrAppColorTheme
 enum class MmrThemeAppearance {
     LIGHT,
     DARK,
+
     /** Dark palette with true-black surfaces (OLED). */
     OLED,
 }
@@ -395,21 +396,22 @@ object MmrThemePresets {
 
     private fun classicCoralDark() =
         classicCoralLight().let { light ->
-            light.copy(
-                header = Color(0xFF1A1F38),
-                headerSelection = Color(0xFF12162A),
-                headerBrandTile = Color(0xFF0E1220),
-                listBackground = Color(0xFF12141C),
-                surface = Color(0xFF1C1F2A),
-                navBackground = Color(0xFF161820),
-                reversal = Color(0xFFF2F2F5),
-                textStrong = Color(0xFFE8E8ED),
-                textMedium = Color(0xFFABABB3),
-                textLight = Color(0xFF7A7A85),
-                borderMain = Color(0xFF2E313C),
-                transactionListBorder = Color(0xFF3A3D48),
-                configBackground = Color(0xFF0E1016),
-            ).withDarkChrome()
+            light
+                .copy(
+                    header = Color(0xFF1A1F38),
+                    headerSelection = Color(0xFF12162A),
+                    headerBrandTile = Color(0xFF0E1220),
+                    listBackground = Color(0xFF12141C),
+                    surface = Color(0xFF1C1F2A),
+                    navBackground = Color(0xFF161820),
+                    reversal = Color(0xFFF2F2F5),
+                    textStrong = Color(0xFFE8E8ED),
+                    textMedium = Color(0xFFABABB3),
+                    textLight = Color(0xFF7A7A85),
+                    borderMain = Color(0xFF2E313C),
+                    transactionListBorder = Color(0xFF3A3D48),
+                    configBackground = Color(0xFF0E1016),
+                ).withDarkChrome()
         }
 
     private fun oceanDark() = tintDark(oceanLight())

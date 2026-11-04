@@ -1,6 +1,7 @@
 package com.mmr.core.data.repository
 
 import android.util.Base64
+import com.mmr.core.attachment.AssetAttachmentStore
 import com.mmr.core.attachment.TransactionAttachmentStore
 import com.mmr.core.backup.AppSettingsBackupCoordinator
 import com.mmr.core.backup.BackupImportMode
@@ -8,12 +9,14 @@ import com.mmr.core.backup.BackupImportPlanner
 import com.mmr.core.backup.BackupJsonCodec
 import com.mmr.core.backup.BackupSignedZipCodec
 import com.mmr.core.backup.model.BackupRestoreSummary
+import com.mmr.core.backup.model.MmrBackupAssetAttachmentRecord
 import com.mmr.core.backup.model.MmrBackupAttachmentRecord
 import com.mmr.core.backup.model.MmrBackupPayload
 import com.mmr.core.common.dispatcher.IoDispatcher
 import com.mmr.core.database.MmrDatabase
 import com.mmr.core.database.dao.BackupDao
 import com.mmr.core.database.dao.SyncTombstoneDao
+import com.mmr.core.database.entity.AssetAttachmentEntity
 import com.mmr.core.database.entity.TransactionAttachmentEntity
 import com.mmr.core.domain.repository.BackupRepository
 import com.mmr.core.lansync.LanSyncTombstoneMerger
@@ -32,6 +35,7 @@ class BackupRepositoryImpl
         private val tombstoneMerger: LanSyncTombstoneMerger,
         private val appSettingsBackupCoordinator: AppSettingsBackupCoordinator,
         private val attachmentStore: TransactionAttachmentStore,
+        private val assetAttachmentStore: AssetAttachmentStore,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : BackupRepository {
         override suspend fun getLocalDataSummary(): BackupRestoreSummary =
@@ -48,7 +52,7 @@ class BackupRepositoryImpl
             withContext(ioDispatcher) {
                 val payload = buildPayload(includeAttachmentBytesInJson = false)
                 val payloadJson = BackupJsonCodec.encode(payload)
-                val attachmentBytes = collectAttachmentBytesForArchive()
+                val attachmentBytes = collectAllAttachmentBytesForArchive()
                 BackupSignedZipCodec.encode(payloadJson, attachmentBytes)
             }
 
@@ -94,6 +98,8 @@ class BackupRepositoryImpl
                 loanPayments = backupDao.getAllLoanPayments(),
                 recurringRules = backupDao.getAllRecurringRules(),
                 budgets = backupDao.getAllBudgets(),
+                assets = backupDao.getAllAssets(),
+                assetValuations = backupDao.getAllAssetValuations(),
                 notificationRules = backupDao.getAllNotificationRules(),
                 smsMessageRecords = backupDao.getSmsMessageRecordsForExport(),
                 transactionApprovals = backupDao.getTransactionApprovalsForExport(),
@@ -106,6 +112,12 @@ class BackupRepositoryImpl
                         buildAttachmentRecordsWithBase64()
                     } else {
                         buildAttachmentMetadataOnly()
+                    },
+                assetAttachments =
+                    if (includeAttachmentBytesInJson) {
+                        buildAssetAttachmentRecordsWithBase64()
+                    } else {
+                        buildAssetAttachmentMetadataOnly()
                     },
             )
 
@@ -120,6 +132,7 @@ class BackupRepositoryImpl
                 BackupImportMode.REPLACE -> {
                     val payload = BackupImportPlanner.prepareReplace(rawPayload)
                     attachmentStore.clearAllFiles()
+                    assetAttachmentStore.clearAllFiles()
                     backupDao.restoreAllUserData(
                         categories = payload.categories,
                         subcategories = payload.subcategories,
@@ -131,14 +144,18 @@ class BackupRepositoryImpl
                         loanPayments = payload.loanPayments,
                         recurringRules = payload.recurringRules,
                         budgets = payload.budgets,
+                        assets = payload.assets,
+                        assetValuations = payload.assetValuations,
                         notificationRules = payload.notificationRules,
                         smsMessageRecords = payload.smsMessageRecords,
                         transactionApprovals = payload.transactionApprovals,
                         categorizationRules = payload.categorizationRules,
                         trustedLanDevices = payload.trustedLanDevices,
                         transactionAttachments = payload.transactionAttachments.map { it.toEntity() },
+                        assetAttachments = payload.assetAttachments.map { it.toAssetEntity() },
                     )
                     restoreAttachments(payload.transactionAttachments, attachmentBytesBySyncId)
+                    restoreAssetAttachments(payload.assetAttachments, attachmentBytesBySyncId)
                     syncTombstoneDao.replaceAll(payload.tombstones)
                     return summaryFromPayload(payload, settingsRestored)
                 }
@@ -156,14 +173,18 @@ class BackupRepositoryImpl
                         loanPayments = payload.loanPayments,
                         recurringRules = payload.recurringRules,
                         budgets = payload.budgets,
+                        assets = payload.assets,
+                        assetValuations = payload.assetValuations,
                         notificationRules = payload.notificationRules,
                         smsMessageRecords = payload.smsMessageRecords,
                         transactionApprovals = payload.transactionApprovals,
                         categorizationRules = payload.categorizationRules,
                         trustedLanDevices = payload.trustedLanDevices,
                         transactionAttachments = payload.transactionAttachments.map { it.toEntity() },
+                        assetAttachments = payload.assetAttachments.map { it.toAssetEntity() },
                     )
                     restoreAttachments(payload.transactionAttachments, attachmentBytesBySyncId)
+                    restoreAssetAttachments(payload.assetAttachments, attachmentBytesBySyncId)
                     if (payload.tombstones.isNotEmpty()) {
                         tombstoneMerger.ingestRemoteTombstones(
                             payload.tombstones.map {
@@ -219,13 +240,72 @@ class BackupRepositoryImpl
                 )
             }
 
-        private suspend fun collectAttachmentBytesForArchive(): Map<String, ByteArray> =
-            backupDao
-                .getAllTransactionAttachments()
-                .mapNotNull { entity ->
-                    val bytes = attachmentStore.readBytes(entity.syncId) ?: return@mapNotNull null
-                    entity.syncId to bytes
-                }.toMap()
+        private suspend fun collectAllAttachmentBytesForArchive(): Map<String, ByteArray> {
+            val txn =
+                backupDao
+                    .getAllTransactionAttachments()
+                    .mapNotNull { entity ->
+                        val bytes = attachmentStore.readBytes(entity.syncId) ?: return@mapNotNull null
+                        entity.syncId to bytes
+                    }
+            val asset =
+                backupDao
+                    .getAllAssetAttachments()
+                    .mapNotNull { entity ->
+                        val bytes = assetAttachmentStore.readBytes(entity.syncId) ?: return@mapNotNull null
+                        entity.syncId to bytes
+                    }
+            return (txn + asset).toMap()
+        }
+
+        private suspend fun buildAssetAttachmentMetadataOnly(): List<MmrBackupAssetAttachmentRecord> =
+            backupDao.getAllAssetAttachments().map { entity ->
+                MmrBackupAssetAttachmentRecord(
+                    id = entity.id,
+                    syncId = entity.syncId,
+                    assetId = entity.assetId,
+                    mimeType = entity.mimeType,
+                    fileSizeBytes = entity.fileSizeBytes,
+                    createdAt = entity.createdAt,
+                    updatedAt = entity.updatedAt,
+                    contentBase64 = "",
+                )
+            }
+
+        private suspend fun buildAssetAttachmentRecordsWithBase64(): List<MmrBackupAssetAttachmentRecord> =
+            backupDao.getAllAssetAttachments().mapNotNull { entity ->
+                val bytes = assetAttachmentStore.readBytes(entity.syncId) ?: return@mapNotNull null
+                MmrBackupAssetAttachmentRecord(
+                    id = entity.id,
+                    syncId = entity.syncId,
+                    assetId = entity.assetId,
+                    mimeType = entity.mimeType,
+                    fileSizeBytes = entity.fileSizeBytes,
+                    createdAt = entity.createdAt,
+                    updatedAt = entity.updatedAt,
+                    contentBase64 = Base64.encodeToString(bytes, Base64.NO_WRAP),
+                )
+            }
+
+        private fun restoreAssetAttachments(
+            records: List<MmrBackupAssetAttachmentRecord>,
+            attachmentBytesBySyncId: Map<String, ByteArray>?,
+        ) {
+            if (attachmentBytesBySyncId != null) {
+                records.forEach { record ->
+                    val bytes = attachmentBytesBySyncId[record.syncId] ?: return@forEach
+                    assetAttachmentStore.writeBytes(record.syncId, bytes)
+                }
+            } else {
+                records.forEach { record ->
+                    if (record.contentBase64.isBlank()) return@forEach
+                    val bytes =
+                        runCatching { Base64.decode(record.contentBase64, Base64.DEFAULT) }.getOrNull()
+                            ?: return@forEach
+                    assetAttachmentStore.writeBytes(record.syncId, bytes)
+                }
+            }
+        }
 
         private fun restoreAttachments(
             records: List<MmrBackupAttachmentRecord>,
@@ -258,6 +338,17 @@ class BackupRepositoryImpl
                 updatedAt = updatedAt,
             )
 
+        private fun MmrBackupAssetAttachmentRecord.toAssetEntity() =
+            AssetAttachmentEntity(
+                id = id,
+                syncId = syncId,
+                assetId = assetId,
+                mimeType = mimeType,
+                fileSizeBytes = fileSizeBytes,
+                createdAt = createdAt,
+                updatedAt = updatedAt,
+            )
+
         private suspend fun readExistingIds(): BackupImportPlanner.ExistingIds =
             BackupImportPlanner.ExistingIds(
                 categories = backupDao.getAllCategories().map { it.id }.toSet(),
@@ -269,6 +360,9 @@ class BackupRepositoryImpl
                 smsRecords = backupDao.getAllSmsMessageRecords().map { it.id }.toSet(),
                 recurringRules = backupDao.getAllRecurringRules().map { it.id }.toSet(),
                 budgets = backupDao.getAllBudgets().map { it.id }.toSet(),
+                assets = backupDao.getAllAssets().map { it.id }.toSet(),
+                assetValuations = backupDao.getAllAssetValuations().map { it.id }.toSet(),
+                assetAttachments = backupDao.getAllAssetAttachments().map { it.id }.toSet(),
                 notificationRules = backupDao.getAllNotificationRules().map { it.id }.toSet(),
                 loanRevisions = backupDao.getAllLoanInterestRevisions().map { it.id }.toSet(),
                 loanScheduleEntries = backupDao.getAllLoanScheduleEntries().map { it.id }.toSet(),
@@ -293,6 +387,9 @@ class BackupRepositoryImpl
                 loanPayments = payload.loanPayments.size,
                 recurringRules = payload.recurringRules.size,
                 budgets = payload.budgets.size,
+                assets = payload.assets.size,
+                assetValuations = payload.assetValuations.size,
+                assetAttachments = payload.assetAttachments.size,
                 notificationRules = payload.notificationRules.size,
                 smsMessageRecords = payload.smsMessageRecords.size,
                 transactionApprovals = payload.transactionApprovals.size,
@@ -311,6 +408,9 @@ class BackupRepositoryImpl
                 loanPayments = backupDao.getAllLoanPayments().size,
                 recurringRules = backupDao.getAllRecurringRules().size,
                 budgets = backupDao.getAllBudgets().size,
+                assets = backupDao.getAllAssets().size,
+                assetValuations = backupDao.getAllAssetValuations().size,
+                assetAttachments = backupDao.getAllAssetAttachments().size,
                 notificationRules = backupDao.getAllNotificationRules().size,
                 smsMessageRecords = backupDao.getSmsMessageRecordsForExport().size,
                 transactionApprovals = backupDao.getTransactionApprovalsForExport().size,

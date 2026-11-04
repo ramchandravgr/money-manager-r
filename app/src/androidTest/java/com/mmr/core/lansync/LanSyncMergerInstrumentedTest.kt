@@ -33,11 +33,28 @@ class LanSyncMergerInstrumentedTest {
     fun setUp() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         graph = MmrInstrumentedRepositoryGraph(context)
+        val tombstoneRecorder =
+            com.mmr.core.lansync.LanSyncTombstoneRecorder(
+                graph.database.syncTombstoneDao(),
+                com.mmr.core.data.preferences
+                    .LanSyncIdentityStore(context),
+            )
+        val assetAttachmentRepository =
+            com.mmr.core.data.repository.AssetAttachmentRepositoryImpl(
+                context = context,
+                database = graph.database,
+                attachmentDao = graph.database.assetAttachmentDao(),
+                store =
+                    com.mmr.core.attachment
+                        .AssetAttachmentStore(context),
+                tombstoneRecorder = tombstoneRecorder,
+            )
         val tombstoneMerger =
             LanSyncTombstoneMerger(
                 database = graph.database,
                 tombstoneDao = graph.database.syncTombstoneDao(),
                 attachmentRepository = graph.transactionAttachmentRepository,
+                assetAttachmentRepository = assetAttachmentRepository,
             )
         merger =
             LanSyncMerger(

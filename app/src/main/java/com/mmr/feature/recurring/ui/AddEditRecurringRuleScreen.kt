@@ -27,6 +27,7 @@ import com.mmr.app.ui.components.MmrTransactionFormScreenBackground
 import com.mmr.app.ui.components.MmrTransactionFormSectionLabel
 import com.mmr.app.ui.components.MmrTransactionTypeSegment
 import com.mmr.core.model.enums.TransactionType
+import com.mmr.core.reminder.MmrReminderPresets
 import com.mmr.feature.recurring.model.AddEditRecurringRuleUiEvent
 import com.mmr.feature.recurring.model.AddEditRecurringRuleUiState
 import com.mmr.feature.recurring.viewmodel.AddEditRecurringRuleViewModel
@@ -38,16 +39,9 @@ import com.mmr.feature.transaction.ui.TransactionNameField
 import com.mmr.feature.transaction.ui.TransactionNoteField
 import com.mmr.feature.transaction.ui.TransactionRecurrenceIntervalChips
 
-private val reminderOptions =
-    listOf(
-        0 to "None",
-        60 to "1 hour before",
-        1440 to "1 day before",
-        2880 to "2 days before",
-    )
+private val reminderOptions = MmrReminderPresets.recurringReminderOptionsMinutes
 
-private fun reminderLabel(minutes: Int): String =
-    reminderOptions.firstOrNull { it.first == minutes }?.second ?: "Custom"
+private fun reminderLabel(minutes: Int): String = MmrReminderPresets.recurringReminderLabel(minutes)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -273,6 +267,11 @@ private fun RecurringRuleFormFields(
         )
     }
 
+    Text(
+        text = "Reminder is required — choose how many days before the due date to notify you.",
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
     RecurringExpandableReminderField(
         displayValue = reminderLabel(uiState.reminderMinutesBefore),
         selectedMinutes = uiState.reminderMinutesBefore,

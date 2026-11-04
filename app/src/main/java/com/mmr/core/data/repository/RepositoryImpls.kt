@@ -477,7 +477,9 @@ class AccountRepositoryImpl
                     linkedTransactionCount = transactionDao.countInvolvingAccount(accountId),
                     linkedRecurringRuleCount = recurringRuleDao.countInvolvingAccount(accountId),
                     isBlocked = true,
-                    blockReason = "This account is the loan ledger for an active loan. Close or reconfigure the loan first.",
+                    blockReason =
+                        "This account is the loan ledger for an active loan. " +
+                            "Close or reconfigure the loan first.",
                 )
             }
             return AccountDeletionPreview(

@@ -1,6 +1,7 @@
 package com.mmr.feature.approval.ui
 
 import android.Manifest
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -27,8 +28,18 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -86,6 +97,18 @@ fun ApprovalCenterScreen(
     )
     val context = LocalContext.current
     var smsPreviewCandidate by remember { mutableStateOf<ApprovalCandidateUi?>(null) }
+
+    LaunchedEffect(Unit) {
+        viewModel.openManualEntryForApprovalId.collect { approvalId ->
+            Toast
+                .makeText(
+                    context,
+                    context.getString(R.string.manual_sms_unparsed_toast),
+                    Toast.LENGTH_LONG,
+                ).show()
+            onNavigateToEditPending(approvalId)
+        }
+    }
 
     LaunchedEffect(launchApprovalId, launchAction, state.candidates, state.isLoading) {
         if (widgetLaunchConsumed || launchApprovalId <= 0L || launchAction.isBlank() || state.isLoading) {

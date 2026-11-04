@@ -5,6 +5,7 @@ import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
@@ -12,6 +13,7 @@ import androidx.compose.material.icons.outlined.AccountBalance
 import androidx.compose.material.icons.outlined.Autorenew
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.Inventory2
 import androidx.compose.material.icons.outlined.PieChart
 import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.Settings
@@ -39,6 +41,11 @@ internal fun mmrDestinationIconPair(route: String): MmrNavIconPair =
             MmrNavIconPair(
                 outlined = Icons.Outlined.PieChart,
                 filled = Icons.Filled.PieChart,
+            )
+        Screen.Assets.route ->
+            MmrNavIconPair(
+                outlined = Icons.Outlined.Inventory2,
+                filled = Icons.Filled.Inventory2,
             )
         Screen.Scheduled.route ->
             MmrNavIconPair(

@@ -22,6 +22,9 @@ internal class SmsTemplateMatcher(
         normalizedBody: String,
     ): SmsTemplateMatch? = matchByIntent(sms, normalizedBody, SmsParseIntent.SETTLED)
 
+    fun matchSettledBodyOnly(normalizedBody: String): SmsTemplateMatch? =
+        matchByIntentBodyOnly(normalizedBody, SmsParseIntent.SETTLED)
+
     fun matchInformational(
         sms: RawSmsMessage,
         normalizedBody: String,
@@ -52,6 +55,19 @@ internal class SmsTemplateMatcher(
         for (template in templates) {
             if (template.intent != intent) continue
             if (!senderMatches(senderKey, template.senderSuffixes)) continue
+            val matcher = template.bodyPattern.matcher(normalizedBody)
+            if (!matcher.find()) continue
+            buildMatch(template, matcher)?.let { return it }
+        }
+        return null
+    }
+
+    private fun matchByIntentBodyOnly(
+        normalizedBody: String,
+        intent: SmsParseIntent,
+    ): SmsTemplateMatch? {
+        for (template in templates) {
+            if (template.intent != intent) continue
             val matcher = template.bodyPattern.matcher(normalizedBody)
             if (!matcher.find()) continue
             buildMatch(template, matcher)?.let { return it }

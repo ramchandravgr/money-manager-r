@@ -276,6 +276,7 @@ data class AddEditLoanUiState(
     val tenureMonths: String = "",
     val fixedEmiOverride: String = "",
     val emiDayOfMonth: String = "1",
+    val emiReminderDaysBefore: Int = 1,
     val notes: String = "",
     val originalRepaymentMode: LoanRepaymentMode? = null,
     val errorMessage: String? = null,
@@ -337,6 +338,10 @@ sealed interface AddEditLoanUiEvent {
 
     data class OnEmiDayChanged(
         val day: String,
+    ) : AddEditLoanUiEvent
+
+    data class OnEmiReminderDaysSelected(
+        val days: Int,
     ) : AddEditLoanUiEvent
 
     data class OnFixedEmiOverrideChanged(

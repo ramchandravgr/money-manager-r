@@ -6,8 +6,7 @@ import com.mmr.core.model.settings.MmrThemeMode
 
 /** Resolves light/dark brand palettes from user preference and/or system night mode. */
 object MmrSystemThemeAppearance {
-    fun fromContext(context: Context): MmrThemeAppearance =
-        fromUiMode(context.resources.configuration.uiMode)
+    fun fromContext(context: Context): MmrThemeAppearance = fromUiMode(context.resources.configuration.uiMode)
 
     fun resolve(
         themeMode: MmrThemeMode,

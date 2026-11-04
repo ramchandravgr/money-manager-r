@@ -18,11 +18,14 @@ data class MmrLanSyncPayload(
     val loanScheduleEntries: List<LanLoanScheduleEntryRecord> = emptyList(),
     val recurringRules: List<LanRecurringRuleRecord> = emptyList(),
     val budgets: List<LanBudgetRecord> = emptyList(),
+    val assets: List<LanAssetRecord> = emptyList(),
+    val assetValuations: List<LanAssetValuationRecord> = emptyList(),
     val categorizationRules: List<LanCategorizationRuleRecord> = emptyList(),
     val notificationRules: List<LanNotificationRuleRecord> = emptyList(),
     val appSettings: MmrAppSettingsBackup? = null,
     val displaySettings: AppDisplaySettingsSnapshot? = null,
     val attachments: List<LanAttachmentRecord> = emptyList(),
+    val assetAttachments: List<LanAssetAttachmentRecord> = emptyList(),
     val tombstones: List<LanSyncTombstoneRecord> = emptyList(),
 )
 
@@ -87,6 +90,7 @@ data class LanLoanRecord(
     val remainingTenureMonths: Int?,
     val fixedEmiAmount: Double?,
     val emiDayOfMonth: Int?,
+    val emiReminderDaysBefore: Int = 1,
     val fixedEmiInputMode: String?,
     val notes: String?,
     val createdAt: Long,

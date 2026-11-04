@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.testTag
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mmr.app.testing.MmrTestTags
+import com.mmr.app.ui.components.MmrIosSettingsMonospaceFieldSlot
 import com.mmr.app.ui.components.MmrIosSettingsPrimaryActionSlot
 import com.mmr.app.ui.components.MmrIosSettingsSection
 import com.mmr.app.ui.components.MmrIosSettingsSectionBodyText
@@ -44,7 +45,9 @@ fun WebManageScreen(
         MmrIosSettingsSection(
             title = "About",
             isFirstInScreen = true,
-            footer = "Open the URL on a laptop on the same Wi‑Fi. Password changes apply without restarting the server.",
+            footer =
+                "Open the URL on a laptop on the same Wi‑Fi. " +
+                    "Password changes apply without restarting the server.",
         ) {
             MmrIosSettingsSectionBodyText(text = "Browser access on your local network only.")
         }
@@ -90,17 +93,37 @@ fun WebManageScreen(
                 MmrIosSettingsSectionBodyText(
                     text = "Connect to Wi‑Fi to use Web Manage from another device.",
                 )
-            } else if (uiState.enabled) {
-                if (!uiState.serverListening) {
+            }
+            when {
+                uiState.enabled && uiState.serverListening -> {
+                    if (!uiState.onWifi) {
+                        MmrIosSettingsSectionBodyText(
+                            text =
+                                "Server is running on this phone; connect Wi‑Fi so a laptop on the same network can reach it.",
+                        )
+                    }
+                    MmrIosSettingsMonospaceFieldSlot(
+                        fieldLabel = "IP address",
+                        value = uiState.lanIpv4 ?: "Unknown — check Wi‑Fi details in system settings",
+                        accentValue = uiState.lanIpv4 != null,
+                    )
+                    MmrIosSettingsMonospaceFieldSlot(
+                        fieldLabel = "Port",
+                        value = uiState.serverPort.toString(),
+                        accentValue = true,
+                        showDividerBelow = false,
+                    )
+                    uiState.localUrl?.let { url ->
+                        MmrIosSettingsSectionBodyText(text = "On your laptop browser:")
+                        MmrSettingsMonospaceText(
+                            text = url,
+                            accent = true,
+                        )
+                    }
+                }
+                uiState.enabled -> {
                     MmrIosSettingsSectionBodyText(
                         text = "Server is starting… Turn Web Manage off and on if this message stays.",
-                    )
-                }
-                uiState.localUrl?.let { url ->
-                    MmrIosSettingsSectionBodyText(text = "On your laptop browser:")
-                    MmrSettingsMonospaceText(
-                        text = url,
-                        accent = true,
                     )
                 }
             }

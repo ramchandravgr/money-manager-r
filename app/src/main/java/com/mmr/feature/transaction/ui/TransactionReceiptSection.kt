@@ -45,6 +45,7 @@ fun TransactionReceiptSection(
     modifier: Modifier = Modifier,
     canAddMore: Boolean = true,
     readOnly: Boolean = false,
+    sectionLabel: String = "Receipt photos",
     onReceiptClick: (filePath: String) -> Unit = {},
 ) {
     if (readOnly && receipts.isEmpty()) return
@@ -52,7 +53,7 @@ fun TransactionReceiptSection(
     if (receipts.isEmpty()) return
 
     Column(modifier = modifier.fillMaxWidth()) {
-        MmrTransactionFormSectionLabel(text = "Receipt photos")
+        MmrTransactionFormSectionLabel(text = sectionLabel)
         MmrTransactionFormCard {
             Row(
                 modifier =
@@ -106,7 +107,9 @@ private fun ReceiptThumbnail(
             val bitmap =
                 remember(filePath) {
                     filePath?.let { path ->
-                        runCatching { MmrReceiptImage.decodeBitmapFile(path)?.asImageBitmap() }.getOrNull()
+                        runCatching {
+                            MmrReceiptImage.decodeBitmapFileForDisplay(path, maxEdgePx = 512)?.asImageBitmap()
+                        }.getOrNull()
                     }
                 }
             if (bitmap != null) {

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.mmr.core.attachment.AssetAttachmentStore
 import com.mmr.core.attachment.TransactionAttachmentStore
 import com.mmr.core.backup.AppSettingsBackupCoordinator
 import com.mmr.core.data.preferences.AppDisplaySettingsStore
@@ -13,6 +14,7 @@ import com.mmr.core.data.preferences.LanSyncWifiTrustStore
 import com.mmr.core.data.preferences.SmsInboundSettingsStore
 import com.mmr.core.data.preferences.SmsScanSettingsStore
 import com.mmr.core.data.preferences.WebManagePreferencesStore
+import com.mmr.core.data.repository.AssetAttachmentRepositoryImpl
 import com.mmr.core.data.repository.BackupRepositoryImpl
 import com.mmr.core.database.MmrDatabase
 import com.mmr.core.database.entity.AccountEntity
@@ -64,26 +66,35 @@ class BackupRestoreInstrumentedTest {
                 lanSyncWifiTrustStore = LanSyncWifiTrustStore(context),
                 webManagePreferencesStore = WebManagePreferencesStore(context),
             )
+        val tombstoneRecorder =
+            com.mmr.core.lansync.LanSyncTombstoneRecorder(
+                database.syncTombstoneDao(),
+                com.mmr.core.data.preferences
+                    .LanSyncIdentityStore(context),
+            )
+        val transactionAttachmentRepository =
+            com.mmr.core.data.repository.TransactionAttachmentRepositoryImpl(
+                context = context,
+                database = database,
+                attachmentDao = database.transactionAttachmentDao(),
+                transactionDao = database.transactionDao(),
+                store = TransactionAttachmentStore(context),
+                tombstoneRecorder = tombstoneRecorder,
+            )
+        val assetAttachmentRepository =
+            AssetAttachmentRepositoryImpl(
+                context = context,
+                database = database,
+                attachmentDao = database.assetAttachmentDao(),
+                store = AssetAttachmentStore(context),
+                tombstoneRecorder = tombstoneRecorder,
+            )
         val tombstoneMerger =
             LanSyncTombstoneMerger(
                 database = database,
                 tombstoneDao = database.syncTombstoneDao(),
-                attachmentRepository =
-                    com.mmr.core.data.repository.TransactionAttachmentRepositoryImpl(
-                        context = context,
-                        database = database,
-                        attachmentDao = database.transactionAttachmentDao(),
-                        transactionDao = database.transactionDao(),
-                        store =
-                            com.mmr.core.attachment
-                                .TransactionAttachmentStore(context),
-                        tombstoneRecorder =
-                            com.mmr.core.lansync.LanSyncTombstoneRecorder(
-                                database.syncTombstoneDao(),
-                                com.mmr.core.data.preferences
-                                    .LanSyncIdentityStore(context),
-                            ),
-                    ),
+                attachmentRepository = transactionAttachmentRepository,
+                assetAttachmentRepository = assetAttachmentRepository,
             )
         repository =
             BackupRepositoryImpl(
@@ -92,6 +103,7 @@ class BackupRestoreInstrumentedTest {
                 tombstoneMerger = tombstoneMerger,
                 appSettingsBackupCoordinator = appSettingsCoordinator,
                 attachmentStore = TransactionAttachmentStore(context),
+                assetAttachmentStore = AssetAttachmentStore(context),
                 ioDispatcher = Dispatchers.IO,
             )
     }

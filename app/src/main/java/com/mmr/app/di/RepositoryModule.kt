@@ -69,4 +69,16 @@ abstract class RepositoryModule {
     abstract fun bindGoogleDriveBackupRepository(
         impl: com.mmr.core.data.repository.GoogleDriveBackupRepositoryImpl,
     ): com.mmr.core.domain.repository.GoogleDriveBackupRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAssetRepository(
+        impl: com.mmr.core.data.repository.AssetRepositoryImpl,
+    ): com.mmr.core.domain.repository.AssetRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAssetAttachmentRepository(
+        impl: com.mmr.core.data.repository.AssetAttachmentRepositoryImpl,
+    ): com.mmr.core.domain.repository.AssetAttachmentRepository
 }

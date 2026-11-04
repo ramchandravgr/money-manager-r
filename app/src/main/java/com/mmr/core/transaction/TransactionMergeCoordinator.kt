@@ -12,6 +12,7 @@ import com.mmr.core.loan.LoanTransactionCoordinator
 import com.mmr.core.model.enums.RecordStatus
 import com.mmr.core.model.enums.TransactionSourceType
 import com.mmr.core.model.enums.TransactionType
+import com.mmr.core.transaction.TransactionMergeAmounts
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -39,26 +40,27 @@ class TransactionMergeCoordinator
                 val transactions = ids.mapNotNull { transactionDao.getById(it) }
                 require(transactions.size == ids.size) { "One or more transactions were not found." }
 
-                val type = transactions.first().type
-                require(transactions.all { it.type == type }) {
-                    "Merged transactions must share the same type (expense, income, or transfer)."
-                }
                 require(transactions.all { it.status == RecordStatus.APPROVED }) {
                     "Only approved transactions can be merged."
                 }
                 require(transactions.none { it.sourceType == TransactionSourceType.LOAN }) {
                     "Loan ledger entries cannot be merged from the home screen."
                 }
+                require(
+                    transactions.none {
+                        it.type == TransactionType.TRANSFER ||
+                            it.type == TransactionType.LOAN_PAYMENT
+                    },
+                ) {
+                    "Transfers and loan payments cannot be merged with other types from the home screen."
+                }
+
+                val resolved = TransactionMergeAmounts.resolve(transactions)
+                require(resolved.amount >= 0.0) { "Merged total cannot be negative." }
 
                 val accountId = transactions.first().accountId
                 require(transactions.all { it.accountId == accountId }) {
                     "Merged transactions must use the same account."
-                }
-                if (type == TransactionType.TRANSFER) {
-                    val related = transactions.first().relatedAccountId
-                    require(transactions.all { it.relatedAccountId == related }) {
-                        "Transfers must share the same from/to accounts to merge."
-                    }
                 }
 
                 val loanPaymentCount =
@@ -73,8 +75,8 @@ class TransactionMergeCoordinator
                         loanPaymentDao.getByTransactionId(txn.id)
                     }
 
-                val totalAmount = transactions.sumOf { it.amount }
-                require(totalAmount > 0.0) { "Merged total must be greater than zero." }
+                val totalAmount = resolved.amount
+                val mergedType = resolved.type
 
                 val hasSmsLink =
                     transactions.any { txn ->
@@ -91,7 +93,7 @@ class TransactionMergeCoordinator
                     TransactionEntity(
                         dateTime = resolvedDateTime,
                         amount = totalAmount,
-                        type = type,
+                        type = mergedType,
                         categoryId = template.categoryId,
                         subcategoryId = template.subcategoryId,
                         note = name,
@@ -105,7 +107,11 @@ class TransactionMergeCoordinator
                         updatedAt = now,
                         isEdited = true,
                     )
-                RepositoryGuards.requireValidTransactionEntity(merged)
+                if (totalAmount > 0.0) {
+                    RepositoryGuards.requireValidTransactionEntity(merged)
+                } else {
+                    RepositoryGuards.requireValidTransactionEntityAllowZeroAmount(merged)
+                }
                 val mergedId = transactionDao.insert(merged)
 
                 smsMessageRecordDao.reassignMatchedTransactions(oldIds = ids, newId = mergedId)

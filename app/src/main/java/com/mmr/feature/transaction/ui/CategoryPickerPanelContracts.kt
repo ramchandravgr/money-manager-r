@@ -60,9 +60,17 @@ fun budgetCategoryPickerCallbacks(
     onEvent: (com.mmr.feature.budget.model.AddEditBudgetUiEvent) -> Unit,
 ): CategoryPickerPanelCallbacks =
     CategoryPickerPanelCallbacks(
-        onParentSelected = { onEvent(com.mmr.feature.budget.model.AddEditBudgetUiEvent.OnPickerParentSelected(it)) },
+        onParentSelected = {
+            onEvent(
+                com.mmr.feature.budget.model.AddEditBudgetUiEvent
+                    .OnPickerParentSelected(it),
+            )
+        },
         onSubcategorySelected = {
-            onEvent(com.mmr.feature.budget.model.AddEditBudgetUiEvent.OnPickerSubcategorySelected(it))
+            onEvent(
+                com.mmr.feature.budget.model.AddEditBudgetUiEvent
+                    .OnPickerSubcategorySelected(it),
+            )
         },
         onConfirmParentOnly = { onEvent(com.mmr.feature.budget.model.AddEditBudgetUiEvent.OnPickerConfirmParentOnly) },
     )

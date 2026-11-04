@@ -16,6 +16,7 @@ import com.mmr.core.loan.repaymentModeEnum
 import com.mmr.core.model.enums.AccountType
 import com.mmr.core.model.enums.LoanRepaymentMode
 import com.mmr.core.model.enums.LoanStatus
+import com.mmr.core.reminder.MmrReminderPresets
 import com.mmr.feature.loan.model.AddEditLoanUiEvent
 import com.mmr.feature.loan.model.AddEditLoanUiState
 import com.mmr.feature.loan.model.FixedEmiEntryMode
@@ -94,6 +95,7 @@ class AddEditLoanViewModel
                             tenureMonths = if (entryMode == FixedEmiEntryMode.TENURE) tenureStored else "",
                             fixedEmiOverride = if (entryMode == FixedEmiEntryMode.EMI_AMOUNT) emiStored else "",
                             emiDayOfMonth = loan.emiDayOfMonth.toString(),
+                            emiReminderDaysBefore = loan.emiReminderDaysBefore,
                             notes = loan.notes ?: "",
                             canSave = true,
                         )
@@ -217,6 +219,14 @@ class AddEditLoanViewModel
                     val clean = event.day.filter { it.isDigit() }.take(2)
                     _uiState.update { it.copy(emiDayOfMonth = clean) }
                 }
+                is AddEditLoanUiEvent.OnEmiReminderDaysSelected -> {
+                    _uiState.update {
+                        it.copy(
+                            emiReminderDaysBefore = event.days,
+                            canSave = validate(it.copy(emiReminderDaysBefore = event.days)),
+                        )
+                    }
+                }
                 AddEditLoanUiEvent.OnSaveClick -> {
                     saveLoan()
                 }
@@ -231,7 +241,14 @@ class AddEditLoanViewModel
                     MmrValidation.parsePositiveAmount(state.principalAmount)
                 }
             val dueDateValid = state.dueDate == null || MmrValidation.isValidEpochMillis(state.dueDate)
-            return state.name.isNotBlank() && state.lenderName.isNotBlank() && amount != null && dueDateValid
+            val emiReminderValid =
+                state.repaymentMode != LoanRepaymentMode.FIXED_EMI ||
+                    MmrReminderPresets.isValidLoanEmiReminderDays(state.emiReminderDaysBefore)
+            return state.name.isNotBlank() &&
+                state.lenderName.isNotBlank() &&
+                amount != null &&
+                dueDateValid &&
+                emiReminderValid
         }
 
         private fun saveLoan() {
@@ -249,6 +266,12 @@ class AddEditLoanViewModel
                 return
             }
             val emiDay = state.emiDayOfMonth.toIntOrNull()?.coerceIn(1, 28) ?: 1
+            if (state.repaymentMode == LoanRepaymentMode.FIXED_EMI &&
+                !MmrReminderPresets.isValidLoanEmiReminderDays(state.emiReminderDaysBefore)
+            ) {
+                _uiState.update { it.copy(errorMessage = "Choose how many days before EMI to remind you.") }
+                return
+            }
             val tenureInput = state.tenureMonths.toIntOrNull()?.takeIf { it > 0 }
             val emiInput = state.fixedEmiOverride.toDoubleOrNull()?.takeIf { it > 0.0 }
             val (tenureMonths, fixedEmi) =
@@ -304,6 +327,7 @@ class AddEditLoanViewModel
                                 linkedDebitAccountId = state.linkedDebitAccountId,
                                 linkedLoanAccountId = state.linkedLoanAccountId,
                                 emiDayOfMonth = emiDay,
+                                emiReminderDaysBefore = state.emiReminderDaysBefore,
                                 tenureMonths = tenureMonths ?: existing.tenureMonths,
                                 remainingTenureMonths = tenureMonths ?: existing.remainingTenureMonths,
                                 fixedEmiAmount = fixedEmi ?: existing.fixedEmiAmount,
@@ -350,6 +374,7 @@ class AddEditLoanViewModel
                                 remainingTenureMonths = tenureMonths,
                                 fixedEmiAmount = fixedEmi,
                                 emiDayOfMonth = emiDay,
+                                emiReminderDaysBefore = state.emiReminderDaysBefore,
                                 fixedEmiInputMode =
                                     if (state.repaymentMode == LoanRepaymentMode.FIXED_EMI) {
                                         state.fixedEmiEntryMode.name

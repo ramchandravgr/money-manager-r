@@ -20,6 +20,7 @@ object MmrTestTags {
     const val scheduledScreen = "scheduled.screen"
 
     fun scheduledSectionTab(section: ScheduledSection): String = "scheduled.tab.${section.name.lowercase()}"
+
     val navSettings = navTab(Screen.Settings.route)
 
     fun homeViewTab(tab: HomeViewTab): String = "home.tab.${tab.name.lowercase()}"

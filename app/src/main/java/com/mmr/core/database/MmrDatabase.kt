@@ -24,6 +24,9 @@ import com.mmr.core.database.dao.TransactionApprovalDao
 import com.mmr.core.database.dao.TransactionAttachmentDao
 import com.mmr.core.database.dao.TransactionDao
 import com.mmr.core.database.entity.AccountEntity
+import com.mmr.core.database.entity.AssetAttachmentEntity
+import com.mmr.core.database.entity.AssetEntity
+import com.mmr.core.database.entity.AssetValuationEntity
 import com.mmr.core.database.entity.BudgetEntity
 import com.mmr.core.database.entity.CategorizationRuleEntity
 import com.mmr.core.database.entity.CategoryEntity
@@ -66,14 +69,17 @@ import com.mmr.core.database.entity.TrustedLanDeviceEntity
         SyncTombstoneEntity::class,
         LanSyncTombstonePeerAckEntity::class,
         BudgetEntity::class,
+        AssetEntity::class,
+        AssetValuationEntity::class,
+        AssetAttachmentEntity::class,
     ],
-    version = 19,
+    version = 23,
     exportSchema = false,
 )
 @TypeConverters(EnumConverters::class)
 abstract class MmrDatabase : RoomDatabase() {
     companion object {
-        const val SCHEMA_VERSION = 19
+        const val SCHEMA_VERSION = 23
     }
 
     abstract fun transactionDao(): TransactionDao
@@ -113,4 +119,10 @@ abstract class MmrDatabase : RoomDatabase() {
     abstract fun lanSyncTombstoneAckDao(): LanSyncTombstoneAckDao
 
     abstract fun budgetDao(): BudgetDao
+
+    abstract fun assetDao(): com.mmr.core.database.dao.AssetDao
+
+    abstract fun assetValuationDao(): com.mmr.core.database.dao.AssetValuationDao
+
+    abstract fun assetAttachmentDao(): com.mmr.core.database.dao.AssetAttachmentDao
 }

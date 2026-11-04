@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MMR — small ad placement options (mockups)</title>
+  <style>
+    :root {
+      --bg: #f4f2ef;
+      --phone: #1a1a1a;
+      --screen: #faf9f7;
+      --header: #e85d4c;
+      --header-text: #fff;
+      --nav: #fff;
+      --border: #ddd8d0;
+      --ad: #d4e4f7;
+      --ad-border: #6b9fd4;
+      --ad-text: #1e4a6f;
+      --muted: #6b6560;
+      --card: #fff;
+      --accent: #c45c4a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: #2a2622;
+      margin: 0;
+      padding: 2rem 1.5rem 3rem;
+      line-height: 1.5;
+    }
+    h1 { font-size: 1.5rem; font-weight: 600; margin: 0 0 0.5rem; }
+    .intro { max-width: 52rem; color: var(--muted); margin-bottom: 2rem; font-size: 0.95rem; }
+    .intro strong { color: #2a2622; }
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 1rem 2rem;
+      margin-bottom: 2rem; padding: 1rem 1.25rem;
+      background: var(--card); border-radius: 10px; border: 1px solid var(--border);
+      max-width: 52rem; font-size: 0.875rem;
+    }
+    .legend span { display: flex; align-items: center; gap: 0.5rem; }
+    .swatch-ad {
+      width: 1.25rem; height: 1.25rem; border-radius: 4px;
+      background: var(--ad); border: 2px dashed var(--ad-border);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 2rem 1.5rem;
+      max-width: 1200px;
+    }
+    figure { margin: 0; }
+    figcaption {
+      margin-top: 0.75rem;
+      font-size: 0.875rem;
+    }
+    figcaption h2 { font-size: 1rem; margin: 0 0 0.35rem; font-weight: 600; }
+    figcaption p { margin: 0.25rem 0; color: var(--muted); font-size: 0.8125rem; }
+    .tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--ad-text);
+      background: var(--ad);
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      margin-bottom: 0.35rem;
+    }
+    .phone {
+      width: 260px;
+      margin: 0 auto;
+      background: var(--phone);
+      border-radius: 28px;
+      padding: 10px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+    }
+    .screen {
+      background: var(--screen);
+      border-radius: 20px;
+      overflow: hidden;
+      height: 480px;
+      display: flex;
+      flex-direction: column;
+      font-size: 11px;
+      position: relative;
+    }
+    .status { height: 22px; background: var(--header); opacity: 0.9; }
+    .appbar {
+      background: var(--header);
+      color: var(--header-text);
+      padding: 10px 12px;
+      font-weight: 600;
+      font-size: 13px;
+    }
+    .content {
+      flex: 1;
+      overflow: hidden;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 0;
+    }
+    .strip {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+    }
+    .strip .amt { font-weight: 700; color: var(--accent); }
+    .row {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 10px;
+    }
+    .row .sub { color: var(--muted); font-size: 9px; }
+    .chart {
+      flex: 1;
+      min-height: 80px;
+      background: linear-gradient(180deg, #eee 0%, var(--card) 100%);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-around;
+      padding: 8px;
+      gap: 4px;
+    }
+    .bar { width: 18%; background: var(--accent); opacity: 0.5; border-radius: 3px 3px 0 0; }
+    .fab {
+      position: absolute;
+      right: 18px;
+      bottom: 72px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--accent);
+      opacity: 0.85;
+    }
+    .bottomnav {
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 4px 10px;
+      background: var(--nav);
+      border-top: 1px solid var(--border);
+      font-size: 8px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .bottomnav .on { color: var(--accent); font-weight: 600; }
+    .ad {
+      background: var(--ad);
+      border: 2px dashed var(--ad-border);
+      color: var(--ad-text);
+      font-size: 9px;
+      font-weight: 600;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .ad-label { font-size: 8px; opacity: 0.85; }
+    .ad-banner { height: 36px; border-radius: 6px; margin: 0 0 4px; }
+    .ad-above-nav {
+      height: 40px;
+      margin: 0;
+      border-radius: 0;
+      border-left: none;
+      border-right: none;
+    }
+    .ad-inline { height: 44px; margin: 4px 0; }
+    .ad-corner {
+      position: absolute;
+      right: 10px;
+      bottom: 58px;
+      width: 72px;
+      height: 72px;
+      border-radius: 8px;
+      z-index: 2;
+      font-size: 8px;
+      flex-direction: column;
+      padding: 4px;
+    }
+    .ad-card-foot {
+      height: 52px;
+      margin-top: auto;
+      border-radius: 8px;
+    }
+    .ad-between { height: 38px; }
+    .scroll-fade {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow: hidden;
+      mask-image: linear-gradient(#000 70%, transparent);
+    }
+    .avoid {
+      max-width: 52rem;
+      margin: 2.5rem auto 0;
+      padding: 1rem 1.25rem;
+      background: #fff5f0;
+      border: 1px solid #e8c4b8;
+      border-radius: 10px;
+      font-size: 0.875rem;
+    }
+    .avoid h3 { margin: 0 0 0.5rem; font-size: 0.95rem; }
+    .avoid ul { margin: 0; padding-left: 1.25rem; color: #5c4a42; }
+  </style>
+</head>
+<body>
+  <h1>Money Inbox — small ad placement mockups</h1>
+  <p class="intro">
+    Wireframes for <strong>non–full-screen</strong> ads (banners, small native units, corner tiles).
+    Blue dashed boxes are ad slots. Not implemented in the app — planning reference only.
+    Sizes shown are proportional; real units are often <strong>320×50</strong> banner,
+    <strong>300×250</strong> medium rectangle, or <strong>adaptive anchored</strong> above the nav bar.
+  </p>
+
+  <div class="legend">
+    <span><span class="swatch-ad"></span> Proposed ad zone</span>
+    <span><strong>A</strong> Above bottom nav (all main tabs)</span>
+    <span><strong>B</strong> Below period / summary strip</span>
+    <span><strong>C</strong> Inline in scroll lists</span>
+    <span><strong>D</strong> List footer (end of scroll)</span>
+    <span><strong>E</strong> Small corner overlay</span>
+    <span><strong>F</strong> Settings sub-screens only (optional)</span>
+  </div>
+
+  <div class="grid">
+    <figure>
+      <div class="phone">
+        <div class="screen">
+          <div class="status"></div>
+          <div class="appbar">Transactions</div>
+          <div class="content">
+            <div class="strip"><span>Income / Expense / Total</span><span class="amt">₹24,300</span></div>
+            <div class="ad ad-banner ad-inline"><span>Ad <strong>B</strong> · banner under summary</span></div>
+            <div class="scroll-fade">
+              <div class="row">Coffee shop <span class="sub">Today · Food</span></div>
+              <div class="row">Salary <span class="sub">Mon · Income</span></div>
+              <div class="ad ad-between"><span>Ad <strong>C</strong> · every N rows (native)</span></div>
+              <div class="row">Fuel <span class="sub">Sun · Transport</span></div>
+              <div class="row">…</div>
+            </div>
+          </div>
+          <div class="ad ad-above-nav"><span>Ad <strong>A</strong> · anchored above tab bar</span></div>
+          <div class="bottomnav">
+            <span class="on">Ledger</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>More</span>
+          </div>
+          <div class="fab" title="FAB — keep clear of ads"></div>
+        </div>
+      </div>
+      <figcaption>
+        <span class="tag">Home / Transactions</span>
+        <h2>Best traffic; use A + B or A + C</h2>
+        <p>Keep FAB and swipe actions clear. Avoid covering the dual summary strip.</p>
+      </figcaption>
+    </figure>
+
+    <figure>
+      <div class="phone">
+        <div class="screen">
+          <div class="status"></div>
+          <div class="appbar">Stats</div>
+          <div class="content">
+            <div class="strip"><span>October 2025</span><span>◀ ▶</span></div>
+            <div class="chart">
+              <div class="bar" style="height:40%"></div>
+              <div class="bar" style="height:70%"></div>
+              <div class="bar" style="height:55%"></div>
+              <div class="bar" style="height:90%"></div>
+            </div>
+            <div class="row">Category breakdown list…</div>
+            <div class="ad ad-card-foot"><span>Ad <strong>D</strong> · footer card</span></div>
+          </div>
+          <div class="ad ad-above-nav"><span>Ad <strong>A</strong></span></div>
+          <div class="bottomnav">
+            <span>Ledger</span><span class="on">Stats</span><span>Budgets</span><span>Assets</span><span>More</span>
+          </div>
+          <div class="ad ad-corner"><span>Ad <strong>E</strong><br><span class="ad-label">corner</span></span></div>
+        </div>
+      </div>
+      <figcaption>
+        <span class="tag">Stats</span>
+        <h2>A or D; E only if dismissible</h2>
+        <p>Do not place over the cylinder/chart focus area. Corner ads should be small + closable.</p>
+      </figcaption>
+    </figure>
+
+    <figure>
+      <div class="phone">
+        <div class="screen">
+          <div class="status"></div>
+          <div class="appbar">Budgets</div>
+          <div class="content">
+            <div class="row">Travel · 79% used</div>
+            <div class="row">Food · 45% used</div>
+            <div class="ad ad-inline"><span>Ad <strong>C</strong> · between budget rows</span></div>
+            <div class="row">Shopping · 22% used</div>
+            <div class="scroll-fade"><div class="row">…</div></div>
+            <div class="ad ad-card-foot"><span>Ad <strong>D</strong></span></div>
+          </div>
+          <div class="ad ad-above-nav"><span>Ad <strong>A</strong></span></div>
+          <div class="bottomnav">
+            <span>Ledger</span><span>Stats</span><span class="on">Budgets</span><span>Assets</span><span>More</span>
+          </div>
+        </div>
+      </div>
+      <figcaption>
+        <span class="tag">Budgets</span>
+        <h2>A + D or sparse C</h2>
+        <p>Widget users expect budget data first; keep ads below progress rows.</p>
+      </figcaption>
+    </figure>
+
+    <figure>
+      <div class="phone">
+        <div class="screen">
+          <div class="status"></div>
+          <div class="appbar">Assets</div>
+          <div class="content">
+            <div class="strip"><span>Active total</span><span class="amt">₹5.2L</span></div>
+            <div class="row">Gold chain · Jewellery</div>
+            <div class="row">Flat · Real Estate</div>
+            <div class="ad ad-card-foot"><span>Ad <strong>D</strong></span></div>
+          </div>
+          <div class="ad ad-above-nav"><span>Ad <strong>A</strong></span></div>
+          <div class="bottomnav">
+            <span>Ledger</span><span>Stats</span><span>Budgets</span><span class="on">Assets</span><span>More</span>
+          </div>
+        </div>
+      </div>
+      <figcaption>
+        <span class="tag">Assets list</span>
+        <h2>A or D</h2>
+        <p>Lower frequency screen; anchored banner is enough for many apps.</p>
+      </figcaption>
+    </figure>
+
+    <figure>
+      <div class="phone">
+        <div class="screen">
+          <div class="status"></div>
+          <div class="appbar">Scheduled · Loans</div>
+          <div class="content">
+            <div class="row">Home loan · EMI due 5th</div>
+            <div class="row">Car loan · Active</div>
+            <div class="ad ad-inline"><span>Ad <strong>C</strong> (low density)</span></div>
+            <div class="scroll-fade"><div class="row">…</div></div>
+          </div>
+          <div class="ad ad-above-nav"><span>Ad <strong>A</strong></span></div>
+          <div class="bottomnav">
+            <span>Ledger</span><span>Stats</span><span>Budgets</span><span>Assets</span><span class="on">Sched</span>
+          </div>
+        </div>
+      </div>
+      <figcaption>
+        <span class="tag">Scheduled (Loans / Recurring)</span>
+        <h2>A only recommended</h2>
+        <p>Reminder-sensitive; avoid inline ads near EMI dates.</p>
+      </figcaption>
+    </figure>
+
+    <figure>
+      <div class="phone">
+        <div class="screen">
+          <div class="status"></div>
+          <div class="appbar">Settings → Configuration</div>
+          <div class="content">
+            <div class="row">Transaction appearance</div>
+            <div class="row">Main menu tabs</div>
+            <div class="row">SMS scan</div>
+            <div class="ad ad-card-foot"><span>Ad <strong>F</strong> · bottom of long scroll</span></div>
+          </div>
+          <div class="bottomnav">
+            <span>Ledger</span><span>Stats</span><span>Budgets</span><span>Assets</span><span class="on">Settings</span>
+          </div>
+        </div>
+      </div>
+      <figcaption>
+        <span class="tag">Settings (non-sensitive pages)</span>
+        <h2>F optional; skip Backup / LAN / Web</h2>
+        <p>Never on backup import, pairing PIN, or approval flows.</p>
+      </figcaption>
+    </figure>
+  </div>
+
+  <div class="avoid">
+    <h3>Placements to avoid (finance + trust)</h3>
+    <ul>
+      <li>SMS approval / pending transaction review (widgets + in-app queue)</li>
+      <li>Add / edit transaction, loan, asset, or recurring forms</li>
+      <li>Backup &amp; restore, Google Drive, LAN sync pairing</li>
+      <li>Web Manage login and any screen showing balances during a sensitive action</li>
+      <li>Full-screen interstitials on cold start or after recording a payment</li>
+    </ul>
+  </div>
+
+  <p class="intro" style="margin-top: 2rem; font-size: 0.8125rem;">
+    Open this file in a browser: <code>docs/ad-placement-mockups.html</code>
+  </p>
+</body>
+</html>

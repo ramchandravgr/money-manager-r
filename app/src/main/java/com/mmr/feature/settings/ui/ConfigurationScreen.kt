@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.mmr.app.navigation.MmrToggleableMainDestinations
 import com.mmr.app.ui.components.MmrIosSettingsChoiceRow
 import com.mmr.app.ui.components.MmrIosSettingsNavRow
 import com.mmr.app.ui.components.MmrIosSettingsSection
@@ -25,7 +26,6 @@ import com.mmr.app.ui.components.MmrIosSettingsSingleChoiceSheet
 import com.mmr.app.ui.components.MmrIosSettingsSwitchRow
 import com.mmr.app.ui.components.MmrSettingsChoiceLabelWithSwatches
 import com.mmr.app.ui.components.MmrSettingsColorSwatchStrip
-import com.mmr.app.navigation.MmrToggleableMainDestinations
 import com.mmr.app.ui.components.MmrSettingsScreenLayout
 import com.mmr.app.ui.components.MmrSettingsScreenScaffold
 import com.mmr.app.ui.theme.MmrBrandColors
@@ -139,7 +139,9 @@ fun ConfigurationScreen(
 
         MmrIosSettingsSection(
             title = "Main menu",
-            footer = "Transactions and Settings always stay on the bar. Turn off optional tabs to hide them; remaining items share the space evenly.",
+            footer =
+                "Transactions and Settings always stay on the bar. Turn off optional tabs to hide them; " +
+                    "remaining items share the space evenly.",
         ) {
             MmrToggleableMainDestinations.forEachIndexed { index, destination ->
                 MmrIosSettingsSwitchRow(

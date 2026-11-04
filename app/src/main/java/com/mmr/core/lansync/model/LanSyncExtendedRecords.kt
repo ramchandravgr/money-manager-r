@@ -84,6 +84,46 @@ data class LanCategorizationRuleRecord(
     val updatedAt: Long,
 )
 
+data class LanAssetRecord(
+    val syncId: String,
+    val name: String,
+    val assetType: String,
+    val status: String,
+    val isInherited: Boolean,
+    val purchaseDateMillis: Long?,
+    val purchasePrice: Double?,
+    val currentValue: Double,
+    val ownedByName: String?,
+    val location: String?,
+    val identifier: String?,
+    val linkedLoanSyncId: String?,
+    val nextValuationDueMillis: Long?,
+    val valuationReminderDaysBefore: Int,
+    val saleDateMillis: Long?,
+    val salePrice: Double?,
+    val notes: String?,
+    val createdAt: Long,
+    val updatedAt: Long,
+)
+
+data class LanAssetValuationRecord(
+    val syncId: String,
+    val assetSyncId: String,
+    val amount: Double,
+    val recordedAt: Long,
+    val notes: String?,
+    val createdAt: Long,
+)
+
+data class LanAssetAttachmentRecord(
+    val syncId: String,
+    val assetSyncId: String,
+    val mimeType: String,
+    val fileSizeBytes: Long,
+    val createdAt: Long,
+    val updatedAt: Long,
+)
+
 data class LanNotificationRuleRecord(
     val syncId: String,
     val type: String,
@@ -91,6 +131,7 @@ data class LanNotificationRuleRecord(
     val scheduleTime: Long?,
     val targetLoanSyncId: String?,
     val targetRecurringRuleSyncId: String?,
+    val targetAssetSyncId: String? = null,
     val thresholdValue: Double?,
     val title: String?,
     val message: String?,

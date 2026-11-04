@@ -31,6 +31,7 @@ import com.mmr.core.common.validation.MmrValidation
 import com.mmr.core.loan.LoanAmortizationEngine
 import com.mmr.core.model.enums.LoanRepaymentMode
 import com.mmr.core.model.enums.LoanType
+import com.mmr.core.reminder.MmrReminderPresets
 import com.mmr.feature.loan.model.AddEditLoanUiEvent
 import com.mmr.feature.loan.model.AddEditLoanUiState
 import com.mmr.feature.loan.model.FixedEmiEntryMode
@@ -350,6 +351,21 @@ private fun LoanFixedEmiFields(
             onValueChange = { onEvent(AddEditLoanUiEvent.OnEmiDayChanged(it)) },
             placeholder = "EMI day of month (1–28)",
             keyboardType = KeyboardType.Number,
+        )
+        MmrTransactionFormSectionLabel(text = "Reminder")
+        Text(
+            text = "Required — notify this many days before each EMI due date.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 4.dp),
+        )
+        MmrTransactionFormChoiceChips(
+            options =
+                MmrReminderPresets.loanEmiReminderDaysOptions.map { (days, label) ->
+                    MmrTransactionFormChipOption(days, label)
+                },
+            selected = uiState.emiReminderDaysBefore,
+            onSelected = { onEvent(AddEditLoanUiEvent.OnEmiReminderDaysSelected(it)) },
         )
     }
 }

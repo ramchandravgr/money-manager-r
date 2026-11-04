@@ -20,6 +20,7 @@ import com.mmr.core.lansync.LanSyncTombstoneRecorder
 import com.mmr.core.lansync.SyncEntityType
 import com.mmr.core.loan.LoanAmortizationEngine
 import com.mmr.core.loan.LoanDateUtils
+import com.mmr.core.loan.LoanEmiReminderNotificationSync
 import com.mmr.core.loan.LoanLedgerCoordinator
 import com.mmr.core.loan.LoanLedgerCoordinator.Companion.scheduleSourceRef
 import com.mmr.core.loan.LoanPaymentProcessor
@@ -102,6 +103,7 @@ class LoanRepositoryImpl
                     )
                 }
                 postInitialDisbursalLedger(stored)
+                syncEmiReminderForLoanId(loanId)
                 loanId
             }
         }
@@ -120,6 +122,7 @@ class LoanRepositoryImpl
             require(loan.id > 0L) { "Loan id is required." }
             RepositoryGuards.requireValidLoanEntity(loan)
             loanDao.update(loan)
+            syncEmiReminderForLoanId(loan.id)
         }
 
         override suspend fun updateLoanStatus(
@@ -178,73 +181,74 @@ class LoanRepositoryImpl
             if (loanId <= 0L) throw IllegalArgumentException("Loan id is required.")
             RepositoryGuards.requireValidPaymentAmount(paymentAmount)
 
-            return database.withTransaction {
-                val loan =
-                    loanDao.getById(loanId)
-                        ?: throw IllegalArgumentException("Loan with id $loanId not found")
-                val priorPayments = loanPaymentDao.getPaymentsForLoan(loanId).first()
-                val rateRevision = loanInterestRevisionDao.getRateEffectiveAt(loanId, paymentDate)
-                val annualRate = rateRevision?.annualRatePercent ?: loan.interestRate
+            return database
+                .withTransaction {
+                    val loan =
+                        loanDao.getById(loanId)
+                            ?: throw IllegalArgumentException("Loan with id $loanId not found")
+                    val priorPayments = loanPaymentDao.getPaymentsForLoan(loanId).first()
+                    val rateRevision = loanInterestRevisionDao.getRateEffectiveAt(loanId, paymentDate)
+                    val annualRate = rateRevision?.annualRatePercent ?: loan.interestRate
 
-                val plannedEntries =
-                    if (loan.repaymentModeEnum() == LoanRepaymentMode.FIXED_EMI) {
-                        loanScheduleDao.getByStatus(loanId, LoanScheduleStatus.PLANNED).first()
-                    } else {
-                        emptyList()
-                    }
-                val nextScheduleEntry = plannedEntries.minByOrNull { it.dueDateMillis }
-
-                val resolvedTransactionId =
-                    transactionId
-                        ?: nextScheduleEntry?.let { entry ->
-                            transactionDao.findIdBySourceReference(scheduleSourceRef(entry.id))
+                    val plannedEntries =
+                        if (loan.repaymentModeEnum() == LoanRepaymentMode.FIXED_EMI) {
+                            loanScheduleDao.getByStatus(loanId, LoanScheduleStatus.PLANNED).first()
+                        } else {
+                            emptyList()
                         }
-                        ?: loanLedgerCoordinator.createRepaymentTransaction(
+                    val nextScheduleEntry = plannedEntries.minByOrNull { it.dueDateMillis }
+
+                    val resolvedTransactionId =
+                        transactionId
+                            ?: nextScheduleEntry?.let { entry ->
+                                transactionDao.findIdBySourceReference(scheduleSourceRef(entry.id))
+                            }
+                            ?: loanLedgerCoordinator.createRepaymentTransaction(
+                                loan = loan,
+                                amount = paymentAmount,
+                                dateTime = paymentDate,
+                                note = notes,
+                                scheduleEntryId = nextScheduleEntry?.id,
+                            )
+
+                    val result =
+                        LoanPaymentProcessor.process(
                             loan = loan,
-                            amount = paymentAmount,
-                            dateTime = paymentDate,
-                            note = notes,
-                            scheduleEntryId = nextScheduleEntry?.id,
+                            priorPayments = priorPayments,
+                            paymentAmount = paymentAmount,
+                            paymentType = paymentType,
+                            paymentDate = paymentDate,
+                            annualRatePercent = annualRate,
+                            partPaymentAdjustment = partPaymentAdjustment,
+                            transactionId = resolvedTransactionId,
+                            notes = notes,
                         )
 
-                val result =
-                    LoanPaymentProcessor.process(
-                        loan = loan,
-                        priorPayments = priorPayments,
-                        paymentAmount = paymentAmount,
-                        paymentType = paymentType,
-                        paymentDate = paymentDate,
-                        annualRatePercent = annualRate,
-                        partPaymentAdjustment = partPaymentAdjustment,
-                        transactionId = resolvedTransactionId,
-                        notes = notes,
-                    )
-
-                val payment =
-                    result.payment.copy(
-                        principalComponent = principalComponent ?: result.payment.principalComponent,
-                        interestComponent = interestComponent ?: result.payment.interestComponent,
-                    )
-                val paymentId = loanPaymentDao.insert(payment)
-                loanDao.update(result.updatedLoan)
-                loanDao.updateOutstandingAndStatus(loanId, result.updatedLoan.outstandingAmount, result.newStatus)
-
-                if (loan.repaymentModeEnum() == LoanRepaymentMode.FIXED_EMI) {
-                    LoanPaymentProcessor.markNearestPlannedEntryPaid(plannedEntries, paymentId)?.let { entryId ->
-                        loanScheduleDao.markEntry(entryId, LoanScheduleStatus.PAID, paymentId)
-                    }
-                    if (result.newStatus != LoanStatus.CLOSED) {
-                        LoanSchedulePlanner.regenerateFixedEmiSchedule(
-                            loanDao.getById(loanId)!!,
-                            loanScheduleDao,
-                            paymentDate,
+                    val payment =
+                        result.payment.copy(
+                            principalComponent = principalComponent ?: result.payment.principalComponent,
+                            interestComponent = interestComponent ?: result.payment.interestComponent,
                         )
-                    } else {
-                        loanScheduleDao.deletePlannedFrom(loanId, paymentDate)
+                    val paymentId = loanPaymentDao.insert(payment)
+                    loanDao.update(result.updatedLoan)
+                    loanDao.updateOutstandingAndStatus(loanId, result.updatedLoan.outstandingAmount, result.newStatus)
+
+                    if (loan.repaymentModeEnum() == LoanRepaymentMode.FIXED_EMI) {
+                        LoanPaymentProcessor.markNearestPlannedEntryPaid(plannedEntries, paymentId)?.let { entryId ->
+                            loanScheduleDao.markEntry(entryId, LoanScheduleStatus.PAID, paymentId)
+                        }
+                        if (result.newStatus != LoanStatus.CLOSED) {
+                            LoanSchedulePlanner.regenerateFixedEmiSchedule(
+                                loanDao.getById(loanId)!!,
+                                loanScheduleDao,
+                                paymentDate,
+                            )
+                        } else {
+                            loanScheduleDao.deletePlannedFrom(loanId, paymentDate)
+                        }
                     }
-                }
-                paymentId
-            }
+                    paymentId
+                }.also { syncEmiReminderForLoanId(loanId) }
         }
 
         override suspend fun recordLoanTopUp(
@@ -260,93 +264,94 @@ class LoanRepositoryImpl
             RepositoryGuards.requireValidPaymentAmount(topUpAmount)
             val topUpDateMillis = LoanDateUtils.normalizeLoanCalendarDay(topUpDate)
 
-            return database.withTransaction {
-                val loan =
-                    loanDao.getById(loanId)
-                        ?: throw IllegalArgumentException("Loan with id $loanId not found")
-                val priorAccrualStart = emiScheduleAnchorMillis(loanId, loan)
-                val balanceBeforeTopUp = loan.outstandingAmount
-                val adjustment =
-                    when {
-                        loan.repaymentModeEnum() != LoanRepaymentMode.FIXED_EMI -> null
-                        topUpAdjustment != null -> topUpAdjustment
-                        else -> LoanTopUpAdjustment.EXTEND_TENURE
-                    }
-                if (adjustment == LoanTopUpAdjustment.EXTEND_TENURE) {
-                    val emi =
-                        loan.fixedEmiAmount
-                            ?: throw IllegalStateException("Fixed-EMI loan is missing EMI amount.")
-                    val tenure =
-                        LoanAmortizationEngine.computeTenureMonths(
-                            loan.outstandingAmount + topUpAmount,
-                            loan.interestRate,
-                            emi,
-                        )
-                    if (tenure <= 0) {
-                        val minEmi =
-                            LoanAmortizationEngine.minimumEmiForAmortization(
+            return database
+                .withTransaction {
+                    val loan =
+                        loanDao.getById(loanId)
+                            ?: throw IllegalArgumentException("Loan with id $loanId not found")
+                    val priorAccrualStart = emiScheduleAnchorMillis(loanId, loan)
+                    val balanceBeforeTopUp = loan.outstandingAmount
+                    val adjustment =
+                        when {
+                            loan.repaymentModeEnum() != LoanRepaymentMode.FIXED_EMI -> null
+                            topUpAdjustment != null -> topUpAdjustment
+                            else -> LoanTopUpAdjustment.EXTEND_TENURE
+                        }
+                    if (adjustment == LoanTopUpAdjustment.EXTEND_TENURE) {
+                        val emi =
+                            loan.fixedEmiAmount
+                                ?: throw IllegalStateException("Fixed-EMI loan is missing EMI amount.")
+                        val tenure =
+                            LoanAmortizationEngine.computeTenureMonths(
                                 loan.outstandingAmount + topUpAmount,
                                 loan.interestRate,
+                                emi,
                             )
-                        throw IllegalArgumentException(
-                            "After top-up, current EMI is too low. Raise EMI (≥ ${MmrMoneyFormat.formatInr(
-                                minEmi,
-                            )}) or choose increase EMI.",
+                        if (tenure <= 0) {
+                            val minEmi =
+                                LoanAmortizationEngine.minimumEmiForAmortization(
+                                    loan.outstandingAmount + topUpAmount,
+                                    loan.interestRate,
+                                )
+                            throw IllegalArgumentException(
+                                "After top-up, current EMI is too low. Raise EMI (≥ ${MmrMoneyFormat.formatInr(
+                                    minEmi,
+                                )}) or choose increase EMI.",
+                            )
+                        }
+                    }
+
+                    val resolvedTransactionId =
+                        transactionId
+                            ?: if (postLedgerTransfer) {
+                                loanLedgerCoordinator.createTopUpTransaction(
+                                    loan = loan,
+                                    amount = topUpAmount,
+                                    dateTime = topUpDateMillis,
+                                    note = notes,
+                                )
+                            } else {
+                                null
+                            }
+
+                    val result =
+                        LoanTopUpProcessor.process(
+                            loan = loan,
+                            topUpAmount = topUpAmount,
+                            topUpDateMillis = topUpDateMillis,
+                            topUpAdjustment = adjustment,
+                            transactionId = resolvedTransactionId,
+                            notes = notes,
+                        )
+                    val paymentId = loanPaymentDao.insert(result.payment)
+                    loanDao.update(result.updatedLoan)
+                    increaseLoanLiabilityAccountBalance(
+                        accountId = result.updatedLoan.linkedLoanAccountId,
+                        principalIncrease = topUpAmount,
+                    )
+
+                    if (loan.repaymentModeEnum() == LoanRepaymentMode.FIXED_EMI) {
+                        loanScheduleDao.deletePlannedForLoan(loanId)
+                        val firstPeriodStep =
+                            if (priorAccrualStart < topUpDateMillis && balanceBeforeTopUp > 0.0) {
+                                PrincipalStepAccrual(
+                                    periodStartMillis = priorAccrualStart,
+                                    stepMillis = topUpDateMillis,
+                                    balanceBeforeStep = balanceBeforeTopUp,
+                                    balanceAfterStep = balanceBeforeTopUp + topUpAmount,
+                                )
+                            } else {
+                                null
+                            }
+                        LoanSchedulePlanner.regenerateFixedEmiSchedule(
+                            result.updatedLoan,
+                            loanScheduleDao,
+                            scheduleAnchorMillis = topUpDateMillis,
+                            firstPeriodPrincipalStep = firstPeriodStep,
                         )
                     }
-                }
-
-                val resolvedTransactionId =
-                    transactionId
-                        ?: if (postLedgerTransfer) {
-                            loanLedgerCoordinator.createTopUpTransaction(
-                                loan = loan,
-                                amount = topUpAmount,
-                                dateTime = topUpDateMillis,
-                                note = notes,
-                            )
-                        } else {
-                            null
-                        }
-
-                val result =
-                    LoanTopUpProcessor.process(
-                        loan = loan,
-                        topUpAmount = topUpAmount,
-                        topUpDateMillis = topUpDateMillis,
-                        topUpAdjustment = adjustment,
-                        transactionId = resolvedTransactionId,
-                        notes = notes,
-                    )
-                val paymentId = loanPaymentDao.insert(result.payment)
-                loanDao.update(result.updatedLoan)
-                increaseLoanLiabilityAccountBalance(
-                    accountId = result.updatedLoan.linkedLoanAccountId,
-                    principalIncrease = topUpAmount,
-                )
-
-                if (loan.repaymentModeEnum() == LoanRepaymentMode.FIXED_EMI) {
-                    loanScheduleDao.deletePlannedForLoan(loanId)
-                    val firstPeriodStep =
-                        if (priorAccrualStart < topUpDateMillis && balanceBeforeTopUp > 0.0) {
-                            PrincipalStepAccrual(
-                                periodStartMillis = priorAccrualStart,
-                                stepMillis = topUpDateMillis,
-                                balanceBeforeStep = balanceBeforeTopUp,
-                                balanceAfterStep = balanceBeforeTopUp + topUpAmount,
-                            )
-                        } else {
-                            null
-                        }
-                    LoanSchedulePlanner.regenerateFixedEmiSchedule(
-                        result.updatedLoan,
-                        loanScheduleDao,
-                        scheduleAnchorMillis = topUpDateMillis,
-                        firstPeriodPrincipalStep = firstPeriodStep,
-                    )
-                }
-                paymentId
-            }
+                    paymentId
+                }.also { syncEmiReminderForLoanId(loanId) }
         }
 
         private suspend fun increaseLoanLiabilityAccountBalance(
@@ -462,6 +467,7 @@ class LoanRepositoryImpl
                     }
                 }
             }
+            syncEmiReminderForLoanId(loanId)
         }
 
         override suspend fun refreshPlannedEmiSchedule(loanId: Long) {
@@ -475,6 +481,7 @@ class LoanRepositoryImpl
                     loanScheduleDao,
                     emiScheduleAnchorMillis(loanId, loan),
                 )
+                syncEmiReminderForLoanId(loanId)
             }
         }
 
@@ -565,4 +572,25 @@ class LoanRepositoryImpl
                     activeLoansCount = activeCount,
                 )
             }
+
+        override suspend fun reconcileAllEmiReminderNotifications(now: Long) {
+            LoanEmiReminderNotificationSync.reconcileAllActiveLoans(
+                loanDao = loanDao,
+                loanScheduleDao = loanScheduleDao,
+                notificationRuleDao = database.notificationRuleDao(),
+                tombstoneRecorder = tombstoneRecorder,
+                now = now,
+            )
+        }
+
+        private suspend fun syncEmiReminderForLoanId(loanId: Long) {
+            if (loanId <= 0L) return
+            val loan = loanDao.getById(loanId) ?: return
+            LoanEmiReminderNotificationSync.syncForLoan(
+                loan = loan,
+                loanScheduleDao = loanScheduleDao,
+                notificationRuleDao = database.notificationRuleDao(),
+                tombstoneRecorder = tombstoneRecorder,
+            )
+        }
     }

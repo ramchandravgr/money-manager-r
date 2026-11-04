@@ -43,10 +43,23 @@ class LanSyncNetworkUtils
 
         fun lanIpv4Address(): String? {
             val candidates = linkedSetOf<String>()
+            activeWifiLinkIpv4Candidates().forEach { candidates.add(it) }
             wifiLinkIpv4Candidates().forEach { candidates.add(it) }
             legacyWifiManagerIpv4()?.let { candidates.add(it) }
             wlanInterfaceIpv4Candidates().forEach { candidates.add(it) }
             return pickBestLanIpv4(candidates)
+        }
+
+        /** Prefer the process default network when it is Wi‑Fi (more reliable on Android 12+). */
+        private fun activeWifiLinkIpv4Candidates(): List<String> {
+            val connectivity = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val network = connectivity.activeNetwork ?: return emptyList()
+            val capabilities = connectivity.getNetworkCapabilities(network) ?: return emptyList()
+            if (!capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) return emptyList()
+            val linkProperties = connectivity.getLinkProperties(network) ?: return emptyList()
+            return linkProperties.linkAddresses
+                .filter { isUsableLanIpv4(it) }
+                .mapNotNull { it.address.hostAddress }
         }
 
         private fun wifiLinkIpv4Candidates(): List<String> {

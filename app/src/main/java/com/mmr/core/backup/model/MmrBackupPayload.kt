@@ -1,6 +1,8 @@
 package com.mmr.core.backup.model
 
 import com.mmr.core.database.entity.AccountEntity
+import com.mmr.core.database.entity.AssetEntity
+import com.mmr.core.database.entity.AssetValuationEntity
 import com.mmr.core.database.entity.BudgetEntity
 import com.mmr.core.database.entity.CategorizationRuleEntity
 import com.mmr.core.database.entity.CategoryEntity
@@ -32,6 +34,8 @@ data class MmrBackupPayload(
     val loanPayments: List<LoanPaymentEntity>,
     val recurringRules: List<RecurringRuleEntity>,
     val budgets: List<BudgetEntity> = emptyList(),
+    val assets: List<AssetEntity> = emptyList(),
+    val assetValuations: List<AssetValuationEntity> = emptyList(),
     val notificationRules: List<NotificationRuleEntity>,
     val smsMessageRecords: List<SmsMessageRecordEntity>,
     val transactionApprovals: List<TransactionApprovalEntity>,
@@ -40,6 +44,7 @@ data class MmrBackupPayload(
     val categorizationRules: List<CategorizationRuleEntity> = emptyList(),
     val trustedLanDevices: List<TrustedLanDeviceEntity> = emptyList(),
     val transactionAttachments: List<MmrBackupAttachmentRecord> = emptyList(),
+    val assetAttachments: List<MmrBackupAssetAttachmentRecord> = emptyList(),
 )
 
 data class BackupRestoreSummary(
@@ -53,6 +58,9 @@ data class BackupRestoreSummary(
     val loanPayments: Int,
     val recurringRules: Int,
     val budgets: Int = 0,
+    val assets: Int = 0,
+    val assetValuations: Int = 0,
+    val assetAttachments: Int = 0,
     val notificationRules: Int,
     val smsMessageRecords: Int,
     val transactionApprovals: Int,
@@ -62,5 +70,6 @@ data class BackupRestoreSummary(
         get() =
             categories + subcategories + accounts + loans + loanInterestRevisions +
                 loanScheduleEntries + transactions + loanPayments +
-                recurringRules + budgets + notificationRules + smsMessageRecords + transactionApprovals
+                recurringRules + budgets + assets + assetValuations + assetAttachments +
+                notificationRules + smsMessageRecords + transactionApprovals
 }

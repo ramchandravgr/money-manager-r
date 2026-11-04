@@ -99,7 +99,13 @@ class SmsParserEngine
                 return SmsParseResult.Ignored
             }
 
-            val templateMatch = templateRegistry.matchSettled(sms, normalized)
+            val templateMatch =
+                templateRegistry.matchSettled(sms, normalized)
+                    ?: if (isManualEntryContext(sms)) {
+                        templateRegistry.matchSettledBodyOnly(normalized)
+                    } else {
+                        null
+                    }
             if (templateMatch != null) {
                 return SmsParseResult.Transaction(
                     buildCandidate(
@@ -232,5 +238,11 @@ class SmsParserEngine
                 instrument = instrument,
                 approvalKind = approvalKind,
             )
+        }
+
+        private fun isManualEntryContext(sms: RawSmsMessage): Boolean {
+            if (sms.id.startsWith("manual-")) return true
+            val senderKey = SmsTemplateRegistry.normalizeSenderId(sms.sender)
+            return senderKey == "MANUAL" || senderKey.isEmpty()
         }
     }

@@ -29,6 +29,18 @@ sealed class Screen(
 
     object Budgets : Screen("budgets")
 
+    object Assets : Screen("assets")
+
+    object AddAsset : Screen("add_asset")
+
+    object EditAsset : Screen("edit_asset/{assetId}") {
+        fun createRoute(assetId: Long): String = "edit_asset/$assetId"
+    }
+
+    object AssetDetail : Screen("asset_detail/{assetId}") {
+        fun createRoute(assetId: Long): String = "asset_detail/$assetId"
+    }
+
     object AddBudget : Screen("add_budget")
 
     object EditBudget : Screen("edit_budget/{budgetId}") {

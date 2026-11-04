@@ -179,12 +179,11 @@ internal fun RecurringRuleWithDetails.toItemUi(): RecurringRuleItemUi {
         }
 
     val reminderLabel =
-        when (rule.reminderMinutesBefore) {
-            0 -> "No reminder"
-            60 -> "1 hour before"
-            1440 -> "1 day before"
-            2880 -> "2 days before"
-            else -> "${rule.reminderMinutesBefore / 60} hours before"
+        if (rule.reminderMinutesBefore <= 0) {
+            "No reminder"
+        } else {
+            com.mmr.core.reminder.MmrReminderPresets
+                .recurringReminderLabel(rule.reminderMinutesBefore)
         }
 
     return RecurringRuleItemUi(

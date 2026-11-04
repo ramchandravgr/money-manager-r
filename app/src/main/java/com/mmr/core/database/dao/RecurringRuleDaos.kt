@@ -172,4 +172,16 @@ interface NotificationRuleDao {
 
     @Query("DELETE FROM notification_rules WHERE targetLoanId = :loanId")
     suspend fun deleteForLoan(loanId: Long)
+
+    @Query("DELETE FROM notification_rules WHERE targetLoanId = :loanId AND isFired = 0")
+    suspend fun deleteUnfiredForLoan(loanId: Long)
+
+    @Query("SELECT * FROM notification_rules WHERE targetAssetId = :assetId")
+    suspend fun listForAsset(assetId: Long): List<NotificationRuleEntity>
+
+    @Query("DELETE FROM notification_rules WHERE targetAssetId = :assetId")
+    suspend fun deleteForAsset(assetId: Long)
+
+    @Query("DELETE FROM notification_rules WHERE targetAssetId = :assetId AND isFired = 0")
+    suspend fun deleteUnfiredForAsset(assetId: Long)
 }
