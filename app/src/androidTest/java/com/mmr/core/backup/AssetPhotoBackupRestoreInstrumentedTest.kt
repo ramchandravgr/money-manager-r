@@ -8,8 +8,6 @@ import com.mmr.core.attachment.AssetAttachmentStore
 import com.mmr.core.attachment.TransactionAttachmentStore
 import com.mmr.core.data.preferences.AppDisplaySettingsStore
 import com.mmr.core.data.preferences.LanSyncIdentityStore
-import com.mmr.core.data.preferences.LanSyncPreferencesStore
-import com.mmr.core.data.preferences.LanSyncWifiTrustStore
 import com.mmr.core.data.preferences.SmsInboundSettingsStore
 import com.mmr.core.data.preferences.SmsScanSettingsStore
 import com.mmr.core.data.preferences.WebManagePreferencesStore
@@ -77,19 +75,23 @@ class AssetPhotoBackupRestoreInstrumentedTest {
                 attachmentRepository = transactionAttachmentRepository,
                 assetAttachmentRepository = assetAttachmentRepository,
             )
+        val ownerProfileCoordinator =
+            com.mmr.core.owner.MmrOwnerProfileCoordinator(
+                LanSyncIdentityStore(context),
+                database.ownerProfileDao(),
+            )
         val appSettingsCoordinator =
             AppSettingsBackupCoordinator(
                 smsScanSettingsStore = SmsScanSettingsStore(context),
                 displaySettingsStore = AppDisplaySettingsStore(context),
                 smsInboundSettingsStore = SmsInboundSettingsStore(context),
-                lanSyncIdentityStore = LanSyncIdentityStore(context),
-                lanSyncPreferencesStore = LanSyncPreferencesStore(context),
-                lanSyncWifiTrustStore = LanSyncWifiTrustStore(context),
                 webManagePreferencesStore = WebManagePreferencesStore(context),
+                ownerProfileCoordinator = ownerProfileCoordinator,
             )
         repository =
             BackupRepositoryImpl(
                 backupDao = database.backupDao(),
+                lanSyncDao = database.lanSyncDao(),
                 syncTombstoneDao = database.syncTombstoneDao(),
                 tombstoneMerger = tombstoneMerger,
                 appSettingsBackupCoordinator = appSettingsCoordinator,

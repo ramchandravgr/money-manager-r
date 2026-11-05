@@ -9,20 +9,8 @@ enum class AssetStatusFilter {
     SOLD,
 }
 
-private val legacyAssetTypeLabels: Map<String, String> =
-    mapOf(
-        "REAL_ESTATE" to "Real Estate",
-        "VEHICLE" to "Vehicle",
-        "GOLD_JEWELLERY" to "Gold / Jewellery",
-        "INVESTMENTS" to "Investments",
-        "ELECTRONICS" to "Electronics",
-        "COLLECTIBLES" to "Collectibles",
-        "BUSINESS" to "Business",
-        "OTHER" to "Other",
-    )
-
-/** Display text for list/detail; maps pre–free-text enum names from older data. */
-fun String.assetTypeDisplayLabel(): String = legacyAssetTypeLabels[this] ?: this.trim()
+/** Display text for list/detail. */
+fun String.assetTypeDisplayLabel(): String = trim()
 
 /** Value shown in the add/edit type field when loading an existing asset. */
 fun String.assetTypeForEdit(): String = assetTypeDisplayLabel()

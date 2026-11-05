@@ -1,6 +1,7 @@
 package com.mmr.core.attachment
 
 import android.content.Context
+import com.mmr.core.attachment.MmrAttachmentSyncId
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import javax.inject.Inject
@@ -15,10 +16,10 @@ class AssetAttachmentStore
         private val rootDir: File =
             File(context.filesDir, "asset_attachments").apply { mkdirs() }
 
-        fun fileForSyncId(syncId: String): File = File(rootDir, syncId)
+        fun fileForSyncId(syncId: String): File = MmrAttachmentSyncId.fileInRoot(rootDir, syncId)
 
         fun readBytes(syncId: String): ByteArray? {
-            val file = fileForSyncId(syncId)
+            val file = runCatching { fileForSyncId(syncId) }.getOrNull() ?: return null
             if (!file.isFile) return null
             return runCatching { file.readBytes() }.getOrNull()
         }

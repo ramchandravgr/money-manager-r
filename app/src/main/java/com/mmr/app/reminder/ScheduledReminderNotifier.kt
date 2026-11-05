@@ -4,16 +4,14 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import com.mmr.app.MainActivity
 import com.mmr.app.R
 import com.mmr.app.navigation.Screen
+import com.mmr.app.navigation.buildMainActivityNavIntent
+import com.mmr.app.notification.MmrAppNotificationPoster
 import com.mmr.core.database.entity.NotificationRuleEntity
 import com.mmr.core.model.enums.NotificationRuleType
-import com.mmr.core.parser.permission.SmsPermissionHelper
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -25,9 +23,6 @@ class ScheduledReminderNotifier
         @ApplicationContext private val context: Context,
     ) {
         fun show(rule: NotificationRuleEntity) {
-            if (!SmsPermissionHelper.hasPostNotificationsPermission(context)) return
-            if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return
-
             ensureChannel()
 
             val route =
@@ -47,11 +42,7 @@ class ScheduledReminderNotifier
                     else -> return
                 }
 
-            val intent =
-                Intent(context, MainActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                    putExtra(MainActivity.EXTRA_NAV_ROUTE, route)
-                }
+            val intent = buildMainActivityNavIntent(context, route)
             val pendingIntent =
                 PendingIntent.getActivity(
                     context,
@@ -76,7 +67,7 @@ class ScheduledReminderNotifier
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                     .build()
 
-            NotificationManagerCompat.from(context).notify(NOTIFICATION_ID_BASE + rule.id.toInt(), notification)
+            MmrAppNotificationPoster.notify(context, NOTIFICATION_ID_BASE + rule.id.toInt(), notification)
         }
 
         private fun ensureChannel() {

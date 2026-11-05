@@ -35,15 +35,44 @@
 
   function iconActionButton(className, label, iconKey, variant) {
     const v = variant ? ` icon-action-btn--${variant}` : '';
-    return `<button type="button" class="icon-action-btn${v} ${className}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">${ACTION_ICONS[iconKey]}</button>`;
+    return `<button type="button" class="icon-action-btn${v} ${className}" title="${escapeAttr(label)}" aria-label="${escapeAttr(label)}">${ACTION_ICONS[iconKey]}</button>`;
   }
 
+  /** Safe for text inside HTML elements (not attributes). */
   function escapeHtml(s) {
     return String(s || '')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  /** Safe for dynamic attribute values (value="", title="", data-*, etc.). */
+  function escapeAttr(s) {
+    return escapeHtml(s).replace(/'/g, '&#39;');
+  }
+
+  /**
+   * DOM helper for user-controlled text (textContent / setAttribute). opts.html is for trusted static markup only.
+   */
+  function el(tag, opts, children) {
+    opts = opts || {};
+    children = children || [];
+    const node = document.createElement(tag);
+    if (opts.className) node.className = opts.className;
+    if (opts.attrs) {
+      Object.keys(opts.attrs).forEach((key) => {
+        node.setAttribute(key, opts.attrs[key]);
+      });
+    }
+    if (opts.text != null) node.textContent = opts.text;
+    if (opts.html != null) node.innerHTML = opts.html;
+    children.forEach((child) => {
+      if (child == null) return;
+      if (typeof child === 'string') node.appendChild(document.createTextNode(child));
+      else node.appendChild(child);
+    });
+    return node;
   }
 
   async function api(path, options = {}) {
@@ -328,15 +357,12 @@
     };
   }
 
-  function approvalTileHtml(item) {
+  function approvalTileShellHtml(item) {
     const type = item.type || 'EXPENSE';
     const isTransfer = type === 'TRANSFER';
     const selected = approvalSelection.has(item.id);
-    const dateVal = item.dateTimeMillis
-      ? new Date(item.dateTimeMillis).toISOString().slice(0, 16)
-      : '';
     return `
-      <article class="approval-tile ${selected ? 'selected' : ''}" data-id="${item.id}">
+      <article class="approval-tile ${selected ? 'selected' : ''}" data-id="${escapeAttr(String(item.id))}">
         <div class="tile-head">
           <div class="tile-head-main">
             <div class="tile-amount">${formatMoney(item.amount)}</div>
@@ -353,12 +379,12 @@
             <div class="tile-type-row">${typePill(type)}</div>
           </div>
         </div>
-        <div class="tile-meta">${escapeHtml(item.sender || '')}${item.merchant ? ' · ' + escapeHtml(item.merchant) : ''}</div>
-        <div class="sms-excerpt">${escapeHtml(item.smsBody || '')}</div>
+        <div class="tile-meta ap-user-meta"></div>
+        <div class="sms-excerpt ap-sms-excerpt"></div>
         <label class="inline-check ap-merge-select"><input type="checkbox" class="ap-select" ${selected ? 'checked' : ''} /> Select for merge</label>
         <div class="tile-fields">
-          <label>Amount <input type="number" step="0.01" class="ap-amount" value="${item.amount}" /></label>
-          <label>Date <input type="datetime-local" class="ap-date" value="${dateVal}" /></label>
+          <label>Amount <input type="number" step="0.01" class="ap-amount" /></label>
+          <label>Date <input type="datetime-local" class="ap-date" /></label>
           <label>Type
             <select class="ap-type">
               <option value="EXPENSE" ${type === 'EXPENSE' ? 'selected' : ''}>Expense</option>
@@ -378,9 +404,28 @@
             <label>Subcategory <select class="ap-subcategory">${subcategoryOptions(item.categoryId)}</select></label>
             <div class="inline-add"><button type="button" class="secondary ap-add-sub">+ Subcategory</button></div>
           </div>
-          <label>Note <input type="text" class="ap-note" value="${String(item.note || '').replace(/"/g, '&quot;')}" /></label>
+          <label>Note <input type="text" class="ap-note" /></label>
         </div>
       </article>`;
+  }
+
+  function fillApprovalTileUserFields(tile, item) {
+    const senderLine = [item.sender, item.merchant].filter(Boolean).join(' · ');
+    tile.querySelector('.ap-user-meta').textContent = senderLine;
+    tile.querySelector('.ap-sms-excerpt').textContent = item.smsBody || '';
+    tile.querySelector('.ap-amount').value = item.amount;
+    tile.querySelector('.ap-date').value = item.dateTimeMillis
+      ? new Date(item.dateTimeMillis).toISOString().slice(0, 16)
+      : '';
+    tile.querySelector('.ap-note').value = item.note || '';
+  }
+
+  function createApprovalTile(item) {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = approvalTileShellHtml(item);
+    const tile = wrap.firstElementChild;
+    fillApprovalTileUserFields(tile, item);
+    return tile;
   }
 
   function wireApprovalTile(tile) {
@@ -421,10 +466,9 @@
       updateApprovalToolbar();
     });
     tile.querySelector('.ap-view-sms').addEventListener('click', () => {
-      const body = tile.querySelector('.sms-excerpt')?.textContent || '';
-      const metaLine = tile.querySelector('.tile-meta')?.textContent || '';
-      const sender = metaLine.split('·')[0].trim();
-      document.getElementById('sms-dialog-meta').textContent = sender ? `From: ${sender}` : '';
+      const body = tile.querySelector('.ap-sms-excerpt')?.textContent || '';
+      const senderLine = tile.querySelector('.ap-user-meta')?.textContent || '';
+      document.getElementById('sms-dialog-meta').textContent = senderLine ? `From: ${senderLine}` : '';
       document.getElementById('sms-dialog-body').textContent = body;
       smsDialog.showModal();
     });
@@ -481,7 +525,7 @@
           <div class="tile-grid" id="approval-grid"></div>
         </div>`;
       const grid = document.getElementById('approval-grid');
-      grid.innerHTML = data.items.map(approvalTileHtml).join('');
+      grid.replaceChildren(...data.items.map((item) => createApprovalTile(item)));
       grid.querySelectorAll('.approval-tile').forEach(wireApprovalTile);
       panel.querySelector('.link-selected').addEventListener('click', () => {
         if (!approvalSelection.size) return;
@@ -505,24 +549,31 @@
       const hay = [t.note, t.categoryName, t.accountName, t.type, t.amount, t.id].join(' ').toLowerCase();
       return hay.includes(q);
     });
-    container.innerHTML = filtered.map((t) => {
+    container.replaceChildren();
+    if (!filtered.length) {
+      container.appendChild(el('p', { className: 'meta', text: 'No matches.', attrs: { style: 'padding:0.5rem' } }));
+      return;
+    }
+    filtered.forEach((t) => {
       const suggested = mergeState.suggestedIds.has(t.id);
       const selected = mergeState.selectedTxnId === t.id;
       const line = `${formatMoney(t.amount)} · ${t.type} · ${t.categoryName || '—'} · ${formatDate(t.dateTimeMillis)}`;
       const sub = `${t.accountName || ''}${t.note ? ' — ' + t.note : ''}`;
-      return `<button type="button" class="merge-pick ${selected ? 'selected' : ''} ${suggested ? 'suggested' : ''}" data-txn-id="${t.id}">
-        <div>${escapeHtml(line)}</div>
-        <div class="tile-meta">${escapeHtml(sub)}</div>
-      </button>`;
-    }).join('') || '<p class="meta" style="padding:0.5rem">No matches.</p>';
-    container.querySelectorAll('.merge-pick').forEach((btn) => {
+      const btn = el('button', {
+        className: `merge-pick${selected ? ' selected' : ''}${suggested ? ' suggested' : ''}`,
+        attrs: { type: 'button', 'data-txn-id': String(t.id) },
+      }, [
+        el('div', { text: line }),
+        el('div', { className: 'tile-meta', text: sub }),
+      ]);
       btn.addEventListener('click', () => {
         mergeState.selectedTxnId = Number(btn.dataset.txnId);
         document.getElementById('merge-confirm').disabled = false;
-        mergeDialog.querySelectorAll('.merge-pick').forEach((el) => {
-          el.classList.toggle('selected', Number(el.dataset.txnId) === mergeState.selectedTxnId);
+        mergeDialog.querySelectorAll('.merge-pick').forEach((elBtn) => {
+          elBtn.classList.toggle('selected', Number(elBtn.dataset.txnId) === mergeState.selectedTxnId);
         });
       });
+      container.appendChild(btn);
     });
   }
 
@@ -814,7 +865,7 @@
     const sel = document.getElementById('txn-preset-load');
     const presets = loadTxnPresets();
     sel.innerHTML = '<option value="">Saved presets…</option>' +
-      presets.map((p) => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join('');
+      presets.map((p) => `<option value="${escapeAttr(p.id)}">${escapeHtml(p.name)}</option>`).join('');
   }
 
   function saveTxnPreset() {

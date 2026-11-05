@@ -2,14 +2,13 @@ package com.mmr.app.di
 
 import android.content.Context
 import androidx.room.Room
+import com.mmr.core.data.catalog.MmrBuiltInAccounts
 import com.mmr.core.data.catalog.MmrCategorizationRuleSeeder
 import com.mmr.core.data.catalog.MmrDefaultCatalogSeeder
 import com.mmr.core.database.MmrDatabase
 import com.mmr.core.database.dao.AccountDao
 import com.mmr.core.database.dao.CategoryDao
 import com.mmr.core.database.dao.TransactionDao
-import com.mmr.core.database.entity.AccountEntity
-import com.mmr.core.model.enums.AccountType
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -49,15 +48,16 @@ object TestDatabaseModule {
                     .isEmpty()
             ) {
                 database.accountDao().insertAccounts(
-                    listOf(
-                        AccountEntity(name = "Cash", type = AccountType.CASH, isDefault = true),
-                        AccountEntity(name = "Main Bank Account", type = AccountType.BANK, isDefault = false),
-                    ),
+                    listOf(MmrBuiltInAccounts.defaultAccount()),
                 )
             }
         }
         return database
     }
+
+    @Provides
+    fun provideOwnerProfileDao(database: MmrDatabase): com.mmr.core.database.dao.OwnerProfileDao =
+        database.ownerProfileDao()
 
     @Provides
     fun provideTransactionDao(database: MmrDatabase): TransactionDao = database.transactionDao()

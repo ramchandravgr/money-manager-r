@@ -2,6 +2,7 @@ package com.mmr.core.domain.repository
 
 import com.mmr.core.data.preferences.LanSyncPeerMode
 import com.mmr.core.database.entity.LanSyncLogEntryEntity
+import com.mmr.core.database.entity.PendingLanPairRequestEntity
 import com.mmr.core.database.entity.TrustedLanDeviceEntity
 import com.mmr.core.lansync.LanSyncMergeOptions
 import com.mmr.core.lansync.LanSyncMergeSummary
@@ -27,6 +28,7 @@ data class LanSyncSessionState(
     val selectedPeerDeviceId: String? = null,
     val includeAttachments: Boolean = false,
     val pendingApprovalCount: Int = 0,
+    val pendingPairRequests: List<PendingLanPairRequestEntity> = emptyList(),
 )
 
 data class LanSyncNowResult(
@@ -47,10 +49,18 @@ interface LanSyncRepository {
 
     fun pairingOffer(): LanSyncPairingOffer
 
-    /** Resolves a short pairing PIN from the LAN or a legacy pasted `mmr-lan-sync:` payload. */
+    /** Resolves a short pairing PIN via discovered LAN peers (`GET /mmr/v1/pairing-offer`). */
     suspend fun resolvePairingInput(raw: String): LanSyncPairingOffer
 
-    suspend fun trustDeviceFromPairingOffer(offer: LanSyncPairingOffer)
+    suspend fun trustDeviceFromPairingOffer(
+        offer: LanSyncPairingOffer,
+        /** Host pairing code from the other device; required for mutual inbound `/pair`. */
+        pairingCode: String? = null,
+    )
+
+    suspend fun approvePendingPairRequest(remoteDeviceId: String)
+
+    suspend fun rejectPendingPairRequest(remoteDeviceId: String)
 
     suspend fun removeTrustedDevice(deviceId: String)
 

@@ -10,7 +10,7 @@ plugins {
 
 tasks.register("codeQuality") {
     group = "verification"
-    description = "Runs ktlint and detekt on :app"
-    dependsOn(":app:ktlintCheck", ":app:detekt")
+    description = "Runs ktlint, detekt, and Android lint (debug) on :app"
+    dependsOn(":app:ktlintCheck", ":app:detekt", ":app:lintDebug")
 }
 

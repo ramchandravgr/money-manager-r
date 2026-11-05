@@ -1,12 +1,11 @@
 package com.mmr.feature.approval.viewmodel
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mmr.app.ui.state.MmrUiMessages
+import com.mmr.core.approval.ApprovalInboxSmsScanCoordinator
 import com.mmr.core.common.validation.MmrValidation
 import com.mmr.core.data.preferences.AppDisplaySettingsStore
-import com.mmr.core.data.preferences.SmsScanSettingsStore
 import com.mmr.core.database.entity.AccountEntity
 import com.mmr.core.database.entity.CategoryEntity
 import com.mmr.core.database.relation.TransactionWithDetails
@@ -22,12 +21,9 @@ import com.mmr.core.model.enums.CategoryType
 import com.mmr.core.model.enums.SmsApprovalKind
 import com.mmr.core.model.enums.SmsApprovalState
 import com.mmr.core.model.enums.TransactionType
-import com.mmr.core.parser.model.SmsInboxScanSummary
 import com.mmr.core.parser.model.SmsInstrument
 import com.mmr.core.parser.model.SmsPaymentChannel
 import com.mmr.core.parser.model.buildParseSourceLabel
-import com.mmr.core.parser.permission.SmsPermissionHelper
-import com.mmr.core.parser.scanner.LocalSmsScannerService
 import com.mmr.feature.approval.model.ApprovalCandidateUi
 import com.mmr.feature.approval.model.ApprovalCategoryOptionUi
 import com.mmr.feature.approval.model.ApprovalCenterUiEvent
@@ -42,7 +38,6 @@ import com.mmr.feature.home.TransactionRowMapping
 import com.mmr.feature.transaction.model.CategoryUi
 import com.mmr.feature.transaction.model.SubcategoryUi
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -76,10 +71,8 @@ class ApprovalCenterViewModel
         private val accountRepository: AccountRepository,
         private val categoryRepository: CategoryRepository,
         private val transactionRepository: TransactionRepository,
-        private val smsScannerService: LocalSmsScannerService,
-        private val smsScanSettingsStore: SmsScanSettingsStore,
+        private val approvalInboxSmsScanCoordinator: ApprovalInboxSmsScanCoordinator,
         private val displaySettingsStore: AppDisplaySettingsStore,
-        @ApplicationContext private val appContext: Context,
     ) : ViewModel() {
         private val zoneId = ZoneId.systemDefault()
         private val approvalRetryKey = MutableStateFlow(0)
@@ -715,12 +708,14 @@ class ApprovalCenterViewModel
         private suspend fun approveCandidateOnce(id: Long) {
             val accounts = accountRepository.getAccounts().firstOrNull() ?: emptyList()
             val fallbackAccountId =
-                accounts.firstOrNull()?.id
+                accounts.firstOrNull { it.isDefault }?.id
+                    ?: accounts.firstOrNull()?.id
                     ?: throw IllegalStateException("Add an account before approving SMS.")
             approvalRepository.approveCandidate(
                 id = id,
                 fallbackAccountId = fallbackAccountId,
                 fallbackCategoryId = null,
+                provisionAccountFromSms = true,
             )
             scanResultMessageState.value = "Approved — added to your transaction list."
         }
@@ -807,77 +802,14 @@ class ApprovalCenterViewModel
                 smsScanning.value = true
                 scanResultMessageState.value = null
                 try {
-                    if (!SmsPermissionHelper.hasSmsPermission(appContext)) {
-                        scanResultMessageState.value =
-                            "SMS permission is required. Allow READ_SMS to scan your inbox."
-                        return@launch
-                    }
-                    val months = smsScanSettingsStore.getScanMonths()
-                    val scanSummary = smsScannerService.scanInbox(monthsBack = months)
-                    val parsedCandidates = scanSummary.transactions
-                    if (
-                        parsedCandidates.isEmpty() &&
-                        scanSummary.cardRefunds.isEmpty() &&
-                        scanSummary.informationalCount == 0
-                    ) {
-                        scanResultMessageState.value =
-                            "No transaction SMS found in the last $months month(s)."
-                    } else {
-                        val cleared = approvalRepository.reconcilePendingWithCurrentParser()
-                        val addedTxn = approvalRepository.insertCandidates(parsedCandidates)
-                        val addedRefund = approvalRepository.insertCandidates(scanSummary.cardRefunds)
-                        scanResultMessageState.value =
-                            buildScanResultMessage(
-                                added = addedTxn + addedRefund,
-                                txnCount = parsedCandidates.size + scanSummary.cardRefunds.size,
-                                summary = scanSummary,
-                                clearedPending = cleared,
-                            )
-                    }
+                    val result = approvalInboxSmsScanCoordinator.scanInboxForUserAction()
+                    scanResultMessageState.value = result.userMessage
                 } catch (e: Exception) {
                     scanResultMessageState.value = "Error scanning SMS: ${e.localizedMessage}"
                 } finally {
                     smsScanning.value = false
                 }
             }
-        }
-
-        private fun buildScanResultMessage(
-            added: Int,
-            txnCount: Int,
-            summary: SmsInboxScanSummary,
-            clearedPending: Int = 0,
-        ): String {
-            val parts = mutableListOf<String>()
-            if (clearedPending > 0) {
-                parts.add(
-                    "Removed $clearedPending outdated pending item(s) (declined, mandate, or non-transaction SMS).",
-                )
-            }
-            when {
-                added > 0 -> parts.add("Added $added new pending transaction(s).")
-                txnCount > 0 -> parts.add("All $txnCount matched transaction(s) were already imported.")
-                else -> parts.add("No new transactions to import.")
-            }
-            if (summary.mandateNotices > 0) {
-                parts.add("${summary.mandateNotices} upcoming mandate notice(s) skipped.")
-            }
-            if (summary.statementNotices > 0) {
-                parts.add("${summary.statementNotices} statement notice(s) skipped.")
-            }
-            if (summary.investmentNotices > 0) {
-                parts.add("${summary.investmentNotices} IPO/SIP hold notice(s) skipped.")
-            }
-            if (summary.cardPaymentNotices > 0) {
-                parts.add("${summary.cardPaymentNotices} credit card payment(s) skipped.")
-            }
-            if (summary.cardRefundNotices > 0) {
-                parts.add("${summary.cardRefundNotices} card refund(s) queued to apply.")
-            }
-            if (summary.duplicateSuppressed > 0) {
-                parts.add("${summary.duplicateSuppressed} duplicate HP Pay/card SMS merged.")
-            }
-            return parts.joinToString(" ")
         }
 
         private fun com.mmr.core.domain.model.PendingApprovalWithSms.toUi(

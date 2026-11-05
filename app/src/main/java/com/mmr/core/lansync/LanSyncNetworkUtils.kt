@@ -45,7 +45,7 @@ class LanSyncNetworkUtils
             val candidates = linkedSetOf<String>()
             activeWifiLinkIpv4Candidates().forEach { candidates.add(it) }
             wifiLinkIpv4Candidates().forEach { candidates.add(it) }
-            legacyWifiManagerIpv4()?.let { candidates.add(it) }
+            wifiManagerConnectionInfoIpv4()?.let { candidates.add(it) }
             wlanInterfaceIpv4Candidates().forEach { candidates.add(it) }
             return pickBestLanIpv4(candidates)
         }
@@ -77,8 +77,9 @@ class LanSyncNetworkUtils
             return results
         }
 
+        /** Fallback when [LinkProperties] does not expose an address (deprecated [WifiManager] API). */
         @Suppress("DEPRECATION")
-        private fun legacyWifiManagerIpv4(): String? {
+        private fun wifiManagerConnectionInfoIpv4(): String? {
             if (!isOnWifi()) return null
             val wifi = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
             val packed = wifi.connectionInfo?.ipAddress ?: return null

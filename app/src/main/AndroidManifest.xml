@@ -95,6 +95,10 @@
             android:exported="false" />
 
         <receiver
+            android:name=".sms.SmsApprovalNotificationReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".sms.IncomingSmsReceiver"
             android:exported="true"
             android:permission="android.permission.BROADCAST_SMS">

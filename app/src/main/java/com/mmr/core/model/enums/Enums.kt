@@ -133,13 +133,6 @@ enum class AssetStatus {
     SOLD,
 }
 
-/** Maps legacy backup/DB values (e.g. removed `DISPOSED`) to current statuses. */
-fun assetStatusFromStored(name: String): AssetStatus =
-    when (name) {
-        "DISPOSED" -> AssetStatus.SOLD
-        else -> AssetStatus.valueOf(name)
-    }
-
 enum class CategorizationMatchType {
     MERCHANT_OR_NOTE_CONTAINS,
     SMS_BODY_CONTAINS,

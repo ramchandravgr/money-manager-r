@@ -31,6 +31,7 @@ data class LanSyncLogLine(
 enum class LanSyncSensitiveAction {
     TRUST_DEVICE,
     REMOVE_TRUSTED,
+    APPROVE_PAIR_REQUEST,
 }
 
 data class LanSyncUiState(
@@ -60,6 +61,8 @@ data class LanSyncUiState(
     val syncNowButtonText: String = "Sync now",
     val syncNowEnabled: Boolean = false,
     val syncNowDisabledHint: String? = null,
+    val pendingPairLabels: List<String> = emptyList(),
+    val pendingPairDeviceIds: List<String> = emptyList(),
 )
 
 @HiltViewModel
@@ -76,6 +79,7 @@ class LanSyncViewModel
         private val mergeConflicts = MutableStateFlow<LanSyncMergeConflicts?>(null)
         private val sensitiveAction = MutableStateFlow<LanSyncSensitiveAction?>(null)
         private val removeTrustedIndex = MutableStateFlow<Int?>(null)
+        private val approvePairDeviceId = MutableStateFlow<String?>(null)
         private var mergeOptions = LanSyncMergeOptions()
 
         private val _navigateHomeAfterRestore = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
@@ -145,6 +149,8 @@ class LanSyncViewModel
                         syncNowButtonText = syncNowButtonText,
                         syncNowEnabled = syncNowEnabled,
                         syncNowDisabledHint = syncNowDisabledHint,
+                        pendingPairLabels = session.pendingPairRequests.map { it.displayName },
+                        pendingPairDeviceIds = session.pendingPairRequests.map { it.remoteDeviceId },
                     )
                 },
                 wifiTrustPromptSsid,
@@ -202,9 +208,27 @@ class LanSyncViewModel
             sensitiveAction.value = LanSyncSensitiveAction.REMOVE_TRUSTED
         }
 
+        fun requestApprovePairRequest(deviceId: String) {
+            approvePairDeviceId.value = deviceId
+            sensitiveAction.value = LanSyncSensitiveAction.APPROVE_PAIR_REQUEST
+        }
+
+        fun rejectPairRequest(deviceId: String) {
+            viewModelScope.launch {
+                try {
+                    lanSyncRepository.rejectPendingPairRequest(deviceId)
+                    statusMessage.value = "Pair request declined."
+                    lanSyncRepository.refreshSessionState()
+                } catch (e: Exception) {
+                    errorMessage.value = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_ACTION)
+                }
+            }
+        }
+
         fun clearSensitiveAction() {
             sensitiveAction.value = null
             removeTrustedIndex.value = null
+            approvePairDeviceId.value = null
         }
 
         fun completeTrustAfterAuth() {
@@ -212,10 +236,32 @@ class LanSyncViewModel
             trustFromPairingInputInternal()
         }
 
+        fun completeApprovePairAfterAuth() {
+            val deviceId = approvePairDeviceId.value
+            sensitiveAction.value = null
+            approvePairDeviceId.value = null
+            removeTrustedIndex.value = null
+            if (deviceId.isNullOrBlank()) return
+            viewModelScope.launch {
+                isBusy.value = true
+                errorMessage.value = null
+                try {
+                    lanSyncRepository.approvePendingPairRequest(deviceId)
+                    statusMessage.value = "Device trusted. You can sync when both phones are on the same Wi‑Fi."
+                    lanSyncRepository.refreshSessionState()
+                } catch (e: Exception) {
+                    errorMessage.value = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_ACTION)
+                } finally {
+                    isBusy.value = false
+                }
+            }
+        }
+
         fun completeRemoveTrustedAfterAuth() {
             val index = removeTrustedIndex.value
             sensitiveAction.value = null
             removeTrustedIndex.value = null
+            approvePairDeviceId.value = null
             if (index == null) return
             viewModelScope.launch {
                 val deviceId =
@@ -235,10 +281,14 @@ class LanSyncViewModel
                 isBusy.value = true
                 errorMessage.value = null
                 try {
+                    val pairingCodeForPeer =
+                        com.mmr.core.lansync.LanSyncPairingPin
+                            .normalize(raw)
                     val offer = lanSyncRepository.resolvePairingInput(raw)
-                    lanSyncRepository.trustDeviceFromPairingOffer(offer)
+                    lanSyncRepository.trustDeviceFromPairingOffer(offer, pairingCodeForPeer)
                     pairingInput.value = ""
-                    statusMessage.value = "Device trusted. Sync when both phones are on the same Wi‑Fi."
+                    statusMessage.value =
+                        "This device trusts the other phone. Approve their request on the other device if prompted."
                     lanSyncRepository.refreshSessionState()
                 } catch (e: Exception) {
                     errorMessage.value = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_ACTION)

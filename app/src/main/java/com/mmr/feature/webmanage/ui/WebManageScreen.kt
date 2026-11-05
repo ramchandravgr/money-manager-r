@@ -46,10 +46,15 @@ fun WebManageScreen(
             title = "About",
             isFirstInScreen = true,
             footer =
-                "Open the URL on a laptop on the same Wi‑Fi. " +
-                    "Password changes apply without restarting the server.",
+                "Open the URL on a laptop on the same Wi‑Fi. Password changes apply without restarting the server. " +
+                    "Security details: docs/security-audit-2026-11-04.md (section 5.2, M4).",
         ) {
-            MmrIosSettingsSectionBodyText(text = "Browser access on your local network only.")
+            MmrIosSettingsSectionBodyText(
+                text =
+                    "Browser access on your local network only. Traffic uses unencrypted HTTP — " +
+                        "use a network you trust (not guest or public Wi‑Fi). Sign-in sessions last 2 hours " +
+                        "and stay bound to the browser device that logged in.",
+            )
         }
 
         MmrIosSettingsSection(
@@ -77,9 +82,9 @@ fun WebManageScreen(
             title = "Server",
             footer =
                 if (uiState.enabled) {
-                    "Turning Web Manage on disables Peer Device Sync."
+                    "Turning Web Manage on disables Peer Device Sync. Anyone on the same LAN could reach this server; keep HTTP traffic on trusted Wi‑Fi only."
                 } else {
-                    "Local HTTP server for browser access on your LAN."
+                    "Local HTTP server for browser access on your LAN. HTTPS with a local certificate is planned for a future release."
                 },
         ) {
             MmrIosSettingsSwitchRow(

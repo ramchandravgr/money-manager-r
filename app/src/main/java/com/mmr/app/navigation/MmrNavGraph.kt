@@ -318,20 +318,6 @@ fun MmrNavGraph(
             )
         }
 
-        composable(Screen.Loans.route) {
-            scheduledScreen(
-                navController = navController,
-                initialSection = ScheduledSection.LOANS,
-            )
-        }
-
-        composable(Screen.Recurring.route) {
-            scheduledScreen(
-                navController = navController,
-                initialSection = ScheduledSection.RECURRING,
-            )
-        }
-
         composable(Screen.AddRecurringRule.route) {
             AddEditRecurringRuleScreen(
                 onNavigateBack = { navController.popBackStack() },

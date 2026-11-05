@@ -9,22 +9,33 @@ import javax.inject.Singleton
 class WebManageSessionManager
     @Inject
     constructor() {
-        private val sessions = ConcurrentHashMap<String, Long>()
+        private val sessions = ConcurrentHashMap<String, SessionRecord>()
         private val random = SecureRandom()
 
-        fun createSession(): String {
+        fun createSession(clientAddress: String): String {
             val tokenBytes = ByteArray(24)
             random.nextBytes(tokenBytes)
             val token = tokenBytes.joinToString("") { "%02x".format(it) }
-            sessions[token] = System.currentTimeMillis() + SESSION_TTL_MS
+            sessions[token] =
+                SessionRecord(
+                    expiresAtMs = System.currentTimeMillis() + SESSION_TTL_MS,
+                    clientAddress = normalizeClientAddress(clientAddress),
+                )
             pruneExpired()
             return token
         }
 
-        fun isValid(token: String?): Boolean {
+        fun isValid(
+            token: String?,
+            clientAddress: String?,
+        ): Boolean {
             if (token.isNullOrBlank()) return false
-            val expiresAt = sessions[token] ?: return false
-            if (System.currentTimeMillis() > expiresAt) {
+            val record = sessions[token] ?: return false
+            if (System.currentTimeMillis() > record.expiresAtMs) {
+                sessions.remove(token)
+                return false
+            }
+            if (record.clientAddress != normalizeClientAddress(clientAddress)) {
                 sessions.remove(token)
                 return false
             }
@@ -43,10 +54,20 @@ class WebManageSessionManager
 
         private fun pruneExpired() {
             val now = System.currentTimeMillis()
-            sessions.entries.removeIf { it.value < now }
+            sessions.entries.removeIf { it.value.expiresAtMs < now }
         }
 
-        private companion object {
-            const val SESSION_TTL_MS = 12L * 60L * 60L * 1000L
+        private fun normalizeClientAddress(raw: String?): String =
+            raw?.trim()?.takeIf { it.isNotEmpty() } ?: UNKNOWN_CLIENT
+
+        private data class SessionRecord(
+            val expiresAtMs: Long,
+            val clientAddress: String,
+        )
+
+        companion object {
+            const val SESSION_TTL_MS = 2L * 60L * 60L * 1000L
+
+            private const val UNKNOWN_CLIENT = "unknown"
         }
     }

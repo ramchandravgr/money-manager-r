@@ -47,6 +47,27 @@ class LanSyncIdentityStore
                 prefs.edit().putString(KEY_DISPLAY_NAME, value.trim()).apply()
             }
 
+        /** Stable person/device-owner id for created-by provenance; survives backup restore (unlike [deviceId]). */
+        val ownerProfileId: String
+            get() {
+                val existing = prefs.getString(KEY_OWNER_PROFILE_ID, null)
+                if (!existing.isNullOrBlank()) return existing
+                val newId = MmrSyncId.newId()
+                prefs.edit().putString(KEY_OWNER_PROFILE_ID, newId).apply()
+                return newId
+            }
+
+        fun restoreOwnerProfile(
+            profileId: String,
+            displayName: String,
+        ) {
+            prefs
+                .edit()
+                .putString(KEY_OWNER_PROFILE_ID, profileId.trim())
+                .putString(KEY_DISPLAY_NAME, displayName.trim())
+                .apply()
+        }
+
         fun setLanSyncEnabled(enabled: Boolean) {
             prefs.edit().putBoolean(KEY_ENABLED, enabled).apply()
             _lanSyncEnabled.value = enabled
@@ -54,20 +75,18 @@ class LanSyncIdentityStore
 
         fun isLanSyncEnabled(): Boolean = _lanSyncEnabled.value
 
-        fun applyRestoredIdentity(
-            lanSyncEnabled: Boolean,
-            deviceId: String,
-            inboundAuthToken: String,
-            displayName: String,
-        ) {
-            prefs
-                .edit()
-                .putBoolean(KEY_ENABLED, lanSyncEnabled)
-                .putString(KEY_DEVICE_ID, deviceId)
-                .putString(KEY_INBOUND_TOKEN, inboundAuthToken)
-                .putString(KEY_DISPLAY_NAME, displayName)
-                .apply()
-            _lanSyncEnabled.value = lanSyncEnabled
+        fun rotateIdentityAfterBackupRestore(preferredDisplayName: String? = null) {
+            val newDeviceId = MmrSyncId.newId()
+            val newToken = MmrSyncId.newId()
+            val editor =
+                prefs
+                    .edit()
+                    .putBoolean(KEY_ENABLED, false)
+                    .putString(KEY_DEVICE_ID, newDeviceId)
+                    .putString(KEY_INBOUND_TOKEN, newToken)
+            preferredDisplayName?.trim()?.takeIf { it.isNotEmpty() }?.let { editor.putString(KEY_DISPLAY_NAME, it) }
+            editor.apply()
+            _lanSyncEnabled.value = false
         }
 
         private companion object {
@@ -76,5 +95,6 @@ class LanSyncIdentityStore
             const val KEY_DEVICE_ID = "device_id"
             const val KEY_INBOUND_TOKEN = "inbound_auth_token"
             const val KEY_DISPLAY_NAME = "display_name"
+            const val KEY_OWNER_PROFILE_ID = "owner_profile_id"
         }
     }

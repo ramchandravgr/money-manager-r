@@ -5,9 +5,9 @@ import com.mmr.core.backup.model.MmrBackupAssetAttachmentRecord
 import com.mmr.core.backup.model.MmrBackupAttachmentRecord
 import com.mmr.core.backup.model.MmrBackupPayload
 import com.mmr.core.backup.model.MmrDisplaySettingsBackup
-import com.mmr.core.backup.model.MmrLanSyncSettingsBackup
+import com.mmr.core.backup.model.MmrKnownProfileBackup
+import com.mmr.core.backup.model.MmrOwnerProfileBackup
 import com.mmr.core.backup.model.MmrSmsInboundSettingsBackup
-import com.mmr.core.backup.model.MmrWebManageSettingsBackup
 import com.mmr.core.database.entity.AccountEntity
 import com.mmr.core.database.entity.AssetEntity
 import com.mmr.core.database.entity.AssetValuationEntity
@@ -27,6 +27,7 @@ import com.mmr.core.database.entity.TransactionApprovalEntity
 import com.mmr.core.database.entity.TransactionEntity
 import com.mmr.core.database.entity.TrustedLanDeviceEntity
 import com.mmr.core.model.enums.AccountType
+import com.mmr.core.model.enums.AssetStatus
 import com.mmr.core.model.enums.BudgetPeriodType
 import com.mmr.core.model.enums.CardNetwork
 import com.mmr.core.model.enums.CategorizationMatchType
@@ -49,7 +50,7 @@ import org.json.JSONObject
 
 object BackupJsonCodec {
     const val CURRENT_FORMAT_VERSION = 4
-    const val MIN_SUPPORTED_FORMAT_VERSION = 1
+    const val SUPPORTED_FORMAT_VERSION = 4
     const val EXPECTED_APP_ID = "com.mmr.app"
 
     fun encode(payload: MmrBackupPayload): String =
@@ -121,7 +122,7 @@ object BackupJsonCodec {
                 throw IllegalArgumentException("Backup file is not valid JSON.", e)
             }
         val formatVersion = root.optInt("formatVersion", -1)
-        if (formatVersion < MIN_SUPPORTED_FORMAT_VERSION || formatVersion > CURRENT_FORMAT_VERSION) {
+        if (formatVersion != SUPPORTED_FORMAT_VERSION) {
             throw IllegalArgumentException("Unsupported backup format version: $formatVersion")
         }
         val appId = root.optString("appId", "")
@@ -195,8 +196,28 @@ object BackupJsonCodec {
             put("smsScanMonths", settings.smsScanMonths)
             settings.display?.let { put("display", displaySettingsBackupToJson(it)) }
             settings.smsInbound?.let { put("smsInbound", smsInboundSettingsToJson(it)) }
-            settings.lanSync?.let { put("lanSync", lanSyncSettingsToJson(it)) }
-            settings.webManage?.let { put("webManage", webManageSettingsToJson(it)) }
+            settings.ownerProfile?.let { put("ownerProfile", ownerProfileBackupToJson(it)) }
+            if (settings.knownProfiles.isNotEmpty()) {
+                put(
+                    "knownProfiles",
+                    JSONArray().apply {
+                        settings.knownProfiles.forEach { put(ownerProfileBackupToJson(it)) }
+                    },
+                )
+            }
+        }
+
+    private fun ownerProfileBackupToJson(profile: MmrOwnerProfileBackup) =
+        JSONObject().apply {
+            put("profileId", profile.profileId)
+            put("displayName", profile.displayName)
+        }
+
+    private fun ownerProfileBackupToJson(profile: MmrKnownProfileBackup) =
+        JSONObject().apply {
+            put("profileId", profile.profileId)
+            put("displayName", profile.displayName)
+            put("updatedAt", profile.updatedAt)
         }
 
     private fun appSettingsFromJson(json: JSONObject): MmrAppSettingsBackup {
@@ -220,18 +241,31 @@ object BackupJsonCodec {
                 } else {
                     null
                 },
-            lanSync =
-                if (json.has("lanSync") && !json.isNull("lanSync")) {
-                    lanSyncSettingsFromJson(json.getJSONObject("lanSync"))
+            ownerProfile =
+                if (json.has("ownerProfile") && !json.isNull("ownerProfile")) {
+                    val op = json.getJSONObject("ownerProfile")
+                    MmrOwnerProfileBackup(
+                        profileId = op.getString("profileId"),
+                        displayName = op.getString("displayName"),
+                    )
                 } else {
                     null
                 },
-            webManage =
-                if (json.has("webManage") && !json.isNull("webManage")) {
-                    webManageSettingsFromJson(json.getJSONObject("webManage"))
-                } else {
-                    null
-                },
+            knownProfiles =
+                json.optJSONArray("knownProfiles")?.let { array ->
+                    buildList {
+                        for (i in 0 until array.length()) {
+                            val item = array.getJSONObject(i)
+                            add(
+                                MmrKnownProfileBackup(
+                                    profileId = item.getString("profileId"),
+                                    displayName = item.getString("displayName"),
+                                    updatedAt = item.optLong("updatedAt", 0L),
+                                ),
+                            )
+                        }
+                    }
+                } ?: emptyList(),
         )
     }
 
@@ -295,61 +329,6 @@ object BackupJsonCodec {
             readSmsInboundPromptShown = json.getBoolean("readSmsInboundPromptShown"),
         )
 
-    private fun lanSyncSettingsToJson(settings: MmrLanSyncSettingsBackup) =
-        JSONObject().apply {
-            put("lanSyncEnabled", settings.lanSyncEnabled)
-            put("deviceId", settings.deviceId)
-            put("inboundAuthToken", settings.inboundAuthToken)
-            put("displayName", settings.displayName)
-            put("peerMode", settings.peerMode)
-            putNullableString("selectedPeerDeviceId", settings.selectedPeerDeviceId)
-            put("includeAttachments", settings.includeAttachments)
-            put("trustedWifiSsids", JSONArray(settings.trustedWifiSsids))
-            val policies = JSONObject()
-            settings.duplicateEntityPolicies.forEach { (key, value) -> policies.put(key, value) }
-            put("duplicateEntityPolicies", policies)
-        }
-
-    private fun lanSyncSettingsFromJson(json: JSONObject): MmrLanSyncSettingsBackup {
-        val ssids = mutableListOf<String>()
-        if (json.has("trustedWifiSsids") && !json.isNull("trustedWifiSsids")) {
-            val array = json.getJSONArray("trustedWifiSsids")
-            for (i in 0 until array.length()) {
-                ssids.add(array.getString(i))
-            }
-        }
-        val policies = mutableMapOf<String, String>()
-        if (json.has("duplicateEntityPolicies") && !json.isNull("duplicateEntityPolicies")) {
-            val objectPolicies = json.getJSONObject("duplicateEntityPolicies")
-            objectPolicies.keys().forEach { key -> policies[key] = objectPolicies.getString(key) }
-        }
-        return MmrLanSyncSettingsBackup(
-            lanSyncEnabled = json.getBoolean("lanSyncEnabled"),
-            deviceId = json.getString("deviceId"),
-            inboundAuthToken = json.getString("inboundAuthToken"),
-            displayName = json.getString("displayName"),
-            peerMode = json.getString("peerMode"),
-            selectedPeerDeviceId = json.optNullableString("selectedPeerDeviceId"),
-            includeAttachments = json.getBoolean("includeAttachments"),
-            trustedWifiSsids = ssids,
-            duplicateEntityPolicies = policies,
-        )
-    }
-
-    private fun webManageSettingsToJson(settings: MmrWebManageSettingsBackup) =
-        JSONObject().apply {
-            put("enabled", settings.enabled)
-            putNullableString("passwordSalt", settings.passwordSalt)
-            putNullableString("passwordHash", settings.passwordHash)
-        }
-
-    private fun webManageSettingsFromJson(json: JSONObject) =
-        MmrWebManageSettingsBackup(
-            enabled = json.getBoolean("enabled"),
-            passwordSalt = json.optNullableString("passwordSalt"),
-            passwordHash = json.optNullableString("passwordHash"),
-        )
-
     private fun budgetToJson(entity: BudgetEntity) =
         JSONObject().apply {
             put("id", entity.id)
@@ -365,6 +344,8 @@ object BackupJsonCodec {
             put("isActive", entity.isActive)
             put("createdAt", entity.createdAt)
             put("updatedAt", entity.updatedAt)
+            putNullableString("createdByProfileId", entity.createdByProfileId)
+            putNullableString("createdByDisplayName", entity.createdByDisplayName)
         }
 
     private fun budgetFromJson(json: JSONObject) =
@@ -382,6 +363,8 @@ object BackupJsonCodec {
             isActive = json.getBoolean("isActive"),
             createdAt = json.getLong("createdAt"),
             updatedAt = json.getLong("updatedAt"),
+            createdByProfileId = json.optNullableString("createdByProfileId"),
+            createdByDisplayName = json.optNullableString("createdByDisplayName"),
         )
 
     private fun categorizationRuleToJson(entity: CategorizationRuleEntity) =
@@ -498,6 +481,8 @@ object BackupJsonCodec {
             putNullableString("notes", entity.notes)
             put("createdAt", entity.createdAt)
             put("updatedAt", entity.updatedAt)
+            putNullableString("createdByProfileId", entity.createdByProfileId)
+            putNullableString("createdByDisplayName", entity.createdByDisplayName)
         }
 
     private fun assetFromJson(json: JSONObject) =
@@ -506,9 +491,7 @@ object BackupJsonCodec {
             syncId = syncIdFromJson(json),
             name = json.getString("name"),
             assetType = json.getString("assetType"),
-            status =
-                com.mmr.core.model.enums
-                    .assetStatusFromStored(json.getString("status")),
+            status = AssetStatus.valueOf(json.getString("status")),
             isInherited = json.getBoolean("isInherited"),
             purchaseDateMillis = json.optNullableLong("purchaseDateMillis"),
             purchasePrice = json.optNullableDouble("purchasePrice"),
@@ -524,6 +507,8 @@ object BackupJsonCodec {
             notes = json.optNullableString("notes"),
             createdAt = json.getLong("createdAt"),
             updatedAt = json.getLong("updatedAt"),
+            createdByProfileId = json.optNullableString("createdByProfileId"),
+            createdByDisplayName = json.optNullableString("createdByDisplayName"),
         )
 
     private fun assetValuationToJson(entity: AssetValuationEntity) =
@@ -716,6 +701,8 @@ object BackupJsonCodec {
             putNullableString("notes", entity.notes)
             put("createdAt", entity.createdAt)
             put("updatedAt", entity.updatedAt)
+            putNullableString("createdByProfileId", entity.createdByProfileId)
+            putNullableString("createdByDisplayName", entity.createdByDisplayName)
         }
 
     private fun loanFromJson(json: JSONObject) =
@@ -744,6 +731,8 @@ object BackupJsonCodec {
             notes = json.optNullableString("notes"),
             createdAt = json.getLong("createdAt"),
             updatedAt = json.getLong("updatedAt"),
+            createdByProfileId = json.optNullableString("createdByProfileId"),
+            createdByDisplayName = json.optNullableString("createdByDisplayName"),
         )
 
     private fun transactionToJson(entity: TransactionEntity) =
@@ -772,13 +761,11 @@ object BackupJsonCodec {
             putNullableString("cardNetwork", entity.cardNetwork?.name)
             putNullableDouble("originalAmount", entity.originalAmount)
             put("refundedTotal", entity.refundedTotal)
+            putNullableString("createdByProfileId", entity.createdByProfileId)
+            putNullableString("createdByDisplayName", entity.createdByDisplayName)
         }
 
-    private fun syncIdFromJson(json: JSONObject): String =
-        json.optString("syncId").ifBlank {
-            com.mmr.core.common.sync.MmrSyncId
-                .newId()
-        }
+    private fun syncIdFromJson(json: JSONObject): String = json.getString("syncId")
 
     private fun transactionFromJson(json: JSONObject) =
         TransactionEntity(
@@ -806,6 +793,8 @@ object BackupJsonCodec {
             cardNetwork = json.optNullableString("cardNetwork")?.let { CardNetwork.valueOf(it) },
             originalAmount = json.optNullableDouble("originalAmount"),
             refundedTotal = json.optDouble("refundedTotal", 0.0),
+            createdByProfileId = json.optNullableString("createdByProfileId"),
+            createdByDisplayName = json.optNullableString("createdByDisplayName"),
         )
 
     private fun loanPaymentToJson(entity: LoanPaymentEntity) =
@@ -857,6 +846,8 @@ object BackupJsonCodec {
             put("reminderMinutesBefore", entity.reminderMinutesBefore)
             put("createdAt", entity.createdAt)
             put("updatedAt", entity.updatedAt)
+            putNullableString("createdByProfileId", entity.createdByProfileId)
+            putNullableString("createdByDisplayName", entity.createdByDisplayName)
         }
 
     private fun recurringRuleFromJson(json: JSONObject) =
@@ -880,6 +871,8 @@ object BackupJsonCodec {
             reminderMinutesBefore = json.getInt("reminderMinutesBefore"),
             createdAt = json.getLong("createdAt"),
             updatedAt = json.getLong("updatedAt"),
+            createdByProfileId = json.optNullableString("createdByProfileId"),
+            createdByDisplayName = json.optNullableString("createdByDisplayName"),
         )
 
     private fun notificationRuleToJson(entity: NotificationRuleEntity) =

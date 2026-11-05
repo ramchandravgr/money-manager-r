@@ -29,7 +29,10 @@ import com.mmr.core.model.enums.SmsApprovalState
 import com.mmr.core.model.enums.SmsParsedStatus
 import com.mmr.core.model.enums.TransactionSourceType
 import com.mmr.core.model.enums.TransactionType
+import com.mmr.core.owner.MmrOwnerProfileCoordinator
+import com.mmr.core.owner.withLocalCreatedBy
 import com.mmr.core.parser.account.SmsAccountResolver
+import com.mmr.core.parser.account.parsedSmsCandidateFromApproval
 import com.mmr.core.parser.catalog.CardMetadataExtractor
 import com.mmr.core.parser.duplicate.SmsMessageHasher
 import com.mmr.core.parser.engine.SmsParserEngine
@@ -60,6 +63,7 @@ class ApprovalRepositoryImpl
         private val loanTransactionCoordinator: LoanTransactionCoordinator,
         private val categorizationRuleEngine: CategorizationRuleEngine,
         private val widgetRefreshTrigger: HomeScreenWidgetRefreshTrigger,
+        private val ownerProfileCoordinator: MmrOwnerProfileCoordinator,
     ) : ApprovalRepository {
         private fun refreshWidgets() {
             widgetRefreshTrigger.requestRefresh()
@@ -117,6 +121,9 @@ class ApprovalRepositoryImpl
 
         override suspend fun getPendingCountOnce(): Int = transactionApprovalDao.getPendingCountOnce()
 
+        override suspend fun getLatestQuickApprovablePendingId(): Long? =
+            transactionApprovalDao.getLatestQuickApprovablePendingId()
+
         override suspend fun getApprovalById(id: Long): TransactionApprovalEntity? =
             if (id <= 0L) null else transactionApprovalDao.getById(id)
 
@@ -146,7 +153,7 @@ class ApprovalRepositoryImpl
 
                 val categoryId = resolveCategoryId(candidate, activeCategories)
 
-                val resolvedAccountId = smsAccountResolver.resolveAccountId(candidate)
+                val resolvedAccountId = smsAccountResolver.findExistingAccountId(candidate)
                 val cardNetwork = CardMetadataExtractor.detectNetwork(candidate.rawBody)
 
                 val approvalEntity =
@@ -492,6 +499,7 @@ class ApprovalRepositoryImpl
             subcategoryId: Long?,
             relatedAccountId: Long?,
             loanId: Long?,
+            provisionAccountFromSms: Boolean,
         ): Long {
             if (id <= 0L) {
                 throw IllegalArgumentException("Pending entry not found.")
@@ -506,7 +514,18 @@ class ApprovalRepositoryImpl
                 throw IllegalStateException("Use Apply refund for card refund SMS.")
             }
             MmrValidation.requirePositiveAmount(approval.extractedAmount)
-            val accountId = approval.extractedAccountId ?: fallbackAccountId
+
+            val smsRecord =
+                approvalLedgerDao.getSmsRecordById(approval.smsMessageRecordId)
+                    ?: throw IllegalStateException("SMS record missing for this approval.")
+
+            val accountId =
+                resolveAccountIdForApproval(
+                    approval = approval,
+                    smsRecord = smsRecord,
+                    fallbackAccountId = fallbackAccountId,
+                    provisionFromSms = provisionAccountFromSms,
+                )
             if (accountId <= 0L) {
                 throw IllegalStateException("No valid account available for approval.")
             }
@@ -515,10 +534,6 @@ class ApprovalRepositoryImpl
                     ?: fallbackCategoryId
                     ?: MmrUncategorisedCategory.resolveId(categoryDao, approval.extractedType)
             val dateTime = MmrValidation.normalizeEpochMillis(approval.extractedDateTime)
-
-            val smsRecord =
-                approvalLedgerDao.getSmsRecordById(approval.smsMessageRecordId)
-                    ?: throw IllegalStateException("SMS record missing for this approval.")
 
             val resolvedSubcategoryId =
                 subcategoryId
@@ -565,7 +580,7 @@ class ApprovalRepositoryImpl
                     paymentInstrument = approval.extractedInstrument,
                     cardLastFour = approval.extractedCardLastFour,
                     cardNetwork = approval.extractedCardNetwork,
-                )
+                ).withLocalCreatedBy(ownerProfileCoordinator.localStamp())
             RepositoryGuards.requireValidTransactionEntity(transaction)
 
             val txnId =
@@ -838,13 +853,32 @@ class ApprovalRepositoryImpl
             return approvalLedgerDao.insertPendingCandidate(recordEntity, approvalEntity)
         }
 
+        private suspend fun resolveAccountIdForApproval(
+            approval: TransactionApprovalEntity,
+            smsRecord: SmsMessageRecordEntity,
+            fallbackAccountId: Long,
+            provisionFromSms: Boolean,
+        ): Long {
+            if (approval.userEdited) {
+                return approval.extractedAccountId?.takeIf { it > 0L } ?: fallbackAccountId
+            }
+            if (provisionFromSms) {
+                val candidate = parsedSmsCandidateFromApproval(approval, smsRecord)
+                val provisioned = smsAccountResolver.provisionAccountId(candidate)
+                if (provisioned != null && provisioned > 0L) {
+                    return provisioned
+                }
+            }
+            return approval.extractedAccountId?.takeIf { it > 0L } ?: fallbackAccountId
+        }
+
         private suspend fun buildEntitiesFromCandidate(
             candidate: ParsedSmsCandidate,
             fullBody: String,
         ): Pair<SmsMessageRecordEntity, TransactionApprovalEntity> {
             val activeCategories = categoryDao.getActiveCategories().firstOrNull() ?: emptyList()
             val categoryId = resolveCategoryId(candidate, activeCategories)
-            val resolvedAccountId = smsAccountResolver.resolveAccountId(candidate)
+            val resolvedAccountId = smsAccountResolver.findExistingAccountId(candidate)
             val cardNetwork = CardMetadataExtractor.detectNetwork(candidate.rawBody)
             val unparsedManual = candidate.templateId == ManualSmsParseConstants.UNPARSED_TEMPLATE_ID
 

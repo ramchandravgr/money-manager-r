@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.mmr.core.common.widget.HomeScreenWidgetRefreshTrigger
 import com.mmr.core.data.preferences.AppDisplaySettingsSnapshot
 import com.mmr.core.data.preferences.AppDisplaySettingsStore
+import com.mmr.core.data.preferences.AppSecuritySettingsStore
 import com.mmr.core.model.settings.MmrAmountColorScheme
 import com.mmr.core.model.settings.MmrAppColorTheme
 import com.mmr.core.model.settings.MmrInputOrder
@@ -21,9 +22,12 @@ class ConfigurationViewModel
     @Inject
     constructor(
         private val displaySettingsStore: AppDisplaySettingsStore,
+        private val appSecuritySettingsStore: AppSecuritySettingsStore,
         private val widgetRefreshTrigger: HomeScreenWidgetRefreshTrigger,
     ) : ViewModel() {
         val settings: StateFlow<AppDisplaySettingsSnapshot> = displaySettingsStore.settings
+
+        val appLockOnLaunch: StateFlow<Boolean> = appSecuritySettingsStore.appLockOnLaunch
 
         fun setStartScreen(tab: MmrStartScreenTab) = displaySettingsStore.setStartScreenTab(tab)
 
@@ -56,4 +60,6 @@ class ConfigurationViewModel
             navId: String,
             visible: Boolean,
         ) = displaySettingsStore.setMainNavVisible(navId, visible)
+
+        fun setAppLockOnLaunch(enabled: Boolean) = appSecuritySettingsStore.setAppLockOnLaunch(enabled)
     }

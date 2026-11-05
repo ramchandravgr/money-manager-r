@@ -83,7 +83,7 @@ GOOGLE_WEB_CLIENT_ID=<Web OAuth client ID from Google Cloud Console>
 | Field | Value |
 |-------|--------|
 | Application ID | `com.mmr.app` |
-| `versionCode` / `versionName` | `1` / `1.0` |
+| `versionCode` / `versionName` | `900` / `0.9.0` (semver; see [`docs/versioning.md`](versioning.md)) |
 | `minSdk` | 24 |
 | `compileSdk` / `targetSdk` | 35 |
 | Room DB version | 17 (`MmrDatabase`) |

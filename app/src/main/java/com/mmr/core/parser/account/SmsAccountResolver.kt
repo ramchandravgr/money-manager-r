@@ -14,28 +14,43 @@ class SmsAccountResolver
     constructor(
         private val accountDao: AccountDao,
     ) {
-        suspend fun resolveAccountId(candidate: ParsedSmsCandidate): Long? {
+        /** Maps SMS to an existing account only; never inserts. Used when queueing pending approvals. */
+        suspend fun findExistingAccountId(candidate: ParsedSmsCandidate): Long? {
             val accounts = accountDao.getActiveAccountsOnce()
-            return when {
+            return resolveAccountId(accounts, candidate, createIfMissing = false)
+        }
+
+        /** Maps SMS to an account, creating credit-card or wallet rows when needed. Used on direct approval only. */
+        suspend fun provisionAccountId(candidate: ParsedSmsCandidate): Long? {
+            val accounts = accountDao.getActiveAccountsOnce()
+            return resolveAccountId(accounts, candidate, createIfMissing = true)
+        }
+
+        private suspend fun resolveAccountId(
+            accounts: List<AccountEntity>,
+            candidate: ParsedSmsCandidate,
+            createIfMissing: Boolean,
+        ): Long? =
+            when {
                 SmsSpendChannel.isCreditCardSpend(candidate) -> {
                     val last4 = candidate.accountLastDigits ?: return null
-                    findOrCreateCreditCard(accounts, last4)
+                    findOrCreateCreditCard(accounts, last4, createIfMissing)
                 }
                 SmsSpendChannel.isPluxeeMealSpend(candidate) ->
-                    findOrCreateWallet(accounts, WALLET_PLUXEE_NAME)
+                    findOrCreateWallet(accounts, WALLET_PLUXEE_NAME, createIfMissing)
                 SmsSpendChannel.isHpPayWalletSpend(candidate) ->
-                    findOrCreateWallet(accounts, WALLET_HP_PAY_NAME)
+                    findOrCreateWallet(accounts, WALLET_HP_PAY_NAME, createIfMissing)
                 candidate.instrument == SmsInstrument.SAVINGS && !candidate.accountLastDigits.isNullOrBlank() -> {
                     findBankByLastFour(accounts, candidate.accountLastDigits!!)
                 }
                 else -> null
             }
-        }
 
         private suspend fun findOrCreateCreditCard(
             accounts: List<AccountEntity>,
             last4: String,
-        ): Long {
+            createIfMissing: Boolean,
+        ): Long? {
             val existing =
                 accounts.firstOrNull {
                     it.type == AccountType.CREDIT && it.cardLastFour == last4
@@ -43,6 +58,7 @@ class SmsAccountResolver
                     it.type == AccountType.CREDIT && it.name.contains(last4)
                 }
             if (existing != null) return existing.id
+            if (!createIfMissing) return null
             val name = "Credit card • $last4"
             return accountDao.insert(
                 AccountEntity(
@@ -56,12 +72,14 @@ class SmsAccountResolver
         private suspend fun findOrCreateWallet(
             accounts: List<AccountEntity>,
             walletName: String,
-        ): Long {
+            createIfMissing: Boolean,
+        ): Long? {
             val existing =
                 accounts.firstOrNull {
                     it.type == AccountType.WALLET && it.name.equals(walletName, ignoreCase = true)
                 }
             if (existing != null) return existing.id
+            if (!createIfMissing) return null
             return accountDao.insert(
                 AccountEntity(
                     name = walletName,

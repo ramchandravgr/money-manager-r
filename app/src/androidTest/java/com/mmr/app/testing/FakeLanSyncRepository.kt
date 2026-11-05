@@ -6,7 +6,6 @@ import com.mmr.core.domain.repository.LanSyncRepository
 import com.mmr.core.domain.repository.LanSyncSessionState
 import com.mmr.core.lansync.LanSyncMergeOptions
 import com.mmr.core.lansync.LanSyncMergeSummary
-import com.mmr.core.lansync.LanSyncPairingCodec
 import com.mmr.core.lansync.LanSyncPairingOffer
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -25,15 +24,16 @@ class FakeLanSyncRepository : LanSyncRepository {
     override fun pairingOffer(): LanSyncPairingOffer =
         LanSyncPairingOffer(deviceId = "test", displayName = "Test", inboundAuthToken = "token")
 
-    override suspend fun resolvePairingInput(raw: String): LanSyncPairingOffer {
-        val trimmed = raw.trim()
-        if (trimmed.startsWith(LanSyncPairingCodec.LEGACY_PREFIX)) {
-            return LanSyncPairingCodec.decode(trimmed)
-        }
-        return pairingOffer()
-    }
+    override suspend fun resolvePairingInput(raw: String): LanSyncPairingOffer = pairingOffer()
 
-    override suspend fun trustDeviceFromPairingOffer(offer: LanSyncPairingOffer) = Unit
+    override suspend fun trustDeviceFromPairingOffer(
+        offer: LanSyncPairingOffer,
+        pairingCode: String?,
+    ) = Unit
+
+    override suspend fun approvePendingPairRequest(remoteDeviceId: String) = Unit
+
+    override suspend fun rejectPendingPairRequest(remoteDeviceId: String) = Unit
 
     override suspend fun removeTrustedDevice(deviceId: String) = Unit
 

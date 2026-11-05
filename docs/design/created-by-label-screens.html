@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MMR — Where “Created by” appears</title>
+  <style>
+    :root {
+      --brand: #4f46e5;
+      --brand-dark: #3730a3;
+      --bg: #f3f4f6;
+      --card: #fff;
+      --text: #111827;
+      --muted: #6b7280;
+      --positive: #059669;
+      --negative: #dc2626;
+      --radius: 14px;
+      --phone-w: 320px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    header {
+      background: linear-gradient(135deg, var(--brand), var(--brand-dark));
+      color: #fff;
+      padding: 2rem 1.5rem 2.5rem;
+    }
+    header h1 { margin: 0 0 0.5rem; font-size: 1.5rem; }
+    header p { margin: 0; opacity: 0.92; max-width: 52rem; }
+    main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+    .toc {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+    }
+    .toc h2 { margin: 0 0 0.75rem; font-size: 1rem; }
+    .toc ul { margin: 0; padding-left: 1.25rem; }
+    .toc a { color: var(--brand); }
+    section.screen {
+      margin-bottom: 2.5rem;
+    }
+    section.screen h2 {
+      font-size: 1.25rem;
+      margin: 0 0 0.35rem;
+    }
+    section.screen .route {
+      font-family: ui-monospace, monospace;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-bottom: 0.75rem;
+    }
+    section.screen .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      margin-bottom: 0.75rem;
+    }
+    .badge-live { background: #d1fae5; color: #065f46; }
+    .badge-copy { background: #fef3c7; color: #92400e; }
+    .badge-none { background: #e5e7eb; color: #374151; }
+    .badge-data { background: #dbeafe; color: #1e40af; }
+    .layout {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      align-items: flex-start;
+    }
+    .phone {
+      width: var(--phone-w);
+      flex-shrink: 0;
+      background: #1f2937;
+      border-radius: 28px;
+      padding: 10px;
+      box-shadow: 0 12px 40px rgb(0 0 0 / 18%);
+    }
+    .phone-inner {
+      background: var(--bg);
+      border-radius: 20px;
+      overflow: hidden;
+      min-height: 520px;
+    }
+    .top-bar {
+      background: var(--brand);
+      color: #fff;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .top-bar .back { opacity: 0.9; font-size: 1.1rem; }
+    .body-scroll { padding: 12px; }
+    .hero-title { font-weight: 600; font-size: 1rem; color: #111; }
+    .hero-amount { font-size: 1.35rem; font-weight: 700; color: var(--negative); margin-top: 4px; }
+    .hero-amount.income { color: var(--positive); }
+    .created-by {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+    .created-by strong { color: #374151; font-weight: 600; }
+    .meta-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-top: 12px;
+      font-size: 0.8rem;
+    }
+    .meta-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #f3f4f6; }
+    .meta-row:last-child { border-bottom: none; }
+    .meta-row span:first-child { color: var(--muted); }
+    .footer-bar {
+      margin-top: auto;
+      background: var(--card);
+      border-top: 1px solid #e5e7eb;
+      padding: 10px;
+      display: flex;
+      gap: 8px;
+      font-size: 0.75rem;
+    }
+    .footer-bar button {
+      flex: 1;
+      border: none;
+      border-radius: 8px;
+      padding: 10px;
+      font-weight: 600;
+    }
+    .btn-primary { background: var(--brand); color: #fff; }
+    .btn-secondary { background: #e5e7eb; color: #111; }
+    .settings-group {
+      background: var(--card);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .settings-group h3 {
+      margin: 0;
+      padding: 10px 12px 4px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+    .settings-row {
+      padding: 10px 12px;
+      border-top: 1px solid #f3f4f6;
+      font-size: 0.85rem;
+    }
+    .settings-row label { display: block; color: var(--muted); font-size: 0.75rem; }
+    .settings-row input {
+      width: 100%;
+      border: none;
+      font-size: 0.9rem;
+      margin-top: 4px;
+      outline: none;
+    }
+    .settings-footer {
+      padding: 0 12px 10px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .settings-footer em { color: var(--brand-dark); font-style: normal; font-weight: 600; }
+    .notes {
+      flex: 1;
+      min-width: 260px;
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+      font-size: 0.9rem;
+    }
+    .notes h3 { margin: 0 0 0.5rem; font-size: 0.95rem; }
+    .notes ul { margin: 0.5rem 0 0; padding-left: 1.2rem; }
+    .notes code { font-size: 0.82em; background: #f3f4f6; padding: 0.1em 0.35em; border-radius: 4px; }
+    table.summary {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgb(0 0 0 / 8%);
+      font-size: 0.88rem;
+      margin-bottom: 2rem;
+    }
+    table.summary th, table.summary td {
+      text-align: left;
+      padding: 0.65rem 0.85rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    table.summary th { background: #f9fafb; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+    .dim { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>“Created by” — screens &amp; copy</h1>
+    <p>
+      Reference for Ramchandra: every place the Android app shows the <strong>Created by {name}</strong> provenance label,
+      mentions it in settings copy, or stores created-by data without UI yet. Generated from current Kotlin sources (2026-11-05).
+    </p>
+  </header>
+
+  <main>
+    <nav class="toc">
+      <h2>Quick answer</h2>
+      <ul>
+        <li><strong>Live label on a record:</strong> one screen — <a href="#transaction-detail">Transaction detail</a>.</li>
+        <li><strong>Settings copy only:</strong> <a href="#lan-sync">Peer Device Sync</a> footer under “Your name”.</li>
+        <li><strong>Data stamped, no detail UI yet:</strong> loans, recurring, budgets, assets (see <a href="#summary">summary table</a>).</li>
+        <li><strong>Never shown:</strong> Home, lists, search, stats, approval center, Web Manage, widgets.</li>
+      </ul>
+    </nav>
+
+    <table class="summary" id="summary">
+      <thead>
+        <tr>
+          <th>Screen</th>
+          <th>Navigation</th>
+          <th>User sees “Created by …”?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Transaction detail</td>
+          <td class="dim">Home / Search → row → detail</td>
+          <td><span class="badge badge-live">Yes — hero subtitle</span></td>
+        </tr>
+        <tr>
+          <td>Peer Device Sync</td>
+          <td class="dim">Settings → Peer Device Sync</td>
+          <td><span class="badge badge-copy">Copy only</span> (footer explains label on peer phone)</td>
+        </tr>
+        <tr>
+          <td>Loan detail</td>
+          <td class="dim">Loans → loan</td>
+          <td><span class="badge badge-data">Not implemented</span></td>
+        </tr>
+        <tr>
+          <td>Recurring rule detail</td>
+          <td class="dim">Scheduled → rule</td>
+          <td><span class="badge badge-data">Not implemented</span></td>
+        </tr>
+        <tr>
+          <td>Budget list / edit</td>
+          <td class="dim">Budgets</td>
+          <td><span class="badge badge-data">Not implemented</span></td>
+        </tr>
+        <tr>
+          <td>Asset detail</td>
+          <td class="dim">Assets → asset</td>
+          <td><span class="badge badge-data">Not implemented</span></td>
+        </tr>
+        <tr>
+          <td>Web Manage (browser)</td>
+          <td class="dim">LAN Web UI</td>
+          <td><span class="badge badge-none">No</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Screen 1 -->
+    <section class="screen" id="transaction-detail">
+      <h2>1. Transaction detail</h2>
+      <p class="route">Route: <code>transaction_detail/{transactionId}</code> · <code>TransactionDetailScreen.kt</code> · <code>TransactionDetailViewModel.formatCreatedByLabel</code></p>
+      <span class="badge badge-live">Shows label</span>
+      <div class="layout">
+        <div class="phone">
+          <div class="phone-inner" style="display:flex;flex-direction:column;">
+            <div class="top-bar"><span class="back">←</span> Transaction</div>
+            <div class="body-scroll" style="flex:1;">
+              <div class="hero-title">Lunch with team</div>
+              <div class="hero-amount">−₹750</div>
+              <p class="created-by"><strong>Created by Sita</strong> ← labelSmall, TextMedium, under amount</p>
+              <div class="meta-card">
+                <div class="meta-row"><span>Type</span><span>Expense</span></div>
+                <div class="meta-row"><span>Date</span><span>04 Nov 2025, 01:15 pm</span></div>
+                <div class="meta-row"><span>Category</span><span>Food · Dining</span></div>
+                <div class="meta-row"><span>Account</span><span>Savings</span></div>
+              </div>
+            </div>
+            <div class="footer-bar">
+              <button class="btn-primary" type="button">Edit</button>
+              <button class="btn-secondary" type="button">Duplicate</button>
+            </div>
+          </div>
+        </div>
+        <div class="notes">
+          <h3>When the subtitle appears</h3>
+          <ul>
+            <li><strong>Peer Device Sync</strong> is turned on (<code>LanSyncIdentityStore.isLanSyncEnabled()</code>).</li>
+            <li>Transaction has <code>createdByProfileId</code> and it is <strong>not</strong> this phone’s <code>ownerProfileId</code>.</li>
+            <li><code>createdByDisplayName</code> snapshot is non-empty (sync/merge fills this).</li>
+          </ul>
+          <p class="dim">Not shown on Home rows, search results, stats, or approval cards. <code>MmrOwnerProfileCoordinator.resolveCreatedByLabel</code> exists for richer rules but detail screen still uses the ViewModel helper above.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 2 -->
+    <section class="screen" id="lan-sync">
+      <h2>2. Peer Device Sync (settings)</h2>
+      <p class="route">Route: <code>lan_sync</code> · <code>LanSyncScreen.kt</code> section “This device”</p>
+      <span class="badge badge-copy">Mentions “Created by” in footer</span>
+      <div class="layout">
+        <div class="phone">
+          <div class="phone-inner">
+            <div class="top-bar"><span class="back">←</span> Peer Device Sync</div>
+            <div class="body-scroll">
+              <div class="settings-group">
+                <h3>This device</h3>
+                <div class="settings-row">
+                  <label>Your name</label>
+                  <input type="text" value="Ram" readonly />
+                </div>
+                <div class="settings-footer">
+                  This name is shown on the other phone as <em>Created by</em> when you sync.
+                </div>
+              </div>
+              <p class="dim" style="font-size:0.75rem;padding:0 4px;">Pairing code, trusted devices, Sync now — unchanged.</p>
+            </div>
+          </div>
+        </div>
+        <div class="notes">
+          <h3>What this is not</h3>
+          <p>This footer is <strong>help text</strong>, not a live “Created by” row on a transaction. Editing <strong>Your name</strong> updates <code>ownerProfileId</code> display via <code>MmrOwnerProfileCoordinator.onLocalDisplayNameChanged</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 3 - hidden state -->
+    <section class="screen" id="transaction-detail-hidden">
+      <h2>3. Transaction detail — label hidden (same screen)</h2>
+      <p class="route">Same route; subtitle omitted when rules fail</p>
+      <span class="badge badge-none">No subtitle</span>
+      <div class="layout">
+        <div class="phone">
+          <div class="phone-inner" style="display:flex;flex-direction:column;">
+            <div class="top-bar"><span class="back">←</span> Transaction</div>
+            <div class="body-scroll" style="flex:1;">
+              <div class="hero-title">Groceries</div>
+              <div class="hero-amount">−₹1,240</div>
+              <p class="dim" style="font-size:0.72rem;margin-top:8px;">No line under amount — sync off, or you created it, or missing name.</p>
+              <div class="meta-card">
+                <div class="meta-row"><span>Type</span><span>Expense</span></div>
+                <div class="meta-row"><span>Date</span><span>Today</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="notes">
+          <h3>Hidden when</h3>
+          <ul>
+            <li>Peer Device Sync is <strong>off</strong>.</li>
+            <li><code>createdByProfileId</code> is null/blank (pre-sync local-only data).</li>
+            <li>Profile id equals <strong>this device’s</strong> owner profile (your own entries).</li>
+            <li>Peer name snapshot empty (label not shown even if id differs).</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Future placeholders -->
+    <section class="screen" id="future">
+      <h2>4. Stamped in DB / sync — no UI yet</h2>
+      <p class="route">Repositories stamp <code>createdByProfileId</code> / <code>createdByDisplayName</code> on create; LAN v6 + backup carry fields.</p>
+      <span class="badge badge-data">Future detail screens</span>
+      <div class="layout">
+        <div class="phone">
+          <div class="phone-inner">
+            <div class="top-bar"><span class="back">←</span> Loan detail (example)</div>
+            <div class="body-scroll">
+              <div class="hero-title">Home loan</div>
+              <div class="hero-amount income">₹12,50,000</div>
+              <p class="dim" style="font-size:0.72rem;margin-top:8px;border:1px dashed #9ca3af;padding:8px;border-radius:8px;">
+                Wireframe placeholder: <strong>Created by Sita</strong> would go here (same <code>MmrDetailHeroBlock.subtitle</code> pattern as transactions) — not in app today.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="notes">
+          <h3>Same pattern recommended</h3>
+          <ul>
+            <li>Loan detail — <code>LoanEntity</code></li>
+            <li>Recurring detail — <code>RecurringRuleEntity</code></li>
+            <li>Budget card / edit — <code>BudgetEntity</code></li>
+            <li>Asset detail — <code>AssetEntity</code></li>
+          </ul>
+          <p>Use <code>MmrOwnerProfileCoordinator.resolveCreatedByLabel</code> when implementing.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="code-map">
+      <h2>Code map</h2>
+      <div class="notes" style="max-width:100%;">
+        <ul>
+          <li>UI binding: <code>TransactionDetailScreen.kt</code> → <code>MmrDetailHeroBlock(subtitle = state.syncedFromLabel)</code></li>
+          <li>String built: <code>TransactionDetailViewModel</code> → <code>"Created by $name"</code></li>
+          <li>Settings copy: <code>LanSyncScreen.kt</code> footer on “This device” section</li>
+          <li>Policy helper (unused in UI yet): <code>MmrOwnerProfileCoordinator.shouldShowCreatedByLabel</code> / <code>resolveCreatedByLabel</code></li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

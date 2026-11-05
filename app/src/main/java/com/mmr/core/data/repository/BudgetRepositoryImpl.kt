@@ -13,6 +13,7 @@ import com.mmr.core.domain.model.BudgetProgressSnapshot
 import com.mmr.core.domain.repository.BudgetRepository
 import com.mmr.core.lansync.LanSyncTombstoneRecorder
 import com.mmr.core.lansync.SyncEntityType
+import com.mmr.core.owner.withLocalCreatedBy
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import javax.inject.Inject
@@ -28,6 +29,7 @@ class BudgetRepositoryImpl
         private val budgetAlertNotifier: BudgetAlertNotifier,
         private val tombstoneRecorder: LanSyncTombstoneRecorder,
         private val widgetRefreshTrigger: HomeScreenWidgetRefreshTrigger,
+        private val ownerProfileCoordinator: com.mmr.core.owner.MmrOwnerProfileCoordinator,
     ) : BudgetRepository {
         override fun observeActiveBudgetProgress(): Flow<List<BudgetProgressSnapshot>> =
             combine(
@@ -40,12 +42,18 @@ class BudgetRepositoryImpl
         override suspend fun getById(id: Long): BudgetEntity? = budgetDao.getById(id)
 
         override suspend fun upsert(entity: BudgetEntity): Long {
-            val id =
+            val stamped =
                 if (entity.id > 0L) {
-                    budgetDao.update(entity)
-                    entity.id
+                    entity
                 } else {
-                    budgetDao.insert(entity)
+                    entity.withLocalCreatedBy(ownerProfileCoordinator.localStamp())
+                }
+            val id =
+                if (stamped.id > 0L) {
+                    budgetDao.update(stamped)
+                    stamped.id
+                } else {
+                    budgetDao.insert(stamped)
                 }
             widgetRefreshTrigger.requestRefresh()
             return id

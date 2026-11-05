@@ -48,6 +48,8 @@ data class AssetEntity(
     val saleDateMillis: Long? = null,
     val salePrice: Double? = null,
     val notes: String? = null,
+    val createdByProfileId: String? = null,
+    val createdByDisplayName: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
 )

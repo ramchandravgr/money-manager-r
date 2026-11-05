@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.mmr.core.data.catalog.MmrBuiltInAccounts
 import com.mmr.core.data.catalog.MmrCategorizationRuleSeeder
 import com.mmr.core.data.catalog.MmrDefaultCatalogSeeder
 import com.mmr.core.database.MmrDatabase
@@ -11,8 +12,6 @@ import com.mmr.core.database.dao.AccountDao
 import com.mmr.core.database.dao.BudgetDao
 import com.mmr.core.database.dao.CategoryDao
 import com.mmr.core.database.dao.TransactionDao
-import com.mmr.core.database.entity.AccountEntity
-import com.mmr.core.model.enums.AccountType
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -39,6 +38,7 @@ object DatabaseModule {
                 MmrDatabase::class.java,
                 "mmr_database.db",
             ).fallbackToDestructiveMigration(dropAllTables = true)
+            // Pre-release: no shipped DBs; bump [MmrDatabase.SCHEMA_VERSION] without migration classes.
             .addCallback(
                 object : RoomDatabase.Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
@@ -48,19 +48,16 @@ object DatabaseModule {
                             MmrDefaultCatalogSeeder.seedIfMissing(database)
                             MmrCategorizationRuleSeeder.seedIfMissing(context, database.categorizationRuleDao())
                             database.accountDao().insertAccounts(
-                                listOf(
-                                    AccountEntity(name = "Cash", type = AccountType.CASH, isDefault = true),
-                                    AccountEntity(
-                                        name = "Main Bank Account",
-                                        type = AccountType.BANK,
-                                        isDefault = false,
-                                    ),
-                                ),
+                                listOf(MmrBuiltInAccounts.defaultAccount()),
                             )
                         }
                     }
                 },
             ).build()
+
+    @Provides
+    fun provideOwnerProfileDao(database: MmrDatabase): com.mmr.core.database.dao.OwnerProfileDao =
+        database.ownerProfileDao()
 
     @Provides
     fun provideTransactionDao(database: MmrDatabase): TransactionDao = database.transactionDao()

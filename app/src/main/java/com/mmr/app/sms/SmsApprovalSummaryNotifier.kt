@@ -7,11 +7,11 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
-import com.mmr.app.MainActivity
 import com.mmr.app.R
 import com.mmr.app.navigation.Screen
+import com.mmr.app.navigation.buildMainActivityNavIntent
+import com.mmr.app.notification.MmrAppNotificationPoster
+import com.mmr.core.domain.repository.ApprovalRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -21,13 +21,17 @@ class SmsApprovalSummaryNotifier
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
+        private val approvalRepository: ApprovalRepository,
     ) {
         fun showSummary(
             pendingCount: Int,
             latestLine: String?,
+            quickApproveApprovalId: Long? = null,
         ) {
-            if (pendingCount <= 0) return
-            if (!canPostNotifications()) return
+            if (pendingCount <= 0) {
+                MmrAppNotificationPoster.cancel(context, NOTIFICATION_ID)
+                return
+            }
 
             ensureChannel()
 
@@ -41,49 +45,70 @@ class SmsApprovalSummaryNotifier
                 latestLine?.let { "Latest: $it" }
                     ?: "Tap to open Approval Center"
 
-            val intent =
-                Intent(context, MainActivity::class.java).apply {
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                    putExtra(MainActivity.EXTRA_NAV_ROUTE, Screen.ApprovalCenter.createRoute())
-                }
-            val pendingIntent =
+            val openIntent = buildMainActivityNavIntent(context, Screen.ApprovalCenter.createRoute())
+            val contentPendingIntent =
                 PendingIntent.getActivity(
                     context,
-                    0,
-                    intent,
+                    REQUEST_OPEN,
+                    openIntent,
                     PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
                 )
 
-            val notification =
+            val builder =
                 NotificationCompat
                     .Builder(context, CHANNEL_ID)
                     .setSmallIcon(R.drawable.ic_launcher_monochrome)
                     .setContentTitle(title)
                     .setContentText(text)
                     .setStyle(NotificationCompat.BigTextStyle().bigText(text))
-                    .setContentIntent(pendingIntent)
+                    .setContentIntent(contentPendingIntent)
                     .setAutoCancel(true)
                     .setOnlyAlertOnce(true)
                     .setNumber(pendingCount)
                     .setCategory(NotificationCompat.CATEGORY_STATUS)
                     .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                    .build()
 
-            NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification)
+            builder.addAction(
+                R.drawable.ic_launcher_monochrome,
+                context.getString(R.string.notification_action_open_approvals),
+                contentPendingIntent,
+            )
+
+            if (quickApproveApprovalId != null && quickApproveApprovalId > 0L) {
+                val approveIntent =
+                    Intent(context, SmsApprovalNotificationReceiver::class.java).apply {
+                        action = SmsApprovalNotificationReceiver.ACTION_APPROVE
+                        putExtra(SmsApprovalNotificationReceiver.EXTRA_APPROVAL_ID, quickApproveApprovalId)
+                    }
+                val approvePendingIntent =
+                    PendingIntent.getBroadcast(
+                        context,
+                        quickApproveApprovalId.toInt(),
+                        approveIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+                    )
+                builder.addAction(
+                    R.drawable.ic_launcher_monochrome,
+                    context.getString(R.string.notification_action_approve_latest),
+                    approvePendingIntent,
+                )
+            }
+
+            MmrAppNotificationPoster.notify(context, NOTIFICATION_ID, builder.build())
         }
 
-        private fun canPostNotifications(): Boolean {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                if (
-                    ContextCompat.checkSelfPermission(
-                        context,
-                        android.Manifest.permission.POST_NOTIFICATIONS,
-                    ) != android.content.pm.PackageManager.PERMISSION_GRANTED
-                ) {
-                    return false
-                }
+        suspend fun refreshAfterPendingQueueChanged() {
+            val pendingCount = approvalRepository.getPendingCountOnce()
+            if (pendingCount <= 0) {
+                MmrAppNotificationPoster.cancel(context, NOTIFICATION_ID)
+                return
             }
-            return NotificationManagerCompat.from(context).areNotificationsEnabled()
+            val quickId = approvalRepository.getLatestQuickApprovablePendingId()
+            showSummary(
+                pendingCount = pendingCount,
+                latestLine = null,
+                quickApproveApprovalId = quickId,
+            )
         }
 
         private fun ensureChannel() {
@@ -103,5 +128,6 @@ class SmsApprovalSummaryNotifier
         companion object {
             const val NOTIFICATION_ID = 4101
             const val CHANNEL_ID = "mmr_sms_approvals"
+            private const val REQUEST_OPEN = 41010
         }
     }

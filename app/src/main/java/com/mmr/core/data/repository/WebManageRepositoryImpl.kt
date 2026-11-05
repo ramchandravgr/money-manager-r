@@ -96,7 +96,7 @@ class WebManageRepositoryImpl
                         requestHandler.handle(method, path, query, headers, body)
                     },
                 )
-            server.start(LanSyncHttpConstants.DEFAULT_PORT)
+            server.start()
             httpServer = server
             lanServerNotifier.onLanServerStarted(LocalLanServerMode.WEB_MANAGE)
         }

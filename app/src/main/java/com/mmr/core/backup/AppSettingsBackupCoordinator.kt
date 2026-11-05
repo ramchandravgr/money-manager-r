@@ -2,16 +2,9 @@ package com.mmr.core.backup
 
 import com.mmr.core.backup.model.MmrAppSettingsBackup
 import com.mmr.core.backup.model.MmrDisplaySettingsBackup
-import com.mmr.core.backup.model.MmrLanSyncSettingsBackup
 import com.mmr.core.backup.model.MmrSmsInboundSettingsBackup
-import com.mmr.core.backup.model.MmrWebManageSettingsBackup
 import com.mmr.core.data.preferences.AppDisplaySettingsSnapshot
 import com.mmr.core.data.preferences.AppDisplaySettingsStore
-import com.mmr.core.data.preferences.LanSyncDuplicateEntityPolicy
-import com.mmr.core.data.preferences.LanSyncIdentityStore
-import com.mmr.core.data.preferences.LanSyncPeerMode
-import com.mmr.core.data.preferences.LanSyncPreferencesStore
-import com.mmr.core.data.preferences.LanSyncWifiTrustStore
 import com.mmr.core.data.preferences.SmsInboundSettingsStore
 import com.mmr.core.data.preferences.SmsScanSettingsStore
 import com.mmr.core.data.preferences.WebManagePreferencesStore
@@ -23,6 +16,7 @@ import com.mmr.core.model.settings.MmrSwipeBehavior
 import com.mmr.core.model.settings.MmrThemeMode
 import com.mmr.core.model.settings.MmrTimeDisplay
 import com.mmr.core.model.settings.MmrWeekStartDay
+import com.mmr.core.owner.MmrOwnerProfileCoordinator
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -33,13 +27,12 @@ class AppSettingsBackupCoordinator
         private val smsScanSettingsStore: SmsScanSettingsStore,
         private val displaySettingsStore: AppDisplaySettingsStore,
         private val smsInboundSettingsStore: SmsInboundSettingsStore,
-        private val lanSyncIdentityStore: LanSyncIdentityStore,
-        private val lanSyncPreferencesStore: LanSyncPreferencesStore,
-        private val lanSyncWifiTrustStore: LanSyncWifiTrustStore,
         private val webManagePreferencesStore: WebManagePreferencesStore,
+        private val ownerProfileCoordinator: MmrOwnerProfileCoordinator,
     ) {
-        fun capture(): MmrAppSettingsBackup =
-            MmrAppSettingsBackup(
+        suspend fun capture(): MmrAppSettingsBackup {
+            val (ownerProfile, knownProfiles) = ownerProfileCoordinator.captureForBackup()
+            return MmrAppSettingsBackup(
                 smsScanMonths = smsScanSettingsStore.getScanMonths(),
                 display = displaySettingsStore.snapshot().toBackup(),
                 smsInbound =
@@ -47,28 +40,12 @@ class AppSettingsBackupCoordinator
                         notifyOnNewPending = smsInboundSettingsStore.isNotifyOnNewPendingEnabled(),
                         readSmsInboundPromptShown = smsInboundSettingsStore.hasReadSmsInboundPromptBeenShown(),
                     ),
-                lanSync =
-                    MmrLanSyncSettingsBackup(
-                        lanSyncEnabled = lanSyncIdentityStore.isLanSyncEnabled(),
-                        deviceId = lanSyncIdentityStore.deviceId,
-                        inboundAuthToken = lanSyncIdentityStore.inboundAuthToken,
-                        displayName = lanSyncIdentityStore.displayName,
-                        peerMode = lanSyncPreferencesStore.peerMode.name,
-                        selectedPeerDeviceId = lanSyncPreferencesStore.selectedPeerDeviceId,
-                        includeAttachments = lanSyncPreferencesStore.includeAttachments,
-                        trustedWifiSsids = lanSyncWifiTrustStore.trustedSsids().sorted(),
-                        duplicateEntityPolicies =
-                            lanSyncPreferencesStore.duplicatePolicyEntries().mapValues { it.value.name },
-                    ),
-                webManage =
-                    MmrWebManageSettingsBackup(
-                        enabled = webManagePreferencesStore.isWebManageEnabled(),
-                        passwordSalt = webManagePreferencesStore.getPasswordSalt(),
-                        passwordHash = webManagePreferencesStore.getPasswordHash(),
-                    ),
+                ownerProfile = ownerProfile,
+                knownProfiles = knownProfiles,
             )
+        }
 
-        fun apply(backup: MmrAppSettingsBackup?): Boolean {
+        suspend fun apply(backup: MmrAppSettingsBackup?): Boolean {
             if (backup == null) return false
             smsScanSettingsStore.setScanMonths(backup.smsScanMonths)
             backup.display?.let { displaySettingsStore.applySnapshot(it.toSnapshot()) }
@@ -76,37 +53,15 @@ class AppSettingsBackupCoordinator
                 smsInboundSettingsStore.setNotifyOnNewPending(it.notifyOnNewPending)
                 smsInboundSettingsStore.setReadSmsInboundPromptShown(it.readSmsInboundPromptShown)
             }
-            backup.lanSync?.let {
-                lanSyncIdentityStore.applyRestoredIdentity(
-                    lanSyncEnabled = it.lanSyncEnabled,
-                    deviceId = it.deviceId,
-                    inboundAuthToken = it.inboundAuthToken,
-                    displayName = it.displayName,
-                )
-                lanSyncPreferencesStore.peerMode =
-                    runCatching { LanSyncPeerMode.valueOf(it.peerMode) }
-                        .getOrDefault(LanSyncPeerMode.ALL_TRUSTED_ON_LAN)
-                lanSyncPreferencesStore.selectedPeerDeviceId = it.selectedPeerDeviceId
-                lanSyncPreferencesStore.includeAttachments = it.includeAttachments
-                lanSyncWifiTrustStore.replaceTrustedSsids(it.trustedWifiSsids.toSet())
-                lanSyncPreferencesStore.replaceDuplicatePolicies(
-                    it.duplicateEntityPolicies.mapValues { (_, raw) ->
-                        runCatching { LanSyncDuplicateEntityPolicy.valueOf(raw) }
-                            .getOrDefault(LanSyncDuplicateEntityPolicy.ASK)
-                    },
-                )
-            }
-            backup.webManage?.let {
-                webManagePreferencesStore.setWebManageEnabled(it.enabled)
-                val salt = it.passwordSalt
-                val hash = it.passwordHash
-                if (!salt.isNullOrBlank() && !hash.isNullOrBlank()) {
-                    webManagePreferencesStore.setAccessPassword(salt, hash)
-                } else {
-                    webManagePreferencesStore.clearAccessPassword()
-                }
-            }
+            ownerProfileCoordinator.restoreFromBackup(backup.ownerProfile, backup.knownProfiles)
+            resetNetworkFeaturesAfterRestore()
             return true
+        }
+
+        private fun resetNetworkFeaturesAfterRestore() {
+            webManagePreferencesStore.setWebManageEnabled(false)
+            webManagePreferencesStore.clearAccessPassword()
+            ownerProfileCoordinator.rotateLanIdentityAfterBackupRestore()
         }
 
         private fun AppDisplaySettingsSnapshot.toBackup() =

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.mmr.app.ui.state.MmrUiMessages
 import com.mmr.core.common.display.MmrMoneyFormat
 import com.mmr.core.common.display.TransactionCategoryLabels
+import com.mmr.core.data.preferences.LanSyncIdentityStore
 import com.mmr.core.domain.repository.TransactionAttachmentRepository
 import com.mmr.core.domain.repository.TransactionRepository
 import com.mmr.core.loan.LoanLinkedTransactionDeleteMode
@@ -43,6 +44,7 @@ class TransactionDetailViewModel
     constructor(
         private val transactionRepository: TransactionRepository,
         private val attachmentRepository: TransactionAttachmentRepository,
+        private val lanSyncIdentityStore: LanSyncIdentityStore,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private val transactionId: Long = checkNotNull(savedStateHandle["transactionId"])
@@ -54,7 +56,7 @@ class TransactionDetailViewModel
             val isDeleting: Boolean = false,
         )
 
-        private val _overlays = MutableStateFlow(DetailOverlays())
+        private val overlayState = MutableStateFlow(DetailOverlays())
         private val _deleted = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
         val deleted = _deleted.asSharedFlow()
 
@@ -117,7 +119,7 @@ class TransactionDetailViewModel
                 },
                 transactionRepository.getLinkedSmsForTransaction(transactionId),
                 receiptsFlow,
-                _overlays,
+                overlayState,
             ) { details, smsRecords, receipts, overlays ->
                 if (details == null) {
                     TransactionDetailUiState(
@@ -191,12 +193,7 @@ class TransactionDetailViewModel
                         paymentChannelLabel = formatPaymentChannel(txn.paymentChannel),
                         paymentInstrumentLabel = formatPaymentInstrument(txn.paymentInstrument),
                         cardMetadataLabel = formatCardMetadata(txn.cardLastFour, txn.cardNetwork),
-                        syncedFromLabel =
-                            txn.syncedFromDeviceName
-                                ?.trim()
-                                ?.takeIf { it.isNotEmpty() }
-                                ?.let { "From $it" }
-                                ?: txn.syncedFromDeviceId?.take(8)?.let { "From device $it…" },
+                        syncedFromLabel = formatCreatedByLabel(txn.createdByProfileId, txn.createdByDisplayName),
                         refundSummaryLabel = refundSummary,
                         linkedSms = smsUi,
                         receipts = receipts,
@@ -223,19 +220,19 @@ class TransactionDetailViewModel
         fun onEvent(event: TransactionDetailUiEvent) {
             when (event) {
                 TransactionDetailUiEvent.OnDeleteClick -> {
-                    _overlays.update { it.copy(showDeleteConfirmDialog = true) }
+                    overlayState.update { it.copy(showDeleteConfirmDialog = true) }
                 }
 
                 TransactionDetailUiEvent.OnDismissDeleteConfirm -> {
-                    _overlays.update { it.copy(showDeleteConfirmDialog = false) }
+                    overlayState.update { it.copy(showDeleteConfirmDialog = false) }
                 }
 
                 TransactionDetailUiEvent.OnConfirmDelete -> {
-                    _overlays.update { it.copy(showDeleteConfirmDialog = false) }
+                    overlayState.update { it.copy(showDeleteConfirmDialog = false) }
                     viewModelScope.launch {
                         val linked = transactionRepository.hasLinkedLoanPayment(transactionId)
                         if (linked) {
-                            _overlays.update { it.copy(showLoanDeleteDialog = true) }
+                            overlayState.update { it.copy(showLoanDeleteDialog = true) }
                         } else {
                             deleteTransaction(LoanLinkedTransactionDeleteMode.UNLINK)
                         }
@@ -243,24 +240,24 @@ class TransactionDetailViewModel
                 }
 
                 TransactionDetailUiEvent.OnDismissLoanDeleteDialog -> {
-                    _overlays.update { it.copy(showLoanDeleteDialog = false) }
+                    overlayState.update { it.copy(showLoanDeleteDialog = false) }
                 }
 
                 is TransactionDetailUiEvent.OnConfirmDeleteWithLoanPolicy -> {
-                    _overlays.update { it.copy(showLoanDeleteDialog = false) }
+                    overlayState.update { it.copy(showLoanDeleteDialog = false) }
                     deleteTransaction(event.mode)
                 }
 
                 TransactionDetailUiEvent.OnDuplicateClick -> {
-                    _overlays.update { it.copy(showDuplicateDateDialog = true) }
+                    overlayState.update { it.copy(showDuplicateDateDialog = true) }
                 }
 
                 TransactionDetailUiEvent.OnDismissDuplicateDateDialog -> {
-                    _overlays.update { it.copy(showDuplicateDateDialog = false) }
+                    overlayState.update { it.copy(showDuplicateDateDialog = false) }
                 }
 
                 TransactionDetailUiEvent.OnDuplicateSameDate -> {
-                    _overlays.update { it.copy(showDuplicateDateDialog = false) }
+                    overlayState.update { it.copy(showDuplicateDateDialog = false) }
                     val millis = uiState.value.dateTimeMillis
                     _duplicateNavigation.tryEmit(
                         DuplicateNavigation(
@@ -271,7 +268,7 @@ class TransactionDetailViewModel
                 }
 
                 TransactionDetailUiEvent.OnDuplicateToday -> {
-                    _overlays.update { it.copy(showDuplicateDateDialog = false) }
+                    overlayState.update { it.copy(showDuplicateDateDialog = false) }
                     _duplicateNavigation.tryEmit(
                         DuplicateNavigation(
                             sourceTransactionId = transactionId,
@@ -284,7 +281,7 @@ class TransactionDetailViewModel
 
         private fun deleteTransaction(mode: LoanLinkedTransactionDeleteMode) {
             viewModelScope.launch {
-                _overlays.update { it.copy(isDeleting = true) }
+                overlayState.update { it.copy(isDeleting = true) }
                 try {
                     val existing =
                         transactionRepository.getTransactionDetailedById(transactionId)
@@ -292,8 +289,19 @@ class TransactionDetailViewModel
                     transactionRepository.deleteTransactionWithLoanPolicy(existing.transaction, mode)
                     _deleted.tryEmit(Unit)
                 } catch (e: Exception) {
-                    _overlays.update { it.copy(isDeleting = false) }
+                    overlayState.update { it.copy(isDeleting = false) }
                 }
             }
+        }
+
+        private fun formatCreatedByLabel(
+            profileId: String?,
+            snapshotName: String?,
+        ): String? {
+            if (!lanSyncIdentityStore.isLanSyncEnabled()) return null
+            if (profileId.isNullOrBlank()) return null
+            if (profileId == lanSyncIdentityStore.ownerProfileId) return null
+            val name = snapshotName?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+            return "Created by $name"
         }
     }

@@ -5,12 +5,17 @@ object GoogleDriveBackupContracts {
     const val USERINFO_EMAIL_SCOPE = "https://www.googleapis.com/auth/userinfo.email"
     const val FOLDER_MONEY_INBOX = "MoneyInbox"
     const val FOLDER_BACKUPS = "Backups"
-    const val FILE_CURRENT_NAME = "MoneyInbox-backup.mmrbackup"
+    const val FILE_CURRENT_NAME = "MoneyInbox-backup.mibxbac"
     const val FILE_DATED_PREFIX = "MoneyInbox-backup-"
-    const val FILE_EXTENSION = ".mmrbackup"
+    const val FILE_EXTENSION = ".mibxbac"
+    const val LEGACY_FILE_CURRENT_NAME = "MoneyInbox-backup.mmrbackup"
+    const val LEGACY_FILE_EXTENSION = ".mmrbackup"
     const val MAX_RETAINED_FILES = 6
     const val AUTO_FAILURE_NOTIFY_THRESHOLD = 5
     const val WORK_NAME_AUTO = "mmr_google_drive_auto_backup"
+
+    fun isBackupArchiveFileName(name: String): Boolean =
+        name.endsWith(FILE_EXTENSION) || name.endsWith(LEGACY_FILE_EXTENSION)
 }
 
 enum class GoogleDriveAutoSchedule {

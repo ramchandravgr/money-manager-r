@@ -3,6 +3,8 @@
     <string name="app_tagline">Scan bank SMS. Approve before recording.</string>
     <string name="notification_channel_sms_approvals">SMS approvals</string>
     <string name="notification_channel_sms_approvals_desc">Summary when new bank SMS are ready to review</string>
+    <string name="notification_action_open_approvals">Open</string>
+    <string name="notification_action_approve_latest">Approve</string>
     <string name="notification_channel_budget_alerts">Budget alerts</string>
     <string name="notification_channel_budget_alerts_desc">When spending crosses a budget limit for the period</string>
     <string name="notification_channel_payment_reminders">Payment reminders</string>

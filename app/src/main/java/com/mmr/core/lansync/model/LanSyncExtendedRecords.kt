@@ -55,6 +55,8 @@ data class LanRecurringRuleRecord(
     val reminderMinutesBefore: Int,
     val createdAt: Long,
     val updatedAt: Long,
+    val createdByProfileId: String? = null,
+    val createdByDisplayName: String? = null,
 )
 
 data class LanBudgetRecord(
@@ -70,6 +72,8 @@ data class LanBudgetRecord(
     val isActive: Boolean,
     val createdAt: Long,
     val updatedAt: Long,
+    val createdByProfileId: String? = null,
+    val createdByDisplayName: String? = null,
 )
 
 data class LanCategorizationRuleRecord(
@@ -104,6 +108,8 @@ data class LanAssetRecord(
     val notes: String?,
     val createdAt: Long,
     val updatedAt: Long,
+    val createdByProfileId: String? = null,
+    val createdByDisplayName: String? = null,
 )
 
 data class LanAssetValuationRecord(

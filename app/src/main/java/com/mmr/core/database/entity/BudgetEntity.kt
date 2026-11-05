@@ -44,4 +44,6 @@ data class BudgetEntity(
     val isActive: Boolean = true,
     val createdAt: Long,
     val updatedAt: Long,
+    val createdByProfileId: String? = null,
+    val createdByDisplayName: String? = null,
 )

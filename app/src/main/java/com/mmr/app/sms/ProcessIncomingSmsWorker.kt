@@ -50,9 +50,11 @@ class ProcessIncomingSmsWorker
             }
 
             val pendingCount = approvalRepository.getPendingCountOnce()
+            val quickApproveId = approvalRepository.getLatestQuickApprovablePendingId()
             summaryNotifier.showSummary(
                 pendingCount = pendingCount,
                 latestLine = ingestResult.summaryLine,
+                quickApproveApprovalId = quickApproveId,
             )
             widgetRefresher.refreshAllAndWait()
             return Result.success()

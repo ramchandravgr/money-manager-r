@@ -11,10 +11,12 @@ import com.mmr.core.model.enums.SmsLinkRole
 import com.mmr.core.model.enums.TransactionType
 import com.mmr.core.parser.model.ParsedSmsCandidate
 import com.mmr.core.parser.model.ParserConfidence
+import com.mmr.core.parser.model.SmsInstrument
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -52,6 +54,74 @@ class ApprovalRepositoryInstrumentedTest {
 
             val pending = repository.getApprovalsByState(SmsApprovalState.PENDING).first()
             assertEquals(1, pending.size)
+        }
+
+    @Test
+    fun insertCandidates_doesNotAutoCreateAccounts() =
+        runBlocking {
+            val accountCountBefore =
+                graph.database
+                    .accountDao()
+                    .getActiveAccountsOnce()
+                    .size
+            val candidate =
+                sampleCandidate(hash = "cc-no-create", last4 = "4242").copy(
+                    instrument = SmsInstrument.CREDIT_CARD,
+                    rawBody = "Rs.100 spent on your credit card ending 4242 at Amazon",
+                )
+            assertEquals(1, repository.insertCandidates(listOf(candidate)))
+            assertEquals(
+                accountCountBefore,
+                graph.database
+                    .accountDao()
+                    .getActiveAccountsOnce()
+                    .size,
+            )
+            val pending = repository.getApprovalsByState(SmsApprovalState.PENDING).first().single()
+            assertNull(pending.extractedAccountId)
+        }
+
+    @Test
+    fun approveCandidate_withProvisionFromSms_createsCreditCardAccount() =
+        runBlocking {
+            val candidate =
+                sampleCandidate(hash = "cc-provision", last4 = "4242").copy(
+                    instrument = SmsInstrument.CREDIT_CARD,
+                    rawBody = "Rs.100 spent on your credit card ending 4242 at Amazon",
+                )
+            repository.insertCandidates(listOf(candidate))
+            val approvalId =
+                repository
+                    .getApprovalsByState(SmsApprovalState.PENDING)
+                    .first()
+                    .single()
+                    .id
+            val accountCountBefore =
+                graph.database
+                    .accountDao()
+                    .getActiveAccountsOnce()
+                    .size
+
+            repository.approveCandidate(
+                id = approvalId,
+                fallbackAccountId = 1L,
+                fallbackCategoryId = null,
+                provisionAccountFromSms = true,
+            )
+
+            assertEquals(
+                accountCountBefore + 1,
+                graph.database
+                    .accountDao()
+                    .getActiveAccountsOnce()
+                    .size,
+            )
+            assertTrue(
+                graph.database
+                    .accountDao()
+                    .getActiveAccountsOnce()
+                    .any { it.type == AccountType.CREDIT && it.cardLastFour == "4242" },
+            )
         }
 
     @Test

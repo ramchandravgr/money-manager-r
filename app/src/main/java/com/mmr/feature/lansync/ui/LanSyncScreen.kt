@@ -73,6 +73,14 @@ fun LanSyncScreen(
                     onSuccess = viewModel::completeRemoveTrustedAfterAuth,
                     onFailure = viewModel::clearSensitiveAction,
                 )
+            LanSyncSensitiveAction.APPROVE_PAIR_REQUEST ->
+                MmrDeviceCredentialGate.authenticate(
+                    activity = host,
+                    title = "Approve sync device",
+                    subtitle = "Confirm to trust this device on your phone",
+                    onSuccess = viewModel::completeApprovePairAfterAuth,
+                    onFailure = viewModel::clearSensitiveAction,
+                )
         }
     }
 
@@ -121,7 +129,9 @@ fun LanSyncScreen(
             isFirstInScreen = true,
             footer =
                 "Approved ledger data syncs between trusted devices on the same Wi‑Fi. " +
-                    "SMS and pending approvals stay on each phone. Tap Sync now when you are ready — no background sync.",
+                    "SMS and pending approvals stay on each phone. Tap Sync now when you are ready — " +
+                    "no background sync. Sync uses unencrypted HTTP — use only Wi‑Fi networks you trust " +
+                    "(not guest or public).",
         ) {
             MmrIosSettingsSwitchRow(
                 label = "Sync on same Wi‑Fi",
@@ -152,9 +162,12 @@ fun LanSyncScreen(
             }
         }
 
-        MmrIosSettingsSection(title = "This device") {
+        MmrIosSettingsSection(
+            title = "This device",
+            footer = "This name is shown on the other phone as Created by when you sync.",
+        ) {
             MmrIosSettingsInlineTextRow(
-                label = "Device name",
+                label = "Your name",
                 value = uiState.displayName,
                 onValueChange = viewModel::setDisplayName,
                 placeholder = "Name",
@@ -164,6 +177,36 @@ fun LanSyncScreen(
                 value = uiState.pairingOfferText,
                 showDividerBelow = false,
             )
+            MmrIosSettingsSectionBodyText(
+                text = "Share this code only with someone you trust. It expires after 15 minutes.",
+            )
+        }
+
+        if (uiState.pendingPairLabels.isNotEmpty()) {
+            MmrIosSettingsSection(
+                title = "Pending pair requests",
+                footer = "Another device asked to sync with you. Approve only if you started pairing.",
+            ) {
+                uiState.pendingPairLabels.forEachIndexed { index, label ->
+                    val deviceId = uiState.pendingPairDeviceIds.getOrNull(index)
+                    MmrIosSettingsSectionBodyText(text = label)
+                    MmrIosSettingsPrimaryActionSlot(
+                        text = "Approve $label",
+                        onClick = {
+                            if (deviceId != null) viewModel.requestApprovePairRequest(deviceId)
+                        },
+                        enabled = uiState.enabled && !uiState.isBusy && deviceId != null,
+                    )
+                    MmrIosSettingsSecondaryActionSlot(
+                        text = "Decline",
+                        onClick = {
+                            if (deviceId != null) viewModel.rejectPairRequest(deviceId)
+                        },
+                        enabled = uiState.enabled && !uiState.isBusy && deviceId != null,
+                        showDividerBelow = index < uiState.pendingPairLabels.lastIndex,
+                    )
+                }
+            }
         }
 
         MmrIosSettingsSection(title = "Trust a device") {

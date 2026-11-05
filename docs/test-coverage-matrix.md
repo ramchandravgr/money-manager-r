@@ -90,7 +90,7 @@ Status keys used in tables: `Done` | `Partial` | `Todo`
 | Excel export writer / periods | `PeriodExcelWriterTest`, `HomeExcelExportPeriodsTest` | Done |
 | Home total utils | `HomeTotalUtilsTest` | Done |
 | Search period presets | `SearchPeriodPresetsTest` | Done |
-| LAN sync pairing QR/string codec | `LanSyncPairingCodecTest` | Done |
+| LAN sync pairing PIN | `LanSyncPairingPinTest`, `LanSyncPairingGateTest` | Done |
 | LAN sync port binding | `LanSyncPortBinderTest` | Done |
 | Web Manage password + pie chart JSON | `WebManagePasswordHasherTest`, `WebManageChartJsonBuilderTest` | Done |
 | LAN server mode coordinator | `LocalLanServerCoordinatorTest` | Done |

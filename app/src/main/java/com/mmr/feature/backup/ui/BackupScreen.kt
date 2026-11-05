@@ -148,7 +148,7 @@ fun BackupScreen(
                                 SimpleDateFormat("yyyyMMdd-HHmmss", Locale.getDefault())
                                     .format(Date())
                             exportLauncher.launch(
-                                "mmr-backup-$stamp.${BackupSignedZipCodec.SUGGESTED_FILE_EXTENSION}",
+                                "money-inbox-backup-$stamp.${BackupSignedZipCodec.SUGGESTED_FILE_EXTENSION}",
                             )
                         },
                         onImport = {
@@ -222,7 +222,7 @@ private fun BackupContent(
 
         MmrIosSettingsSection(
             title = "Actions",
-            footer = "Export saves a signed .mmrbackup file. Google Drive opens cloud backup settings.",
+            footer = "Export saves a signed .mibxbac file. Google Drive opens cloud backup settings.",
         ) {
             MmrIosSettingsPrimaryActionSlot(
                 text = "Export backup",

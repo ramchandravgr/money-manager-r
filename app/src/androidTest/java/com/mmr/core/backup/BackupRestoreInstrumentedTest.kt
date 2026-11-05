@@ -9,8 +9,6 @@ import com.mmr.core.attachment.TransactionAttachmentStore
 import com.mmr.core.backup.AppSettingsBackupCoordinator
 import com.mmr.core.data.preferences.AppDisplaySettingsStore
 import com.mmr.core.data.preferences.LanSyncIdentityStore
-import com.mmr.core.data.preferences.LanSyncPreferencesStore
-import com.mmr.core.data.preferences.LanSyncWifiTrustStore
 import com.mmr.core.data.preferences.SmsInboundSettingsStore
 import com.mmr.core.data.preferences.SmsScanSettingsStore
 import com.mmr.core.data.preferences.WebManagePreferencesStore
@@ -22,6 +20,7 @@ import com.mmr.core.database.entity.CategoryEntity
 import com.mmr.core.database.entity.SmsMessageRecordEntity
 import com.mmr.core.database.entity.TransactionApprovalEntity
 import com.mmr.core.database.entity.TransactionEntity
+import com.mmr.core.database.entity.TrustedLanDeviceEntity
 import com.mmr.core.lansync.LanSyncTombstoneMerger
 import com.mmr.core.model.enums.AccountType
 import com.mmr.core.model.enums.CategoryType
@@ -34,6 +33,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,6 +47,8 @@ class BackupRestoreInstrumentedTest {
     private lateinit var database: MmrDatabase
     private lateinit var settingsStore: SmsScanSettingsStore
     private lateinit var displaySettingsStore: AppDisplaySettingsStore
+    private lateinit var lanSyncIdentityStore: LanSyncIdentityStore
+    private lateinit var webManagePreferencesStore: WebManagePreferencesStore
     private lateinit var repository: BackupRepositoryImpl
 
     @Before
@@ -56,15 +61,20 @@ class BackupRestoreInstrumentedTest {
                 .build()
         settingsStore = SmsScanSettingsStore(context)
         displaySettingsStore = AppDisplaySettingsStore(context)
+        lanSyncIdentityStore = LanSyncIdentityStore(context)
+        webManagePreferencesStore = WebManagePreferencesStore(context)
+        val ownerProfileCoordinator =
+            com.mmr.core.owner.MmrOwnerProfileCoordinator(
+                lanSyncIdentityStore,
+                database.ownerProfileDao(),
+            )
         val appSettingsCoordinator =
             AppSettingsBackupCoordinator(
                 smsScanSettingsStore = settingsStore,
                 displaySettingsStore = displaySettingsStore,
                 smsInboundSettingsStore = SmsInboundSettingsStore(context),
-                lanSyncIdentityStore = LanSyncIdentityStore(context),
-                lanSyncPreferencesStore = LanSyncPreferencesStore(context),
-                lanSyncWifiTrustStore = LanSyncWifiTrustStore(context),
-                webManagePreferencesStore = WebManagePreferencesStore(context),
+                webManagePreferencesStore = webManagePreferencesStore,
+                ownerProfileCoordinator = ownerProfileCoordinator,
             )
         val tombstoneRecorder =
             com.mmr.core.lansync.LanSyncTombstoneRecorder(
@@ -99,6 +109,7 @@ class BackupRestoreInstrumentedTest {
         repository =
             BackupRepositoryImpl(
                 backupDao = database.backupDao(),
+                lanSyncDao = database.lanSyncDao(),
                 syncTombstoneDao = database.syncTombstoneDao(),
                 tombstoneMerger = tombstoneMerger,
                 appSettingsBackupCoordinator = appSettingsCoordinator,
@@ -227,11 +238,40 @@ class BackupRestoreInstrumentedTest {
         }
 
     @Test
-    fun importBackup_legacyJsonStillSupported() =
+    fun exportOmitsNetworkSecrets_restoreRotatesLanIdentityAndClearsTrust() =
+        runBlocking {
+            lanSyncIdentityStore.setLanSyncEnabled(true)
+            val oldDeviceId = lanSyncIdentityStore.deviceId
+            val oldToken = lanSyncIdentityStore.inboundAuthToken
+            webManagePreferencesStore.setWebManageEnabled(true)
+            database.lanSyncDao().upsertTrustedDevice(
+                TrustedLanDeviceEntity(
+                    remoteDeviceId = "remote-peer",
+                    displayName = "Peer phone",
+                    theirAuthToken = "peer-token",
+                ),
+            )
+
+            val decoded = BackupJsonCodec.decode(repository.exportBackupJson())
+            assertTrue(decoded.trustedLanDevices.isEmpty())
+            assertFalse(repository.exportBackupJson().contains(oldToken))
+
+            repository.importBackup(repository.exportBackupArchive())
+            assertFalse(lanSyncIdentityStore.isLanSyncEnabled())
+            assertNotEquals(oldDeviceId, lanSyncIdentityStore.deviceId)
+            assertNotEquals(oldToken, lanSyncIdentityStore.inboundAuthToken)
+            assertFalse(webManagePreferencesStore.isWebManageEnabled())
+            assertTrue(database.lanSyncDao().getTrustedDevices().isEmpty())
+        }
+
+    @Test
+    fun importBackup_rejectsUnsignedJsonFile() =
         runBlocking {
             val json = repository.exportBackupJson()
-            database.backupDao().clearAllUserData()
-            repository.importBackup(json.toByteArray(Charsets.UTF_8))
-            assertEquals(0, repository.getLocalDataSummary().transactions)
+            assertThrows(IllegalArgumentException::class.java) {
+                runBlocking {
+                    repository.importBackup(json.toByteArray(Charsets.UTF_8))
+                }
+            }
         }
 }

@@ -132,7 +132,7 @@ class BackupJsonCodecInstrumentedTest {
     }
 
     @Test
-    fun decode_formatVersion1_withoutNewSections_usesEmptyDefaults() {
+    fun decode_rejectsOldFormatVersion() {
         val v1Json =
             """
             {
@@ -152,10 +152,12 @@ class BackupJsonCodecInstrumentedTest {
               "transactionApprovals": []
             }
             """.trimIndent()
-        val decoded = BackupJsonCodec.decode(v1Json)
-        assertEquals(0, decoded.loanInterestRevisions.size)
-        assertEquals(0, decoded.loanScheduleEntries.size)
-        assertEquals(null, decoded.appSettings)
+        try {
+            BackupJsonCodec.decode(v1Json)
+            assertTrue(false)
+        } catch (e: IllegalArgumentException) {
+            assertTrue(e.message!!.contains("Unsupported backup format version"))
+        }
     }
 
     @Test

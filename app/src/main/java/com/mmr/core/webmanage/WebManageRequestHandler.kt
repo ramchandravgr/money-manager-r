@@ -58,7 +58,8 @@ class WebManageRequestHandler
             val normalizedPath = normalizeApiPath(path)
             return when {
                 normalizedPath == WebManageHttpConstants.PATH_STATUS && method == "GET" -> handleStatus()
-                normalizedPath == WebManageHttpConstants.PATH_AUTH_LOGIN && method == "POST" -> handleLogin(body)
+                normalizedPath == WebManageHttpConstants.PATH_AUTH_LOGIN && method == "POST" ->
+                    handleLogin(body, headers)
                 method == "OPTIONS" && normalizedPath.startsWith(WebManageHttpConstants.API_PREFIX) ->
                     HttpLanResponse.json(204, "")
                 normalizedPath.startsWith(WebManageHttpConstants.API_PREFIX) ->
@@ -84,7 +85,8 @@ class WebManageRequestHandler
             body: String,
         ): HttpLanResponse {
             val session = headers[WebManageHttpConstants.HEADER_SESSION.lowercase()]
-            if (!sessionManager.isValid(session)) {
+            val clientAddress = WebManageLoginRateLimiter.clientKeyFromHeaders(headers)
+            if (!sessionManager.isValid(session, clientAddress)) {
                 return HttpLanResponse.json(401, """{"error":"unauthorized"}""")
             }
             return when {
@@ -144,7 +146,14 @@ class WebManageRequestHandler
             )
         }
 
-        private fun handleLogin(body: String): HttpLanResponse {
+        private fun handleLogin(
+            body: String,
+            headers: Map<String, String>,
+        ): HttpLanResponse {
+            val clientKey = WebManageLoginRateLimiter.clientKeyFromHeaders(headers)
+            if (!WebManageLoginRateLimiter.isLoginAllowed(clientKey)) {
+                return HttpLanResponse.json(429, """{"error":"too_many_attempts"}""")
+            }
             if (!preferencesStore.hasAccessPassword()) {
                 return HttpLanResponse.json(403, """{"error":"password_not_set"}""")
             }
@@ -162,9 +171,11 @@ class WebManageRequestHandler
                 preferencesStore.getPasswordHash()
                     ?: return HttpLanResponse.json(403, """{"error":"password_not_set"}""")
             if (!WebManagePasswordHasher.verify(password, salt, hash)) {
+                WebManageLoginRateLimiter.recordFailure(clientKey)
                 return HttpLanResponse.json(401, """{"error":"invalid_password"}""")
             }
-            val token = sessionManager.createSession()
+            WebManageLoginRateLimiter.recordSuccess(clientKey)
+            val token = sessionManager.createSession(clientKey)
             return HttpLanResponse.json(
                 200,
                 JSONObject().put("token", token).toString(),

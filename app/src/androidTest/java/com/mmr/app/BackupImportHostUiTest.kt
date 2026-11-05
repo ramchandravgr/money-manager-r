@@ -15,6 +15,7 @@ import com.mmr.app.testing.traceAction
 import com.mmr.app.testing.traceClickTag
 import com.mmr.app.testing.traceWaitUntil
 import com.mmr.core.backup.BackupImportMode
+import com.mmr.core.backup.BackupSignedZipCodec
 import com.mmr.core.database.MmrDatabase
 import com.mmr.core.domain.repository.BackupRepository
 import dagger.hilt.android.testing.HiltAndroidRule
@@ -58,13 +59,13 @@ class BackupImportHostUiTest {
         BackupScreenHostTestBridge.clear()
     }
 
-    private fun launchImportFromPreparedJson(json: String) {
+    private fun launchImportFromPreparedArchive(archiveBytes: ByteArray) {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         val uri =
-            BackupImportTestFiles.writeJsonAndGetUri(
+            BackupImportTestFiles.writeArchiveAndGetUri(
                 context,
-                json,
-                "mmr-host-import-${System.nanoTime()}.json",
+                archiveBytes,
+                "mib-host-import-${System.nanoTime()}.${BackupSignedZipCodec.SUGGESTED_FILE_EXTENSION}",
             )
         BackupScreenHostTestBridge.pendingImportUri = uri
         composeRule.traceAction("host_activity_recreate") {
@@ -79,14 +80,14 @@ class BackupImportHostUiTest {
     @Test
     fun importReplace_viaHost_showsDialogAndRestoresTransaction() {
         val marker = "Backup host replace ${System.nanoTime()}"
-        val json =
+        val archiveBytes =
             runBlocking {
                 MmrUiTestFixtures.seedSingleExpense(database, note = marker, amount = 66.0)
-                backupRepository.exportBackupJson()
+                backupRepository.exportBackupArchive()
             }
         runBlocking { MmrUiTestFixtures.resetUiTestDatabase(database) }
 
-        launchImportFromPreparedJson(json)
+        launchImportFromPreparedArchive(archiveBytes)
         composeRule.onNodeWithTag(MmrTestTags.backupImportModeReplace).assertExists()
         composeRule.traceClickTag(MmrTestTags.backupImportConfirm)
 
@@ -106,17 +107,17 @@ class BackupImportHostUiTest {
     @Test
     fun importMerge_viaHost_reportsMergeComplete() {
         val marker = "Backup host merge ${System.nanoTime()}"
-        val json =
+        val archiveBytes =
             runBlocking {
                 MmrUiTestFixtures.seedSingleExpense(database, note = marker, amount = 44.0)
-                backupRepository.exportBackupJson()
+                backupRepository.exportBackupArchive()
             }
         runBlocking {
             MmrUiTestFixtures.resetUiTestDatabase(database)
-            backupRepository.importBackupJson(json, BackupImportMode.REPLACE)
+            backupRepository.importBackup(archiveBytes, BackupImportMode.REPLACE)
         }
 
-        launchImportFromPreparedJson(json)
+        launchImportFromPreparedArchive(archiveBytes)
         composeRule.traceClickTag(MmrTestTags.backupImportModeMerge)
         composeRule.traceClickTag(MmrTestTags.backupImportConfirm)
 

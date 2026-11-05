@@ -8,6 +8,9 @@ data class MmrLanSyncPayload(
     val exportedAtEpochMillis: Long,
     val sourceDeviceId: String,
     val sourceDeviceName: String? = null,
+    val sourceProfileId: String? = null,
+    val sourceProfileName: String? = null,
+    val knownProfiles: List<LanOwnerProfileRecord> = emptyList(),
     val categories: List<LanCategoryRecord>,
     val subcategories: List<LanSubcategoryRecord>,
     val accounts: List<LanAccountRecord>,
@@ -95,6 +98,8 @@ data class LanLoanRecord(
     val notes: String?,
     val createdAt: Long,
     val updatedAt: Long,
+    val createdByProfileId: String? = null,
+    val createdByDisplayName: String? = null,
 )
 
 data class LanTransactionRecord(
@@ -118,6 +123,6 @@ data class LanTransactionRecord(
     val paymentInstrument: String?,
     val cardLastFour: String?,
     val cardNetwork: String?,
-    val syncedFromDeviceId: String? = null,
-    val syncedFromDeviceName: String? = null,
+    val createdByProfileId: String? = null,
+    val createdByDisplayName: String? = null,
 )

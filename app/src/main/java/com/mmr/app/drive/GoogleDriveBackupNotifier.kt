@@ -4,13 +4,12 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import com.mmr.app.MainActivity
 import com.mmr.app.R
 import com.mmr.app.navigation.Screen
+import com.mmr.app.navigation.buildMainActivityNavIntent
+import com.mmr.app.notification.MmrAppNotificationPoster
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -33,7 +32,7 @@ class GoogleDriveBackupNotifier
                     ).setContentIntent(openDriveBackupPendingIntent())
                     .setAutoCancel(true)
                     .build()
-            NotificationManagerCompat.from(context).notify(NOTIFICATION_ID, notification)
+            MmrAppNotificationPoster.notify(context, NOTIFICATION_ID, notification)
         }
 
         private fun ensureChannel() {
@@ -51,11 +50,7 @@ class GoogleDriveBackupNotifier
         }
 
         private fun openDriveBackupPendingIntent(): PendingIntent {
-            val intent =
-                Intent(context, MainActivity::class.java).apply {
-                    putExtra(MainActivity.EXTRA_NAV_ROUTE, Screen.GoogleDriveBackup.route)
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                }
+            val intent = buildMainActivityNavIntent(context, Screen.GoogleDriveBackup.route)
             return PendingIntent.getActivity(
                 context,
                 0,

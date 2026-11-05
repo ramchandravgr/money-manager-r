@@ -59,6 +59,8 @@ object MmrTestTags {
 
     const val approvalScanSms = "approval.action.scan_sms"
 
+    const val releaseNotesClose = "release_notes.action.close"
+
     const val recurringFieldName = "recurring.field.name"
 
     fun approvalCard(approvalId: Long): String = "approval.card.$approvalId"

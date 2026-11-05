@@ -13,6 +13,7 @@ import com.mmr.core.domain.repository.AssetRepository
 import com.mmr.core.lansync.LanSyncTombstoneRecorder
 import com.mmr.core.lansync.SyncEntityType
 import com.mmr.core.model.enums.AssetStatus
+import com.mmr.core.owner.withLocalCreatedBy
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -26,6 +27,7 @@ class AssetRepositoryImpl
         private val assetValuationDao: AssetValuationDao,
         private val notificationRuleDao: NotificationRuleDao,
         private val tombstoneRecorder: LanSyncTombstoneRecorder,
+        private val ownerProfileCoordinator: com.mmr.core.owner.MmrOwnerProfileCoordinator,
     ) : AssetRepository {
         override fun getAllAssets(): Flow<List<AssetEntity>> = assetDao.getAllAssets()
 
@@ -45,8 +47,9 @@ class AssetRepositoryImpl
             val assetId =
                 database.withTransaction {
                     val now = System.currentTimeMillis()
+                    val stamp = ownerProfileCoordinator.localStamp()
                     val toInsert =
-                        asset.copy(
+                        asset.withLocalCreatedBy(stamp).copy(
                             currentValue = initialValuationAmount,
                             createdAt = now,
                             updatedAt = now,

@@ -62,6 +62,7 @@ class LanSyncMergerInstrumentedTest {
                 balanceValidator = LanSyncAccountBalanceValidator(graph.database),
                 tombstoneMerger = tombstoneMerger,
                 widgetRefreshTrigger = NoOpHomeScreenWidgetRefreshTrigger,
+                ownerProfileCoordinator = graph.ownerProfileCoordinator,
             )
     }
 

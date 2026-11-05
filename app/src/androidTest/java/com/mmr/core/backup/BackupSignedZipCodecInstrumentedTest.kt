@@ -3,6 +3,7 @@ package com.mmr.core.backup
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,6 +45,16 @@ class BackupSignedZipCodecInstrumentedTest {
             attachments["sync-attachment-1"]!!.toList(),
             parsed.attachmentBytesBySyncId["sync-attachment-1"]!!.toList(),
         )
+    }
+
+    @Test
+    fun decode_rejectsCompressedArchiveOverLimit() {
+        val oversized = ByteArray(BackupArchiveLimits.MAX_COMPRESSED_BYTES + 1)
+        oversized[0] = 0x50
+        oversized[1] = 0x4B
+        assertThrows(IllegalArgumentException::class.java) {
+            BackupSignedZipCodec.decode(oversized)
+        }
     }
 
     @Test

@@ -19,8 +19,6 @@ fun mainNavIdForRoute(route: String?): String? {
         Screen.Assets.route -> MmrMainNavIds.ASSETS
         Screen.Settings.route -> MmrMainNavIds.SETTINGS
         Screen.Scheduled.route,
-        Screen.Loans.route,
-        Screen.Recurring.route,
         -> MmrMainNavIds.SCHEDULED
         else -> null
     }

@@ -39,6 +39,7 @@ import com.mmr.core.lansync.model.LanSubcategoryRecord
 import com.mmr.core.lansync.model.LanSyncTombstoneRecord
 import com.mmr.core.lansync.model.LanTransactionRecord
 import com.mmr.core.lansync.model.MmrLanSyncPayload
+import com.mmr.core.owner.MmrOwnerProfileCoordinator
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -51,6 +52,7 @@ class LanSyncExporter
         private val categorizationRuleDao: CategorizationRuleDao,
         private val attachmentDao: TransactionAttachmentDao,
         private val tombstoneCoordinator: LanSyncTombstoneCoordinator,
+        private val ownerProfileCoordinator: MmrOwnerProfileCoordinator,
     ) {
         suspend fun buildPayload(
             sourceDeviceId: String,
@@ -78,12 +80,17 @@ class LanSyncExporter
             val assetSyncMap = assets.associate { it.id to it.syncId }
             val assetValuations = backupDao.getAllAssetValuations()
             val approved = transactionDao.getAllApprovedTransactions().map { it.withSyncId() }
+            ownerProfileCoordinator.registerLocalProfile()
+            val knownProfiles = ownerProfileCoordinator.knownProfilesForExport()
 
             return MmrLanSyncPayload(
                 formatVersion = LanSyncJsonCodec.CURRENT_FORMAT_VERSION,
                 exportedAtEpochMillis = System.currentTimeMillis(),
                 sourceDeviceId = sourceDeviceId,
                 sourceDeviceName = sourceDeviceName,
+                sourceProfileId = ownerProfileCoordinator.localProfileId,
+                sourceProfileName = sourceDeviceName,
+                knownProfiles = knownProfiles,
                 categories = categories.map { it.toLanRecord() },
                 subcategories = subcategories.map { it.toLanRecord(categorySyncMap) },
                 accounts = accounts.map { it.toLanRecord() },
@@ -176,21 +183,26 @@ class LanSyncExporter
             }
         }
 
-        fun buildEmptyPayload(
+        suspend fun buildEmptyPayload(
             sourceDeviceId: String,
             sourceDeviceName: String,
-        ): MmrLanSyncPayload =
-            MmrLanSyncPayload(
+        ): MmrLanSyncPayload {
+            ownerProfileCoordinator.registerLocalProfile()
+            return MmrLanSyncPayload(
                 formatVersion = LanSyncJsonCodec.CURRENT_FORMAT_VERSION,
                 exportedAtEpochMillis = System.currentTimeMillis(),
                 sourceDeviceId = sourceDeviceId,
                 sourceDeviceName = sourceDeviceName,
+                sourceProfileId = ownerProfileCoordinator.localProfileId,
+                sourceProfileName = sourceDeviceName,
+                knownProfiles = ownerProfileCoordinator.knownProfilesForExport(),
                 categories = emptyList(),
                 subcategories = emptyList(),
                 accounts = emptyList(),
                 loans = emptyList(),
                 transactions = emptyList(),
             )
+        }
 
         private fun CategoryEntity.withSyncId() = copy(syncId = MmrSyncId.normalize(syncId))
 
@@ -273,6 +285,8 @@ class LanSyncExporter
                 notes = notes,
                 createdAt = createdAt,
                 updatedAt = updatedAt,
+                createdByProfileId = createdByProfileId,
+                createdByDisplayName = createdByDisplayName,
             )
 
         private fun TransactionEntity.toLanRecord(
@@ -301,8 +315,8 @@ class LanSyncExporter
             paymentInstrument = paymentInstrument,
             cardLastFour = cardLastFour,
             cardNetwork = cardNetwork?.name,
-            syncedFromDeviceId = syncedFromDeviceId,
-            syncedFromDeviceName = syncedFromDeviceName,
+            createdByProfileId = createdByProfileId,
+            createdByDisplayName = createdByDisplayName,
         )
 
         private fun LoanPaymentEntity.toLanRecord(
@@ -373,6 +387,8 @@ class LanSyncExporter
             reminderMinutesBefore = reminderMinutesBefore,
             createdAt = createdAt,
             updatedAt = updatedAt,
+            createdByProfileId = createdByProfileId,
+            createdByDisplayName = createdByDisplayName,
         )
 
         private fun BudgetEntity.toLanRecord(
@@ -391,6 +407,8 @@ class LanSyncExporter
             isActive = isActive,
             createdAt = createdAt,
             updatedAt = updatedAt,
+            createdByProfileId = createdByProfileId,
+            createdByDisplayName = createdByDisplayName,
         )
 
         private fun CategorizationRuleEntity.toLanRecord() =
@@ -427,6 +445,8 @@ class LanSyncExporter
                 notes = notes,
                 createdAt = createdAt,
                 updatedAt = updatedAt,
+                createdByProfileId = createdByProfileId,
+                createdByDisplayName = createdByDisplayName,
             )
 
         private fun AssetValuationEntity.toLanRecord(assetSyncId: String) =

@@ -14,11 +14,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.mmr.app.navigation.MmrToggleableMainDestinations
+import com.mmr.app.security.MmrDeviceCredentialGate
 import com.mmr.app.ui.components.MmrIosSettingsChoiceRow
 import com.mmr.app.ui.components.MmrIosSettingsNavRow
 import com.mmr.app.ui.components.MmrIosSettingsSection
@@ -49,6 +52,9 @@ fun ConfigurationScreen(
     viewModel: ConfigurationViewModel = hiltViewModel(),
 ) {
     val settings by viewModel.settings.collectAsState()
+    val appLockOnLaunch by viewModel.appLockOnLaunch.collectAsState()
+    val context = LocalContext.current
+    val activity = context as? FragmentActivity
     var picker by remember { mutableStateOf<ConfigPicker?>(null) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val systemInDarkTheme = isSystemInDarkTheme()
@@ -214,6 +220,37 @@ fun ConfigurationScreen(
                 label = "Note autocomplete",
                 checked = settings.autocompleteEnabled,
                 onCheckedChange = viewModel::setAutocomplete,
+                showDividerBelow = false,
+            )
+        }
+
+        MmrIosSettingsSection(
+            title = "Security",
+            footer =
+                "When enabled, unlock with your device PIN, pattern, or biometrics after opening the app " +
+                    "or returning from the background. Requires a screen lock in Android settings.",
+        ) {
+            MmrIosSettingsSwitchRow(
+                label = "Lock app on launch",
+                checked = appLockOnLaunch,
+                onCheckedChange = { enabled ->
+                    if (!enabled) {
+                        viewModel.setAppLockOnLaunch(false)
+                        return@MmrIosSettingsSwitchRow
+                    }
+                    val host = activity
+                    if (host == null) {
+                        viewModel.setAppLockOnLaunch(true)
+                        return@MmrIosSettingsSwitchRow
+                    }
+                    MmrDeviceCredentialGate.authenticate(
+                        activity = host,
+                        title = "Turn on app lock",
+                        subtitle = "Confirm with your device screen lock or biometrics",
+                        onSuccess = { viewModel.setAppLockOnLaunch(true) },
+                        onFailure = { },
+                    )
+                },
                 showDividerBelow = false,
             )
         }

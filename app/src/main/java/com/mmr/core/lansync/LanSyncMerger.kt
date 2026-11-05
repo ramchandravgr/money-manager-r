@@ -38,7 +38,9 @@ import com.mmr.core.lansync.model.LanRecurringRuleRecord
 import com.mmr.core.lansync.model.LanSubcategoryRecord
 import com.mmr.core.lansync.model.LanTransactionRecord
 import com.mmr.core.lansync.model.MmrLanSyncPayload
+import com.mmr.core.lansync.model.lanCreatedByFromRecord
 import com.mmr.core.model.enums.AccountType
+import com.mmr.core.model.enums.AssetStatus
 import com.mmr.core.model.enums.BudgetPeriodType
 import com.mmr.core.model.enums.CardNetwork
 import com.mmr.core.model.enums.CategorizationMatchType
@@ -85,11 +87,13 @@ class LanSyncMerger
         private val balanceValidator: LanSyncAccountBalanceValidator,
         private val tombstoneMerger: LanSyncTombstoneMerger,
         private val widgetRefreshTrigger: HomeScreenWidgetRefreshTrigger,
+        private val ownerProfileCoordinator: com.mmr.core.owner.MmrOwnerProfileCoordinator,
     ) {
         suspend fun merge(
             payload: MmrLanSyncPayload,
             options: LanSyncMergeOptions = LanSyncMergeOptions(),
         ): LanSyncMergeSummary {
+            ownerProfileCoordinator.ingestSyncPayload(payload)
             val categoryDao = database.categoryDao()
             val accountDao = database.accountDao()
             val loanDao = database.loanDao()
@@ -220,12 +224,12 @@ class LanSyncMerger
                     if (existing == null) {
                         val id =
                             loanDao.insert(
-                                record.toEntity(debitId, loanAccountId),
+                                record.toEntity(debitId, loanAccountId, payload),
                             )
                         loanSyncToLocal[record.syncId] = id
                         loansInserted++
                     } else if (record.updatedAt > existing.updatedAt) {
-                        loanDao.update(record.toEntity(debitId, loanAccountId, existing.id))
+                        loanDao.update(record.toEntity(debitId, loanAccountId, payload, existing.id))
                         loanSyncToLocal[record.syncId] = existing.id
                         loansUpdated++
                         tombstoneMerger.clearIfSuperseded(record.syncId, record.updatedAt)
@@ -346,6 +350,7 @@ class LanSyncMerger
                                     accountId = accountId,
                                     categoryId = categoryId,
                                     subcategoryId = subcategoryId,
+                                    payload = payload,
                                     relatedAccountId = relatedAccountId,
                                     loanId = loanId,
                                 ),
@@ -367,6 +372,7 @@ class LanSyncMerger
                                             accountId = accountId,
                                             categoryId = categoryId,
                                             subcategoryId = subcategoryId,
+                                            payload = payload,
                                             relatedAccountId = relatedAccountId,
                                             loanId = loanId,
                                             existingId = existing.id,
@@ -404,10 +410,10 @@ class LanSyncMerger
                         }
                     val existing = budgetDao.getBySyncId(record.syncId)
                     if (existing == null) {
-                        budgetDao.insert(record.toEntity(categoryId, subcategoryId))
+                        budgetDao.insert(record.toEntity(categoryId, subcategoryId, payload))
                         tombstoneMerger.clearIfSuperseded(record.syncId, record.updatedAt)
                     } else if (record.updatedAt > existing.updatedAt) {
-                        budgetDao.update(record.toEntity(categoryId, subcategoryId, existing.id))
+                        budgetDao.update(record.toEntity(categoryId, subcategoryId, payload, existing.id))
                         tombstoneMerger.clearIfSuperseded(record.syncId, record.updatedAt)
                     }
                 }
@@ -418,11 +424,11 @@ class LanSyncMerger
                     val linkedLoanId = record.linkedLoanSyncId?.let { loanSyncToLocal[it] }
                     val existing = assetDao.getBySyncId(record.syncId)
                     if (existing == null) {
-                        val id = assetDao.insert(record.toEntity(linkedLoanId))
+                        val id = assetDao.insert(record.toEntity(linkedLoanId, payload))
                         assetSyncToLocal[record.syncId] = id
                         tombstoneMerger.clearIfSuperseded(record.syncId, record.updatedAt)
                     } else if (record.updatedAt > existing.updatedAt) {
-                        assetDao.update(record.toEntity(linkedLoanId, existing.id))
+                        assetDao.update(record.toEntity(linkedLoanId, payload, existing.id))
                         assetSyncToLocal[record.syncId] = existing.id
                         tombstoneMerger.clearIfSuperseded(record.syncId, record.updatedAt)
                     } else {
@@ -548,33 +554,39 @@ class LanSyncMerger
         private fun LanLoanRecord.toEntity(
             linkedDebitAccountId: Long?,
             linkedLoanAccountId: Long?,
+            payload: MmrLanSyncPayload,
             existingId: Long = 0L,
-        ) = LoanEntity(
-            id = existingId,
-            syncId = syncId,
-            name = name,
-            lenderName = lenderName,
-            principalAmount = principalAmount,
-            interestRate = interestRate,
-            outstandingAmount = outstandingAmount,
-            openingDate = openingDate,
-            dueDate = dueDate,
-            autoTransferDate = autoTransferDate,
-            linkedDebitAccountId = linkedDebitAccountId,
-            linkedLoanAccountId = linkedLoanAccountId,
-            loanType = LoanType.valueOf(loanType),
-            status = LoanStatus.valueOf(status),
-            repaymentMode = repaymentMode,
-            tenureMonths = tenureMonths,
-            remainingTenureMonths = remainingTenureMonths,
-            fixedEmiAmount = fixedEmiAmount,
-            emiDayOfMonth = emiDayOfMonth,
-            emiReminderDaysBefore = emiReminderDaysBefore,
-            fixedEmiInputMode = fixedEmiInputMode,
-            notes = notes,
-            createdAt = createdAt,
-            updatedAt = updatedAt,
-        )
+        ): LoanEntity {
+            val createdBy = lanCreatedByFromRecord(createdByProfileId, createdByDisplayName, payload)
+            return LoanEntity(
+                id = existingId,
+                syncId = syncId,
+                name = name,
+                lenderName = lenderName,
+                principalAmount = principalAmount,
+                interestRate = interestRate,
+                outstandingAmount = outstandingAmount,
+                openingDate = openingDate,
+                dueDate = dueDate,
+                autoTransferDate = autoTransferDate,
+                linkedDebitAccountId = linkedDebitAccountId,
+                linkedLoanAccountId = linkedLoanAccountId,
+                loanType = LoanType.valueOf(loanType),
+                status = LoanStatus.valueOf(status),
+                repaymentMode = repaymentMode,
+                tenureMonths = tenureMonths,
+                remainingTenureMonths = remainingTenureMonths,
+                fixedEmiAmount = fixedEmiAmount,
+                emiDayOfMonth = emiDayOfMonth,
+                emiReminderDaysBefore = emiReminderDaysBefore,
+                fixedEmiInputMode = fixedEmiInputMode,
+                notes = notes,
+                createdAt = createdAt,
+                updatedAt = updatedAt,
+                createdByProfileId = createdBy.profileId,
+                createdByDisplayName = createdBy.displayName,
+            )
+        }
 
         private fun LanLoanPaymentRecord.toEntity(
             loanId: Long,
@@ -625,51 +637,63 @@ class LanSyncMerger
             accountId: Long,
             categoryId: Long?,
             subcategoryId: Long?,
+            payload: MmrLanSyncPayload,
             relatedAccountId: Long? = null,
             loanId: Long? = null,
             existingId: Long = 0L,
-        ) = RecurringRuleEntity(
-            id = existingId,
-            syncId = MmrSyncId.normalize(syncId),
-            name = name,
-            transactionTemplateType = TransactionType.valueOf(transactionTemplateType),
-            amount = amount,
-            categoryId = categoryId,
-            subcategoryId = subcategoryId,
-            accountId = accountId,
-            relatedAccountId = relatedAccountId,
-            loanId = loanId,
-            dayOfMonth = dayOfMonth,
-            recurrenceInterval = RecurrenceInterval.valueOf(recurrenceInterval),
-            nextRunDate = nextRunDate,
-            isEnabled = isEnabled,
-            lastGeneratedDate = lastGeneratedDate,
-            endDate = endDate,
-            noteTemplate = noteTemplate,
-            reminderMinutesBefore = reminderMinutesBefore,
-            createdAt = createdAt,
-            updatedAt = updatedAt,
-        )
+        ): RecurringRuleEntity {
+            val createdBy = lanCreatedByFromRecord(createdByProfileId, createdByDisplayName, payload)
+            return RecurringRuleEntity(
+                id = existingId,
+                syncId = MmrSyncId.normalize(syncId),
+                name = name,
+                transactionTemplateType = TransactionType.valueOf(transactionTemplateType),
+                amount = amount,
+                categoryId = categoryId,
+                subcategoryId = subcategoryId,
+                accountId = accountId,
+                relatedAccountId = relatedAccountId,
+                loanId = loanId,
+                dayOfMonth = dayOfMonth,
+                recurrenceInterval = RecurrenceInterval.valueOf(recurrenceInterval),
+                nextRunDate = nextRunDate,
+                isEnabled = isEnabled,
+                lastGeneratedDate = lastGeneratedDate,
+                endDate = endDate,
+                noteTemplate = noteTemplate,
+                reminderMinutesBefore = reminderMinutesBefore,
+                createdAt = createdAt,
+                updatedAt = updatedAt,
+                createdByProfileId = createdBy.profileId,
+                createdByDisplayName = createdBy.displayName,
+            )
+        }
 
         private fun LanBudgetRecord.toEntity(
             categoryId: Long,
             subcategoryId: Long?,
+            payload: MmrLanSyncPayload,
             existingId: Long = 0L,
-        ) = BudgetEntity(
-            id = existingId,
-            syncId = MmrSyncId.normalize(syncId),
-            categoryId = categoryId,
-            subcategoryId = subcategoryId,
-            amountLimit = amountLimit,
-            periodType = BudgetPeriodType.valueOf(periodType),
-            customPeriodStartMillis = customPeriodStartMillis,
-            customPeriodEndMillis = customPeriodEndMillis,
-            alertOnExceeded = alertOnExceeded,
-            lastAlertPeriodKey = lastAlertPeriodKey,
-            isActive = isActive,
-            createdAt = createdAt,
-            updatedAt = updatedAt,
-        )
+        ): BudgetEntity {
+            val createdBy = lanCreatedByFromRecord(createdByProfileId, createdByDisplayName, payload)
+            return BudgetEntity(
+                id = existingId,
+                syncId = MmrSyncId.normalize(syncId),
+                categoryId = categoryId,
+                subcategoryId = subcategoryId,
+                amountLimit = amountLimit,
+                periodType = BudgetPeriodType.valueOf(periodType),
+                customPeriodStartMillis = customPeriodStartMillis,
+                customPeriodEndMillis = customPeriodEndMillis,
+                alertOnExceeded = alertOnExceeded,
+                lastAlertPeriodKey = lastAlertPeriodKey,
+                isActive = isActive,
+                createdAt = createdAt,
+                updatedAt = updatedAt,
+                createdByProfileId = createdBy.profileId,
+                createdByDisplayName = createdBy.displayName,
+            )
+        }
 
         private fun LanCategorizationRuleRecord.toEntity(existingId: Long = 0L) =
             CategorizationRuleEntity(
@@ -687,31 +711,35 @@ class LanSyncMerger
 
         private fun LanAssetRecord.toEntity(
             linkedLoanId: Long?,
+            payload: MmrLanSyncPayload,
             existingId: Long = 0L,
-        ) = AssetEntity(
-            id = existingId,
-            syncId = MmrSyncId.normalize(syncId),
-            name = name,
-            assetType = assetType,
-            status =
-                com.mmr.core.model.enums
-                    .assetStatusFromStored(status),
-            isInherited = isInherited,
-            purchaseDateMillis = purchaseDateMillis,
-            purchasePrice = purchasePrice,
-            currentValue = currentValue,
-            ownedByName = ownedByName,
-            location = location,
-            identifier = identifier,
-            linkedLoanId = linkedLoanId,
-            nextValuationDueMillis = nextValuationDueMillis,
-            valuationReminderDaysBefore = valuationReminderDaysBefore,
-            saleDateMillis = saleDateMillis,
-            salePrice = salePrice,
-            notes = notes,
-            createdAt = createdAt,
-            updatedAt = updatedAt,
-        )
+        ): AssetEntity {
+            val createdBy = lanCreatedByFromRecord(createdByProfileId, createdByDisplayName, payload)
+            return AssetEntity(
+                id = existingId,
+                syncId = MmrSyncId.normalize(syncId),
+                name = name,
+                assetType = assetType,
+                status = AssetStatus.valueOf(status),
+                isInherited = isInherited,
+                purchaseDateMillis = purchaseDateMillis,
+                purchasePrice = purchasePrice,
+                currentValue = currentValue,
+                ownedByName = ownedByName,
+                location = location,
+                identifier = identifier,
+                linkedLoanId = linkedLoanId,
+                nextValuationDueMillis = nextValuationDueMillis,
+                valuationReminderDaysBefore = valuationReminderDaysBefore,
+                saleDateMillis = saleDateMillis,
+                salePrice = salePrice,
+                notes = notes,
+                createdAt = createdAt,
+                updatedAt = updatedAt,
+                createdByProfileId = createdBy.profileId,
+                createdByDisplayName = createdBy.displayName,
+            )
+        }
 
         private fun LanAssetValuationRecord.toEntity(assetId: Long) =
             AssetValuationEntity(
@@ -834,7 +862,12 @@ class LanSyncMerger
             paymentInstrument = paymentInstrument,
             cardLastFour = cardLastFour,
             cardNetwork = cardNetwork?.let { runCatching { CardNetwork.valueOf(it) }.getOrNull() },
-            syncedFromDeviceId = syncedFromDeviceId ?: payload.sourceDeviceId,
-            syncedFromDeviceName = syncedFromDeviceName ?: payload.sourceDeviceName,
+            createdByProfileId = lanCreatedByFromRecord(createdByProfileId, createdByDisplayName, payload).profileId,
+            createdByDisplayName =
+                lanCreatedByFromRecord(
+                    createdByProfileId,
+                    createdByDisplayName,
+                    payload,
+                ).displayName,
         )
     }

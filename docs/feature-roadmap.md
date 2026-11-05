@@ -58,7 +58,7 @@ From peer-sync product notes and in-progress LAN work.
 | `[x]` | **Live inbound** notify toggle | `IncomingSmsReceiver` → `ProcessIncomingSmsWorker` → summary notification |
 | `[x]` | Tie notify toggle to **READ_SMS** (optional, once) | Prompt when enabling live SMS; `read_sms_inbound_prompt_shown` |
 | `[x]` | **POST_NOTIFICATIONS** when enabling (API 33+) | Settings toggle flow |
-| `[ ]` | Notification **actions**: Approve / Open only | Today: tap opens Approval Center; no action buttons |
+| `[x]` | Notification **actions**: Approve / Open only | Tap opens Approval Center; **Approve** quick-approves latest non–card-refund pending (`SmsApprovalNotificationReceiver`) |
 | `[~]` | **reconcilePendingWithCurrentParser()** | Manual from Approval Center; **no** daily WorkManager job yet |
 | `[-]` | Backfill disbursal txn for old loans | One-time tool — deferred |
 | `[~]` | **SMS template overlay** | Import + Settings screen; **no** export overlay / match-rate debug / AI drafting |
@@ -121,7 +121,7 @@ From peer-sync product notes and in-progress LAN work.
 | Status | Item | Notes |
 |--------|------|--------|
 | `[x]` | **Biometric / device credential** for LAN trust & remove peer | `MmrDeviceCredentialGate` |
-| `[ ]` | **App lock** (biometric) on launch | |
+| `[x]` | **App lock** (biometric) on launch | Settings → Transaction Appearance → **Lock app on launch**; re-lock on background (`AppSecuritySettingsStore`, `MmrAppLockGate`) |
 | `[ ]` | **Encrypted backup** (password on export file) | JSON backup unencrypted |
 | `[ ]` | **Auto-backup** to user-chosen folder on schedule | |
 | `[x]` | Manual backup & restore | `BackupScreen`, `BackupJsonCodec` |

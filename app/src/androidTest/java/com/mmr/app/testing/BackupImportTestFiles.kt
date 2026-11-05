@@ -15,6 +15,24 @@ object BackupImportTestFiles {
         val dir = File(context.cacheDir, "exports").apply { mkdirs() }
         val file = File(dir, fileName)
         file.writeText(json)
+        return uriForFile(context, file)
+    }
+
+    fun writeArchiveAndGetUri(
+        context: Context,
+        archiveBytes: ByteArray,
+        fileName: String,
+    ): Uri {
+        val dir = File(context.cacheDir, "exports").apply { mkdirs() }
+        val file = File(dir, fileName)
+        file.writeBytes(archiveBytes)
+        return uriForFile(context, file)
+    }
+
+    private fun uriForFile(
+        context: Context,
+        file: File,
+    ): Uri {
         val uri =
             FileProvider.getUriForFile(
                 context,

@@ -1,12 +1,14 @@
 /*
- Highcharts JS v4.2.7 (2016-09-21)
+ Highcharts JS v7.2.2 (2020-08-24)
+
  Plugin for displaying a message when there is no data visible in chart.
 
- (c) 2010-2016 Highsoft AS
+ (c) 2010-2019 Highsoft AS
  Author: Oystein Moseng
 
  License: www.highcharts.com/license
 */
-(function(a){typeof module==="object"&&module.exports?module.exports=a:a(Highcharts)})(function(a){function h(){return!!this.points.length}function d(){this.hasData()?this.hideNoData():this.showNoData()}var e=a.seriesTypes,c=a.Chart.prototype,f=a.getOptions(),g=a.extend,i=a.each;g(f.lang,{noData:"No data to display"});f.noData={position:{x:0,y:0,align:"center",verticalAlign:"middle"},attr:{},style:{fontWeight:"bold",fontSize:"12px",color:"#60606a"}};i(["pie","gauge","waterfall","bubble","treemap"],
-function(b){if(e[b])e[b].prototype.hasData=h});a.Series.prototype.hasData=function(){return this.visible&&this.dataMax!==void 0&&this.dataMin!==void 0};c.showNoData=function(b){var a=this.options,b=b||a.lang.noData,a=a.noData;if(!this.noDataLabel)this.noDataLabel=this.renderer.label(b,0,0,null,null,null,a.useHTML,null,"no-data").attr(a.attr).css(a.style).add(),this.noDataLabel.align(g(this.noDataLabel.getBBox(),a.position),!1,"plotBox")};c.hideNoData=function(){if(this.noDataLabel)this.noDataLabel=
-this.noDataLabel.destroy()};c.hasData=function(){for(var a=this.series,c=a.length;c--;)if(a[c].hasData()&&!a[c].options.isInternal)return!0;return!1};c.callbacks.push(function(b){a.addEvent(b,"load",d);a.addEvent(b,"redraw",d)})});
+(function(a){"object"===typeof module&&module.exports?(a["default"]=a,module.exports=a):"function"===typeof define&&define.amd?define("highcharts/modules/no-data-to-display",["highcharts"],function(c){a(c);a.Highcharts=c;return a}):a("undefined"!==typeof Highcharts?Highcharts:void 0)})(function(a){function c(a,d,c,e){a.hasOwnProperty(d)||(a[d]=e.apply(null,c))}a=a?a._modules:{};c(a,"modules/no-data-to-display.src.js",[a["parts/Globals.js"],a["parts/Utilities.js"]],function(a,d){var c=d.extend;d=a.Chart.prototype;
+var e=a.getOptions();c(e.lang,{noData:"No data to display"});e.noData={position:{x:0,y:0,align:"center",verticalAlign:"middle"},style:{fontWeight:"bold",fontSize:"12px",color:"#666666"}};d.showNoData=function(a){var b=this.options;a=a||b&&b.lang.noData;b=b&&b.noData;!this.noDataLabel&&this.renderer&&(this.noDataLabel=this.renderer.label(a,0,0,null,null,null,b.useHTML,null,"no-data"),this.styledMode||this.noDataLabel.attr(b.attr).css(b.style),this.noDataLabel.add(),this.noDataLabel.align(c(this.noDataLabel.getBBox(),
+b.position),!1,"plotBox"))};d.hideNoData=function(){this.noDataLabel&&(this.noDataLabel=this.noDataLabel.destroy())};d.hasData=function(){for(var a=this.series||[],b=a.length;b--;)if(a[b].hasData()&&!a[b].options.isInternal)return!0;return this.loadingShown};a.addEvent(a.Chart,"render",function(){this.hasData()?this.hideNoData():this.showNoData()})});c(a,"masters/modules/no-data-to-display.src.js",[],function(){})});
+//# sourceMappingURL=no-data-to-display.js.map

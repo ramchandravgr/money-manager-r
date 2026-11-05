@@ -43,7 +43,10 @@ class GoogleDriveBackupCoordinator
         ) {
             val files = driveClient.listFilesInFolder(accessToken, folderId)
             val current =
-                files.find { it.name == GoogleDriveBackupContracts.FILE_CURRENT_NAME }
+                files.find {
+                    it.name == GoogleDriveBackupContracts.FILE_CURRENT_NAME ||
+                        it.name == GoogleDriveBackupContracts.LEGACY_FILE_CURRENT_NAME
+                }
             if (current != null) {
                 val datedName = datedBackupName(current.modifiedTimeMillis)
                 driveClient.renameFile(accessToken, current.id, datedName)
@@ -63,7 +66,7 @@ class GoogleDriveBackupCoordinator
         ): List<GoogleDriveFileRef> =
             driveClient
                 .listFilesInFolder(accessToken, folderId)
-                .filter { it.name.endsWith(GoogleDriveBackupContracts.FILE_EXTENSION) }
+                .filter { GoogleDriveBackupContracts.isBackupArchiveFileName(it.name) }
                 .sortedByDescending { it.modifiedTimeMillis }
 
         fun downloadBackup(
@@ -78,7 +81,7 @@ class GoogleDriveBackupCoordinator
             val backups =
                 driveClient
                     .listFilesInFolder(accessToken, folderId)
-                    .filter { it.name.endsWith(GoogleDriveBackupContracts.FILE_EXTENSION) }
+                    .filter { GoogleDriveBackupContracts.isBackupArchiveFileName(it.name) }
                     .sortedByDescending { it.modifiedTimeMillis }
             if (backups.size <= GoogleDriveBackupContracts.MAX_RETAINED_FILES) return
             backups

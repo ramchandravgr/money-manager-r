@@ -37,6 +37,7 @@ import com.mmr.core.model.enums.LoanScheduleStatus
 import com.mmr.core.model.enums.LoanStatus
 import com.mmr.core.model.enums.LoanTopUpAdjustment
 import com.mmr.core.model.enums.LoanType
+import com.mmr.core.owner.withLocalCreatedBy
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -56,6 +57,7 @@ class LoanRepositoryImpl
         private val loanLedgerCoordinator: LoanLedgerCoordinator,
         private val accountRepository: AccountRepository,
         private val tombstoneRecorder: LanSyncTombstoneRecorder,
+        private val ownerProfileCoordinator: com.mmr.core.owner.MmrOwnerProfileCoordinator,
     ) : LoanRepository {
         override fun getAllLoans(): Flow<List<LoanEntity>> = loanDao.getAllLoans()
 
@@ -77,19 +79,22 @@ class LoanRepositoryImpl
 
         override suspend fun createLoan(loan: LoanEntity): Long {
             RepositoryGuards.requireValidLoanEntity(loan)
+            val stamp = ownerProfileCoordinator.localStamp()
             return database.withTransaction {
                 val loanToStore =
-                    if (loan.linkedLoanAccountId != null) {
-                        loan
-                    } else {
-                        val liabilityAccountId =
-                            accountRepository.createAccount(
-                                name = loan.name.trim(),
-                                type = AccountType.LOAN,
-                                openingBalance = loan.principalAmount,
-                            )
-                        loan.copy(linkedLoanAccountId = liabilityAccountId)
-                    }
+                    (
+                        if (loan.linkedLoanAccountId != null) {
+                            loan
+                        } else {
+                            val liabilityAccountId =
+                                accountRepository.createAccount(
+                                    name = loan.name.trim(),
+                                    type = AccountType.LOAN,
+                                    openingBalance = loan.principalAmount,
+                                )
+                            loan.copy(linkedLoanAccountId = liabilityAccountId)
+                        }
+                    ).withLocalCreatedBy(stamp)
                 val loanId = loanDao.insert(loanToStore)
                 loanInterestRevisionDao.insert(
                     LoanSchedulePlanner.initialRevision(loanId, loan.interestRate, loan.openingDate),

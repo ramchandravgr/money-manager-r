@@ -37,6 +37,7 @@ import com.mmr.core.database.entity.LoanInterestRevisionEntity
 import com.mmr.core.database.entity.LoanPaymentEntity
 import com.mmr.core.database.entity.LoanScheduleEntryEntity
 import com.mmr.core.database.entity.NotificationRuleEntity
+import com.mmr.core.database.entity.OwnerProfileEntity
 import com.mmr.core.database.entity.PendingLanPairRequestEntity
 import com.mmr.core.database.entity.RecurringRuleEntity
 import com.mmr.core.database.entity.SmsMessageRecordEntity
@@ -72,14 +73,15 @@ import com.mmr.core.database.entity.TrustedLanDeviceEntity
         AssetEntity::class,
         AssetValuationEntity::class,
         AssetAttachmentEntity::class,
+        OwnerProfileEntity::class,
     ],
-    version = 23,
+    version = 24,
     exportSchema = false,
 )
 @TypeConverters(EnumConverters::class)
 abstract class MmrDatabase : RoomDatabase() {
     companion object {
-        const val SCHEMA_VERSION = 23
+        const val SCHEMA_VERSION = 24
     }
 
     abstract fun transactionDao(): TransactionDao
@@ -125,4 +127,6 @@ abstract class MmrDatabase : RoomDatabase() {
     abstract fun assetValuationDao(): com.mmr.core.database.dao.AssetValuationDao
 
     abstract fun assetAttachmentDao(): com.mmr.core.database.dao.AssetAttachmentDao
+
+    abstract fun ownerProfileDao(): com.mmr.core.database.dao.OwnerProfileDao
 }

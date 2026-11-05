@@ -25,9 +25,9 @@ class BackupImportFlowUiTest : MmrHiltUiTest() {
         val marker = "Backup restore ${System.nanoTime()}"
         runBlocking {
             MmrUiTestFixtures.seedSingleExpense(database, note = marker, amount = 77.0)
-            val json = backupRepository.exportBackupJson()
+            val archive = backupRepository.exportBackupArchive()
             MmrUiTestFixtures.resetUiTestDatabase(database)
-            backupRepository.importBackupJson(json, BackupImportMode.REPLACE)
+            backupRepository.importBackup(archive, BackupImportMode.REPLACE)
         }
 
         traceActivityRecreate()
@@ -37,14 +37,14 @@ class BackupImportFlowUiTest : MmrHiltUiTest() {
     @Test
     fun repositoryImportReplace_reflectedOnBackupScreenSummary() {
         val marker = "Backup summary ${System.nanoTime()}"
-        val json =
+        val archiveBytes =
             runBlocking {
                 MmrUiTestFixtures.seedSingleExpense(database, note = marker, amount = 55.0)
-                backupRepository.exportBackupJson()
+                backupRepository.exportBackupArchive()
             }
         runBlocking {
             MmrUiTestFixtures.resetUiTestDatabase(database)
-            backupRepository.importBackupJson(json, BackupImportMode.REPLACE)
+            backupRepository.importBackup(archiveBytes, BackupImportMode.REPLACE)
             check(backupRepository.getLocalDataSummary().transactions == 1) {
                 "Expected one transaction in backup summary after import"
             }

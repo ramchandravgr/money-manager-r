@@ -173,6 +173,7 @@ class FakeApprovalRepository(
         subcategoryId: Long?,
         relatedAccountId: Long?,
         loanId: Long?,
+        provisionAccountFromSms: Boolean,
     ): Long = 0L
 
     override suspend fun mergeCandidateWithTransaction(
@@ -377,16 +378,16 @@ class FakeLanSyncRepository : LanSyncRepository {
     override fun pairingOffer(): LanSyncPairingOffer =
         LanSyncPairingOffer(deviceId = "test", displayName = "Test", inboundAuthToken = "token")
 
-    override suspend fun resolvePairingInput(raw: String): LanSyncPairingOffer {
-        val trimmed = raw.trim()
-        if (trimmed.startsWith(com.mmr.core.lansync.LanSyncPairingCodec.LEGACY_PREFIX)) {
-            return com.mmr.core.lansync.LanSyncPairingCodec
-                .decode(trimmed)
-        }
-        return pairingOffer()
-    }
+    override suspend fun resolvePairingInput(raw: String): LanSyncPairingOffer = pairingOffer()
 
-    override suspend fun trustDeviceFromPairingOffer(offer: LanSyncPairingOffer) = Unit
+    override suspend fun trustDeviceFromPairingOffer(
+        offer: LanSyncPairingOffer,
+        pairingCode: String?,
+    ) = Unit
+
+    override suspend fun approvePendingPairRequest(remoteDeviceId: String) = Unit
+
+    override suspend fun rejectPendingPairRequest(remoteDeviceId: String) = Unit
 
     override suspend fun removeTrustedDevice(deviceId: String) = Unit
 

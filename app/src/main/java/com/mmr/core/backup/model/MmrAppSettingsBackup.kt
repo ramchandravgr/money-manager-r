@@ -2,16 +2,24 @@ package com.mmr.core.backup.model
 
 import com.mmr.core.parser.scanner.SmsScanPeriod
 
-/**
- * User preferences stored outside Room (SharedPreferences, etc.).
- * Optional nested blocks stay null on older backup files; import applies only what is present.
- */
+/** User preferences stored outside Room (SMS scan, display, SMS inbound toggles). */
 data class MmrAppSettingsBackup(
     val smsScanMonths: Int = SmsScanPeriod.DEFAULT_MONTHS,
     val display: MmrDisplaySettingsBackup? = null,
     val smsInbound: MmrSmsInboundSettingsBackup? = null,
-    val lanSync: MmrLanSyncSettingsBackup? = null,
-    val webManage: MmrWebManageSettingsBackup? = null,
+    val ownerProfile: MmrOwnerProfileBackup? = null,
+    val knownProfiles: List<MmrKnownProfileBackup> = emptyList(),
+)
+
+data class MmrOwnerProfileBackup(
+    val profileId: String,
+    val displayName: String,
+)
+
+data class MmrKnownProfileBackup(
+    val profileId: String,
+    val displayName: String,
+    val updatedAt: Long = 0L,
 )
 
 data class MmrDisplaySettingsBackup(
@@ -35,22 +43,4 @@ data class MmrDisplaySettingsBackup(
 data class MmrSmsInboundSettingsBackup(
     val notifyOnNewPending: Boolean,
     val readSmsInboundPromptShown: Boolean,
-)
-
-data class MmrLanSyncSettingsBackup(
-    val lanSyncEnabled: Boolean,
-    val deviceId: String,
-    val inboundAuthToken: String,
-    val displayName: String,
-    val peerMode: String,
-    val selectedPeerDeviceId: String?,
-    val includeAttachments: Boolean,
-    val trustedWifiSsids: List<String>,
-    val duplicateEntityPolicies: Map<String, String>,
-)
-
-data class MmrWebManageSettingsBackup(
-    val enabled: Boolean,
-    val passwordSalt: String?,
-    val passwordHash: String?,
 )

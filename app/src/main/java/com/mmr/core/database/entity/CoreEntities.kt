@@ -84,6 +84,8 @@ data class LoanEntity(
     val emiReminderDaysBefore: Int = 1,
     val fixedEmiInputMode: String? = null,
     val notes: String? = null,
+    val createdByProfileId: String? = null,
+    val createdByDisplayName: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
 )
@@ -265,6 +267,8 @@ data class RecurringRuleEntity(
     val endDate: Long? = null,
     val noteTemplate: String? = null,
     val reminderMinutesBefore: Int = 0,
+    val createdByProfileId: String? = null,
+    val createdByDisplayName: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
 )
@@ -393,8 +397,8 @@ data class TransactionEntity(
     val paymentInstrument: String? = null,
     val cardLastFour: String? = null,
     val cardNetwork: CardNetwork? = null,
-    val syncedFromDeviceId: String? = null,
-    val syncedFromDeviceName: String? = null,
+    val createdByProfileId: String? = null,
+    val createdByDisplayName: String? = null,
     /** Gross amount before card refunds; null until first refund is applied. */
     val originalAmount: Double? = null,
     /** Cumulative card refunds applied through MMR. */

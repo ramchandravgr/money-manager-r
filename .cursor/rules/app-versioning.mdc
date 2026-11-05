@@ -1,0 +1,23 @@
+---
+description: When and how to bump Money Inbox app semver (versionName/versionCode) and release notes
+alwaysApply: true
+---
+
+# App versioning (Money Inbox)
+
+Canonical doc: **`docs/versioning.md`**. User-facing semver lives in **`app/build.gradle.kts`**; release notes in **`MmrReleaseNotesCatalog.kt`**.
+
+## Before finishing a release-related change
+
+1. If shipping a build to a device or Play, ensure **`versionName`** / **`versionCode`** match the bump type (PATCH vs MINOR vs 1.0.0).
+2. **`versionCode`** = `major*10000 + minor*100 + patch`; must increase on **every Play upload**.
+3. Update **`MmrReleaseNotesCatalog`** for the new `versionName` (bullets newest-first).
+4. Do **not** conflate app semver with **backup JSON / LAN / Room** format integers — bump those only when import/sync/migration breaks without the new app.
+
+## Bump guidance (summary)
+
+- **PATCH** — fixes, small UX, security tweaks; no new backup import requirement.
+- **MINOR** — features; or same release as a **breaking backup/LAN format** bump (document in catalog).
+- **1.0.0** — first stable production Play when contracts are settled.
+
+Wire-format and backup extension details: **`docs/versioning.md`** and **`PROJECT_MEMORY.md`** § Release builds.

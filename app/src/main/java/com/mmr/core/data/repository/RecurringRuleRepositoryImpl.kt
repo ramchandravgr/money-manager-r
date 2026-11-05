@@ -13,6 +13,7 @@ import com.mmr.core.domain.util.RecurrenceCalculator
 import com.mmr.core.lansync.LanSyncTombstoneRecorder
 import com.mmr.core.lansync.SyncEntityType
 import com.mmr.core.model.enums.NotificationRuleType
+import com.mmr.core.owner.withLocalCreatedBy
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -27,6 +28,7 @@ class RecurringRuleRepositoryImpl
         private val recurringRuleDao: RecurringRuleDao,
         private val notificationRuleDao: NotificationRuleDao,
         private val tombstoneRecorder: LanSyncTombstoneRecorder,
+        private val ownerProfileCoordinator: com.mmr.core.owner.MmrOwnerProfileCoordinator,
     ) : RecurringRuleRepository {
         override fun getAllRules(): Flow<List<RecurringRuleEntity>> = recurringRuleDao.getAllRules()
 
@@ -49,8 +51,9 @@ class RecurringRuleRepositoryImpl
 
         override suspend fun createRecurringRule(rule: RecurringRuleEntity): Long {
             RepositoryGuards.requireValidRecurringRule(rule)
+            val stamp = ownerProfileCoordinator.localStamp()
             return database.withTransaction {
-                val ruleId = recurringRuleDao.insert(rule)
+                val ruleId = recurringRuleDao.insert(rule.withLocalCreatedBy(stamp))
                 syncReminderNotification(rule.copy(id = ruleId))
                 ruleId
             }

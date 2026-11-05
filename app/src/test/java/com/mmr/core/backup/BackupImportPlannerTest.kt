@@ -84,7 +84,7 @@ class BackupImportPlannerTest {
         transactions: List<TransactionEntity> = emptyList(),
         payments: List<LoanPaymentEntity> = emptyList(),
     ) = MmrBackupPayload(
-        formatVersion = 2,
+        formatVersion = BackupJsonCodec.CURRENT_FORMAT_VERSION,
         appId = "com.mmr.app",
         exportedAtEpochMillis = 0L,
         databaseVersion = 7,

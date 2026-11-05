@@ -43,7 +43,7 @@
     <ID>CyclomaticComplexMethod:ApprovalCenterScreen.kt$@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class) @Composable fun ApprovalCenterScreen( onNavigateBack: () -&gt; Unit, onNavigateToEditPending: (Long) -&gt; Unit, showBackNavigation: Boolean = true, launchApprovalId: Long = 0L, launchAction: String = "", viewModel: ApprovalCenterViewModel = hiltViewModel(), )</ID>
     <ID>CyclomaticComplexMethod:ApprovalCenterViewModel.kt$ApprovalCenterViewModel$fun onEvent(event: ApprovalCenterUiEvent)</ID>
     <ID>CyclomaticComplexMethod:ApprovalCenterViewModel.kt$ApprovalCenterViewModel$private fun com.mmr.core.domain.model.PendingApprovalWithSms.toUi( categoriesById: Map&lt;Long, CategoryEntity&gt;, accountsById: Map&lt;Long, AccountEntity&gt;, ): ApprovalCandidateUi</ID>
-    <ID>CyclomaticComplexMethod:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$override suspend fun approveCandidate( id: Long, fallbackAccountId: Long, fallbackCategoryId: Long?, subcategoryId: Long?, relatedAccountId: Long?, loanId: Long?, ): Long</ID>
+    <ID>CyclomaticComplexMethod:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$override suspend fun approveCandidate( id: Long, fallbackAccountId: Long, fallbackCategoryId: Long?, subcategoryId: Long?, relatedAccountId: Long?, loanId: Long?, provisionAccountFromSms: Boolean, ): Long</ID>
     <ID>CyclomaticComplexMethod:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$override suspend fun mergeCandidateWithTransaction( approvalId: Long, transactionId: Long, categoryId: Long?, subcategoryId: Long?, useLedgerCategory: Boolean, ): Long</ID>
     <ID>CyclomaticComplexMethod:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$override suspend fun reconcilePendingWithCurrentParser(): Int</ID>
     <ID>CyclomaticComplexMethod:AssetDetailScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun AssetDetailScreen( onNavigateBack: () -&gt; Unit, onNavigateToEdit: (Long) -&gt; Unit, viewModel: AssetDetailViewModel = hiltViewModel(), )</ID>
@@ -116,10 +116,15 @@
     <ID>Indentation:AddEditTransactionViewModel.kt$AddEditTransactionViewModel.TransactionFormSnapshot$ </ID>
     <ID>Indentation:AppDisplaySettingsStore.kt$AppDisplaySettingsStore$ </ID>
     <ID>Indentation:AppDisplaySettingsStore.kt$AppDisplaySettingsStore.Companion$ </ID>
+    <ID>Indentation:AppSecuritySettingsStore.kt$AppSecuritySettingsStore$ </ID>
+    <ID>Indentation:AppSecuritySettingsStore.kt$AppSecuritySettingsStore.Companion$ </ID>
     <ID>Indentation:AppSettingsBackupCoordinator.kt$AppSettingsBackupCoordinator$ </ID>
     <ID>Indentation:ApplyCardRefundDialog.kt$ </ID>
     <ID>Indentation:ApprovalCenterScreen.kt$ </ID>
     <ID>Indentation:ApprovalCenterViewModel.kt$ApprovalCenterViewModel$ </ID>
+    <ID>Indentation:ApprovalInboxSmsScanCoordinator.kt$ApprovalInboxSmsScanCoordinator$ </ID>
+    <ID>Indentation:ApprovalInboxSmsScanCoordinator.kt$ApprovalInboxSmsScanCoordinator.Companion$ </ID>
+    <ID>Indentation:ApprovalInboxSmsScanCoordinator.kt$ApprovalInboxSmsScanCoordinator.ScanResult$ </ID>
     <ID>Indentation:ApprovalLinkMergeCategoryField.kt$ </ID>
     <ID>Indentation:ApprovalLinkTransactionDialog.kt$ </ID>
     <ID>Indentation:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$ </ID>
@@ -137,6 +142,7 @@
     <ID>Indentation:AssetRepositoryImpl.kt$AssetRepositoryImpl$ </ID>
     <ID>Indentation:BackupImportPlannerTest.kt$BackupImportPlannerTest$ </ID>
     <ID>Indentation:BackupJsonCodec.kt$BackupJsonCodec$ </ID>
+    <ID>Indentation:BackupPayloadSanitizerTest.kt$BackupPayloadSanitizerTest$ </ID>
     <ID>Indentation:BackupRepositoryImpl.kt$BackupRepositoryImpl$ </ID>
     <ID>Indentation:BackupScreen.kt$ </ID>
     <ID>Indentation:BackupViewModel.kt$BackupViewModel$ </ID>
@@ -245,6 +251,7 @@
     <ID>Indentation:MmrAmountTextField.kt$ </ID>
     <ID>Indentation:MmrAppBarActions.kt$ </ID>
     <ID>Indentation:MmrAppChrome.kt$ </ID>
+    <ID>Indentation:MmrAppLockGate.kt$ </ID>
     <ID>Indentation:MmrBudgetProgressBar.kt$ </ID>
     <ID>Indentation:MmrBudgetsWidget.kt$ </ID>
     <ID>Indentation:MmrCompactDropdown.kt$ </ID>
@@ -267,8 +274,10 @@
     <ID>Indentation:MmrMainNavigationScaffold.kt$ </ID>
     <ID>Indentation:MmrMonthSpendWidget.kt$ </ID>
     <ID>Indentation:MmrNavGraph.kt$ </ID>
+    <ID>Indentation:MmrOwnerProfileCoordinator.kt$MmrOwnerProfileCoordinator$ </ID>
     <ID>Indentation:MmrPendingApprovalsWidget.kt$ </ID>
     <ID>Indentation:MmrPeriodSwipeBox.kt$ </ID>
+    <ID>Indentation:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$ </ID>
     <ID>Indentation:MmrScrollableBottomBar.kt$ </ID>
     <ID>Indentation:MmrSettingsColorSwatches.kt$ </ID>
     <ID>Indentation:MmrSettingsRangeSlider.kt$ </ID>
@@ -300,6 +309,8 @@
     <ID>Indentation:RecurringListScreen.kt$ </ID>
     <ID>Indentation:RecurringListViewModel.kt$RecurringListViewModel$ </ID>
     <ID>Indentation:RecurringRuleRepositoryImpl.kt$RecurringRuleRepositoryImpl$ </ID>
+    <ID>Indentation:ReleaseNotesStore.kt$ReleaseNotesStore$ </ID>
+    <ID>Indentation:ReleaseNotesStore.kt$ReleaseNotesStore.Companion$ </ID>
     <ID>Indentation:RepositoryImpls.kt$AccountRepositoryImpl$ </ID>
     <ID>Indentation:RepositoryImpls.kt$AccountRepositoryImpl.Companion$ </ID>
     <ID>Indentation:RepositoryImpls.kt$CategoryRepositoryImpl$ </ID>
@@ -317,6 +328,7 @@
     <ID>Indentation:SettingsViewModel.kt$SettingsViewModel$ </ID>
     <ID>Indentation:SmsAccountResolver.kt$SmsAccountResolver$ </ID>
     <ID>Indentation:SmsAccountResolver.kt$SmsAccountResolver.Companion$ </ID>
+    <ID>Indentation:SmsApprovalParsedCandidate.kt$ </ID>
     <ID>Indentation:SmsApprovalSummaryNotifier.kt$SmsApprovalSummaryNotifier$ </ID>
     <ID>Indentation:SmsApprovalSummaryNotifier.kt$SmsApprovalSummaryNotifier.Companion$ </ID>
     <ID>Indentation:SmsInboundSettingsStore.kt$SmsInboundSettingsStore$ </ID>
@@ -385,6 +397,7 @@
     <ID>Indentation:WebManageScreen.kt$ </ID>
     <ID>Indentation:WebManageSessionManager.kt$WebManageSessionManager$ </ID>
     <ID>Indentation:WebManageSessionManager.kt$WebManageSessionManager.Companion$ </ID>
+    <ID>Indentation:WebManageSessionManager.kt$WebManageSessionManager.SessionRecord$ </ID>
     <ID>Indentation:WebManageViewModel.kt$WebManageViewModel$ </ID>
     <ID>LambdaParameterInRestartableEffect:AddEditAccountScreen.kt$onNavigateBack</ID>
     <ID>LambdaParameterInRestartableEffect:AddEditAssetScreen.kt$onNavigateBack</ID>
@@ -430,12 +443,13 @@
     <ID>LongMethod:ApprovalCenterScreen.kt$@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class) @Composable fun ApprovalCenterScreen( onNavigateBack: () -&gt; Unit, onNavigateToEditPending: (Long) -&gt; Unit, showBackNavigation: Boolean = true, launchApprovalId: Long = 0L, launchAction: String = "", viewModel: ApprovalCenterViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:ApprovalCenterViewModel.kt$ApprovalCenterViewModel$fun onEvent(event: ApprovalCenterUiEvent)</ID>
     <ID>LongMethod:ApprovalLinkTransactionDialog.kt$@Composable fun ApprovalLinkTransactionDialog( prompt: PendingSmsMergePrompt, onEvent: (ApprovalCenterUiEvent) -&gt; Unit, onMergeInto: (Long) -&gt; Unit, onApproveAsNew: () -&gt; Unit, onDismiss: () -&gt; Unit, onPreviousMonth: () -&gt; Unit, onNextMonth: () -&gt; Unit, onNoteQueryChange: (String) -&gt; Unit, )</ID>
-    <ID>LongMethod:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$override suspend fun approveCandidate( id: Long, fallbackAccountId: Long, fallbackCategoryId: Long?, subcategoryId: Long?, relatedAccountId: Long?, loanId: Long?, ): Long</ID>
+    <ID>LongMethod:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$override suspend fun approveCandidate( id: Long, fallbackAccountId: Long, fallbackCategoryId: Long?, subcategoryId: Long?, relatedAccountId: Long?, loanId: Long?, provisionAccountFromSms: Boolean, ): Long</ID>
     <ID>LongMethod:AssetDetailScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun AssetDetailScreen( onNavigateBack: () -&gt; Unit, onNavigateToEdit: (Long) -&gt; Unit, viewModel: AssetDetailViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:AssetFormFields.kt$@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class) @Composable fun AssetFormFields( uiState: AddEditAssetUiState, onEvent: (AddEditAssetUiEvent) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
     <ID>LongMethod:AssetListScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun AssetListScreen( onNavigateToAssetDetail: (Long) -&gt; Unit, onNavigateToAddAsset: () -&gt; Unit, showBackNavigation: Boolean = false, onNavigateBack: () -&gt; Unit = {}, viewModel: AssetListViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:BackupImportPlanner.kt$BackupImportPlanner$fun prepareMerge( payload: MmrBackupPayload, existing: ExistingIds, ): MmrBackupPayload</ID>
     <ID>LongMethod:BackupScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun BackupScreen( onNavigateBack: () -&gt; Unit, onNavigateToGoogleDrive: () -&gt; Unit = {}, viewModel: BackupViewModel = hiltViewModel(), testImportUri: Uri? = null, )</ID>
+    <ID>LongMethod:BackupSignedZipCodec.kt$BackupSignedZipCodec$fun decode(bytes: ByteArray): ParsedArchive</ID>
     <ID>LongMethod:CategoryListScreen.kt$@Composable fun CategoryListScreen( onNavigateBack: () -&gt; Unit, onNavigateToAddCategory: () -&gt; Unit, onNavigateToEditCategory: (Long) -&gt; Unit, viewModel: CategoryViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:CategorySubcategoryPickerPanel.kt$@Composable fun CategorySubcategoryPickerPanel( panelState: CategoryPickerPanelState, callbacks: CategoryPickerPanelCallbacks, modifier: Modifier = Modifier, maxPanelHeight: Dp = 300.dp, onPickerFinished: () -&gt; Unit = {}, showDismissAction: Boolean = false, onDismiss: () -&gt; Unit = {}, )</ID>
     <ID>LongMethod:ConfigurationScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ConfigurationScreen( onNavigateBack: () -&gt; Unit, viewModel: ConfigurationViewModel = hiltViewModel(), )</ID>
@@ -457,6 +471,7 @@
     <ID>LongMethod:LoanRepaymentDialog.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun LoanRepaymentDialog( outstandingFormatted: String, nextEmiHint: String?, flexibleAccruedInterestHint: String?, amountInput: String, notesInput: String, paymentDateMillis: Long, selectedType: LoanPaymentType, repaymentMode: LoanRepaymentMode, partPaymentAdjustment: LoanPartPaymentAdjustment, isSubmitting: Boolean, errorMessage: String?, onAmountChanged: (String) -&gt; Unit, onNotesChanged: (String) -&gt; Unit, onPaymentDateChanged: (Long) -&gt; Unit, onTypeSelected: (LoanPaymentType) -&gt; Unit, onPartPaymentAdjustmentSelected: (LoanPartPaymentAdjustment) -&gt; Unit, onSubmit: () -&gt; Unit, onDismiss: () -&gt; Unit, )</ID>
     <ID>LongMethod:LoanRepositoryImpl.kt$LoanRepositoryImpl$override suspend fun recordLoanTopUp( loanId: Long, topUpAmount: Double, topUpDate: Long, topUpAdjustment: LoanTopUpAdjustment?, transactionId: Long?, notes: String?, postLedgerTransfer: Boolean, ): Long</ID>
     <ID>LongMethod:LoanTopUpDialog.kt$@Composable fun LoanTopUpDialog( outstandingFormatted: String, repaymentMode: LoanRepaymentMode, amountInput: String, notesInput: String, topUpDateMillis: Long, topUpAdjustment: LoanTopUpAdjustment, isSubmitting: Boolean, errorMessage: String?, onAmountChanged: (String) -&gt; Unit, onNotesChanged: (String) -&gt; Unit, onTopUpDateChanged: (Long) -&gt; Unit, onTopUpAdjustmentSelected: (LoanTopUpAdjustment) -&gt; Unit, onSubmit: () -&gt; Unit, onDismiss: () -&gt; Unit, )</ID>
+    <ID>LongMethod:MainActivity.kt$MainActivity$@OptIn(ExperimentalMaterial3WindowSizeClassApi::class) override fun onCreate(savedInstanceState: Bundle?)</ID>
     <ID>LongMethod:ManualSmsEntryDialog.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ManualSmsEntryDialog( errorMessage: String?, onDismiss: () -&gt; Unit, onSubmit: (sender: String, body: String, timestampMillis: Long) -&gt; Unit, )</ID>
     <ID>LongMethod:MezoLedgerParserComparisonTest.kt$MezoLedgerParserComparisonTest$@Test fun mezoLedgerRows_mostParseAsMmrTransaction()</ID>
     <ID>LongMethod:MmrAmountCalculatorSheet.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun MmrAmountCalculatorSheet( initialAmountFieldValue: String, onDismiss: () -&gt; Unit, onApply: (String) -&gt; Unit, sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), )</ID>
@@ -490,17 +505,19 @@
     <ID>LongParameterList:AccountPickerSheet.kt$( title: String, accounts: List&lt;AccountUi&gt;, selectedAccountId: Long?, onAccountSelected: (Long) -&gt; Unit, sheetState: SheetState, onDismiss: () -&gt; Unit, modifier: Modifier = Modifier, subtitle: String? = null, mode: AccountPickerMode = AccountPickerMode.AccountsGrouped, loans: List&lt;LoanPickerUi&gt; = emptyList(), selectedLoanId: Long? = null, onLoanSelected: ((Long) -&gt; Unit)? = null, excludedAccountId: Long? = null, showAllOption: Boolean = false, onAllSelected: (() -&gt; Unit)? = null, allOptionSelected: Boolean = false, )</ID>
     <ID>LongParameterList:ApplyCardRefundDialog.kt$( prompt: PendingCardRefundApplyPrompt, onDismiss: () -&gt; Unit, onPreviousMonth: () -&gt; Unit, onNextMonth: () -&gt; Unit, onNoteQueryChange: (String) -&gt; Unit, onSelectPurchase: (Long) -&gt; Unit, onBackToPicker: () -&gt; Unit, onToggleFullRefund: (Boolean) -&gt; Unit, onPartialAmountChange: (String) -&gt; Unit, onConfirmApply: () -&gt; Unit, )</ID>
     <ID>LongParameterList:ApprovalCenterScreen.kt$( candidate: ApprovalCandidateUi, isSelectionMode: Boolean = false, isSelected: Boolean = false, onLongPress: () -&gt; Unit = {}, onToggleSelect: () -&gt; Unit = {}, onViewSms: () -&gt; Unit, onEdit: () -&gt; Unit, onLink: () -&gt; Unit = {}, onApprove: () -&gt; Unit, onReject: () -&gt; Unit, )</ID>
+    <ID>LongParameterList:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$( private val transactionApprovalDao: TransactionApprovalDao, private val approvalLedgerDao: ApprovalLedgerDao, private val categoryDao: CategoryDao, private val transactionDao: TransactionDao, private val smsAccountResolver: SmsAccountResolver, private val smsParserEngine: SmsParserEngine, private val loanTransactionCoordinator: LoanTransactionCoordinator, private val categorizationRuleEngine: CategorizationRuleEngine, private val widgetRefreshTrigger: HomeScreenWidgetRefreshTrigger, private val ownerProfileCoordinator: MmrOwnerProfileCoordinator, )</ID>
     <ID>LongParameterList:BackupDao.kt$BackupDao$( categories: List&lt;CategoryEntity&gt;, subcategories: List&lt;SubcategoryEntity&gt;, accounts: List&lt;AccountEntity&gt;, loans: List&lt;LoanEntity&gt;, loanInterestRevisions: List&lt;LoanInterestRevisionEntity&gt;, loanScheduleEntries: List&lt;LoanScheduleEntryEntity&gt;, transactions: List&lt;TransactionEntity&gt;, loanPayments: List&lt;LoanPaymentEntity&gt;, recurringRules: List&lt;RecurringRuleEntity&gt;, budgets: List&lt;BudgetEntity&gt; = emptyList(), assets: List&lt;AssetEntity&gt; = emptyList(), assetValuations: List&lt;AssetValuationEntity&gt; = emptyList(), notificationRules: List&lt;NotificationRuleEntity&gt;, smsMessageRecords: List&lt;SmsMessageRecordEntity&gt;, transactionApprovals: List&lt;TransactionApprovalEntity&gt;, categorizationRules: List&lt;CategorizationRuleEntity&gt; = emptyList(), trustedLanDevices: List&lt;TrustedLanDeviceEntity&gt; = emptyList(), transactionAttachments: List&lt;TransactionAttachmentEntity&gt; = emptyList(), assetAttachments: List&lt;AssetAttachmentEntity&gt; = emptyList(), )</ID>
     <ID>LongParameterList:BackupScreen.kt$( summary: BackupRestoreSummary?, isEmpty: Boolean, isBusy: Boolean, statusMessage: String?, errorMessage: String?, onDismissMessage: () -&gt; Unit, onExport: () -&gt; Unit, onImport: () -&gt; Unit, onNavigateToGoogleDrive: () -&gt; Unit, )</ID>
     <ID>LongParameterList:ConfigurationScreen.kt$( picker: ConfigPicker, settings: AppDisplaySettingsSnapshot, previewAppearance: MmrThemeAppearance, sheetState: SheetState, onDismiss: () -&gt; Unit, onSelectStartScreen: (MmrStartScreenTab) -&gt; Unit, onSelectMonthDay: (Int) -&gt; Unit, onSelectWeekDay: (MmrWeekStartDay) -&gt; Unit, onSelectSwipe: (MmrSwipeBehavior) -&gt; Unit, onSelectColors: (MmrAmountColorScheme) -&gt; Unit, onSelectTime: (MmrTimeDisplay) -&gt; Unit, onSelectAppTheme: (MmrAppColorTheme) -&gt; Unit, onSelectThemeMode: (MmrThemeMode) -&gt; Unit, )</ID>
     <ID>LongParameterList:HomeCalendarComponents.kt$( cells: List&lt;CalendarDayUi&gt;, weekStart: DayOfWeek, selectedDate: LocalDate?, selectedDayGroup: TransactionGroupUi?, onDateSelected: (LocalDate) -&gt; Unit, onPreviousDay: () -&gt; Unit, onNextDay: () -&gt; Unit, onAddForDay: () -&gt; Unit, onTransactionClick: (Long) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
     <ID>LongParameterList:HomeMonthPickerDialog.kt$( visible: Boolean, pickerYear: Int, selectedYear: Int, selectedMonth: Int, onDismiss: () -&gt; Unit, onPreviousYear: () -&gt; Unit, onNextYear: () -&gt; Unit, onMonthSelected: (Int) -&gt; Unit, onThisMonth: () -&gt; Unit, )</ID>
-    <ID>LongParameterList:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$( private val identityStore: LanSyncIdentityStore, private val lanSyncDao: LanSyncDao, private val exporter: LanSyncExporter, private val merger: LanSyncMerger, private val smsScanSettingsStore: SmsScanSettingsStore, private val wifiTrustStore: LanSyncWifiTrustStore, private val preferencesStore: LanSyncPreferencesStore, private val localLanServerCoordinator: LocalLanServerCoordinator, private val webManageRepository: Lazy&lt;WebManageRepository&gt;, private val lanServerNotifier: LocalLanServerNotifier, private val conflictDetector: LanSyncConflictDetector, private val transactionDao: TransactionDao, private val transactionApprovalDao: TransactionApprovalDao, private val networkUtils: LanSyncNetworkUtils, private val nsdHelper: LanSyncNsdHelper, private val attachmentPuller: LanSyncAttachmentPuller, private val attachmentStore: TransactionAttachmentStore, private val assetAttachmentStore: AssetAttachmentStore, private val tombstoneCoordinator: LanSyncTombstoneCoordinator, @IoDispatcher private val ioDispatcher: CoroutineDispatcher, )</ID>
+    <ID>LongParameterList:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$( private val identityStore: LanSyncIdentityStore, private val lanSyncDao: LanSyncDao, private val exporter: LanSyncExporter, private val merger: LanSyncMerger, private val smsScanSettingsStore: SmsScanSettingsStore, private val wifiTrustStore: LanSyncWifiTrustStore, private val preferencesStore: LanSyncPreferencesStore, private val localLanServerCoordinator: LocalLanServerCoordinator, private val webManageRepository: Lazy&lt;WebManageRepository&gt;, private val lanServerNotifier: LocalLanServerNotifier, private val conflictDetector: LanSyncConflictDetector, private val transactionDao: TransactionDao, private val transactionApprovalDao: TransactionApprovalDao, private val networkUtils: LanSyncNetworkUtils, private val nsdHelper: LanSyncNsdHelper, private val attachmentPuller: LanSyncAttachmentPuller, private val attachmentStore: TransactionAttachmentStore, private val assetAttachmentStore: AssetAttachmentStore, private val tombstoneCoordinator: LanSyncTombstoneCoordinator, private val ownerProfileCoordinator: com.mmr.core.owner.MmrOwnerProfileCoordinator, @IoDispatcher private val ioDispatcher: CoroutineDispatcher, )</ID>
     <ID>LongParameterList:LoanAmortizationEngine.kt$LoanAmortizationEngine$( loanId: Long, principalOutstanding: Double, annualRatePercent: Double, emiAmount: Double, remainingTenureMonths: Int, firstDueMillis: Long, emiDayOfMonth: Int, periodStartMillis: Long, startSequence: Int = 1, firstPeriodPrincipalStep: PrincipalStepAccrual? = null, )</ID>
     <ID>LongParameterList:LoanLedgerCoordinator.kt$LoanLedgerCoordinator$( loan: LoanEntity, amount: Double, dateTime: Long, sourceReferenceId: String, defaultNote: String, noteOverride: String? = null, categories: LoanCategoryIds? = null, fromAccountId: Long? = null, toAccountId: Long? = null, )</ID>
     <ID>LongParameterList:LoanPaymentProcessor.kt$LoanPaymentProcessor$( loan: LoanEntity, priorPayments: List&lt;LoanPaymentEntity&gt;, paymentAmount: Double, paymentType: LoanPaymentType, paymentDate: Long, annualRatePercent: Double, partPaymentAdjustment: LoanPartPaymentAdjustment?, transactionId: Long?, notes: String?, )</ID>
     <ID>LongParameterList:LoanRepaymentDialog.kt$( outstandingFormatted: String, nextEmiHint: String?, flexibleAccruedInterestHint: String?, amountInput: String, notesInput: String, paymentDateMillis: Long, selectedType: LoanPaymentType, repaymentMode: LoanRepaymentMode, partPaymentAdjustment: LoanPartPaymentAdjustment, isSubmitting: Boolean, errorMessage: String?, onAmountChanged: (String) -&gt; Unit, onNotesChanged: (String) -&gt; Unit, onPaymentDateChanged: (Long) -&gt; Unit, onTypeSelected: (LoanPaymentType) -&gt; Unit, onPartPaymentAdjustmentSelected: (LoanPartPaymentAdjustment) -&gt; Unit, onSubmit: () -&gt; Unit, onDismiss: () -&gt; Unit, )</ID>
     <ID>LongParameterList:LoanRepository.kt$LoanRepository$( loanId: Long, paymentAmount: Double, paymentType: LoanPaymentType = LoanPaymentType.PART_PAYMENT, paymentDate: Long = System.currentTimeMillis(), partPaymentAdjustment: LoanPartPaymentAdjustment? = null, principalComponent: Double? = null, interestComponent: Double? = null, transactionId: Long? = null, notes: String? = null, )</ID>
+    <ID>LongParameterList:LoanRepositoryImpl.kt$LoanRepositoryImpl$( private val database: MmrDatabase, private val loanDao: LoanDao, private val loanPaymentDao: LoanPaymentDao, private val loanInterestRevisionDao: LoanInterestRevisionDao, private val loanScheduleDao: LoanScheduleDao, private val transactionDao: TransactionDao, private val loanLedgerCoordinator: LoanLedgerCoordinator, private val accountRepository: AccountRepository, private val tombstoneRecorder: LanSyncTombstoneRecorder, private val ownerProfileCoordinator: com.mmr.core.owner.MmrOwnerProfileCoordinator, )</ID>
     <ID>LongParameterList:LoanTopUpDialog.kt$( outstandingFormatted: String, repaymentMode: LoanRepaymentMode, amountInput: String, notesInput: String, topUpDateMillis: Long, topUpAdjustment: LoanTopUpAdjustment, isSubmitting: Boolean, errorMessage: String?, onAmountChanged: (String) -&gt; Unit, onNotesChanged: (String) -&gt; Unit, onTopUpDateChanged: (Long) -&gt; Unit, onTopUpAdjustmentSelected: (LoanTopUpAdjustment) -&gt; Unit, onSubmit: () -&gt; Unit, onDismiss: () -&gt; Unit, )</ID>
     <ID>LongParameterList:MmrAmountTextField.kt$( value: String, onValueChange: (String) -&gt; Unit, modifier: Modifier = Modifier, label: @Composable (() -&gt; Unit)? = null, placeholder: @Composable (() -&gt; Unit)? = null, singleLine: Boolean = true, enabled: Boolean = true, isError: Boolean = false, supportingText: @Composable (() -&gt; Unit)? = null, showCalculator: Boolean = true, )</ID>
     <ID>LongParameterList:MmrAppChrome.kt$( incomeLabel: String, incomeAmount: String, expenseLabel: String, expenseAmount: String, totalLabel: String, totalAmount: String, amountColorScheme: MmrAmountColorScheme = MmrAmountColorScheme.SET_B, modifier: Modifier = Modifier, incomeAmountTestTag: String? = null, expenseAmountTestTag: String? = null, totalAmountTestTag: String? = null, )</ID>
@@ -573,8 +590,8 @@
     <ID>MatchingDeclarationName:TransactionFormInlinePickers.kt$TransactionFormExpandedField</ID>
     <ID>MaxLineLength:AmountAndBalanceRules.kt$BalanceRule$"(?:avl(?:\\.?)?\\s*bal(?:ance)?|available\\s*bal(?:ance)?|bal(?:ance)?\\s*(?:is|:)?)\\s*(?:inr|rs\\.?|₹)?\\s*([0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)"</ID>
     <ID>MaxLineLength:ApprovalLinkTransactionDialog.kt$text = "Search applies to ${prompt.monthTitle} only. Change month above to search another period."</ID>
+    <ID>MaxLineLength:ApprovalRepository.kt$ApprovalRepository$/** When true, may create credit-card/wallet accounts from SMS metadata (Approval Center direct approve only). */</ID>
     <ID>MaxLineLength:AssetEntities.kt$AssetEntity$/** Days before [nextValuationDueMillis] to fire [com.mmr.core.model.enums.NotificationRuleType.ASSET_VALUATION_REMINDER]. */</ID>
-    <ID>MaxLineLength:LanSyncScreen.kt$"SMS and pending approvals stay on each phone. Tap Sync now when you are ready — no background sync."</ID>
     <ID>MaxLineLength:LoanDaos.kt$LoanDao$"UPDATE loans SET outstandingAmount = :newOutstanding, status = :newStatus, updatedAt = :now WHERE id = :loanId"</ID>
     <ID>MaxLineLength:LoanDetailScreen.kt$text = "Accruing since $from on current outstanding (actual/365). Payments clear interest first, then principal."</ID>
     <ID>MaxLineLength:LoanDetailScreen.kt$text = "Reducing-balance interest at ${loan.interestRateFormatted} p.a. (floating revisions keep past payments unchanged)."</ID>
@@ -614,10 +631,11 @@
     <ID>MaxLineLength:SmsTemplateRegistryMatchTest.kt$SmsTemplateRegistryMatchTest$"Spent Rs.584 On HDFC Bank Card 4148 At AMAZON On 2026-01-25:19:52:17.Not You? To Block+Reissue Call 18002586161/SMS BLOCK CC 4148 to 7308080808"</ID>
     <ID>MaxLineLength:SmsTemplateRegistryMatchTest.kt$SmsTemplateRegistryMatchTest$val body = "Rs. 250 spent from Pluxee meal card wallet, card no.xx9999 on 01-01-2026 12:00:00 at zepto . Avl bal Rs.1000."</ID>
     <ID>MaxLineLength:StatsCategoryDetailViewModel.kt$StatsCategoryDetailViewModel$/** Updates as soon as the anchor changes; do not use [uiState].periodStartMillis for swipe (DB-backed state lags). */</ID>
+    <ID>MaxLineLength:WebManageScreen.kt$"Local HTTP server for browser access on your LAN. HTTPS with a local certificate is planned for a future release."</ID>
     <ID>MaxLineLength:WebManageScreen.kt$"Server is running on this phone; connect Wi‑Fi so a laptop on the same network can reach it."</ID>
+    <ID>MaxLineLength:WebManageScreen.kt$"Turning Web Manage on disables Peer Device Sync. Anyone on the same LAN could reach this server; keep HTTP traffic on trusted Wi‑Fi only."</ID>
     <ID>MaximumLineLength:AmountAndBalanceRules.kt$BalanceRule$ </ID>
     <ID>MaximumLineLength:ApprovalLinkTransactionDialog.kt$ </ID>
-    <ID>MaximumLineLength:LanSyncScreen.kt$ </ID>
     <ID>MaximumLineLength:LoanDaos.kt$LoanDao$ </ID>
     <ID>MaximumLineLength:LoanDetailScreen.kt$ </ID>
     <ID>MaximumLineLength:LoanRepaymentDialog.kt$ </ID>
@@ -660,6 +678,7 @@
     <ID>ModifierMissing:MmrAppBarActions.kt$MmrAppBarSaveIcon</ID>
     <ID>ModifierMissing:MmrAppChrome.kt$MmrConfigSectionHeader</ID>
     <ID>ModifierMissing:MmrAppChrome.kt$MmrHeaderIconActions</ID>
+    <ID>ModifierMissing:MmrAppLockGate.kt$MmrAppLockGate</ID>
     <ID>ModifierMissing:MmrIosSettingsForm.kt$MmrIosSettingsChipChoiceSlot</ID>
     <ID>ModifierMissing:MmrIosSettingsForm.kt$MmrIosSettingsCopyableCodeSlot</ID>
     <ID>ModifierMissing:MmrIosSettingsForm.kt$MmrIosSettingsEmphasisTextSlot</ID>
@@ -676,6 +695,7 @@
     <ID>ModifierMissing:MmrLedgerEntityDeleteDialogs.kt$AccountDeleteDialog</ID>
     <ID>ModifierMissing:MmrLedgerEntityDeleteDialogs.kt$CategoryDeleteDialog</ID>
     <ID>ModifierMissing:MmrNavHost.kt$MmrNavHost</ID>
+    <ID>ModifierMissing:MmrReleaseNotesDialog.kt$MmrReleaseNotesDialog</ID>
     <ID>ModifierMissing:MmrTransactionFormChrome.kt$MmrTransactionFormAttachIconButton</ID>
     <ID>ModifierMissing:MmrTransactionMergeDialog.kt$MmrTransactionMergeDialog</ID>
     <ID>ModifierMissing:RecurringDetailScreen.kt$RecurringDetailScreen</ID>
@@ -699,14 +719,15 @@
     <ID>MultipleEmitters:TransactionReceiptViewerDialog.kt$ZoomableReceiptImage</ID>
     <ID>MultipleEmitters:TransactionSearchScreen.kt$SearchAmountMmRow</ID>
     <ID>MutableStateAutoboxing:AddEditCategoryScreen.kt$mutableStateOf(0)</ID>
+    <ID>NestedBlockDepth:BackupSignedZipCodec.kt$BackupSignedZipCodec$fun decode(bytes: ByteArray): ParsedArchive</ID>
     <ID>NestedBlockDepth:HomeTotalUtils.kt$HomeTotalUtils$fun buildAccountsSummary( currentPeriodItems: List&lt;TransactionWithDetails&gt;, previousPeriodItems: List&lt;TransactionWithDetails&gt;, yearMonth: YearMonth, zoneId: ZoneId, monthStartDay: Int, ): HomeTotalAccountsSummaryUi</ID>
+    <ID>NestedBlockDepth:LanSyncHttpServer.kt$LanSyncHttpServer$private fun handleClient(client: Socket)</ID>
     <ID>NestedBlockDepth:LanSyncNetworkUtils.kt$LanSyncNetworkUtils$private fun wlanInterfaceIpv4Candidates(): List&lt;String&gt;</ID>
     <ID>NestedBlockDepth:MmrReceiptImage.kt$MmrReceiptImage$private fun encodeBitmapToJpegUnderMax( initial: Bitmap, maxBytes: Int, ): ByteArray</ID>
-    <ID>NoUnusedImports:AddEditAssetViewModel.kt$com.mmr.feature.asset.viewmodel.AddEditAssetViewModel.kt</ID>
-    <ID>NoUnusedImports:AddEditTransactionScreen.kt$com.mmr.feature.transaction.ui.AddEditTransactionScreen.kt</ID>
-    <ID>NoUnusedImports:AssetListViewModel.kt$com.mmr.feature.asset.viewmodel.AssetListViewModel.kt</ID>
+    <ID>NoUnusedImports:AssetAttachmentStore.kt$com.mmr.core.attachment.AssetAttachmentStore.kt</ID>
     <ID>NoUnusedImports:EmiAutoPostCoordinator.kt$com.mmr.core.loan.EmiAutoPostCoordinator.kt</ID>
     <ID>NoUnusedImports:HomeScreenComponents.kt$com.mmr.feature.home.ui.HomeScreenComponents.kt</ID>
+    <ID>NoUnusedImports:TransactionAttachmentStore.kt$com.mmr.core.attachment.TransactionAttachmentStore.kt</ID>
     <ID>NoUnusedImports:TransactionMergeCoordinator.kt$com.mmr.core.transaction.TransactionMergeCoordinator.kt</ID>
     <ID>NoWildcardImports:BackupScreen.kt$import androidx.compose.foundation.layout.*</ID>
     <ID>NoWildcardImports:BackupScreen.kt$import androidx.compose.material3.*</ID>
@@ -777,6 +798,7 @@
     <ID>ParameterNaming:LoanTopUpDialog.kt$onTopUpAdjustmentSelected</ID>
     <ID>ParameterNaming:LoanTopUpDialog.kt$onTopUpDateChanged</ID>
     <ID>ParameterNaming:MmrAppChrome.kt$onTabSelected</ID>
+    <ID>ParameterNaming:MmrAppLockGate.kt$onUnlocked</ID>
     <ID>ParameterNaming:MmrCompactDropdown.kt$onSelected</ID>
     <ID>ParameterNaming:MmrIosSettingsPickers.kt$onOptionSelected</ID>
     <ID>ParameterNaming:MmrLaunchSplashScreen.kt$onFinished</ID>
@@ -824,10 +846,13 @@
     <ID>ReturnCount:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$override suspend fun submitManualSms( sender: String, body: String, timestampMillis: Long, resolution: ManualSmsDuplicateResolution?, existingApprovalIdForRevert: Long?, ): ManualSmsSubmitResult</ID>
     <ID>ReturnCount:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$override suspend fun updateApproval( id: Long, amount: Double, type: TransactionType, categoryId: Long?, accountId: Long?, note: String?, dateTimeMillis: Long?, )</ID>
     <ID>ReturnCount:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$private suspend fun queueUnparsedManualSms( trimmedSender: String, body: String, timestampMillis: Long, rawSmsId: String, resolution: ManualSmsDuplicateResolution?, existingApprovalIdForRevert: Long?, ): ManualSmsSubmitResult</ID>
+    <ID>ReturnCount:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$private suspend fun resolveAccountIdForApproval( approval: TransactionApprovalEntity, smsRecord: SmsMessageRecordEntity, fallbackAccountId: Long, provisionFromSms: Boolean, ): Long</ID>
     <ID>ReturnCount:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$private suspend fun resolveSubcategoryIdFromRules( approval: TransactionApprovalEntity, categoryId: Long?, smsBody: String, ): Long?</ID>
     <ID>ReturnCount:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$private suspend fun revertAndRequeueManual( approvalId: Long, candidate: ParsedSmsCandidate, fullBody: String, ): ManualSmsSubmitResult</ID>
+    <ID>ReturnCount:AssetAttachmentStore.kt$AssetAttachmentStore$fun readBytes(syncId: String): ByteArray?</ID>
     <ID>ReturnCount:AssetValuationReminderNotificationSync.kt$AssetValuationReminderNotificationSync$private fun shouldSchedule(asset: AssetEntity): Boolean</ID>
     <ID>ReturnCount:AssetValuationReminderNotificationSync.kt$AssetValuationReminderNotificationSync$suspend fun syncForAsset( asset: AssetEntity, notificationRuleDao: NotificationRuleDao, tombstoneRecorder: LanSyncTombstoneRecorder, now: Long = System.currentTimeMillis(), )</ID>
+    <ID>ReturnCount:BackupRepositoryImpl.kt$BackupRepositoryImpl$fun writeIfAllowed( syncId: String, bytes: ByteArray, )</ID>
     <ID>ReturnCount:EmiAutoPostCoordinator.kt$EmiAutoPostCoordinator$private suspend fun createIfMissing(entry: LoanScheduleEntryEntity): Boolean</ID>
     <ID>ReturnCount:GoogleDriveBackupPreferencesStore.kt$GoogleDriveBackupPreferencesStore$fun shouldEnqueueAutoBackupToday(): Boolean</ID>
     <ID>ReturnCount:GoogleDriveBackupWorker.kt$GoogleDriveBackupWorker$override suspend fun doWork(): Result</ID>
@@ -837,15 +862,16 @@
     <ID>ReturnCount:IncomingSmsReceiver.kt$IncomingSmsReceiver$override fun onReceive( context: Context, intent: Intent, )</ID>
     <ID>ReturnCount:LanSyncHttpClient.kt$LanSyncHttpClient$private fun readBinaryResponse(input: BufferedInputStream): BinaryHttpResponse</ID>
     <ID>ReturnCount:LanSyncHttpClient.kt$LanSyncHttpClient$private fun readResponse(input: BufferedInputStream): HttpResponse</ID>
-    <ID>ReturnCount:LanSyncHttpServer.kt$LanSyncHttpServer$private fun readHttpRequest(input: BufferedInputStream): HttpRequest?</ID>
-    <ID>ReturnCount:LanSyncHttpServer.kt$LanSyncHttpServer$private fun readRequestBody( input: BufferedInputStream, method: String, headers: Map&lt;String, String&gt;, ): String</ID>
-    <ID>ReturnCount:LanSyncNetworkUtils.kt$LanSyncNetworkUtils$@Suppress("DEPRECATION") private fun legacyWifiManagerIpv4(): String?</ID>
+    <ID>ReturnCount:LanSyncHttpServer.kt$LanSyncHttpServer$private fun readHttpRequest(input: BufferedInputStream): ParsedRequest?</ID>
+    <ID>ReturnCount:LanSyncHttpServer.kt$LanSyncHttpServer$private fun readRequestBody( input: BufferedInputStream, method: String, headers: Map&lt;String, String&gt;, maxBodyBytes: Int, ): BodyReadResult</ID>
+    <ID>ReturnCount:LanSyncNetworkUtils.kt$LanSyncNetworkUtils$@Suppress("DEPRECATION") private fun wifiManagerConnectionInfoIpv4(): String?</ID>
     <ID>ReturnCount:LanSyncNetworkUtils.kt$LanSyncNetworkUtils$private fun activeWifiLinkIpv4Candidates(): List&lt;String&gt;</ID>
     <ID>ReturnCount:LanSyncNetworkUtils.kt$LanSyncNetworkUtils$private fun pickBestLanIpv4(candidates: Set&lt;String&gt;): String?</ID>
     <ID>ReturnCount:LanSyncNetworkUtils.kt$LanSyncNetworkUtils$private fun readWifiSsid(): String?</ID>
+    <ID>ReturnCount:LanSyncPairingGate.kt$LanSyncPairingGate$fun pairingCodeMatches( submittedRaw: String, activePin: String?, ): Boolean</ID>
     <ID>ReturnCount:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$private fun handleAttachmentGetRequest( path: String, headers: Map&lt;String, String&gt;, ): HttpLanResponse</ID>
     <ID>ReturnCount:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$private fun handleHttpRequest( method: String, path: String, query: String, headers: Map&lt;String, String&gt;, body: String, ): HttpLanResponse</ID>
-    <ID>ReturnCount:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$private fun handlePairRequest( headers: Map&lt;String, String&gt;, body: String, ): HttpLanResponse</ID>
+    <ID>ReturnCount:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$private fun handlePairRequest(body: String): HttpLanResponse</ID>
     <ID>ReturnCount:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$private fun handlePairingOfferGet(query: String): HttpLanResponse</ID>
     <ID>ReturnCount:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$private fun handleSyncRequest( headers: Map&lt;String, String&gt;, body: String, ): HttpLanResponse</ID>
     <ID>ReturnCount:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$private fun resolveSyncTargets(trusted: List&lt;TrustedLanDeviceEntity&gt;): List&lt;TrustedLanDeviceEntity&gt;</ID>
@@ -881,10 +907,16 @@
     <ID>ReturnCount:MmrAmountExpressionEvaluator.kt$MmrAmountExpressionEvaluator.Parser$private fun parsePower(): Double?</ID>
     <ID>ReturnCount:MmrAmountExpressionEvaluator.kt$MmrAmountExpressionEvaluator.Parser$private fun parsePrimary(): Double?</ID>
     <ID>ReturnCount:MmrAmountExpressionEvaluator.kt$MmrAmountExpressionEvaluator.Parser$private fun parseTerm(): Double?</ID>
+    <ID>ReturnCount:MmrBackupAttachmentBytes.kt$MmrBackupAttachmentBytes$fun decodeBase64Content( contentBase64: String, maxBytes: Int, ): ByteArray?</ID>
+    <ID>ReturnCount:MmrExternalNavRouteAllowlist.kt$MmrExternalNavRouteAllowlist$fun sanitize( route: String?, trustSensitiveQueryParams: Boolean = true, ): String?</ID>
     <ID>ReturnCount:MmrLocaleAmountVisualTransformation.kt$internal fun formatSanitizedAmountForDisplay( sanitized: String, locale: Locale = Locale.getDefault(), ): String</ID>
     <ID>ReturnCount:MmrMainNavVisibility.kt$fun isMainNavRouteVisible( route: String?, hiddenNavIds: Set&lt;String&gt;, ): Boolean</ID>
+    <ID>ReturnCount:MmrNavRouteIntentTrust.kt$MmrNavRouteIntentTrust$fun isTrustedDelivery( activity: Activity, intent: Intent?, ): Boolean</ID>
+    <ID>ReturnCount:MmrOwnerProfileCoordinator.kt$MmrOwnerProfileCoordinator$suspend fun displayNameFor(profileId: String?): String?</ID>
+    <ID>ReturnCount:MmrOwnerProfileCoordinator.kt$MmrOwnerProfileCoordinator$suspend fun shouldShowCreatedByLabel(profileId: String?): Boolean</ID>
     <ID>ReturnCount:MmrReceiptImage.kt$MmrReceiptImage$fun decodeBitmapFileForDisplay( path: String, maxEdgePx: Int = 2048, ): Bitmap?</ID>
     <ID>ReturnCount:MmrReceiptImage.kt$MmrReceiptImage$private fun encodeBitmapToJpegUnderMax( initial: Bitmap, maxBytes: Int, ): ByteArray</ID>
+    <ID>ReturnCount:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$private fun parseSemver(version: String): SemverTriple?</ID>
     <ID>ReturnCount:MmrWidgetActionExecutor.kt$MmrWidgetActionExecutor$suspend fun approve(approvalId: Long)</ID>
     <ID>ReturnCount:PeriodExcelWriter.kt$PeriodExcelWriter$private fun noteWithTransferSuffix(item: TransactionWithDetails): String</ID>
     <ID>ReturnCount:PeriodExcelWriter.kt$PeriodExcelWriter$private fun paymentLabel( instrument: String?, channel: String?, ): String</ID>
@@ -892,6 +924,8 @@
     <ID>ReturnCount:RecurringAutoPostCoordinator.kt$RecurringAutoPostCoordinator$private suspend fun resolveTransferTargets(rule: RecurringRuleEntity): Pair&lt;Long?, Long?&gt;</ID>
     <ID>ReturnCount:RepositoryImpls.kt$CategoryRepositoryImpl$override suspend fun resolveCategoryWithChildren(categoryId: Long): CategoryWithChildren?</ID>
     <ID>ReturnCount:ScheduledReminderNotifier.kt$ScheduledReminderNotifier$fun show(rule: NotificationRuleEntity)</ID>
+    <ID>ReturnCount:SmsAccountResolver.kt$SmsAccountResolver$private suspend fun findOrCreateCreditCard( accounts: List&lt;AccountEntity&gt;, last4: String, createIfMissing: Boolean, ): Long?</ID>
+    <ID>ReturnCount:SmsAccountResolver.kt$SmsAccountResolver$private suspend fun findOrCreateWallet( accounts: List&lt;AccountEntity&gt;, walletName: String, createIfMissing: Boolean, ): Long?</ID>
     <ID>ReturnCount:SmsClassifier.kt$SmsClassifier$fun isAxisAutoSweepFlexi(text: String): Boolean</ID>
     <ID>ReturnCount:SmsClassifier.kt$SmsClassifier$fun isDeclinedOrFailedTransaction(textLower: String): Boolean</ID>
     <ID>ReturnCount:SmsClassifier.kt$SmsClassifier$fun isIgnored(textLower: String): Boolean</ID>
@@ -906,13 +940,16 @@
     <ID>ReturnCount:SmsTemplateJsonCodec.kt$SmsTemplateJsonCodec$fun parseOverlayJson(json: String): ParseOverlayResult</ID>
     <ID>ReturnCount:SmsTemplateJsonCodec.kt$SmsTemplateJsonCodec$private fun parseTemplateOrError(item: JSONObject): TemplateItemResult</ID>
     <ID>ReturnCount:StatsViewModel.kt$StatsViewModel$private fun buildCategoryBreakdowns( spendings: List&lt;com.mmr.core.database.model.CategorySpending&gt;, tabTotal: Double, ): List&lt;CategoryBreakdownUi&gt;</ID>
+    <ID>ReturnCount:TransactionAttachmentStore.kt$TransactionAttachmentStore$fun readBytes(syncId: String): ByteArray?</ID>
     <ID>ReturnCount:TransactionCashFlow.kt$TransactionCashFlow$private fun isLoanRepaymentTransfer( transaction: TransactionEntity, loanType: LoanType?, expectedType: LoanType, ): Boolean</ID>
+    <ID>ReturnCount:TransactionDetailViewModel.kt$TransactionDetailViewModel$private fun formatCreatedByLabel( profileId: String?, snapshotName: String?, ): String?</ID>
     <ID>ReturnCount:TransactionReceiptSection.kt$@Composable fun TransactionReceiptSection( receipts: List&lt;TransactionReceiptUi&gt;, onAddClick: () -&gt; Unit, onRemoveSaved: (Long) -&gt; Unit, onRemovePending: (filePath: String) -&gt; Unit, modifier: Modifier = Modifier, canAddMore: Boolean = true, readOnly: Boolean = false, sectionLabel: String = "Receipt photos", onReceiptClick: (filePath: String) -&gt; Unit = {}, )</ID>
     <ID>ReturnCount:TransactionSearchViewModel.kt$TransactionSearchViewModel$fun onEvent(event: TransactionSearchUiEvent)</ID>
     <ID>ReturnCount:TypeAndSenderRules.kt$TransactionTypeRule$fun inferType(normalizedBody: String): TransactionType?</ID>
     <ID>ReturnCount:UpiDisplayNameTable.kt$UpiDisplayNameTable$fun resolve(raw: String): String</ID>
     <ID>ReturnCount:WebManageChartJsonBuilder.kt$WebManageChartJsonBuilder$private fun buildBreakdowns( spendings: List&lt;CategorySpending&gt;, tabTotal: Double, ): List&lt;PieSlice&gt;</ID>
-    <ID>ReturnCount:WebManageRequestHandler.kt$WebManageRequestHandler$private fun handleLogin(body: String): HttpLanResponse</ID>
+    <ID>ReturnCount:WebManageLoginRateLimiter.kt$WebManageLoginRateLimiter$fun isLoginAllowed(clientKey: String): Boolean</ID>
+    <ID>ReturnCount:WebManageRequestHandler.kt$WebManageRequestHandler$private fun handleLogin( body: String, headers: Map&lt;String, String&gt;, ): HttpLanResponse</ID>
     <ID>ReturnCount:WebManageRequestHandler.kt$WebManageRequestHandler$private fun serveBundledAsset( root: String, relativePath: String, ): HttpLanResponse</ID>
     <ID>ReturnCount:WebManageRequestHandler.kt$WebManageRequestHandler$private suspend fun approve( path: String, body: String, ): HttpLanResponse</ID>
     <ID>ReturnCount:WebManageRequestHandler.kt$WebManageRequestHandler$private suspend fun bulkDeleteTransactions(body: String): HttpLanResponse</ID>
@@ -923,7 +960,7 @@
     <ID>ReturnCount:WebManageRequestHandler.kt$WebManageRequestHandler$private suspend fun mergeApprovals(body: String): HttpLanResponse</ID>
     <ID>ReturnCount:WebManageRequestHandler.kt$WebManageRequestHandler$private suspend fun updateApproval( path: String, body: String, ): HttpLanResponse</ID>
     <ID>ReturnCount:WebManageRequestHandler.kt$WebManageRequestHandler$private suspend fun updateTransaction( path: String, body: String, ): HttpLanResponse</ID>
-    <ID>ReturnCount:WebManageSessionManager.kt$WebManageSessionManager$fun isValid(token: String?): Boolean</ID>
+    <ID>ReturnCount:WebManageSessionManager.kt$WebManageSessionManager$fun isValid( token: String?, clientAddress: String?, ): Boolean</ID>
     <ID>SwallowedException:GoogleDriveBackupWorker.kt$GoogleDriveBackupWorker$e: Exception</ID>
     <ID>SwallowedException:LocalSmsScannerService.kt$LocalSmsScannerService$e: Exception</ID>
     <ID>SwallowedException:LocalSmsScannerService.kt$LocalSmsScannerService$e: SecurityException</ID>
@@ -934,7 +971,7 @@
     <ID>ThrowsCount:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$private fun ensureSyncTargetsPresent( allTrusted: List&lt;TrustedLanDeviceEntity&gt;, targets: List&lt;TrustedLanDeviceEntity&gt;, )</ID>
     <ID>ThrowsCount:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$private suspend fun ensureReadyForSync()</ID>
     <ID>ThrowsCount:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$private suspend fun syncWithPeers( devices: List&lt;TrustedLanDeviceEntity&gt;, oneWayLocalPayload: Boolean, mergeOptions: LanSyncMergeOptions, interactive: Boolean, successLogDetail: (TrustedLanDeviceEntity, LanSyncMergeSummary) -&gt; String = { _, summary -&gt; "${summary.totalChanges} change(s) applied" }, ): LanSyncNowResult</ID>
-    <ID>ThrowsCount:PeriodExcelDownloadsSaver.kt$PeriodExcelDownloadsSaver$private fun saveViaMediaStore( source: File, displayName: String, ): String</ID>
+    <ID>ThrowsCount:PeriodExcelDownloadsSaver.kt$PeriodExcelDownloadsSaver$@RequiresApi(Build.VERSION_CODES.Q) private fun saveViaMediaStore( source: File, displayName: String, ): String</ID>
     <ID>TooGenericExceptionCaught:AccountListViewModel.kt$AccountListViewModel$e: Exception</ID>
     <ID>TooGenericExceptionCaught:AddEditAccountViewModel.kt$AddEditAccountViewModel$e: Exception</ID>
     <ID>TooGenericExceptionCaught:AddEditAssetViewModel.kt$AddEditAssetViewModel$e: Exception</ID>
@@ -979,6 +1016,7 @@
     <ID>TooManyFunctions:LanSyncDao.kt$LanSyncDao</ID>
     <ID>TooManyFunctions:LanSyncExporter.kt$LanSyncExporter</ID>
     <ID>TooManyFunctions:LanSyncJsonCodec.kt$LanSyncJsonCodec</ID>
+    <ID>TooManyFunctions:LanSyncRepository.kt$LanSyncRepository</ID>
     <ID>TooManyFunctions:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl : LanSyncRepository</ID>
     <ID>TooManyFunctions:LanSyncTombstoneMerger.kt$LanSyncTombstoneMerger</ID>
     <ID>TooManyFunctions:LanSyncViewModel.kt$LanSyncViewModel : ViewModel</ID>
@@ -1047,11 +1085,22 @@
     <ID>UseRequire:BackupJsonCodec.kt$BackupJsonCodec$throw IllegalArgumentException("Backup file is empty.")</ID>
     <ID>UseRequire:BackupJsonCodec.kt$BackupJsonCodec$throw IllegalArgumentException("This backup file is not for Money Inbox.")</ID>
     <ID>UseRequire:BackupJsonCodec.kt$BackupJsonCodec$throw IllegalArgumentException("Unsupported backup format version: $formatVersion")</ID>
-    <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("Backup attachment was modified or is corrupt: $syncId")</ID>
+    <ID>UseRequire:BackupPayloadSanitizer.kt$BackupPayloadSanitizer$throw IllegalArgumentException("Backup must not include trusted LAN devices.")</ID>
+    <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("Backup archive entry is too large.")</ID>
+    <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("Backup archive exceeds maximum uncompressed size.")</ID>
+    <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("Backup archive file is too large.")</ID>
+    <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("Backup archive is missing $expectedName.")</ID>
+    <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("Backup archive is missing one or more attachments.")</ID>
+    <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("Backup attachment exceeds maximum allowed size: $syncId")</ID>
+    <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("Backup attachment size mismatch: ${meta.syncId}")</ID>
+    <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("Backup attachment was modified or is corrupt: ${meta.syncId}")</ID>
     <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("Backup data was modified or is corrupt (payload checksum mismatch).")</ID>
     <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("Backup file failed integrity check. It may have been edited.")</ID>
+    <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("Backup payload exceeds maximum allowed size.")</ID>
+    <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("Backup payload size does not match manifest.")</ID>
     <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("Not a valid MMR backup archive.")</ID>
     <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("This backup file is not for Money Inbox.")</ID>
+    <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("Unexpected backup archive entry: $name")</ID>
     <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("Unsupported backup archive version: $archiveVersion")</ID>
     <ID>UseRequire:CardRefundLedgerMath.kt$CardRefundLedgerMath$throw IllegalArgumentException("Refund cannot exceed the remaining purchase amount.")</ID>
     <ID>UseRequire:LanSyncJsonCodec.kt$LanSyncJsonCodec$throw IllegalArgumentException("Unsupported LAN sync format version: $version")</ID>

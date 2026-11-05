@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import androidx.annotation.RequiresApi
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import javax.inject.Inject
@@ -24,9 +25,10 @@ class PeriodExcelDownloadsSaver
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 return saveViaMediaStore(source, safeName)
             }
-            return saveLegacyPublicDownloads(source, safeName)
+            return savePublicDownloadsPreApi29(source, safeName)
         }
 
+        @RequiresApi(Build.VERSION_CODES.Q)
         private fun saveViaMediaStore(
             source: File,
             displayName: String,
@@ -62,7 +64,7 @@ class PeriodExcelDownloadsSaver
         }
 
         @Suppress("DEPRECATION")
-        private fun saveLegacyPublicDownloads(
+        private fun savePublicDownloadsPreApi29(
             source: File,
             displayName: String,
         ): String {

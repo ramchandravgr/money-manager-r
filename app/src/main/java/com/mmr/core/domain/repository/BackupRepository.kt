@@ -11,12 +11,7 @@ interface BackupRepository {
     /** Signed ZIP archive (default export format). */
     suspend fun exportBackupArchive(): ByteArray
 
-    suspend fun importBackupJson(
-        json: String,
-        mode: BackupImportMode = BackupImportMode.REPLACE,
-    ): BackupRestoreSummary
-
-    /** Imports legacy `.json` or signed `.mmrbackup` zip. */
+    /** Imports signed `.mibxbac` zip only (file picker, Drive, other untrusted sources). */
     suspend fun importBackup(
         data: ByteArray,
         mode: BackupImportMode = BackupImportMode.REPLACE,

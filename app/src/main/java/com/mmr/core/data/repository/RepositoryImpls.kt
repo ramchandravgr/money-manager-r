@@ -28,6 +28,7 @@ import com.mmr.core.model.category.CategoryWithChildren
 import com.mmr.core.model.enums.CategoryType
 import com.mmr.core.model.enums.RecordStatus
 import com.mmr.core.model.enums.TransactionType
+import com.mmr.core.owner.withLocalCreatedBy
 import com.mmr.core.transaction.TransactionCashFlow
 import com.mmr.core.transaction.TransactionMergeCoordinator
 import kotlinx.coroutines.flow.Flow
@@ -49,6 +50,7 @@ class TransactionRepositoryImpl
         private val smsMessageRecordDao: SmsMessageRecordDao,
         private val widgetRefreshTrigger: HomeScreenWidgetRefreshTrigger,
         private val budgetRepository: BudgetRepository,
+        private val ownerProfileCoordinator: com.mmr.core.owner.MmrOwnerProfileCoordinator,
     ) : TransactionRepository {
         private fun refreshWidgets() {
             widgetRefreshTrigger.requestRefresh()
@@ -89,12 +91,14 @@ class TransactionRepositoryImpl
             if (loanId <= 0L) flowOf(emptyList()) else transactionDao.getTransactionsForLoan(loanId)
 
         override suspend fun insertTransaction(transaction: TransactionEntity): Long {
+            val stamp = ownerProfileCoordinator.localStamp()
             val validated =
-                transaction.copy(
-                    syncId = MmrSyncId.normalize(transaction.syncId),
-                    accountId = transaction.accountId,
-                    dateTime = transaction.dateTime,
-                )
+                transaction
+                    .copy(
+                        syncId = MmrSyncId.normalize(transaction.syncId),
+                        accountId = transaction.accountId,
+                        dateTime = transaction.dateTime,
+                    ).withLocalCreatedBy(stamp)
             RepositoryGuards.requireValidTransactionEntity(validated)
             accountDao.getById(validated.accountId)
                 ?: throw IllegalArgumentException("Account not found.")

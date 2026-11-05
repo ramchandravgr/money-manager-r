@@ -38,6 +38,17 @@ interface TransactionApprovalDao {
     @Query("SELECT COUNT(*) FROM transaction_approvals WHERE approvalState = 'PENDING'")
     suspend fun getPendingCountOnce(): Int
 
+    @Query(
+        """
+        SELECT id FROM transaction_approvals
+        WHERE approvalState = 'PENDING'
+        AND approvalKind != 'CARD_REFUND'
+        ORDER BY extractedDateTime DESC
+        LIMIT 1
+        """,
+    )
+    suspend fun getLatestQuickApprovablePendingId(): Long?
+
     @Query("SELECT * FROM transaction_approvals WHERE id = :id LIMIT 1")
     suspend fun getById(id: Long): TransactionApprovalEntity?
 

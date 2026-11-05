@@ -1,6 +1,7 @@
 package com.mmr.core.data.repository
 
 import com.mmr.core.attachment.AssetAttachmentStore
+import com.mmr.core.attachment.MmrAttachmentSyncId
 import com.mmr.core.attachment.TransactionAttachmentStore
 import com.mmr.core.backup.model.MmrAppSettingsBackup
 import com.mmr.core.common.dispatcher.IoDispatcher
@@ -13,6 +14,7 @@ import com.mmr.core.database.dao.LanSyncDao
 import com.mmr.core.database.dao.TransactionApprovalDao
 import com.mmr.core.database.dao.TransactionDao
 import com.mmr.core.database.entity.LanSyncLogEntryEntity
+import com.mmr.core.database.entity.PendingLanPairRequestEntity
 import com.mmr.core.database.entity.TrustedLanDeviceEntity
 import com.mmr.core.domain.repository.LanSyncNowResult
 import com.mmr.core.domain.repository.LanSyncRepository
@@ -27,7 +29,7 @@ import com.mmr.core.lansync.LanSyncMergeSummary
 import com.mmr.core.lansync.LanSyncMerger
 import com.mmr.core.lansync.LanSyncNeedsResolutionException
 import com.mmr.core.lansync.LanSyncNetworkUtils
-import com.mmr.core.lansync.LanSyncPairingCodec
+import com.mmr.core.lansync.LanSyncPairingGate
 import com.mmr.core.lansync.LanSyncPairingOffer
 import com.mmr.core.lansync.LanSyncPairingPin
 import com.mmr.core.lansync.LanSyncTombstoneCoordinator
@@ -77,11 +79,13 @@ class LanSyncRepositoryImpl
         private val attachmentStore: TransactionAttachmentStore,
         private val assetAttachmentStore: AssetAttachmentStore,
         private val tombstoneCoordinator: LanSyncTombstoneCoordinator,
+        private val ownerProfileCoordinator: com.mmr.core.owner.MmrOwnerProfileCoordinator,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : LanSyncRepository {
         private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
         private var httpServer: LanSyncHttpServer? = null
         private var activePairingPin: String? = null
+        private var activePairingPinIssuedAtMillis: Long = 0L
 
         private val _sessionState = MutableStateFlow(LanSyncSessionState())
         override val sessionState: StateFlow<LanSyncSessionState> = _sessionState.asStateFlow()
@@ -107,8 +111,10 @@ class LanSyncRepositoryImpl
         }
 
         override fun setDisplayName(name: String) {
-            identityStore.displayName = name
-            scope.launch { publishState() }
+            scope.launch {
+                ownerProfileCoordinator.onLocalDisplayNameChanged(name)
+                publishState()
+            }
         }
 
         override fun pairingOffer(): LanSyncPairingOffer =
@@ -120,18 +126,17 @@ class LanSyncRepositoryImpl
 
         override suspend fun resolvePairingInput(raw: String): LanSyncPairingOffer =
             withContext(ioDispatcher) {
-                val trimmed = raw.trim()
-                if (trimmed.startsWith(LanSyncPairingCodec.LEGACY_PREFIX)) {
-                    return@withContext LanSyncPairingCodec.decode(trimmed)
-                }
-                val pin = LanSyncPairingPin.normalize(trimmed)
+                val pin = LanSyncPairingPin.normalize(raw.trim())
                 if (!LanSyncPairingPin.isValidFormat(pin)) {
                     throw IllegalArgumentException("Enter a valid pairing code from the other device.")
                 }
                 resolveOfferFromLanPeers(pin)
             }
 
-        override suspend fun trustDeviceFromPairingOffer(offer: LanSyncPairingOffer) {
+        override suspend fun trustDeviceFromPairingOffer(
+            offer: LanSyncPairingOffer,
+            pairingCode: String?,
+        ) {
             withContext(ioDispatcher) {
                 if (offer.deviceId == identityStore.deviceId) {
                     throw IllegalArgumentException("Cannot trust this device.")
@@ -143,7 +148,26 @@ class LanSyncRepositoryImpl
                         theirAuthToken = offer.inboundAuthToken,
                     ),
                 )
-                sendPairRequestToPeer(offer)
+                if (!pairingCode.isNullOrBlank()) {
+                    sendPairRequestToPeer(offer, pairingCode)
+                }
+                publishState()
+            }
+        }
+
+        override suspend fun approvePendingPairRequest(remoteDeviceId: String) {
+            withContext(ioDispatcher) {
+                val pending =
+                    lanSyncDao.getPendingPairRequests().find { it.remoteDeviceId == remoteDeviceId }
+                        ?: throw IllegalArgumentException("No pending pair request for that device.")
+                lanSyncDao.approvePairRequest(pending)
+                publishState()
+            }
+        }
+
+        override suspend fun rejectPendingPairRequest(remoteDeviceId: String) {
+            withContext(ioDispatcher) {
+                lanSyncDao.deletePendingPairRequest(remoteDeviceId)
                 publishState()
             }
         }
@@ -452,6 +476,7 @@ class LanSyncRepositoryImpl
                     selectedPeerDeviceId = preferencesStore.selectedPeerDeviceId,
                     includeAttachments = preferencesStore.includeAttachments,
                     pendingApprovalCount = transactionApprovalDao.getPendingCountOnce(),
+                    pendingPairRequests = lanSyncDao.getPendingPairRequests(),
                 )
         }
 
@@ -482,14 +507,21 @@ class LanSyncRepositoryImpl
             active.stop()
             httpServer = null
             activePairingPin = null
+            activePairingPinIssuedAtMillis = 0L
             lanServerNotifier.onLanServerStopped()
         }
 
         private fun ensureActivePairingPin(): String {
+            val now = System.currentTimeMillis()
             val existing = activePairingPin
-            if (existing != null) return existing
+            if (existing != null &&
+                !LanSyncPairingGate.isPinExpired(activePairingPinIssuedAtMillis, now)
+            ) {
+                return existing
+            }
             val pin = LanSyncPairingPin.generate()
             activePairingPin = pin
+            activePairingPinIssuedAtMillis = now
             return pin
         }
 
@@ -512,7 +544,12 @@ class LanSyncRepositoryImpl
                 return handlePairingOfferGet(query)
             }
             return when (path) {
-                LanSyncHttpConstants.PATH_PAIR -> handlePairRequest(headers, body)
+                LanSyncHttpConstants.PATH_PAIR ->
+                    if (!method.equals("POST", ignoreCase = true)) {
+                        HttpLanResponse.json(405, """{"error":"method_not_allowed"}""")
+                    } else {
+                        handlePairRequest(body)
+                    }
                 LanSyncHttpConstants.PATH_SYNC -> handleSyncRequest(headers, body)
                 else -> HttpLanResponse.json(404, """{"error":"not_found"}""")
             }
@@ -523,6 +560,9 @@ class LanSyncRepositoryImpl
                 parseQueryParams(query)["code"]?.let(LanSyncPairingPin::normalize)
                     ?: return HttpLanResponse.json(400, """{"error":"missing_code"}""")
             val expected = activePairingPin ?: return HttpLanResponse.json(404, """{"error":"not_found"}""")
+            if (LanSyncPairingGate.isPinExpired(activePairingPinIssuedAtMillis)) {
+                return HttpLanResponse.json(403, """{"error":"pairing_code_expired"}""")
+            }
             if (!code.equals(expected, ignoreCase = true)) {
                 return HttpLanResponse.json(404, """{"error":"not_found"}""")
             }
@@ -604,10 +644,13 @@ class LanSyncRepositoryImpl
             if (trusted == null || trusted.theirAuthToken != remoteToken) {
                 return HttpLanResponse.json(401, """{"error":"unauthorized"}""")
             }
-            val syncId = path.removePrefix(LanSyncHttpConstants.PATH_ATTACHMENT_PREFIX)
-            if (syncId.isBlank()) {
+            val rawSyncId = path.removePrefix(LanSyncHttpConstants.PATH_ATTACHMENT_PREFIX)
+            if (rawSyncId.isBlank()) {
                 return HttpLanResponse.json(404, """{"error":"not_found"}""")
             }
+            val syncId =
+                runCatching { MmrAttachmentSyncId.requireSafeSyncId(rawSyncId) }.getOrNull()
+                    ?: return HttpLanResponse.json(404, """{"error":"not_found"}""")
             val bytes =
                 runCatching {
                     kotlinx.coroutines.runBlocking(ioDispatcher) {
@@ -621,44 +664,49 @@ class LanSyncRepositoryImpl
             return HttpLanResponse.bytes(200, bytes, "application/octet-stream")
         }
 
-        private fun handlePairRequest(
-            headers: Map<String, String>,
-            body: String,
-        ): HttpLanResponse {
-            val remoteDeviceId =
-                headers[LanSyncHttpConstants.HEADER_DEVICE_ID.lowercase()]
-                    ?: return HttpLanResponse.json(401, "")
-            val remoteToken = headers[LanSyncHttpConstants.HEADER_AUTH_TOKEN.lowercase()]
-            if (!remoteToken.isNullOrBlank()) {
-                val trusted =
-                    runCatching {
-                        kotlinx.coroutines.runBlocking {
-                            lanSyncDao.getTrustedDevice(
-                                remoteDeviceId,
-                            )
-                        }
-                    }.getOrNull()
-                if (trusted == null || trusted.theirAuthToken != remoteToken) {
-                    // New pair requests do not require prior trust.
-                }
-            }
-            val json = runCatching { JSONObject(body) }.getOrNull() ?: return HttpLanResponse.json(400, "")
+        private fun handlePairRequest(body: String): HttpLanResponse {
+            val json =
+                runCatching { JSONObject(body) }.getOrNull()
+                    ?: return HttpLanResponse.json(400, """{"error":"invalid_body"}""")
             val deviceId = json.optString("deviceId")
             val displayName = json.optString("displayName")
             val inboundAuthToken = json.optString("inboundAuthToken")
-            if (deviceId.isBlank() || inboundAuthToken.isBlank()) return HttpLanResponse.json(400, "")
+            val pairingCode = json.optString("pairingCode")
+            if (deviceId.isBlank() || inboundAuthToken.isBlank()) {
+                return HttpLanResponse.json(400, """{"error":"invalid_body"}""")
+            }
+            if (deviceId == identityStore.deviceId) {
+                return HttpLanResponse.json(400, """{"error":"self_pair"}""")
+            }
+            val activePin = activePairingPin
+            if (activePin == null ||
+                LanSyncPairingGate.isPinExpired(activePairingPinIssuedAtMillis)
+            ) {
+                return HttpLanResponse.json(403, """{"error":"pairing_code_expired"}""")
+            }
+            if (!LanSyncPairingGate.pairingCodeMatches(pairingCode, activePin)) {
+                return HttpLanResponse.json(403, """{"error":"invalid_pairing_code"}""")
+            }
+            val existingTrusted =
+                runCatching {
+                    kotlinx.coroutines.runBlocking(ioDispatcher) {
+                        lanSyncDao.getTrustedDevice(deviceId)
+                    }
+                }.getOrNull()
+            if (existingTrusted != null) {
+                return HttpLanResponse.json(200, """{"status":"already_trusted"}""")
+            }
             scope.launch {
-                lanSyncDao.upsertTrustedDevice(
-                    TrustedLanDeviceEntity(
+                lanSyncDao.upsertPendingPairRequest(
+                    PendingLanPairRequestEntity(
                         remoteDeviceId = deviceId,
                         displayName = displayName.ifBlank { "MMR device" },
                         theirAuthToken = inboundAuthToken,
                     ),
                 )
-                lanSyncDao.deletePendingPairRequest(deviceId)
                 publishState()
             }
-            return HttpLanResponse.json(200, """{"status":"trusted"}""")
+            return HttpLanResponse.json(202, """{"status":"pending_approval"}""")
         }
 
         private fun handleSyncRequest(
@@ -719,7 +767,10 @@ class LanSyncRepositoryImpl
             smsScanSettingsStore.setScanMonths(merged)
         }
 
-        private suspend fun sendPairRequestToPeer(offer: LanSyncPairingOffer) {
+        private suspend fun sendPairRequestToPeer(
+            offer: LanSyncPairingOffer,
+            pairingCode: String,
+        ) {
             val peer = nsdHelper.findPeer(offer.deviceId) ?: return
             val body =
                 JSONObject()
@@ -727,6 +778,7 @@ class LanSyncRepositoryImpl
                         put("deviceId", identityStore.deviceId)
                         put("displayName", identityStore.displayName)
                         put("inboundAuthToken", identityStore.inboundAuthToken)
+                        put("pairingCode", LanSyncPairingPin.normalize(pairingCode))
                     }.toString()
             LanSyncHttpClient.post(
                 host = peer.host,

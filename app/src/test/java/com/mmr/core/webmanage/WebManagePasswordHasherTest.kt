@@ -11,5 +11,6 @@ class WebManagePasswordHasherTest {
         val hash = WebManagePasswordHasher.hash("secret-pass", salt)
         assertTrue(WebManagePasswordHasher.verify("secret-pass", salt, hash))
         assertFalse(WebManagePasswordHasher.verify("wrong", salt, hash))
+        assertTrue(hash.startsWith("pbkdf2:"))
     }
 }

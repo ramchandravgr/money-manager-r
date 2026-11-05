@@ -15,6 +15,7 @@ import com.mmr.core.loan.EmiAutoPostCoordinator
 import com.mmr.core.loan.LoanCategoryResolver
 import com.mmr.core.loan.LoanLedgerCoordinator
 import com.mmr.core.loan.LoanTransactionCoordinator
+import com.mmr.core.owner.MmrOwnerProfileCoordinator
 import com.mmr.core.parser.account.SmsAccountResolver
 import com.mmr.core.parser.engine.SmsParserEngine
 import com.mmr.core.parser.template.SmsTemplateRegistry
@@ -38,6 +39,12 @@ class MmrInstrumentedRepositoryGraph(
 
     private val lanSyncIdentityStore = LanSyncIdentityStore(context)
 
+    val ownerProfileCoordinator =
+        MmrOwnerProfileCoordinator(
+            identityStore = lanSyncIdentityStore,
+            ownerProfileDao = database.ownerProfileDao(),
+        )
+
     private val tombstoneRecorder =
         LanSyncTombstoneRecorder(
             tombstoneDao = database.syncTombstoneDao(),
@@ -56,6 +63,7 @@ class MmrInstrumentedRepositoryGraph(
             budgetAlertNotifier = budgetAlertNotifier,
             tombstoneRecorder = tombstoneRecorder,
             widgetRefreshTrigger = NoOpHomeScreenWidgetRefreshTrigger,
+            ownerProfileCoordinator = ownerProfileCoordinator,
         )
 
     val transactionAttachmentRepository: TransactionAttachmentRepositoryImpl =
@@ -107,9 +115,11 @@ class MmrInstrumentedRepositoryGraph(
             smsMessageRecordDao = database.smsMessageRecordDao(),
             widgetRefreshTrigger = NoOpHomeScreenWidgetRefreshTrigger,
             budgetRepository = budgetRepository,
+            ownerProfileCoordinator = ownerProfileCoordinator,
         )
 
-    private val loanCategoryResolver = LoanCategoryResolver(categoryDao = database.categoryDao())
+    private val loanCategoryResolver =
+        LoanCategoryResolver(categoryDao = database.categoryDao())
 
     val loanLedgerCoordinator =
         LoanLedgerCoordinator(
@@ -137,6 +147,7 @@ class MmrInstrumentedRepositoryGraph(
             loanLedgerCoordinator = loanLedgerCoordinator,
             accountRepository = accountRepository,
             tombstoneRecorder = tombstoneRecorder,
+            ownerProfileCoordinator = ownerProfileCoordinator,
         )
 
     val recurringRuleRepository: RecurringRuleRepositoryImpl =
@@ -145,6 +156,7 @@ class MmrInstrumentedRepositoryGraph(
             recurringRuleDao = database.recurringRuleDao(),
             notificationRuleDao = database.notificationRuleDao(),
             tombstoneRecorder = tombstoneRecorder,
+            ownerProfileCoordinator = ownerProfileCoordinator,
         )
 
     val recurringAutoPostCoordinator: RecurringAutoPostCoordinator =
@@ -169,6 +181,7 @@ class MmrInstrumentedRepositoryGraph(
             loanTransactionCoordinator = loanTransactionCoordinator,
             categorizationRuleEngine = CategorizationRuleEngine(database.categorizationRuleDao()),
             widgetRefreshTrigger = NoOpHomeScreenWidgetRefreshTrigger,
+            ownerProfileCoordinator = ownerProfileCoordinator,
         )
 
     fun close() {

@@ -2,12 +2,16 @@ package com.mmr.core.data.repository
 
 import android.util.Base64
 import com.mmr.core.attachment.AssetAttachmentStore
+import com.mmr.core.attachment.MmrAttachmentSyncId
 import com.mmr.core.attachment.TransactionAttachmentStore
 import com.mmr.core.backup.AppSettingsBackupCoordinator
+import com.mmr.core.backup.BackupImportGuard
 import com.mmr.core.backup.BackupImportMode
 import com.mmr.core.backup.BackupImportPlanner
 import com.mmr.core.backup.BackupJsonCodec
+import com.mmr.core.backup.BackupPayloadSanitizer
 import com.mmr.core.backup.BackupSignedZipCodec
+import com.mmr.core.backup.MmrBackupAttachmentBytes
 import com.mmr.core.backup.model.BackupRestoreSummary
 import com.mmr.core.backup.model.MmrBackupAssetAttachmentRecord
 import com.mmr.core.backup.model.MmrBackupAttachmentRecord
@@ -15,6 +19,7 @@ import com.mmr.core.backup.model.MmrBackupPayload
 import com.mmr.core.common.dispatcher.IoDispatcher
 import com.mmr.core.database.MmrDatabase
 import com.mmr.core.database.dao.BackupDao
+import com.mmr.core.database.dao.LanSyncDao
 import com.mmr.core.database.dao.SyncTombstoneDao
 import com.mmr.core.database.entity.AssetAttachmentEntity
 import com.mmr.core.database.entity.TransactionAttachmentEntity
@@ -31,6 +36,7 @@ class BackupRepositoryImpl
     @Inject
     constructor(
         private val backupDao: BackupDao,
+        private val lanSyncDao: LanSyncDao,
         private val syncTombstoneDao: SyncTombstoneDao,
         private val tombstoneMerger: LanSyncTombstoneMerger,
         private val appSettingsBackupCoordinator: AppSettingsBackupCoordinator,
@@ -56,30 +62,21 @@ class BackupRepositoryImpl
                 BackupSignedZipCodec.encode(payloadJson, attachmentBytes)
             }
 
-        override suspend fun importBackupJson(
-            json: String,
-            mode: BackupImportMode,
-        ): BackupRestoreSummary =
-            withContext(ioDispatcher) {
-                importPayload(decodePayload(json), mode, attachmentBytesBySyncId = null)
-            }
-
         override suspend fun importBackup(
             data: ByteArray,
             mode: BackupImportMode,
         ): BackupRestoreSummary =
             withContext(ioDispatcher) {
-                if (BackupSignedZipCodec.isZipArchive(data)) {
-                    val archive = BackupSignedZipCodec.decode(data)
-                    importPayload(
-                        decodePayload(archive.payloadJson),
-                        mode,
-                        attachmentBytesBySyncId = archive.attachmentBytesBySyncId,
-                    )
-                } else {
-                    val json = data.toString(Charsets.UTF_8)
-                    importPayload(decodePayload(json), mode, attachmentBytesBySyncId = null)
+                if (!BackupSignedZipCodec.isZipArchive(data)) {
+                    throw IllegalArgumentException(BackupImportGuard.UNSIGNED_FILE_MESSAGE)
                 }
+                val archive = BackupSignedZipCodec.decode(data)
+                val payload = decodePayload(archive.payloadJson)
+                importPayload(
+                    payload,
+                    mode,
+                    attachmentBytesBySyncId = archive.attachmentBytesBySyncId,
+                )
             }
 
         private suspend fun buildPayload(includeAttachmentBytesInJson: Boolean): MmrBackupPayload =
@@ -106,7 +103,7 @@ class BackupRepositoryImpl
                 appSettings = appSettingsBackupCoordinator.capture(),
                 tombstones = syncTombstoneDao.getAll(),
                 categorizationRules = backupDao.getAllCategorizationRules(),
-                trustedLanDevices = backupDao.getAllTrustedLanDevices(),
+                trustedLanDevices = emptyList(),
                 transactionAttachments =
                     if (includeAttachmentBytesInJson) {
                         buildAttachmentRecordsWithBase64()
@@ -126,68 +123,72 @@ class BackupRepositoryImpl
             mode: BackupImportMode,
             attachmentBytesBySyncId: Map<String, ByteArray>?,
         ): BackupRestoreSummary {
-            val settingsRestored = appSettingsBackupCoordinator.apply(rawPayload.appSettings)
+            val payload = BackupPayloadSanitizer.forImport(rawPayload)
+            val settingsRestored = appSettingsBackupCoordinator.apply(payload.appSettings)
+            if (settingsRestored) {
+                clearLocalLanTrustAfterBackupImport()
+            }
 
             when (mode) {
                 BackupImportMode.REPLACE -> {
-                    val payload = BackupImportPlanner.prepareReplace(rawPayload)
+                    val planned = BackupImportPlanner.prepareReplace(payload)
                     attachmentStore.clearAllFiles()
                     assetAttachmentStore.clearAllFiles()
                     backupDao.restoreAllUserData(
-                        categories = payload.categories,
-                        subcategories = payload.subcategories,
-                        accounts = payload.accounts,
-                        loans = payload.loans,
-                        loanInterestRevisions = payload.loanInterestRevisions,
-                        loanScheduleEntries = payload.loanScheduleEntries,
-                        transactions = payload.transactions,
-                        loanPayments = payload.loanPayments,
-                        recurringRules = payload.recurringRules,
-                        budgets = payload.budgets,
-                        assets = payload.assets,
-                        assetValuations = payload.assetValuations,
-                        notificationRules = payload.notificationRules,
-                        smsMessageRecords = payload.smsMessageRecords,
-                        transactionApprovals = payload.transactionApprovals,
-                        categorizationRules = payload.categorizationRules,
-                        trustedLanDevices = payload.trustedLanDevices,
-                        transactionAttachments = payload.transactionAttachments.map { it.toEntity() },
-                        assetAttachments = payload.assetAttachments.map { it.toAssetEntity() },
+                        categories = planned.categories,
+                        subcategories = planned.subcategories,
+                        accounts = planned.accounts,
+                        loans = planned.loans,
+                        loanInterestRevisions = planned.loanInterestRevisions,
+                        loanScheduleEntries = planned.loanScheduleEntries,
+                        transactions = planned.transactions,
+                        loanPayments = planned.loanPayments,
+                        recurringRules = planned.recurringRules,
+                        budgets = planned.budgets,
+                        assets = planned.assets,
+                        assetValuations = planned.assetValuations,
+                        notificationRules = planned.notificationRules,
+                        smsMessageRecords = planned.smsMessageRecords,
+                        transactionApprovals = planned.transactionApprovals,
+                        categorizationRules = planned.categorizationRules,
+                        trustedLanDevices = planned.trustedLanDevices,
+                        transactionAttachments = planned.transactionAttachments.map { it.toEntity() },
+                        assetAttachments = planned.assetAttachments.map { it.toAssetEntity() },
                     )
-                    restoreAttachments(payload.transactionAttachments, attachmentBytesBySyncId)
-                    restoreAssetAttachments(payload.assetAttachments, attachmentBytesBySyncId)
-                    syncTombstoneDao.replaceAll(payload.tombstones)
-                    return summaryFromPayload(payload, settingsRestored)
+                    restoreAttachments(planned.transactionAttachments, attachmentBytesBySyncId)
+                    restoreAssetAttachments(planned.assetAttachments, attachmentBytesBySyncId)
+                    syncTombstoneDao.replaceAll(planned.tombstones)
+                    return summaryFromPayload(planned, settingsRestored)
                 }
                 BackupImportMode.MERGE -> {
                     val existing = readExistingIds()
-                    val payload = BackupImportPlanner.prepareMerge(rawPayload, existing)
+                    val planned = BackupImportPlanner.prepareMerge(payload, existing)
                     backupDao.mergeUserData(
-                        categories = payload.categories,
-                        subcategories = payload.subcategories,
-                        accounts = payload.accounts,
-                        loans = payload.loans,
-                        loanInterestRevisions = payload.loanInterestRevisions,
-                        loanScheduleEntries = payload.loanScheduleEntries,
-                        transactions = payload.transactions,
-                        loanPayments = payload.loanPayments,
-                        recurringRules = payload.recurringRules,
-                        budgets = payload.budgets,
-                        assets = payload.assets,
-                        assetValuations = payload.assetValuations,
-                        notificationRules = payload.notificationRules,
-                        smsMessageRecords = payload.smsMessageRecords,
-                        transactionApprovals = payload.transactionApprovals,
-                        categorizationRules = payload.categorizationRules,
-                        trustedLanDevices = payload.trustedLanDevices,
-                        transactionAttachments = payload.transactionAttachments.map { it.toEntity() },
-                        assetAttachments = payload.assetAttachments.map { it.toAssetEntity() },
+                        categories = planned.categories,
+                        subcategories = planned.subcategories,
+                        accounts = planned.accounts,
+                        loans = planned.loans,
+                        loanInterestRevisions = planned.loanInterestRevisions,
+                        loanScheduleEntries = planned.loanScheduleEntries,
+                        transactions = planned.transactions,
+                        loanPayments = planned.loanPayments,
+                        recurringRules = planned.recurringRules,
+                        budgets = planned.budgets,
+                        assets = planned.assets,
+                        assetValuations = planned.assetValuations,
+                        notificationRules = planned.notificationRules,
+                        smsMessageRecords = planned.smsMessageRecords,
+                        transactionApprovals = planned.transactionApprovals,
+                        categorizationRules = planned.categorizationRules,
+                        trustedLanDevices = planned.trustedLanDevices,
+                        transactionAttachments = planned.transactionAttachments.map { it.toEntity() },
+                        assetAttachments = planned.assetAttachments.map { it.toAssetEntity() },
                     )
-                    restoreAttachments(payload.transactionAttachments, attachmentBytesBySyncId)
-                    restoreAssetAttachments(payload.assetAttachments, attachmentBytesBySyncId)
-                    if (payload.tombstones.isNotEmpty()) {
+                    restoreAttachments(planned.transactionAttachments, attachmentBytesBySyncId)
+                    restoreAssetAttachments(planned.assetAttachments, attachmentBytesBySyncId)
+                    if (planned.tombstones.isNotEmpty()) {
                         tombstoneMerger.ingestRemoteTombstones(
-                            payload.tombstones.map {
+                            planned.tombstones.map {
                                 LanSyncTombstoneRecord(
                                     syncId = it.syncId,
                                     entityType = it.entityType,
@@ -197,9 +198,14 @@ class BackupRepositoryImpl
                             },
                         )
                     }
-                    return summaryFromPayload(payload, settingsRestored)
+                    return summaryFromPayload(planned, settingsRestored)
                 }
             }
+        }
+
+        private suspend fun clearLocalLanTrustAfterBackupImport() {
+            backupDao.deleteAllTrustedLanDevices()
+            lanSyncDao.clearPendingPairRequests()
         }
 
         private fun decodePayload(json: String): MmrBackupPayload =
@@ -291,18 +297,32 @@ class BackupRepositoryImpl
             records: List<MmrBackupAssetAttachmentRecord>,
             attachmentBytesBySyncId: Map<String, ByteArray>?,
         ) {
+            var totalRestoredBytes = 0L
+            val maxTotal = MmrBackupAttachmentBytes.MAX_TOTAL_RESTORE_BYTES
+            val maxFile = MmrBackupAttachmentBytes.maxBytesForAssetAttachment()
+
+            fun writeIfAllowed(
+                syncId: String,
+                bytes: ByteArray,
+            ) {
+                if (bytes.size > maxFile) return
+                if (totalRestoredBytes + bytes.size > maxTotal) return
+                if (runCatching { MmrAttachmentSyncId.requireSafeSyncId(syncId) }.isFailure) return
+                totalRestoredBytes += bytes.size
+                assetAttachmentStore.writeBytes(syncId, bytes)
+            }
+
             if (attachmentBytesBySyncId != null) {
                 records.forEach { record ->
                     val bytes = attachmentBytesBySyncId[record.syncId] ?: return@forEach
-                    assetAttachmentStore.writeBytes(record.syncId, bytes)
+                    writeIfAllowed(record.syncId, bytes)
                 }
             } else {
                 records.forEach { record ->
-                    if (record.contentBase64.isBlank()) return@forEach
                     val bytes =
-                        runCatching { Base64.decode(record.contentBase64, Base64.DEFAULT) }.getOrNull()
+                        MmrBackupAttachmentBytes.decodeBase64Content(record.contentBase64, maxFile)
                             ?: return@forEach
-                    assetAttachmentStore.writeBytes(record.syncId, bytes)
+                    writeIfAllowed(record.syncId, bytes)
                 }
             }
         }
@@ -311,18 +331,32 @@ class BackupRepositoryImpl
             records: List<MmrBackupAttachmentRecord>,
             attachmentBytesBySyncId: Map<String, ByteArray>?,
         ) {
+            var totalRestoredBytes = 0L
+            val maxTotal = MmrBackupAttachmentBytes.MAX_TOTAL_RESTORE_BYTES
+            val maxFile = MmrBackupAttachmentBytes.maxBytesForTransactionAttachment()
+
+            fun writeIfAllowed(
+                syncId: String,
+                bytes: ByteArray,
+            ) {
+                if (bytes.size > maxFile) return
+                if (totalRestoredBytes + bytes.size > maxTotal) return
+                if (runCatching { MmrAttachmentSyncId.requireSafeSyncId(syncId) }.isFailure) return
+                totalRestoredBytes += bytes.size
+                attachmentStore.writeBytes(syncId, bytes)
+            }
+
             if (attachmentBytesBySyncId != null) {
                 records.forEach { record ->
                     val bytes = attachmentBytesBySyncId[record.syncId] ?: return@forEach
-                    attachmentStore.writeBytes(record.syncId, bytes)
+                    writeIfAllowed(record.syncId, bytes)
                 }
             } else {
                 records.forEach { record ->
-                    if (record.contentBase64.isBlank()) return@forEach
                     val bytes =
-                        runCatching { Base64.decode(record.contentBase64, Base64.DEFAULT) }.getOrNull()
+                        MmrBackupAttachmentBytes.decodeBase64Content(record.contentBase64, maxFile)
                             ?: return@forEach
-                    attachmentStore.writeBytes(record.syncId, bytes)
+                    writeIfAllowed(record.syncId, bytes)
                 }
             }
         }

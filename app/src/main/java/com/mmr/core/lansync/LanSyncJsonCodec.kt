@@ -15,6 +15,7 @@ import com.mmr.core.lansync.model.LanLoanPaymentRecord
 import com.mmr.core.lansync.model.LanLoanRecord
 import com.mmr.core.lansync.model.LanLoanScheduleEntryRecord
 import com.mmr.core.lansync.model.LanNotificationRuleRecord
+import com.mmr.core.lansync.model.LanOwnerProfileRecord
 import com.mmr.core.lansync.model.LanRecurringRuleRecord
 import com.mmr.core.lansync.model.LanSubcategoryRecord
 import com.mmr.core.lansync.model.LanSyncTombstoneRecord
@@ -24,7 +25,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object LanSyncJsonCodec {
-    const val CURRENT_FORMAT_VERSION = 5
+    const val CURRENT_FORMAT_VERSION = 6
 
     fun encode(payload: MmrLanSyncPayload): String =
         JSONObject()
@@ -33,6 +34,11 @@ object LanSyncJsonCodec {
                 put("exportedAtEpochMillis", payload.exportedAtEpochMillis)
                 put("sourceDeviceId", payload.sourceDeviceId)
                 putNullableString("sourceDeviceName", payload.sourceDeviceName)
+                putNullableString("sourceProfileId", payload.sourceProfileId)
+                putNullableString("sourceProfileName", payload.sourceProfileName)
+                if (payload.knownProfiles.isNotEmpty()) {
+                    put("knownProfiles", payload.knownProfiles.toJsonArray { knownProfileToJson(it) })
+                }
                 put("categories", payload.categories.toJsonArray { categoryToJson(it) })
                 put("subcategories", payload.subcategories.toJsonArray { subcategoryToJson(it) })
                 put("accounts", payload.accounts.toJsonArray { accountToJson(it) })
@@ -63,14 +69,17 @@ object LanSyncJsonCodec {
     fun decode(json: String): MmrLanSyncPayload {
         val root = JSONObject(json)
         val version = root.getInt("formatVersion")
-        if (version !in 1..CURRENT_FORMAT_VERSION) {
+        if (version != CURRENT_FORMAT_VERSION) {
             throw IllegalArgumentException("Unsupported LAN sync format version: $version")
         }
         return MmrLanSyncPayload(
-            formatVersion = version,
+            formatVersion = CURRENT_FORMAT_VERSION,
             exportedAtEpochMillis = root.getLong("exportedAtEpochMillis"),
             sourceDeviceId = root.getString("sourceDeviceId"),
             sourceDeviceName = root.optNullableString("sourceDeviceName"),
+            sourceProfileId = root.optNullableString("sourceProfileId"),
+            sourceProfileName = root.optNullableString("sourceProfileName"),
+            knownProfiles = root.readArray("knownProfiles").mapObjects { knownProfileFromJson(it) },
             categories = root.readArray("categories").mapObjects { categoryFromJson(it) },
             subcategories = root.readArray("subcategories").mapObjects { subcategoryFromJson(it) },
             accounts = root.readArray("accounts").mapObjects { accountFromJson(it) },
@@ -226,6 +235,8 @@ object LanSyncJsonCodec {
             putNullableString("notes", record.notes)
             put("createdAt", record.createdAt)
             put("updatedAt", record.updatedAt)
+            putNullableString("createdByProfileId", record.createdByProfileId)
+            putNullableString("createdByDisplayName", record.createdByDisplayName)
         }
 
     private fun loanFromJson(json: JSONObject) =
@@ -253,6 +264,8 @@ object LanSyncJsonCodec {
             notes = json.optNullableString("notes"),
             createdAt = json.getLong("createdAt"),
             updatedAt = json.getLong("updatedAt"),
+            createdByProfileId = json.optNullableString("createdByProfileId"),
+            createdByDisplayName = json.optNullableString("createdByDisplayName"),
         )
 
     private fun transactionToJson(record: LanTransactionRecord) =
@@ -277,8 +290,8 @@ object LanSyncJsonCodec {
             putNullableString("paymentInstrument", record.paymentInstrument)
             putNullableString("cardLastFour", record.cardLastFour)
             putNullableString("cardNetwork", record.cardNetwork)
-            putNullableString("syncedFromDeviceId", record.syncedFromDeviceId)
-            putNullableString("syncedFromDeviceName", record.syncedFromDeviceName)
+            putNullableString("createdByProfileId", record.createdByProfileId)
+            putNullableString("createdByDisplayName", record.createdByDisplayName)
         }
 
     private fun transactionFromJson(json: JSONObject) =
@@ -303,8 +316,12 @@ object LanSyncJsonCodec {
             paymentInstrument = json.optNullableString("paymentInstrument"),
             cardLastFour = json.optNullableString("cardLastFour"),
             cardNetwork = json.optNullableString("cardNetwork"),
-            syncedFromDeviceId = json.optNullableString("syncedFromDeviceId"),
-            syncedFromDeviceName = json.optNullableString("syncedFromDeviceName"),
+            createdByProfileId =
+                json.optNullableString("createdByProfileId")
+                    ?: json.optNullableString("syncedFromDeviceId"),
+            createdByDisplayName =
+                json.optNullableString("createdByDisplayName")
+                    ?: json.optNullableString("syncedFromDeviceName"),
         )
 
     private fun loanPaymentToJson(record: LanLoanPaymentRecord) =
@@ -404,6 +421,8 @@ object LanSyncJsonCodec {
             put("reminderMinutesBefore", record.reminderMinutesBefore)
             put("createdAt", record.createdAt)
             put("updatedAt", record.updatedAt)
+            putNullableString("createdByProfileId", record.createdByProfileId)
+            putNullableString("createdByDisplayName", record.createdByDisplayName)
         }
 
     private fun recurringFromJson(json: JSONObject) =
@@ -427,6 +446,8 @@ object LanSyncJsonCodec {
             reminderMinutesBefore = json.getInt("reminderMinutesBefore"),
             createdAt = json.getLong("createdAt"),
             updatedAt = json.getLong("updatedAt"),
+            createdByProfileId = json.optNullableString("createdByProfileId"),
+            createdByDisplayName = json.optNullableString("createdByDisplayName"),
         )
 
     private fun budgetToJson(record: LanBudgetRecord) =
@@ -443,6 +464,8 @@ object LanSyncJsonCodec {
             put("isActive", record.isActive)
             put("createdAt", record.createdAt)
             put("updatedAt", record.updatedAt)
+            putNullableString("createdByProfileId", record.createdByProfileId)
+            putNullableString("createdByDisplayName", record.createdByDisplayName)
         }
 
     private fun budgetFromJson(json: JSONObject) =
@@ -459,6 +482,8 @@ object LanSyncJsonCodec {
             isActive = json.getBoolean("isActive"),
             createdAt = json.getLong("createdAt"),
             updatedAt = json.getLong("updatedAt"),
+            createdByProfileId = json.optNullableString("createdByProfileId"),
+            createdByDisplayName = json.optNullableString("createdByDisplayName"),
         )
 
     private fun assetToJson(record: LanAssetRecord) =
@@ -482,6 +507,8 @@ object LanSyncJsonCodec {
             putNullableString("notes", record.notes)
             put("createdAt", record.createdAt)
             put("updatedAt", record.updatedAt)
+            putNullableString("createdByProfileId", record.createdByProfileId)
+            putNullableString("createdByDisplayName", record.createdByDisplayName)
         }
 
     private fun assetFromJson(json: JSONObject) =
@@ -505,6 +532,8 @@ object LanSyncJsonCodec {
             notes = json.optNullableString("notes"),
             createdAt = json.getLong("createdAt"),
             updatedAt = json.getLong("updatedAt"),
+            createdByProfileId = json.optNullableString("createdByProfileId"),
+            createdByDisplayName = json.optNullableString("createdByDisplayName"),
         )
 
     private fun assetValuationToJson(record: LanAssetValuationRecord) =
@@ -708,6 +737,20 @@ object LanSyncJsonCodec {
     ) {
         if (value != null) put(key, value)
     }
+
+    private fun knownProfileToJson(record: LanOwnerProfileRecord) =
+        JSONObject().apply {
+            put("profileId", record.profileId)
+            put("displayName", record.displayName)
+            put("updatedAt", record.updatedAt)
+        }
+
+    private fun knownProfileFromJson(json: JSONObject) =
+        LanOwnerProfileRecord(
+            profileId = json.getString("profileId"),
+            displayName = json.getString("displayName"),
+            updatedAt = json.optLong("updatedAt", 0L),
+        )
 
     private fun JSONObject.optNullableString(key: String): String? =
         if (has(key) && !isNull(key)) getString(key) else null

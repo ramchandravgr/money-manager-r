@@ -105,9 +105,5 @@ class EnumConverters {
     @TypeConverter fun fromAssetStatus(value: AssetStatus?): String? = value?.name
 
     @TypeConverter
-    fun toAssetStatus(value: String?): AssetStatus? =
-        value?.let {
-            com.mmr.core.model.enums
-                .assetStatusFromStored(it)
-        }
+    fun toAssetStatus(value: String?): AssetStatus? = value?.let { AssetStatus.valueOf(it) }
 }

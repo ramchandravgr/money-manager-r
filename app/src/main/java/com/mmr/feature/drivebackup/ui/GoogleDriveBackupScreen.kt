@@ -90,7 +90,7 @@ fun GoogleDriveBackupScreen(
         MmrIosSettingsSection(
             title = "About",
             isFirstInScreen = true,
-            footer = "Opt-in folder MoneyInbox/Backups on your Drive. Same signed .mmrbackup format as local export.",
+            footer = "Opt-in folder MoneyInbox/Backups on your Drive. Same signed .mibxbac format as local export.",
         ) {
             MmrIosSettingsSectionBodyText(text = "Backups use your Google account storage and API quotas.")
         }

@@ -29,8 +29,9 @@ android {
         applicationId = "com.mmr.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        // Play versionCode: major*10000 + minor*100 + patch (0.9.1 -> 901). Bump every upload.
+        versionCode = 901
+        versionName = "0.9.1"
 
         testInstrumentationRunner = "com.mmr.app.HiltTestRunner"
 
@@ -39,6 +40,7 @@ android {
 
     buildTypes {
         release {
+            // Initial Play releases: minify off (easier release debugging; see PROJECT_MEMORY §6 Release builds, audit §12 RELEASE-R8).
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -50,6 +52,14 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+        isCoreLibraryDesugaringEnabled = true
+    }
+
+    lint {
+        abortOnError = true
+        checkReleaseBuilds = true
+        lintConfig = file("lint.xml")
+        baseline = file("lint-baseline.xml")
     }
 
     buildFeatures {
@@ -89,6 +99,7 @@ ktlint {
 }
 
 dependencies {
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
     detektPlugins(libs.detekt.formatting)
     detektPlugins(libs.detekt.compose.rules)
     implementation(platform(libs.androidx.compose.bom))

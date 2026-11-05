@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- java.time and related JDK APIs: enabled via coreLibraryDesugaring in app/build.gradle.kts. -->
+    <!-- Remaining findings are tracked in lint-baseline.xml; regenerate with :app:updateLintBaseline. -->
+</lint>

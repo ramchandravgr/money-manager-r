@@ -145,8 +145,6 @@ sealed class Screen(
         fun createRoute(section: String = "loans"): String = "scheduled?$ARG_SECTION=$section"
     }
 
-    object Loans : Screen("loans")
-
     object AddLoan : Screen("add_loan")
 
     object EditLoan : Screen("edit_loan/{loanId}") {
@@ -156,8 +154,6 @@ sealed class Screen(
     object LoanDetail : Screen("loan_detail/{loanId}") {
         fun createRoute(loanId: Long): String = "loan_detail/$loanId"
     }
-
-    object Recurring : Screen("recurring")
 
     object AddRecurringRule : Screen("add_recurring")
 

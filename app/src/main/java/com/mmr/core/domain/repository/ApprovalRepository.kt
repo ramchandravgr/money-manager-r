@@ -19,6 +19,8 @@ interface ApprovalRepository {
 
     suspend fun getPendingCountOnce(): Int
 
+    suspend fun getLatestQuickApprovablePendingId(): Long?
+
     suspend fun getApprovalById(id: Long): TransactionApprovalEntity?
 
     suspend fun insertCandidates(candidates: List<ParsedSmsCandidate>): Int
@@ -45,6 +47,8 @@ interface ApprovalRepository {
         subcategoryId: Long? = null,
         relatedAccountId: Long? = null,
         loanId: Long? = null,
+        /** When true, may create credit-card/wallet accounts from SMS metadata (Approval Center direct approve only). */
+        provisionAccountFromSms: Boolean = false,
     ): Long
 
     suspend fun mergeCandidateWithTransaction(

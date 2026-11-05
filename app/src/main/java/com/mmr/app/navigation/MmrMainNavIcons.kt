@@ -1,16 +1,12 @@
 package com.mmr.app.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.AccountBalance
-import androidx.compose.material.icons.outlined.Autorenew
 import androidx.compose.material.icons.outlined.BarChart
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Inventory2
@@ -51,16 +47,6 @@ internal fun mmrDestinationIconPair(route: String): MmrNavIconPair =
             MmrNavIconPair(
                 outlined = Icons.Outlined.Schedule,
                 filled = Icons.Filled.Schedule,
-            )
-        Screen.Loans.route ->
-            MmrNavIconPair(
-                outlined = Icons.Outlined.AccountBalance,
-                filled = Icons.Filled.AccountBalance,
-            )
-        Screen.Recurring.route ->
-            MmrNavIconPair(
-                outlined = Icons.Outlined.Autorenew,
-                filled = Icons.Filled.Autorenew,
             )
         Screen.Settings.route ->
             MmrNavIconPair(

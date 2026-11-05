@@ -46,6 +46,24 @@ class LanSyncHttpServerInstrumentedTest {
     }
 
     @Test
+    fun postSync_withOversizedContentLength_returns413() {
+        val oversized = MmrHttpBodyLimits.MAX_BODY_BYTES + 1
+        val response =
+            rawRequest(
+                method = "POST",
+                path = LanSyncHttpConstants.PATH_SYNC,
+                body = "",
+                extraHeaders =
+                    mapOf(
+                        "Content-Type" to "application/json",
+                        "Content-Length" to oversized.toString(),
+                    ),
+                writeBody = false,
+            )
+        assertTrue(response.contains("HTTP/1.1 413"))
+    }
+
+    @Test
     fun postSync_withBody_returnsJsonFromHandler() =
         runBlocking {
             val response =
@@ -81,6 +99,7 @@ class LanSyncHttpServerInstrumentedTest {
         path: String,
         body: String,
         extraHeaders: Map<String, String>,
+        writeBody: Boolean = true,
     ): String {
         Socket("127.0.0.1", port).use { socket ->
             val payload = body.toByteArray(StandardCharsets.UTF_8)
@@ -88,12 +107,14 @@ class LanSyncHttpServerInstrumentedTest {
                 buildString {
                     append("$method $path HTTP/1.1\r\n")
                     append("Host: 127.0.0.1\r\n")
-                    append("Content-Length: ${payload.size}\r\n")
+                    if (!extraHeaders.containsKey("Content-Length")) {
+                        append("Content-Length: ${payload.size}\r\n")
+                    }
                     extraHeaders.forEach { (key, value) -> append("$key: $value\r\n") }
                     append("Connection: close\r\n\r\n")
                 }
             socket.getOutputStream().write(headerLines.toByteArray(StandardCharsets.UTF_8))
-            if (payload.isNotEmpty()) {
+            if (writeBody && payload.isNotEmpty()) {
                 socket.getOutputStream().write(payload)
             }
             socket.getOutputStream().flush()

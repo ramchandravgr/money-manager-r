@@ -52,7 +52,7 @@ Screens with **successful** post captures through the flow (no `FAILED` in `trac
 ## Issues to track
 
 1. **Inline settings name field** — fixed: clip value `Box` so end-aligned text cannot paint over the label column.
-2. **LAN sync pairing code display** — optional UX: show shortened code + copy action instead of full JSON string in the value column.
+2. **LAN sync pairing code display** — done (2026-11-04): host shows 12-char PIN via `MmrIosSettingsCopyableCodeSlot`, not legacy JSON paste string.
 3. **Home “Daily” tab indicator** — indicator is full tab width; if design wants underline only under label text, narrow the indicator `Box` to text width.
 4. **Trace pull after full suite** — app external dir may be cleared on reinstall; pull during run or copy traces to `Download/` if post-run `pullUiTestScreenshots` is empty.
 
