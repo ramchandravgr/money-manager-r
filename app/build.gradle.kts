@@ -57,8 +57,8 @@ android {
         minSdk = 24
         targetSdk = 35
         // Play versionCode: major*10000 + minor*100 + patch (0.10.1 -> 1001). Bump every upload.
-        versionCode = 1101
-        versionName = "0.11.1"
+        versionCode = 1102
+        versionName = "0.11.2"
 
         testInstrumentationRunner = "com.rrparallelstudio.miapp.HiltTestRunner"
 

@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -161,6 +162,44 @@ fun MmrIosSettingsRowDivider() {
     )
 }
 
+internal const val MMR_IOS_SETTINGS_LABEL_MAX_LINES = 10
+internal const val MMR_IOS_SETTINGS_VALUE_MAX_LINES = 8
+internal val MmrIosSettingsLabelValueGap = 8.dp
+
+@Composable
+internal fun MmrIosSettingsRowLabelText(
+    text: String,
+    modifier: Modifier = Modifier,
+    useStaticLabelCase: Boolean = true,
+) {
+    Text(
+        text = if (useStaticLabelCase) text.mmrStaticLabelCase() else text,
+        modifier = modifier,
+        color = MmrBrandColors.formCardPrimaryText(),
+        fontSize = 16.sp,
+        maxLines = MMR_IOS_SETTINGS_LABEL_MAX_LINES,
+        overflow = TextOverflow.Ellipsis,
+        softWrap = true,
+    )
+}
+
+@Composable
+internal fun MmrIosSettingsRowValueText(
+    text: String,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text = text,
+        modifier = modifier,
+        color = MmrBrandColors.TextMedium,
+        fontSize = 16.sp,
+        maxLines = MMR_IOS_SETTINGS_VALUE_MAX_LINES,
+        overflow = TextOverflow.Ellipsis,
+        softWrap = true,
+        textAlign = TextAlign.End,
+    )
+}
+
 /** Row separator inside [MmrIosSettingsSingleChoiceSheet] grouped list (readable on dark modal chrome). */
 @Composable
 fun MmrIosSettingsSheetRowDivider() {
@@ -190,6 +229,7 @@ fun MmrIosSettingsNavRow(
         modifier =
             modifier.then(if (testTag != null) Modifier.testTag(testTag) else Modifier),
     ) {
+        val hasTrailingValue = valueContent != null || value.isNotEmpty()
         Row(
             modifier =
                 Modifier
@@ -202,26 +242,34 @@ fun MmrIosSettingsNavRow(
                     ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = label.mmrStaticLabelCase(),
-                modifier = Modifier.weight(1f),
-                color = MmrBrandColors.Reversal,
-                fontSize = 16.sp,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
+            MmrIosSettingsRowLabelText(
+                text = label,
+                modifier =
+                    Modifier
+                        .weight(1f, fill = true)
+                        .padding(
+                            end =
+                                if (hasTrailingValue) {
+                                    MmrIosSettingsLabelValueGap
+                                } else {
+                                    0.dp
+                                },
+                        ),
             )
             if (valueContent != null) {
-                Box(modifier = Modifier.padding(end = 6.dp)) {
+                Box(
+                    modifier =
+                        Modifier
+                            .weight(1f, fill = true)
+                            .padding(end = 6.dp),
+                    contentAlignment = Alignment.CenterEnd,
+                ) {
                     valueContent()
                 }
             } else if (value.isNotEmpty()) {
-                Text(
+                MmrIosSettingsRowValueText(
                     text = value,
-                    color = MmrBrandColors.TextMedium,
-                    fontSize = 16.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(end = 6.dp),
+                    modifier = Modifier.weight(1f, fill = true).padding(end = 6.dp),
                 )
             }
             Icon(
@@ -258,11 +306,9 @@ fun MmrIosSettingsSwitchRow(
                     ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = label.mmrStaticLabelCase(),
-                modifier = Modifier.weight(1f),
-                color = MmrBrandColors.Reversal,
-                fontSize = 16.sp,
+            MmrIosSettingsRowLabelText(
+                text = label,
+                modifier = Modifier.weight(1f, fill = true),
             )
             Switch(
                 checked = checked,
@@ -329,18 +375,16 @@ fun MmrIosSettingsValueRow(
                     ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = label.mmrStaticLabelCase(),
-                modifier = Modifier.weight(1f),
-                color = MmrBrandColors.Reversal,
-                fontSize = 16.sp,
+            MmrIosSettingsRowLabelText(
+                text = label,
+                modifier =
+                    Modifier
+                        .weight(1f, fill = true)
+                        .padding(end = MmrIosSettingsLabelValueGap),
             )
-            Text(
+            MmrIosSettingsRowValueText(
                 text = value,
-                color = MmrBrandColors.TextMedium,
-                fontSize = 16.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = true),
             )
         }
     }

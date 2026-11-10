@@ -40,12 +40,8 @@ fun SmsBackupRestoreSetupGuideSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         modifier = modifier,
-        containerColor =
-            if (MmrBrandColors.canvasIsDark()) {
-                MmrBrandColors.modalChromeSurface()
-            } else {
-                MmrBrandColors.ScreenContainer
-            },
+        containerColor = MmrBrandColors.modalChromeSurface(),
+        contentColor = MmrBrandColors.modalSheetTitleText(),
         dragHandle = { BottomSheetDefaults.DragHandle() },
     ) {
         Column(
@@ -63,28 +59,28 @@ fun SmsBackupRestoreSetupGuideSheet(
                 text = "SMS backup setup",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = if (MmrBrandColors.canvasIsDark()) MmrBrandColors.onCanvas() else MmrBrandColors.TextStrong,
+                color = MmrBrandColors.modalSheetTitleText(),
             )
             MmrHelperText(
                 text = SmsBackupRestoreGuideCatalog.intro,
-                color = if (MmrBrandColors.canvasIsDark()) MmrBrandColors.onCanvasMuted() else MmrBrandColors.TextMedium,
+                color = MmrBrandColors.modalSheetBodyText(),
             )
             SmsBackupRestoreGuideCatalog.steps.forEachIndexed { index, step ->
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         text = "${index + 1}. ${step.title}",
                         fontWeight = FontWeight.SemiBold,
-                        color = if (MmrBrandColors.canvasIsDark()) MmrBrandColors.onCanvas() else MmrBrandColors.TextStrong,
+                        color = MmrBrandColors.modalSheetTitleText(),
                     )
-                    Text(
+                    MmrHelperText(
                         text = step.body,
-                        color = if (MmrBrandColors.canvasIsDark()) MmrBrandColors.onCanvasMuted() else MmrBrandColors.TextMedium,
+                        color = MmrBrandColors.modalSheetBodyText(),
                     )
                 }
             }
             MmrHelperText(
                 text = SmsBackupRestoreGuideCatalog.footnote,
-                color = if (MmrBrandColors.canvasIsDark()) MmrBrandColors.onCanvasMuted() else MmrBrandColors.TextMedium,
+                color = MmrBrandColors.modalSheetBodyText(),
             )
             MmrPrimaryActionButton(
                 text = "Open Play Store — ${SmsBackupRestoreGuideCatalog.PLAY_STORE_APP_NAME}",

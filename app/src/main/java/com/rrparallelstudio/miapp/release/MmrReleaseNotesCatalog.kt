@@ -13,6 +13,15 @@ object MmrReleaseNotesCatalog {
     private val entries: List<VersionNotes> =
         listOf(
             VersionNotes(
+                version = "0.11.2",
+                changesNewestFirst =
+                    listOf(
+                        "Settings sheets and SMS backup setup guide: readable text on light and expressive themes.",
+                        "Settings rows wrap long labels and values so backup rows stay readable.",
+                        "Tapping Ledger again no longer jumps to Settings.",
+                    ),
+            ),
+            VersionNotes(
                 version = "0.11.1",
                 changesNewestFirst =
                     listOf(

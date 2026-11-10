@@ -35,22 +35,26 @@ fun MmrNavHost(
     val homeDestination =
         visibleDestinations.firstOrNull { it.navId == MmrMainNavIds.HOME }
     val onMainDestinationSelected: (String) -> Unit = { route ->
+        val homeRoute = Screen.Home.route
         val reselectingLedger =
-            route == Screen.Home.route &&
+            route == homeRoute &&
                 homeDestination != null &&
                 isLedgerNavSelected(currentRoute, homeDestination)
         if (reselectingLedger) {
             homeLedgerTabReselectNotifier.notifyLedgerTabReselected()
             if (isLedgerOverlayRoute(currentRoute)) {
-                navController.popBackStack(Screen.Home.route, inclusive = false)
+                navController.popBackStack(homeRoute, inclusive = false)
             }
-        }
-        navController.navigate(route) {
-            popUpTo(navController.graph.findStartDestination().id) {
-                saveState = true
+            // Already on Ledger (or just popped to it). Skip navigate()+restoreState — it can
+            // resurrect another main tab's saved back-stack state (e.g. Settings).
+        } else {
+            navController.navigate(route) {
+                popUpTo(navController.graph.findStartDestination().id) {
+                    saveState = true
+                }
+                launchSingleTop = true
+                restoreState = true
             }
-            launchSingleTop = true
-            restoreState = true
         }
     }
 

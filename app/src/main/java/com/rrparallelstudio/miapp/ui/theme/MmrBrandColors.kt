@@ -137,20 +137,19 @@ object MmrBrandColors {
             else -> SurfaceWhite
         }
 
-    /** Primary label on rows inside settings bottom-sheet pickers (never raw [Reversal] on dark palettes). */
+    /** Primary label on rows inside settings bottom-sheet pickers (contrast vs [settingsSheetGroupedListFill]). */
     fun settingsSheetListRowText(): Color =
-        when {
-            canvasIsDark() && MmrExpressiveThemeFlags.ENABLED -> onCanvas()
-            canvasIsDark() -> Reversal
-            SurfaceWhite.mmrRelativeLuminance() >= 0.45f -> TextStrong
-            else -> Reversal
+        if (settingsSheetGroupedListFill().mmrRelativeLuminance() >= 0.45f) {
+            TextStrong
+        } else {
+            onCanvas()
         }
 
     fun settingsSheetListDivider(): Color =
-        if (canvasIsDark()) {
-            Color.White.copy(alpha = 0.14f)
-        } else {
+        if (settingsSheetGroupedListFill().mmrRelativeLuminance() >= 0.45f) {
             BorderMain
+        } else {
+            Color.White.copy(alpha = 0.14f)
         }
 
     /** Outline for theme swatches on dark modal chrome ([BorderMain] is too dark on frosted bands). */
@@ -172,6 +171,22 @@ object MmrBrandColors {
     fun dialogTitleText(): Color = if (canvasIsDark()) onCanvas() else p.textStrong
 
     fun dialogMessageText(): Color = if (canvasIsDark()) onCanvasMuted() else p.textMedium
+
+    /** Title on [modalChromeSurface] (bottom sheets); branches on surface luminance, not list canvas alone. */
+    fun modalSheetTitleText(): Color =
+        if (modalChromeSurface().mmrRelativeLuminance() >= 0.45f) {
+            TextStrong
+        } else {
+            onCanvas()
+        }
+
+    /** Body / helper copy on [modalChromeSurface]. */
+    fun modalSheetBodyText(): Color =
+        if (modalChromeSurface().mmrRelativeLuminance() >= 0.45f) {
+            TextMedium
+        } else {
+            onCanvasMuted()
+        }
 
     /** Primary value / input text inside dialog fields (replaces light-theme [Reversal] on dark canvas). */
     fun dialogFieldValueText(): Color = if (canvasIsDark()) onCanvas() else p.reversal

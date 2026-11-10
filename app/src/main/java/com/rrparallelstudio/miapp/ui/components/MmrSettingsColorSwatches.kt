@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -59,15 +60,19 @@ fun MmrSettingsChoiceLabelWithSwatches(
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(
             text = label,
-            modifier = Modifier.weight(1f),
+            modifier =
+                Modifier
+                    .weight(1f, fill = true)
+                    .padding(end = 10.dp),
             color = MmrBrandColors.settingsSheetListRowText(),
             fontSize = 16.sp,
             fontWeight = labelFontWeight,
-            maxLines = 2,
+            maxLines = MMR_IOS_SETTINGS_LABEL_MAX_LINES,
+            overflow = TextOverflow.Ellipsis,
+            softWrap = true,
         )
         MmrSettingsColorSwatchStrip(
             colors = swatchColors,

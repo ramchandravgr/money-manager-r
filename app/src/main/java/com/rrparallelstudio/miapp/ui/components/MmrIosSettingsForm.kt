@@ -130,17 +130,18 @@ fun MmrIosSettingsReadOnlyValueRow(
                     .padding(vertical = 11.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
+            MmrIosSettingsRowLabelText(
                 text = label,
-                modifier = Modifier.weight(1f),
-                color = MmrBrandColors.Reversal,
-                fontSize = 16.sp,
+                useStaticLabelCase = false,
+                modifier =
+                    Modifier
+                        .weight(1f, fill = true)
+                        .padding(end = MmrIosSettingsLabelValueGap),
             )
             value?.let {
-                Text(
+                MmrIosSettingsRowValueText(
                     text = it,
-                    color = MmrBrandColors.TextMedium,
-                    fontSize = 16.sp,
+                    modifier = Modifier.weight(1f, fill = true),
                 )
             }
         }

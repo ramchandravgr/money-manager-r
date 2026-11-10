@@ -54,12 +54,8 @@ fun MmrIosSettingsSingleChoiceSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         modifier = modifier,
-        containerColor =
-            if (MmrBrandColors.canvasIsDark()) {
-                MmrBrandColors.modalChromeSurface()
-            } else {
-                MmrBrandColors.ScreenContainer
-            },
+        containerColor = MmrBrandColors.modalChromeSurface(),
+        contentColor = MmrBrandColors.modalSheetTitleText(),
         dragHandle = { BottomSheetDefaults.DragHandle() },
     ) {
         Column(
@@ -77,24 +73,14 @@ fun MmrIosSettingsSingleChoiceSheet(
                 text = title,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.SemiBold,
-                color =
-                    if (MmrBrandColors.canvasIsDark()) {
-                        MmrBrandColors.onCanvas()
-                    } else {
-                        MmrBrandColors.TextStrong
-                    },
+                color = MmrBrandColors.modalSheetTitleText(),
                 modifier = Modifier.padding(bottom = if (message != null) 6.dp else 12.dp),
             )
             message?.let {
                 MmrHelperText(
                     text = it,
                     modifier = Modifier.padding(bottom = 12.dp),
-                    color =
-                        if (MmrBrandColors.canvasIsDark()) {
-                            MmrBrandColors.onCanvasMuted()
-                        } else {
-                            MmrBrandColors.TextMedium
-                        },
+                    color = MmrBrandColors.modalSheetBodyText(),
                 )
             }
             Surface(
@@ -242,18 +228,19 @@ fun MmrIosSettingsChoiceRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (labelContent != null) {
-                Box(modifier = Modifier.weight(1f)) {
+                Box(modifier = Modifier.weight(1f, fill = true).padding(end = 8.dp)) {
                     labelContent()
                 }
             } else {
                 Text(
                     text = label,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f, fill = true).padding(end = 8.dp),
                     color = MmrBrandColors.settingsSheetListRowText(),
                     fontSize = 16.sp,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                    maxLines = 3,
+                    maxLines = MMR_IOS_SETTINGS_LABEL_MAX_LINES,
                     overflow = TextOverflow.Ellipsis,
+                    softWrap = true,
                 )
             }
             if (selected) {
