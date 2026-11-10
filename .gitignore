@@ -1,4 +1,5 @@
 /local.properties
+/app/google-services.json
 *.iml
 .gradle
 /.idea/caches
@@ -20,3 +21,9 @@ replay_pid*.log
 window_dump*.xml
 mmr_cap.png
 /docs/device-screenshots/
+__pycache__/
+/.playwright-mcp/
+*.mibxbac
+/device_backup_mibxbac.zip
+/tools/sms-exports/
+/tools/sms-export-compare.txt

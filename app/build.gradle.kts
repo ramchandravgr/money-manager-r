@@ -21,21 +21,62 @@ val localProperties =
 val googleWebClientId: String =
     localProperties.getProperty("GOOGLE_WEB_CLIENT_ID")?.trim().orEmpty()
 
+fun propOrDefault(
+    key: String,
+    default: String,
+): String = localProperties.getProperty(key)?.trim()?.takeIf { it.isNotEmpty() } ?: default
+
+// Google sample IDs — debug / until real units are set in local.properties
+val admobAppId =
+    propOrDefault(
+        "ADMOB_APP_ID",
+        "ca-app-pub-3940256099942544~3347511713",
+    )
+val admobUnitHomeBanner =
+    propOrDefault(
+        "ADMOB_UNIT_HOME_BANNER",
+        "ca-app-pub-3940256099942544/9214589741",
+    )
+val admobUnitHomeMrec =
+    propOrDefault(
+        "ADMOB_UNIT_HOME_MREC",
+        "ca-app-pub-3940256099942544/6300978111",
+    )
+val admobUnitStatsNative =
+    propOrDefault(
+        "ADMOB_UNIT_STATS_NATIVE",
+        "ca-app-pub-3940256099942544/2247696110",
+    )
+
 android {
-    namespace = "com.mmr.app"
+    namespace = "com.rrparallelstudio.miapp"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.mmr.app"
+        applicationId = "com.rrparallelstudio.miapp"
         minSdk = 24
         targetSdk = 35
-        // Play versionCode: major*10000 + minor*100 + patch (0.9.1 -> 901). Bump every upload.
-        versionCode = 901
-        versionName = "0.9.1"
+        // Play versionCode: major*10000 + minor*100 + patch (0.10.1 -> 1001). Bump every upload.
+        versionCode = 1101
+        versionName = "0.11.1"
 
-        testInstrumentationRunner = "com.mmr.app.HiltTestRunner"
+        testInstrumentationRunner = "com.rrparallelstudio.miapp.HiltTestRunner"
 
         buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
+        buildConfigField(
+            "boolean",
+            "ADS_DEBUG_PLACEHOLDERS",
+            if (localProperties.getProperty("ADS_DEBUG_PLACEHOLDERS")?.trim() == "true") "true" else "false",
+        )
+        buildConfigField(
+            "boolean",
+            "CRASHLYTICS_DEBUG",
+            if (localProperties.getProperty("CRASHLYTICS_DEBUG")?.trim() == "true") "true" else "false",
+        )
+        buildConfigField("String", "ADMOB_UNIT_HOME_BANNER", "\"$admobUnitHomeBanner\"")
+        buildConfigField("String", "ADMOB_UNIT_HOME_MREC", "\"$admobUnitHomeMrec\"")
+        buildConfigField("String", "ADMOB_UNIT_STATS_NATIVE", "\"$admobUnitStatsNative\"")
+        manifestPlaceholders["admobAppId"] = admobAppId
     }
 
     buildTypes {
@@ -105,6 +146,7 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
 
     implementation(libs.androidx.core.ktx)
+    implementation("androidx.documentfile:documentfile:1.1.0")
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.activity.compose)
@@ -134,6 +176,10 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.fastexcel)
     implementation(libs.play.services.auth)
+    implementation(libs.play.services.ads)
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.config)
+    implementation(libs.firebase.crashlytics)
     implementation(libs.okhttp)
     implementation(libs.androidx.credentials)
     implementation(libs.androidx.credentials.play.services.auth)
@@ -180,13 +226,19 @@ fun registerKtlintSrcTask(
     mainClass.set("com.pinterest.ktlint.Main")
     workingDir = layout.projectDirectory.asFile
     val baseline = rootProject.file("config/ktlint/baseline.xml")
+    val srcRoots =
+        listOf(
+            "src/main/java",
+            "src/test/java",
+            "src/androidTest/java",
+        )
     val mode =
         buildList {
             if (format) add("-F")
             add("--baseline=${baseline.absolutePath}")
-            add("src")
+            addAll(srcRoots)
         }
-    args(mode)
+    args(*mode.toTypedArray())
 }
 
 val ktlintCheckSources = registerKtlintSrcTask("ktlintCheckSources", format = false)
@@ -200,11 +252,15 @@ tasks.register<JavaExec>("ktlintGenerateSrcBaseline") {
     workingDir = layout.projectDirectory.asFile
     isIgnoreExitValue = true
     val baseline = rootProject.file("config/ktlint/baseline.xml")
-    args(
-        "generateBaseline",
-        "--baseline=${baseline.absolutePath}",
-        "src",
-    )
+    val generateArgs =
+        buildList {
+            add("generateBaseline")
+            add("--baseline=${baseline.absolutePath}")
+            add("src/main/java")
+            add("src/test/java")
+            add("src/androidTest/java")
+        }
+    args(*generateArgs.toTypedArray())
 }
 
 tasks.named("ktlintCheck") {
@@ -223,11 +279,16 @@ tasks.register<Exec>("pullUiTestScreenshots") {
     group = "verification"
     description = "Pull PNG UI traces from the connected device into app/build/ui-test-trace/"
     val dest = layout.buildDirectory.dir("ui-test-trace")
-    val remote = "/sdcard/Android/data/com.mmr.app/files/ui-test-trace/"
+    val remote = "/sdcard/Android/data/com.rrparallelstudio.miapp/files/ui-test-trace/"
     commandLine(adbExecutable, "pull", remote, dest.get().asFile.absolutePath)
     isIgnoreExitValue = true
 }
 
 afterEvaluate {
     tasks.findByName("connectedDebugAndroidTest")?.finalizedBy("pullUiTestScreenshots")
+}
+
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
 }

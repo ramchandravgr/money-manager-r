@@ -1,0 +1,1056 @@
+package com.rrparallelstudio.miapp.core.backup
+
+import com.rrparallelstudio.miapp.core.backup.model.MmrAppSettingsBackup
+import com.rrparallelstudio.miapp.core.backup.model.MmrBackupAssetAttachmentRecord
+import com.rrparallelstudio.miapp.core.backup.model.MmrBackupAttachmentRecord
+import com.rrparallelstudio.miapp.core.backup.model.MmrBackupPayload
+import com.rrparallelstudio.miapp.core.backup.model.MmrDisplaySettingsBackup
+import com.rrparallelstudio.miapp.core.backup.model.MmrKnownProfileBackup
+import com.rrparallelstudio.miapp.core.backup.model.MmrOwnerProfileBackup
+import com.rrparallelstudio.miapp.core.backup.model.MmrSmsInboundSettingsBackup
+import com.rrparallelstudio.miapp.core.database.entity.AccountEntity
+import com.rrparallelstudio.miapp.core.database.entity.AssetEntity
+import com.rrparallelstudio.miapp.core.database.entity.AssetValuationEntity
+import com.rrparallelstudio.miapp.core.database.entity.BudgetEntity
+import com.rrparallelstudio.miapp.core.database.entity.CategorizationRuleEntity
+import com.rrparallelstudio.miapp.core.database.entity.CategoryEntity
+import com.rrparallelstudio.miapp.core.database.entity.LoanEntity
+import com.rrparallelstudio.miapp.core.database.entity.LoanInterestRevisionEntity
+import com.rrparallelstudio.miapp.core.database.entity.LoanPaymentEntity
+import com.rrparallelstudio.miapp.core.database.entity.LoanScheduleEntryEntity
+import com.rrparallelstudio.miapp.core.database.entity.NotificationRuleEntity
+import com.rrparallelstudio.miapp.core.database.entity.RecurringRuleEntity
+import com.rrparallelstudio.miapp.core.database.entity.SmsMessageRecordEntity
+import com.rrparallelstudio.miapp.core.database.entity.SubcategoryEntity
+import com.rrparallelstudio.miapp.core.database.entity.SyncTombstoneEntity
+import com.rrparallelstudio.miapp.core.database.entity.TransactionApprovalEntity
+import com.rrparallelstudio.miapp.core.database.entity.TransactionEntity
+import com.rrparallelstudio.miapp.core.database.entity.TrustedLanDeviceEntity
+import com.rrparallelstudio.miapp.core.model.enums.AccountType
+import com.rrparallelstudio.miapp.core.model.enums.AssetStatus
+import com.rrparallelstudio.miapp.core.model.enums.BudgetPeriodType
+import com.rrparallelstudio.miapp.core.model.enums.CardNetwork
+import com.rrparallelstudio.miapp.core.model.enums.CategorizationMatchType
+import com.rrparallelstudio.miapp.core.model.enums.CategoryType
+import com.rrparallelstudio.miapp.core.model.enums.LoanPaymentType
+import com.rrparallelstudio.miapp.core.model.enums.LoanScheduleStatus
+import com.rrparallelstudio.miapp.core.model.enums.LoanStatus
+import com.rrparallelstudio.miapp.core.model.enums.LoanType
+import com.rrparallelstudio.miapp.core.model.enums.NotificationRuleType
+import com.rrparallelstudio.miapp.core.model.enums.RecordStatus
+import com.rrparallelstudio.miapp.core.model.enums.RecurrenceInterval
+import com.rrparallelstudio.miapp.core.model.enums.SmsApprovalKind
+import com.rrparallelstudio.miapp.core.model.enums.SmsApprovalState
+import com.rrparallelstudio.miapp.core.model.enums.SmsLinkRole
+import com.rrparallelstudio.miapp.core.model.enums.SmsParsedStatus
+import com.rrparallelstudio.miapp.core.model.enums.TransactionSourceType
+import com.rrparallelstudio.miapp.core.model.enums.TransactionType
+import org.json.JSONArray
+import org.json.JSONObject
+
+object BackupJsonCodec {
+    const val CURRENT_FORMAT_VERSION = 4
+    const val SUPPORTED_FORMAT_VERSION = 4
+    const val EXPECTED_APP_ID = "com.rrparallelstudio.miapp"
+
+    fun encode(payload: MmrBackupPayload): String =
+        JSONObject()
+            .apply {
+                put("formatVersion", payload.formatVersion)
+                put("appId", payload.appId)
+                put("exportedAtEpochMillis", payload.exportedAtEpochMillis)
+                put("databaseVersion", payload.databaseVersion)
+                put("categories", payload.categories.toJsonArray { categoryToJson(it) })
+                put("subcategories", payload.subcategories.toJsonArray { subcategoryToJson(it) })
+                put("accounts", payload.accounts.toJsonArray { accountToJson(it) })
+                put("loans", payload.loans.toJsonArray { loanToJson(it) })
+                put(
+                    "loanInterestRevisions",
+                    payload.loanInterestRevisions.toJsonArray { loanInterestRevisionToJson(it) },
+                )
+                put("loanScheduleEntries", payload.loanScheduleEntries.toJsonArray { loanScheduleEntryToJson(it) })
+                put("transactions", payload.transactions.toJsonArray { transactionToJson(it) })
+                put("loanPayments", payload.loanPayments.toJsonArray { loanPaymentToJson(it) })
+                put("recurringRules", payload.recurringRules.toJsonArray { recurringRuleToJson(it) })
+                if (payload.budgets.isNotEmpty()) {
+                    put("budgets", payload.budgets.toJsonArray { budgetToJson(it) })
+                }
+                if (payload.assets.isNotEmpty()) {
+                    put("assets", payload.assets.toJsonArray { assetToJson(it) })
+                }
+                if (payload.assetValuations.isNotEmpty()) {
+                    put("assetValuations", payload.assetValuations.toJsonArray { assetValuationToJson(it) })
+                }
+                put("notificationRules", payload.notificationRules.toJsonArray { notificationRuleToJson(it) })
+                put("smsMessageRecords", payload.smsMessageRecords.toJsonArray { smsRecordToJson(it) })
+                put("transactionApprovals", payload.transactionApprovals.toJsonArray { approvalToJson(it) })
+                payload.appSettings?.let { settings ->
+                    put("appSettings", appSettingsToJson(settings))
+                }
+                if (payload.tombstones.isNotEmpty()) {
+                    put("tombstones", payload.tombstones.toJsonArray { tombstoneToJson(it) })
+                }
+                if (payload.categorizationRules.isNotEmpty()) {
+                    put("categorizationRules", payload.categorizationRules.toJsonArray { categorizationRuleToJson(it) })
+                }
+                if (payload.trustedLanDevices.isNotEmpty()) {
+                    put("trustedLanDevices", payload.trustedLanDevices.toJsonArray { trustedLanDeviceToJson(it) })
+                }
+                if (payload.transactionAttachments.isNotEmpty()) {
+                    put(
+                        "transactionAttachments",
+                        payload.transactionAttachments.toJsonArray { backupAttachmentToJson(it) },
+                    )
+                }
+                if (payload.assetAttachments.isNotEmpty()) {
+                    put(
+                        "assetAttachments",
+                        payload.assetAttachments.toJsonArray { backupAssetAttachmentToJson(it) },
+                    )
+                }
+            }.toString(2)
+
+    fun decode(json: String): MmrBackupPayload {
+        val trimmed = json.trim()
+        if (trimmed.isEmpty()) {
+            throw IllegalArgumentException("Backup file is empty.")
+        }
+        val root =
+            try {
+                JSONObject(trimmed)
+            } catch (e: Exception) {
+                throw IllegalArgumentException("Backup file is not valid JSON.", e)
+            }
+        val formatVersion = root.optInt("formatVersion", -1)
+        if (formatVersion != SUPPORTED_FORMAT_VERSION) {
+            throw IllegalArgumentException("Unsupported backup format version: $formatVersion")
+        }
+        val appId = root.optString("appId", "")
+        if (appId != EXPECTED_APP_ID) {
+            throw IllegalArgumentException("This backup file is not for Money Inbox.")
+        }
+
+        return MmrBackupPayload(
+            formatVersion = formatVersion,
+            appId = appId,
+            exportedAtEpochMillis = root.optLong("exportedAtEpochMillis", 0L),
+            databaseVersion = root.optInt("databaseVersion", 0),
+            categories = root.readArray("categories").mapObjects { categoryFromJson(it) },
+            subcategories = root.readArray("subcategories").mapObjects { subcategoryFromJson(it) },
+            accounts = root.readArray("accounts").mapObjects { accountFromJson(it) },
+            loans = root.readArray("loans").mapObjects { loanFromJson(it) },
+            loanInterestRevisions =
+                root
+                    .readArray(
+                        "loanInterestRevisions",
+                    ).mapObjects { loanInterestRevisionFromJson(it) },
+            loanScheduleEntries =
+                root
+                    .readArray(
+                        "loanScheduleEntries",
+                    ).mapObjects { loanScheduleEntryFromJson(it) },
+            transactions = root.readArray("transactions").mapObjects { transactionFromJson(it) },
+            loanPayments = root.readArray("loanPayments").mapObjects { loanPaymentFromJson(it) },
+            recurringRules = root.readArray("recurringRules").mapObjects { recurringRuleFromJson(it) },
+            budgets = root.readArray("budgets").mapObjects { budgetFromJson(it) },
+            assets = root.readArray("assets").mapObjects { assetFromJson(it) },
+            assetValuations = root.readArray("assetValuations").mapObjects { assetValuationFromJson(it) },
+            notificationRules = root.readArray("notificationRules").mapObjects { notificationRuleFromJson(it) },
+            smsMessageRecords = root.readArray("smsMessageRecords").mapObjects { smsRecordFromJson(it) },
+            transactionApprovals = root.readArray("transactionApprovals").mapObjects { approvalFromJson(it) },
+            appSettings =
+                if (root.has("appSettings") && !root.isNull("appSettings")) {
+                    appSettingsFromJson(root.getJSONObject("appSettings"))
+                } else {
+                    null
+                },
+            tombstones = root.readArray("tombstones").mapObjects { tombstoneFromJson(it) },
+            categorizationRules =
+                root.readArray("categorizationRules").mapObjects { categorizationRuleFromJson(it) },
+            trustedLanDevices = root.readArray("trustedLanDevices").mapObjects { trustedLanDeviceFromJson(it) },
+            transactionAttachments =
+                root.readArray("transactionAttachments").mapObjects { backupAttachmentFromJson(it) },
+            assetAttachments =
+                root.readArray("assetAttachments").mapObjects { backupAssetAttachmentFromJson(it) },
+        )
+    }
+
+    private fun tombstoneToJson(entity: SyncTombstoneEntity) =
+        JSONObject().apply {
+            put("syncId", entity.syncId)
+            put("entityType", entity.entityType)
+            put("deletedAt", entity.deletedAt)
+            put("sourceDeviceId", entity.sourceDeviceId)
+        }
+
+    private fun tombstoneFromJson(json: JSONObject) =
+        SyncTombstoneEntity(
+            syncId = json.getString("syncId"),
+            entityType = json.getString("entityType"),
+            deletedAt = json.getLong("deletedAt"),
+            sourceDeviceId = json.getString("sourceDeviceId"),
+        )
+
+    private fun appSettingsToJson(settings: MmrAppSettingsBackup) =
+        JSONObject().apply {
+            put("smsScanMonths", settings.smsScanMonths)
+            settings.display?.let { put("display", displaySettingsBackupToJson(it)) }
+            settings.smsInbound?.let { put("smsInbound", smsInboundSettingsToJson(it)) }
+            settings.ownerProfile?.let { put("ownerProfile", ownerProfileBackupToJson(it)) }
+            if (settings.knownProfiles.isNotEmpty()) {
+                put(
+                    "knownProfiles",
+                    JSONArray().apply {
+                        settings.knownProfiles.forEach { put(ownerProfileBackupToJson(it)) }
+                    },
+                )
+            }
+        }
+
+    private fun ownerProfileBackupToJson(profile: MmrOwnerProfileBackup) =
+        JSONObject().apply {
+            put("profileId", profile.profileId)
+            put("displayName", profile.displayName)
+        }
+
+    private fun ownerProfileBackupToJson(profile: MmrKnownProfileBackup) =
+        JSONObject().apply {
+            put("profileId", profile.profileId)
+            put("displayName", profile.displayName)
+            put("updatedAt", profile.updatedAt)
+        }
+
+    private fun appSettingsFromJson(json: JSONObject): MmrAppSettingsBackup {
+        val smsScanMonths =
+            if (json.has("smsScanMonths")) {
+                json.getInt("smsScanMonths")
+            } else {
+                com.rrparallelstudio.miapp.core.parser.scanner.SmsScanPeriod.DEFAULT_MONTHS
+            }
+        return MmrAppSettingsBackup(
+            smsScanMonths = smsScanMonths,
+            display =
+                if (json.has("display") && !json.isNull("display")) {
+                    displaySettingsBackupFromJson(json.getJSONObject("display"))
+                } else {
+                    null
+                },
+            smsInbound =
+                if (json.has("smsInbound") && !json.isNull("smsInbound")) {
+                    smsInboundSettingsFromJson(json.getJSONObject("smsInbound"))
+                } else {
+                    null
+                },
+            ownerProfile =
+                if (json.has("ownerProfile") && !json.isNull("ownerProfile")) {
+                    val op = json.getJSONObject("ownerProfile")
+                    MmrOwnerProfileBackup(
+                        profileId = op.getString("profileId"),
+                        displayName = op.getString("displayName"),
+                    )
+                } else {
+                    null
+                },
+            knownProfiles =
+                json.optJSONArray("knownProfiles")?.let { array ->
+                    buildList {
+                        for (i in 0 until array.length()) {
+                            val item = array.getJSONObject(i)
+                            add(
+                                MmrKnownProfileBackup(
+                                    profileId = item.getString("profileId"),
+                                    displayName = item.getString("displayName"),
+                                    updatedAt = item.optLong("updatedAt", 0L),
+                                ),
+                            )
+                        }
+                    }
+                } ?: emptyList(),
+        )
+    }
+
+    private fun displaySettingsBackupToJson(settings: MmrDisplaySettingsBackup) =
+        JSONObject().apply {
+            put("mainCurrencyCode", settings.mainCurrencyCode)
+            putNullableString("subCurrencyCode", settings.subCurrencyCode)
+            put("startScreenTab", settings.startScreenTab)
+            put("monthStartDay", settings.monthStartDay)
+            put("weekStartDay", settings.weekStartDay)
+            put("budgetCarryOver", settings.budgetCarryOver)
+            put("swipeBehavior", "CHANGE_DATE")
+            put("amountColorScheme", settings.amountColorScheme)
+            put("timeDisplay", settings.timeDisplay)
+            put("showDescription", settings.showDescription)
+            put("autocompleteEnabled", settings.autocompleteEnabled)
+            put("inputOrder", settings.inputOrder)
+            put("appColorTheme", settings.appColorTheme)
+            put("themeMode", settings.themeMode)
+            put(
+                "hiddenMainNavIds",
+                org.json.JSONArray(settings.hiddenMainNavIds),
+            )
+        }
+
+    private fun displaySettingsBackupFromJson(json: JSONObject) =
+        MmrDisplaySettingsBackup(
+            mainCurrencyCode = json.getString("mainCurrencyCode"),
+            subCurrencyCode = json.optNullableString("subCurrencyCode"),
+            startScreenTab = json.getString("startScreenTab"),
+            monthStartDay = json.getInt("monthStartDay"),
+            weekStartDay = json.getString("weekStartDay"),
+            budgetCarryOver = json.getBoolean("budgetCarryOver"),
+            swipeBehavior = json.getString("swipeBehavior"),
+            amountColorScheme = json.getString("amountColorScheme"),
+            timeDisplay = json.getString("timeDisplay"),
+            showDescription = json.getBoolean("showDescription"),
+            autocompleteEnabled = json.getBoolean("autocompleteEnabled"),
+            inputOrder = json.getString("inputOrder"),
+            appColorTheme = json.getString("appColorTheme"),
+            themeMode = json.optString("themeMode", "SYSTEM"),
+            hiddenMainNavIds =
+                json.readArray("hiddenMainNavIds").let { array ->
+                    buildList {
+                        for (index in 0 until array.length()) {
+                            add(array.getString(index))
+                        }
+                    }
+                },
+        )
+
+    private fun smsInboundSettingsToJson(settings: MmrSmsInboundSettingsBackup) =
+        JSONObject().apply {
+            put("notifyOnNewPending", settings.notifyOnNewPending)
+            put("readSmsInboundPromptShown", settings.readSmsInboundPromptShown)
+        }
+
+    private fun smsInboundSettingsFromJson(json: JSONObject) =
+        MmrSmsInboundSettingsBackup(
+            notifyOnNewPending = json.getBoolean("notifyOnNewPending"),
+            readSmsInboundPromptShown = json.getBoolean("readSmsInboundPromptShown"),
+        )
+
+    private fun budgetToJson(entity: BudgetEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("syncId", entity.syncId)
+            put("categoryId", entity.categoryId)
+            putNullableLong("subcategoryId", entity.subcategoryId)
+            put("amountLimit", entity.amountLimit)
+            put("periodType", entity.periodType.name)
+            putNullableLong("customPeriodStartMillis", entity.customPeriodStartMillis)
+            putNullableLong("customPeriodEndMillis", entity.customPeriodEndMillis)
+            put("alertOnExceeded", entity.alertOnExceeded)
+            putNullableString("lastAlertPeriodKey", entity.lastAlertPeriodKey)
+            put("isActive", entity.isActive)
+            put("createdAt", entity.createdAt)
+            put("updatedAt", entity.updatedAt)
+            putNullableString("createdByProfileId", entity.createdByProfileId)
+            putNullableString("createdByDisplayName", entity.createdByDisplayName)
+        }
+
+    private fun budgetFromJson(json: JSONObject) =
+        BudgetEntity(
+            id = json.getLong("id"),
+            syncId = json.getString("syncId"),
+            categoryId = json.getLong("categoryId"),
+            subcategoryId = json.optNullableLong("subcategoryId"),
+            amountLimit = json.getDouble("amountLimit"),
+            periodType = BudgetPeriodType.valueOf(json.getString("periodType")),
+            customPeriodStartMillis = json.optNullableLong("customPeriodStartMillis"),
+            customPeriodEndMillis = json.optNullableLong("customPeriodEndMillis"),
+            alertOnExceeded = json.getBoolean("alertOnExceeded"),
+            lastAlertPeriodKey = json.optNullableString("lastAlertPeriodKey"),
+            isActive = json.getBoolean("isActive"),
+            createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
+            createdByProfileId = json.optNullableString("createdByProfileId"),
+            createdByDisplayName = json.optNullableString("createdByDisplayName"),
+        )
+
+    private fun categorizationRuleToJson(entity: CategorizationRuleEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("syncId", entity.syncId)
+            put("priority", entity.priority)
+            put("matchType", entity.matchType.name)
+            put("pattern", entity.pattern)
+            put("categoryName", entity.categoryName)
+            putNullableString("subcategoryName", entity.subcategoryName)
+            put("isEnabled", entity.isEnabled)
+            put("createdAt", entity.createdAt)
+            put("updatedAt", entity.updatedAt)
+        }
+
+    private fun categorizationRuleFromJson(json: JSONObject) =
+        CategorizationRuleEntity(
+            id = json.getLong("id"),
+            syncId = json.getString("syncId"),
+            priority = json.getInt("priority"),
+            matchType = CategorizationMatchType.valueOf(json.getString("matchType")),
+            pattern = json.getString("pattern"),
+            categoryName = json.getString("categoryName"),
+            subcategoryName = json.optNullableString("subcategoryName"),
+            isEnabled = json.getBoolean("isEnabled"),
+            createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
+        )
+
+    private fun trustedLanDeviceToJson(entity: TrustedLanDeviceEntity) =
+        JSONObject().apply {
+            put("remoteDeviceId", entity.remoteDeviceId)
+            put("displayName", entity.displayName)
+            put("theirAuthToken", entity.theirAuthToken)
+            put("pairedAtMillis", entity.pairedAtMillis)
+        }
+
+    private fun trustedLanDeviceFromJson(json: JSONObject) =
+        TrustedLanDeviceEntity(
+            remoteDeviceId = json.getString("remoteDeviceId"),
+            displayName = json.getString("displayName"),
+            theirAuthToken = json.getString("theirAuthToken"),
+            pairedAtMillis = json.getLong("pairedAtMillis"),
+        )
+
+    private fun backupAttachmentToJson(record: MmrBackupAttachmentRecord) =
+        JSONObject().apply {
+            put("id", record.id)
+            put("syncId", record.syncId)
+            put("transactionId", record.transactionId)
+            put("mimeType", record.mimeType)
+            put("fileSizeBytes", record.fileSizeBytes)
+            put("createdAt", record.createdAt)
+            put("updatedAt", record.updatedAt)
+            put("contentBase64", record.contentBase64)
+        }
+
+    private fun backupAttachmentFromJson(json: JSONObject) =
+        MmrBackupAttachmentRecord(
+            id = json.getLong("id"),
+            syncId = json.getString("syncId"),
+            transactionId = json.getLong("transactionId"),
+            mimeType = json.getString("mimeType"),
+            fileSizeBytes = json.getLong("fileSizeBytes"),
+            createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
+            contentBase64 = json.getString("contentBase64"),
+        )
+
+    private fun backupAssetAttachmentToJson(record: MmrBackupAssetAttachmentRecord) =
+        JSONObject().apply {
+            put("id", record.id)
+            put("syncId", record.syncId)
+            put("assetId", record.assetId)
+            put("mimeType", record.mimeType)
+            put("fileSizeBytes", record.fileSizeBytes)
+            put("createdAt", record.createdAt)
+            put("updatedAt", record.updatedAt)
+            put("contentBase64", record.contentBase64)
+        }
+
+    private fun backupAssetAttachmentFromJson(json: JSONObject) =
+        MmrBackupAssetAttachmentRecord(
+            id = json.getLong("id"),
+            syncId = json.getString("syncId"),
+            assetId = json.getLong("assetId"),
+            mimeType = json.getString("mimeType"),
+            fileSizeBytes = json.getLong("fileSizeBytes"),
+            createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
+            contentBase64 = json.getString("contentBase64"),
+        )
+
+    private fun assetToJson(entity: AssetEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("syncId", entity.syncId)
+            put("name", entity.name)
+            put("assetType", entity.assetType)
+            put("status", entity.status.name)
+            put("isInherited", entity.isInherited)
+            putNullableLong("purchaseDateMillis", entity.purchaseDateMillis)
+            putNullableDouble("purchasePrice", entity.purchasePrice)
+            putNullableString("purchasePaymentMode", entity.purchasePaymentMode)
+            putNullableDouble("purchaseDownPayment", entity.purchaseDownPayment)
+            putNullableDouble("purchaseFinancedAmount", entity.purchaseFinancedAmount)
+            put("currentValue", entity.currentValue)
+            putNullableString("ownedByName", entity.ownedByName)
+            putNullableString("location", entity.location)
+            putNullableString("identifier", entity.identifier)
+            putNullableLong("linkedLoanId", entity.linkedLoanId)
+            putNullableLong("nextValuationDueMillis", entity.nextValuationDueMillis)
+            put("valuationReminderDaysBefore", entity.valuationReminderDaysBefore)
+            putNullableLong("saleDateMillis", entity.saleDateMillis)
+            putNullableDouble("salePrice", entity.salePrice)
+            putNullableString("notes", entity.notes)
+            put("createdAt", entity.createdAt)
+            put("updatedAt", entity.updatedAt)
+            putNullableString("createdByProfileId", entity.createdByProfileId)
+            putNullableString("createdByDisplayName", entity.createdByDisplayName)
+        }
+
+    private fun assetFromJson(json: JSONObject) =
+        AssetEntity(
+            id = json.getLong("id"),
+            syncId = syncIdFromJson(json),
+            name = json.getString("name"),
+            assetType = json.getString("assetType"),
+            status = AssetStatus.valueOf(json.getString("status")),
+            isInherited = json.getBoolean("isInherited"),
+            purchaseDateMillis = json.optNullableLong("purchaseDateMillis"),
+            purchasePrice = json.optNullableDouble("purchasePrice"),
+            purchasePaymentMode = json.optNullableString("purchasePaymentMode"),
+            purchaseDownPayment = json.optNullableDouble("purchaseDownPayment"),
+            purchaseFinancedAmount = json.optNullableDouble("purchaseFinancedAmount"),
+            currentValue = json.getDouble("currentValue"),
+            ownedByName = json.optNullableString("ownedByName"),
+            location = json.optNullableString("location"),
+            identifier = json.optNullableString("identifier"),
+            linkedLoanId = json.optNullableLong("linkedLoanId"),
+            nextValuationDueMillis = json.optNullableLong("nextValuationDueMillis"),
+            valuationReminderDaysBefore = json.optInt("valuationReminderDaysBefore", 0),
+            saleDateMillis = json.optNullableLong("saleDateMillis"),
+            salePrice = json.optNullableDouble("salePrice"),
+            notes = json.optNullableString("notes"),
+            createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
+            createdByProfileId = json.optNullableString("createdByProfileId"),
+            createdByDisplayName = json.optNullableString("createdByDisplayName"),
+        )
+
+    private fun assetValuationToJson(entity: AssetValuationEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("syncId", entity.syncId)
+            put("assetId", entity.assetId)
+            put("amount", entity.amount)
+            put("recordedAt", entity.recordedAt)
+            putNullableString("notes", entity.notes)
+            put("createdAt", entity.createdAt)
+        }
+
+    private fun assetValuationFromJson(json: JSONObject) =
+        AssetValuationEntity(
+            id = json.getLong("id"),
+            syncId = syncIdFromJson(json),
+            assetId = json.getLong("assetId"),
+            amount = json.getDouble("amount"),
+            recordedAt = json.getLong("recordedAt"),
+            notes = json.optNullableString("notes"),
+            createdAt = json.getLong("createdAt"),
+        )
+
+    private fun loanInterestRevisionToJson(entity: LoanInterestRevisionEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("loanId", entity.loanId)
+            put("effectiveFromMillis", entity.effectiveFromMillis)
+            put("annualRatePercent", entity.annualRatePercent)
+            putNullableString("note", entity.note)
+            put("createdAt", entity.createdAt)
+        }
+
+    private fun loanInterestRevisionFromJson(json: JSONObject) =
+        LoanInterestRevisionEntity(
+            id = json.getLong("id"),
+            loanId = json.getLong("loanId"),
+            effectiveFromMillis = json.getLong("effectiveFromMillis"),
+            annualRatePercent = json.getDouble("annualRatePercent"),
+            note = json.optNullableString("note"),
+            createdAt = json.getLong("createdAt"),
+        )
+
+    private fun loanScheduleEntryToJson(entity: LoanScheduleEntryEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("loanId", entity.loanId)
+            put("sequenceNumber", entity.sequenceNumber)
+            put("dueDateMillis", entity.dueDateMillis)
+            put("emiAmount", entity.emiAmount)
+            put("principalPlanned", entity.principalPlanned)
+            put("interestPlanned", entity.interestPlanned)
+            put("status", entity.status.name)
+            putNullableLong("linkedPaymentId", entity.linkedPaymentId)
+            put("annualRatePercentAtPlan", entity.annualRatePercentAtPlan)
+        }
+
+    private fun loanScheduleEntryFromJson(json: JSONObject) =
+        LoanScheduleEntryEntity(
+            id = json.getLong("id"),
+            loanId = json.getLong("loanId"),
+            sequenceNumber = json.getInt("sequenceNumber"),
+            dueDateMillis = json.getLong("dueDateMillis"),
+            emiAmount = json.getDouble("emiAmount"),
+            principalPlanned = json.getDouble("principalPlanned"),
+            interestPlanned = json.getDouble("interestPlanned"),
+            status = LoanScheduleStatus.valueOf(json.getString("status")),
+            linkedPaymentId = json.optNullableLong("linkedPaymentId"),
+            annualRatePercentAtPlan = json.getDouble("annualRatePercentAtPlan"),
+        )
+
+    private fun JSONObject.readArray(name: String): JSONArray =
+        if (has(name) && !isNull(name)) getJSONArray(name) else JSONArray()
+
+    private fun <T> List<T>.toJsonArray(mapper: (T) -> JSONObject): JSONArray =
+        JSONArray().also { array ->
+            forEach { array.put(mapper(it)) }
+        }
+
+    private fun <T> JSONArray.mapObjects(mapper: (JSONObject) -> T): List<T> {
+        val items = mutableListOf<T>()
+        for (index in 0 until length()) {
+            items.add(mapper(getJSONObject(index)))
+        }
+        return items
+    }
+
+    private fun categoryToJson(entity: CategoryEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("syncId", entity.syncId)
+            put("name", entity.name)
+            put("iconName", entity.iconName)
+            put("colorHex", entity.colorHex)
+            put("type", entity.type.name)
+            put("isDefault", entity.isDefault)
+            put("isActive", entity.isActive)
+            put("orderIndex", entity.orderIndex)
+        }
+
+    private fun categoryFromJson(json: JSONObject) =
+        CategoryEntity(
+            id = json.getLong("id"),
+            syncId = syncIdFromJson(json),
+            name = json.getString("name"),
+            iconName = json.getString("iconName"),
+            colorHex = json.getString("colorHex"),
+            type = CategoryType.valueOf(json.getString("type")),
+            isDefault = json.getBoolean("isDefault"),
+            isActive = json.getBoolean("isActive"),
+            orderIndex = json.getInt("orderIndex"),
+        )
+
+    private fun subcategoryToJson(entity: SubcategoryEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("syncId", entity.syncId)
+            put("categoryId", entity.categoryId)
+            put("name", entity.name)
+            put("isActive", entity.isActive)
+            put("orderIndex", entity.orderIndex)
+        }
+
+    private fun subcategoryFromJson(json: JSONObject) =
+        SubcategoryEntity(
+            id = json.getLong("id"),
+            syncId = syncIdFromJson(json),
+            categoryId = json.getLong("categoryId"),
+            name = json.getString("name"),
+            isActive = json.getBoolean("isActive"),
+            orderIndex = json.getInt("orderIndex"),
+        )
+
+    private fun accountToJson(entity: AccountEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("syncId", entity.syncId)
+            put("name", entity.name)
+            put("type", entity.type.name)
+            put("openingBalance", entity.openingBalance)
+            put("currentBalance", entity.currentBalance)
+            put("currencyCode", entity.currencyCode)
+            put("isActive", entity.isActive)
+            put("isDefault", entity.isDefault)
+            putNullableString("cardLastFour", entity.cardLastFour)
+            put("createdAt", entity.createdAt)
+            put("updatedAt", entity.updatedAt)
+        }
+
+    private fun accountFromJson(json: JSONObject) =
+        AccountEntity(
+            id = json.getLong("id"),
+            syncId = syncIdFromJson(json),
+            name = json.getString("name"),
+            type = AccountType.valueOf(json.getString("type")),
+            openingBalance = json.getDouble("openingBalance"),
+            currentBalance = json.getDouble("currentBalance"),
+            currencyCode = json.getString("currencyCode"),
+            isActive = json.getBoolean("isActive"),
+            isDefault = json.getBoolean("isDefault"),
+            cardLastFour = json.optNullableString("cardLastFour"),
+            createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
+        )
+
+    private fun loanToJson(entity: LoanEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("syncId", entity.syncId)
+            put("name", entity.name)
+            put("lenderName", entity.lenderName)
+            put("principalAmount", entity.principalAmount)
+            put("interestRate", entity.interestRate)
+            put("outstandingAmount", entity.outstandingAmount)
+            put("openingDate", entity.openingDate)
+            putNullableLong("dueDate", entity.dueDate)
+            putNullableLong("autoTransferDate", entity.autoTransferDate)
+            putNullableLong("linkedDebitAccountId", entity.linkedDebitAccountId)
+            putNullableLong("linkedLoanAccountId", entity.linkedLoanAccountId)
+            put("loanType", entity.loanType.name)
+            put("status", entity.status.name)
+            putNullableString("repaymentMode", entity.repaymentMode)
+            putNullableInt("tenureMonths", entity.tenureMonths)
+            putNullableInt("remainingTenureMonths", entity.remainingTenureMonths)
+            putNullableDouble("fixedEmiAmount", entity.fixedEmiAmount)
+            putNullableInt("emiDayOfMonth", entity.emiDayOfMonth)
+            putNullableLong("firstEmiDueMillis", entity.firstEmiDueMillis)
+            put("emiReminderDaysBefore", entity.emiReminderDaysBefore)
+            putNullableString("fixedEmiInputMode", entity.fixedEmiInputMode)
+            putNullableString("notes", entity.notes)
+            put("createdAt", entity.createdAt)
+            put("updatedAt", entity.updatedAt)
+            putNullableString("createdByProfileId", entity.createdByProfileId)
+            putNullableString("createdByDisplayName", entity.createdByDisplayName)
+        }
+
+    private fun loanFromJson(json: JSONObject) =
+        LoanEntity(
+            id = json.getLong("id"),
+            syncId = syncIdFromJson(json),
+            name = json.getString("name"),
+            lenderName = json.getString("lenderName"),
+            principalAmount = json.getDouble("principalAmount"),
+            interestRate = json.getDouble("interestRate"),
+            outstandingAmount = json.getDouble("outstandingAmount"),
+            openingDate = json.getLong("openingDate"),
+            dueDate = json.optNullableLong("dueDate"),
+            autoTransferDate = json.optNullableLong("autoTransferDate"),
+            linkedDebitAccountId = json.optNullableLong("linkedDebitAccountId"),
+            linkedLoanAccountId = json.optNullableLong("linkedLoanAccountId"),
+            loanType = LoanType.valueOf(json.getString("loanType")),
+            status = LoanStatus.valueOf(json.getString("status")),
+            repaymentMode = json.optNullableString("repaymentMode"),
+            tenureMonths = json.optNullableInt("tenureMonths"),
+            remainingTenureMonths = json.optNullableInt("remainingTenureMonths"),
+            fixedEmiAmount = json.optNullableDouble("fixedEmiAmount"),
+            emiDayOfMonth = json.optNullableInt("emiDayOfMonth"),
+            firstEmiDueMillis = json.optNullableLong("firstEmiDueMillis"),
+            emiReminderDaysBefore = json.optInt("emiReminderDaysBefore", 1),
+            fixedEmiInputMode = json.optNullableString("fixedEmiInputMode"),
+            notes = json.optNullableString("notes"),
+            createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
+            createdByProfileId = json.optNullableString("createdByProfileId"),
+            createdByDisplayName = json.optNullableString("createdByDisplayName"),
+        )
+
+    private fun transactionToJson(entity: TransactionEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("syncId", entity.syncId)
+            put("dateTime", entity.dateTime)
+            put("amount", entity.amount)
+            put("type", entity.type.name)
+            putNullableLong("categoryId", entity.categoryId)
+            putNullableLong("subcategoryId", entity.subcategoryId)
+            putNullableString("note", entity.note)
+            put("accountId", entity.accountId)
+            putNullableLong("relatedAccountId", entity.relatedAccountId)
+            putNullableLong("loanId", entity.loanId)
+            put("sourceType", entity.sourceType.name)
+            putNullableString("sourceReferenceId", entity.sourceReferenceId)
+            put("status", entity.status.name)
+            put("attachmentCount", entity.attachmentCount)
+            put("createdAt", entity.createdAt)
+            put("updatedAt", entity.updatedAt)
+            put("isEdited", entity.isEdited)
+            putNullableString("paymentChannel", entity.paymentChannel)
+            putNullableString("paymentInstrument", entity.paymentInstrument)
+            putNullableString("cardLastFour", entity.cardLastFour)
+            putNullableString("cardNetwork", entity.cardNetwork?.name)
+            putNullableDouble("originalAmount", entity.originalAmount)
+            put("refundedTotal", entity.refundedTotal)
+            putNullableString("createdByProfileId", entity.createdByProfileId)
+            putNullableString("createdByDisplayName", entity.createdByDisplayName)
+        }
+
+    private fun syncIdFromJson(json: JSONObject): String = json.getString("syncId")
+
+    private fun transactionFromJson(json: JSONObject) =
+        TransactionEntity(
+            id = json.getLong("id"),
+            syncId = syncIdFromJson(json),
+            dateTime = json.getLong("dateTime"),
+            amount = json.getDouble("amount"),
+            type = TransactionType.valueOf(json.getString("type")),
+            categoryId = json.optNullableLong("categoryId"),
+            subcategoryId = json.optNullableLong("subcategoryId"),
+            note = json.optNullableString("note"),
+            accountId = json.getLong("accountId"),
+            relatedAccountId = json.optNullableLong("relatedAccountId"),
+            loanId = json.optNullableLong("loanId"),
+            sourceType = TransactionSourceType.valueOf(json.getString("sourceType")),
+            sourceReferenceId = json.optNullableString("sourceReferenceId"),
+            status = RecordStatus.valueOf(json.getString("status")),
+            attachmentCount = json.getInt("attachmentCount"),
+            createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
+            isEdited = json.getBoolean("isEdited"),
+            paymentChannel = json.optNullableString("paymentChannel"),
+            paymentInstrument = json.optNullableString("paymentInstrument"),
+            cardLastFour = json.optNullableString("cardLastFour"),
+            cardNetwork = json.optNullableString("cardNetwork")?.let { CardNetwork.valueOf(it) },
+            originalAmount = json.optNullableDouble("originalAmount"),
+            refundedTotal = json.optDouble("refundedTotal", 0.0),
+            createdByProfileId = json.optNullableString("createdByProfileId"),
+            createdByDisplayName = json.optNullableString("createdByDisplayName"),
+        )
+
+    private fun loanPaymentToJson(entity: LoanPaymentEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("loanId", entity.loanId)
+            putNullableLong("transactionId", entity.transactionId)
+            put("paymentAmount", entity.paymentAmount)
+            put("paymentDate", entity.paymentDate)
+            put("paymentType", entity.paymentType.name)
+            putNullableDouble("principalComponent", entity.principalComponent)
+            putNullableDouble("interestComponent", entity.interestComponent)
+            put("outstandingAfterPayment", entity.outstandingAfterPayment)
+            putNullableString("notes", entity.notes)
+        }
+
+    private fun loanPaymentFromJson(json: JSONObject) =
+        LoanPaymentEntity(
+            id = json.getLong("id"),
+            loanId = json.getLong("loanId"),
+            transactionId = json.optNullableLong("transactionId"),
+            paymentAmount = json.getDouble("paymentAmount"),
+            paymentDate = json.getLong("paymentDate"),
+            paymentType = LoanPaymentType.valueOf(json.getString("paymentType")),
+            principalComponent = json.optNullableDouble("principalComponent"),
+            interestComponent = json.optNullableDouble("interestComponent"),
+            outstandingAfterPayment = json.getDouble("outstandingAfterPayment"),
+            notes = json.optNullableString("notes"),
+        )
+
+    private fun recurringRuleToJson(entity: RecurringRuleEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("name", entity.name)
+            put("transactionTemplateType", entity.transactionTemplateType.name)
+            put("amount", entity.amount)
+            putNullableLong("categoryId", entity.categoryId)
+            putNullableLong("subcategoryId", entity.subcategoryId)
+            put("accountId", entity.accountId)
+            putNullableLong("relatedAccountId", entity.relatedAccountId)
+            putNullableLong("loanId", entity.loanId)
+            putNullableInt("dayOfMonth", entity.dayOfMonth)
+            put("recurrenceInterval", entity.recurrenceInterval.name)
+            put("nextRunDate", entity.nextRunDate)
+            put("isEnabled", entity.isEnabled)
+            putNullableLong("lastGeneratedDate", entity.lastGeneratedDate)
+            putNullableLong("endDate", entity.endDate)
+            putNullableString("noteTemplate", entity.noteTemplate)
+            put("reminderMinutesBefore", entity.reminderMinutesBefore)
+            put("createdAt", entity.createdAt)
+            put("updatedAt", entity.updatedAt)
+            putNullableString("createdByProfileId", entity.createdByProfileId)
+            putNullableString("createdByDisplayName", entity.createdByDisplayName)
+        }
+
+    private fun recurringRuleFromJson(json: JSONObject) =
+        RecurringRuleEntity(
+            id = json.getLong("id"),
+            name = json.getString("name"),
+            transactionTemplateType = TransactionType.valueOf(json.getString("transactionTemplateType")),
+            amount = json.getDouble("amount"),
+            categoryId = json.optNullableLong("categoryId"),
+            subcategoryId = json.optNullableLong("subcategoryId"),
+            accountId = json.getLong("accountId"),
+            relatedAccountId = json.optNullableLong("relatedAccountId"),
+            loanId = json.optNullableLong("loanId"),
+            dayOfMonth = json.optNullableInt("dayOfMonth"),
+            recurrenceInterval = RecurrenceInterval.valueOf(json.getString("recurrenceInterval")),
+            nextRunDate = json.getLong("nextRunDate"),
+            isEnabled = json.getBoolean("isEnabled"),
+            lastGeneratedDate = json.optNullableLong("lastGeneratedDate"),
+            endDate = json.optNullableLong("endDate"),
+            noteTemplate = json.optNullableString("noteTemplate"),
+            reminderMinutesBefore = json.getInt("reminderMinutesBefore"),
+            createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
+            createdByProfileId = json.optNullableString("createdByProfileId"),
+            createdByDisplayName = json.optNullableString("createdByDisplayName"),
+        )
+
+    private fun notificationRuleToJson(entity: NotificationRuleEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("type", entity.type.name)
+            put("enabled", entity.enabled)
+            putNullableLong("scheduleTime", entity.scheduleTime)
+            putNullableLong("targetLoanId", entity.targetLoanId)
+            putNullableLong("targetRecurringRuleId", entity.targetRecurringRuleId)
+            putNullableLong("targetAssetId", entity.targetAssetId)
+            putNullableDouble("thresholdValue", entity.thresholdValue)
+            putNullableString("title", entity.title)
+            putNullableString("message", entity.message)
+            put("isFired", entity.isFired)
+            put("createdAt", entity.createdAt)
+        }
+
+    private fun notificationRuleFromJson(json: JSONObject) =
+        NotificationRuleEntity(
+            id = json.getLong("id"),
+            type = NotificationRuleType.valueOf(json.getString("type")),
+            enabled = json.getBoolean("enabled"),
+            scheduleTime = json.optNullableLong("scheduleTime"),
+            targetLoanId = json.optNullableLong("targetLoanId"),
+            targetRecurringRuleId = json.optNullableLong("targetRecurringRuleId"),
+            targetAssetId = json.optNullableLong("targetAssetId"),
+            thresholdValue = json.optNullableDouble("thresholdValue"),
+            title = json.optNullableString("title"),
+            message = json.optNullableString("message"),
+            isFired = json.getBoolean("isFired"),
+            createdAt = json.getLong("createdAt"),
+        )
+
+    private fun smsRecordToJson(entity: SmsMessageRecordEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("sender", entity.sender)
+            put("messageBodyHash", entity.messageBodyHash)
+            put("messageBodySnippet", entity.messageBodySnippet)
+            putNullableString("messageBodyFull", entity.messageBodyFull)
+            put("receivedTime", entity.receivedTime)
+            put("parsedStatus", entity.parsedStatus.name)
+            putNullableDouble("parsedAmount", entity.parsedAmount)
+            putNullableLong("parsedDateTime", entity.parsedDateTime)
+            putNullableLong("matchedTransactionId", entity.matchedTransactionId)
+            put("approvalState", entity.approvalState.name)
+            putNullableString("rawMessageId", entity.rawMessageId)
+            putNullableLong("processedAt", entity.processedAt)
+            putNullableString("linkRole", entity.linkRole?.name)
+        }
+
+    private fun smsRecordFromJson(json: JSONObject) =
+        SmsMessageRecordEntity(
+            id = json.getLong("id"),
+            sender = json.getString("sender"),
+            messageBodyHash = json.getString("messageBodyHash"),
+            messageBodySnippet = json.getString("messageBodySnippet"),
+            messageBodyFull = json.optNullableString("messageBodyFull"),
+            receivedTime = json.getLong("receivedTime"),
+            parsedStatus = SmsParsedStatus.valueOf(json.getString("parsedStatus")),
+            parsedAmount = json.optNullableDouble("parsedAmount"),
+            parsedDateTime = json.optNullableLong("parsedDateTime"),
+            matchedTransactionId = json.optNullableLong("matchedTransactionId"),
+            approvalState = SmsApprovalState.valueOf(json.getString("approvalState")),
+            rawMessageId = json.optNullableString("rawMessageId"),
+            processedAt = json.optNullableLong("processedAt"),
+            linkRole = json.optNullableString("linkRole")?.let { SmsLinkRole.valueOf(it) },
+        )
+
+    private fun approvalToJson(entity: TransactionApprovalEntity) =
+        JSONObject().apply {
+            put("id", entity.id)
+            put("smsMessageRecordId", entity.smsMessageRecordId)
+            put("extractedAmount", entity.extractedAmount)
+            put("extractedType", entity.extractedType.name)
+            put("approvalKind", entity.approvalKind.name)
+            put("extractedDateTime", entity.extractedDateTime)
+            put("extractedSender", entity.extractedSender)
+            putNullableString("extractedMerchant", entity.extractedMerchant)
+            putNullableLong("extractedCategoryId", entity.extractedCategoryId)
+            putNullableLong("extractedAccountId", entity.extractedAccountId)
+            putNullableString("extractedNote", entity.extractedNote)
+            put("confidenceScore", entity.confidenceScore)
+            put("userEdited", entity.userEdited)
+            put("approvalState", entity.approvalState.name)
+            put("rawBodySnippet", entity.rawBodySnippet)
+            putNullableString("extractedTemplateId", entity.extractedTemplateId)
+            putNullableString("extractedPaymentChannel", entity.extractedPaymentChannel)
+            putNullableString("extractedInstrument", entity.extractedInstrument)
+            putNullableString("extractedCardLastFour", entity.extractedCardLastFour)
+            putNullableString("extractedCardNetwork", entity.extractedCardNetwork?.name)
+            put("createdAt", entity.createdAt)
+            put("updatedAt", entity.updatedAt)
+        }
+
+    private fun approvalFromJson(json: JSONObject) =
+        TransactionApprovalEntity(
+            id = json.getLong("id"),
+            smsMessageRecordId = json.getLong("smsMessageRecordId"),
+            extractedAmount = json.getDouble("extractedAmount"),
+            extractedType = TransactionType.valueOf(json.getString("extractedType")),
+            approvalKind =
+                runCatching {
+                    SmsApprovalKind.valueOf(json.optString("approvalKind", SmsApprovalKind.TRANSACTION.name))
+                }.getOrDefault(SmsApprovalKind.TRANSACTION),
+            extractedDateTime = json.getLong("extractedDateTime"),
+            extractedSender = json.getString("extractedSender"),
+            extractedMerchant = json.optNullableString("extractedMerchant"),
+            extractedCategoryId = json.optNullableLong("extractedCategoryId"),
+            extractedAccountId = json.optNullableLong("extractedAccountId"),
+            extractedNote = json.optNullableString("extractedNote"),
+            confidenceScore = json.getInt("confidenceScore"),
+            userEdited = json.getBoolean("userEdited"),
+            approvalState = SmsApprovalState.valueOf(json.getString("approvalState")),
+            rawBodySnippet = json.getString("rawBodySnippet"),
+            extractedTemplateId = json.optNullableString("extractedTemplateId"),
+            extractedPaymentChannel = json.optNullableString("extractedPaymentChannel"),
+            extractedInstrument = json.optNullableString("extractedInstrument"),
+            extractedCardLastFour = json.optNullableString("extractedCardLastFour"),
+            extractedCardNetwork = json.optNullableString("extractedCardNetwork")?.let { CardNetwork.valueOf(it) },
+            createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
+        )
+
+    private fun JSONObject.putNullableString(
+        key: String,
+        value: String?,
+    ) {
+        if (value == null) put(key, JSONObject.NULL) else put(key, value)
+    }
+
+    private fun JSONObject.putNullableLong(
+        key: String,
+        value: Long?,
+    ) {
+        if (value == null) put(key, JSONObject.NULL) else put(key, value)
+    }
+
+    private fun JSONObject.putNullableInt(
+        key: String,
+        value: Int?,
+    ) {
+        if (value == null) put(key, JSONObject.NULL) else put(key, value)
+    }
+
+    private fun JSONObject.putNullableDouble(
+        key: String,
+        value: Double?,
+    ) {
+        if (value == null) put(key, JSONObject.NULL) else put(key, value)
+    }
+
+    private fun JSONObject.optNullableString(key: String): String? {
+        if (!has(key) || isNull(key)) return null
+        return getString(key)
+    }
+
+    private fun JSONObject.optNullableLong(key: String): Long? {
+        if (!has(key) || isNull(key)) return null
+        return getLong(key)
+    }
+
+    private fun JSONObject.optNullableInt(key: String): Int? {
+        if (!has(key) || isNull(key)) return null
+        return getInt(key)
+    }
+
+    private fun JSONObject.optNullableDouble(key: String): Double? {
+        if (!has(key) || isNull(key)) return null
+        return getDouble(key)
+    }
+}

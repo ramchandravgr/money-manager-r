@@ -3,8 +3,14 @@ import re
 import xml.etree.ElementTree as ET
 from collections import Counter, defaultdict
 
-EXPORT = r"D:\Development\MMR\sms-20261022133803.xml"
-TEMPLATES = r"D:\Development\MMR\app\src\main\assets\sms_templates.json"
+import os
+
+_REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+EXPORT = os.environ.get(
+    "MMR_SMS_EXPORT",
+    os.path.join(_REPO, "tools", "sms-exports", "sms-20261109004349.xml"),
+)
+TEMPLATES = os.path.join(_REPO, "app", "src", "main", "assets", "sms_templates.json")
 
 SKIP = re.compile(
     r"\b(otp|one-time password|secret otp|pre-approved|statement is generated|login|"
@@ -78,9 +84,18 @@ def try_match(patterns, body: str, addr: str):
     return None, None
 
 
+VI_PROMO = re.compile(
+    r"\b(special data gift|vi special gift|yayy! free|you got a bonus|1gb\s*/day)\b",
+    re.I,
+)
+BHIM_COLLECT = re.compile(r"has requested money from you on your bhim app", re.I)
+
+
 def main() -> None:
     patterns = load_patterns()
     unmatched = []
+    txn_like = 0
+    matched = 0
     for _, e in ET.iterparse(EXPORT, events=("end",)):
         if e.tag != "sms":
             continue
@@ -89,12 +104,19 @@ def main() -> None:
         if not TXN.search(body) or SKIP.search(body):
             e.clear()
             continue
+        txn_like += 1
+        if VI_PROMO.search(body) or BHIM_COLLECT.search(body):
+            e.clear()
+            continue
         tid, intent = try_match(patterns, body, addr)
-        if tid is None:
+        if tid is not None:
+            matched += 1
+        else:
             unmatched.append((addr, body))
         e.clear()
 
-    print("unmatched count:", len(unmatched))
+    print("txn_like:", txn_like, "settled template matched:", matched)
+    print("unmatched count (excl. vi/bhim promo):", len(unmatched))
     by_sender = Counter(sender_suffix(a) for a, _ in unmatched)
     print("by sender:", by_sender.most_common(20))
     sigs = Counter(norm_sig(b) for _, b in unmatched)

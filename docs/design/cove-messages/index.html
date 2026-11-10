@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Cove — The daily edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,640;1,9..144,560&family=Outfit:wght@360;480;560&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #1b1612;
+      --paper: #f3ead7;
+      --paper-2: #e7dcc4;
+      --rule: rgba(27, 22, 18, 0.18);
+      --fog: #7c7368;
+      --moss: #1d4a3e;
+      --clay: #a33b2b;
+      --gold: #c9842a;
+      --sans: "Outfit", system-ui, sans-serif;
+      --serif: "Fraunces", Georgia, serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: #f6efe4;
+      background:
+        radial-gradient(900px 420px at 80% -10%, rgba(201, 132, 42, 0.18), transparent 50%),
+        #14110e;
+      font-family: var(--sans);
+      font-weight: 360;
+      line-height: 1.5;
+    }
+    a { color: #e7c27a; }
+    .wrap { width: min(1180px, calc(100% - 36px)); margin: 0 auto; }
+    nav.top {
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(20, 17, 14, 0.9);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(243, 234, 215, 0.08);
+    }
+    nav.top .wrap { display: flex; align-items: center; gap: 18px; min-height: 56px; }
+    .mark { color: inherit; text-decoration: none; font-family: var(--serif); font-weight: 640; letter-spacing: -0.03em; font-size: 1.25rem; }
+    nav.top .links { margin-left: auto; display: flex; gap: 16px; flex-wrap: wrap; }
+    nav.top .links a { color: rgba(246, 239, 228, 0.72); text-decoration: none; font-size: 0.92rem; }
+    .kicker { letter-spacing: 0.18em; text-transform: uppercase; font-size: 0.72rem; color: #e7c27a; }
+    h1 {
+      font-family: var(--serif); font-weight: 640; letter-spacing: -0.045em;
+      font-size: clamp(3.4rem, 8vw, 6.6rem); line-height: 0.88; margin: 8px 0 14px;
+    }
+    h2 { font-family: var(--serif); font-weight: 640; letter-spacing: -0.03em; font-size: clamp(1.8rem, 3vw, 2.6rem); margin: 0 0 8px; }
+    .lede { max-width: 40rem; font-size: 1.2rem; color: rgba(246, 239, 228, 0.78); margin: 0; }
+    header.hero { padding: 48px 0 10px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+    .pill { border: 1px solid rgba(246,239,228,0.16); border-radius: 999px; padding: 5px 11px; font-size: 0.8rem; color: rgba(246,239,228,0.7); }
+    section { padding: 36px 0; }
+    .sub { max-width: 46rem; color: rgba(246,239,228,0.72); margin: 0 0 20px; }
+
+    .principles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .principle { border-top: 1px solid rgba(246,239,228,0.16); padding-top: 12px; min-height: 140px; }
+    .principle strong { display: block; font-family: var(--serif); font-size: 1.35rem; font-weight: 640; margin-bottom: 6px; }
+    .principle span { color: rgba(246,239,228,0.7); font-size: 0.92rem; }
+
+    .explorer { display: grid; grid-template-columns: 250px 330px 1fr; gap: 22px; align-items: start; }
+    .screen-nav { display: flex; flex-direction: column; gap: 4px; position: sticky; top: 72px; }
+    .screen-nav button {
+      text-align: left; border: 0; background: transparent; color: rgba(246,239,228,0.78);
+      font: inherit; padding: 8px 10px; border-radius: 10px; cursor: pointer;
+    }
+    .screen-nav button small { display: block; color: rgba(246,239,228,0.42); font-size: 0.75rem; }
+    .screen-nav button.on { background: rgba(243, 234, 215, 0.08); color: #f6efe4; }
+
+    .device {
+      width: 310px; height: 660px; border-radius: 38px; padding: 10px;
+      background: #2a241e; box-shadow: 0 30px 70px rgba(0,0,0,0.45);
+    }
+    .glass { height: 100%; border-radius: 28px; overflow: hidden; background: var(--paper); position: relative; }
+    .screen { display: none; height: 100%; color: var(--ink); position: relative; }
+    .screen.on { display: block; }
+    button.linkish, .hit {
+      border: 0; background: transparent; color: inherit; font: inherit; text-align: left;
+      padding: 0; cursor: pointer; width: 100%;
+    }
+
+    /* Front page */
+    .mast {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      padding: 16px 16px 6px; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    }
+    .mast b { font-family: var(--serif); font-size: 1.7rem; letter-spacing: -0.04em; text-transform: none; font-weight: 640; }
+    .dbl { height: 3px; border-top: 1px solid var(--ink); border-bottom: 1px solid var(--ink); margin: 0 16px 10px; }
+    .lead { padding: 4px 16px 0 16px; }
+    .lead .eyebrow { color: var(--clay); letter-spacing: 0.16em; font-size: 10px; text-transform: uppercase; }
+    .lead h3 {
+      font-family: var(--serif); font-weight: 560; font-style: italic;
+      font-size: 2.05rem; line-height: 0.96; letter-spacing: -0.03em; margin: 6px 0 8px;
+    }
+    .by { font-size: 12px; }
+    .by em { font-family: var(--serif); font-style: italic; font-size: 1.05rem; }
+    .replyline {
+      margin-top: 10px; border-bottom: 1px solid var(--ink); padding: 6px 0;
+      color: var(--fog); font-family: var(--serif); font-style: italic; font-size: 1rem;
+    }
+    .also { padding: 14px 16px 0; }
+    .also .label { font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fog); }
+    .index { display: grid; grid-template-columns: 18px 1fr; gap: 2px 8px; margin-top: 8px; }
+    .index .marktime { color: var(--clay); font-size: 11px; padding-top: 7px; }
+    .index button {
+      border: 0; background: transparent; text-align: left; font: inherit; color: inherit;
+      padding: 6px 0; border-top: 1px solid var(--rule); cursor: pointer;
+    }
+    .index b { font-family: var(--serif); font-weight: 640; }
+    .index span { color: var(--fog); }
+    .ticket-peek {
+      position: absolute; left: 18px; right: 18px; bottom: -6px;
+      background: #f7f1e4; border: 1px dashed #b9a88a; border-bottom: 0;
+      border-radius: 12px 12px 0 0; padding: 10px 12px 16px;
+      transform: rotate(-1.5deg); cursor: pointer; text-align: left; font: inherit; color: var(--ink);
+      box-shadow: 0 -8px 20px rgba(80, 50, 20, 0.06);
+    }
+    .ticket-peek small { letter-spacing: 0.14em; text-transform: uppercase; color: var(--clay); font-size: 10px; }
+    .ticket-peek b { display: block; font-family: var(--serif); font-size: 1.15rem; }
+
+    /* Letter */
+    .letter { height: 100%; display: flex; flex-direction: column; background:
+      linear-gradient(90deg, transparent 36px, rgba(163, 59, 43, 0.45) 36px, rgba(163, 59, 43, 0.45) 37px, transparent 37px),
+      var(--paper);
+    }
+    .letter head, .letter-head { padding: 18px 16px 0 48px; }
+    .letter-head button { border: 0; background: transparent; font: inherit; cursor: pointer; color: var(--fog); padding: 0; }
+    .letter-head h3 { font-family: var(--serif); font-size: 2.4rem; margin: 4px 0 0; line-height: 0.9; font-weight: 640; }
+    .letter-head small { color: var(--fog); letter-spacing: 0.12em; text-transform: uppercase; font-size: 10px; }
+    .manuscript { flex: 1; overflow: auto; padding: 12px 16px 8px 48px; }
+    .line { display: grid; grid-template-columns: 36px 1fr; gap: 8px; margin: 0 0 12px -44px; }
+    .line time { font-size: 10px; color: var(--fog); padding-top: 4px; }
+    .line p { margin: 0; font-family: var(--serif); font-size: 1.15rem; line-height: 1.25; }
+    .line.mine p { font-style: italic; color: var(--moss); }
+    .line.mine { padding-left: 14px; }
+    .continue {
+      margin: 0 16px 14px 48px; border: 0; border-top: 1px solid var(--ink);
+      background: transparent; text-align: left; font-family: var(--serif); font-style: italic;
+      font-size: 1.05rem; padding: 8px 0; color: var(--fog);
+    }
+    .daybreak {
+      margin: 4px 0 10px; text-align: center; letter-spacing: 0.16em;
+      text-transform: uppercase; font-size: 9px; color: var(--fog);
+    }
+    .paste {
+      width: 72%; height: 72px; margin: 2px 0 4px;
+      background:
+        linear-gradient(160deg, rgba(27,22,18,0.15), transparent 40%),
+        linear-gradient(200deg, #d7c4a4, #8ea58f 55%, #c9842a);
+      box-shadow: 0 8px 16px rgba(48, 32, 16, 0.12);
+      transform: rotate(-1.5deg);
+    }
+    .line .state { display: block; margin-top: 2px; font-family: var(--sans); font-style: normal; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fog); }
+    .dock {
+      display: flex; gap: 8px; align-items: center;
+      margin: 0 12px 12px 44px; border-top: 1px solid var(--ink); padding-top: 8px;
+    }
+    .dock .stampchip {
+      border: 1px dashed var(--clay); padding: 4px 6px; font-size: 9px;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--clay); background: transparent;
+    }
+    .dock .field { position: relative; flex: 1; height: 1.4rem; }
+    .dock .rule { position: absolute; left: 0; right: 8px; bottom: 2px; border-bottom: 1px solid var(--ink); }
+    .dock .nib {
+      position: absolute; left: 0; bottom: -2px; width: 14px; height: 14px;
+      animation: cove-nib 3.6s ease-in-out infinite;
+    }
+    @keyframes cove-nib {
+      0%, 8% { left: 0; opacity: 0; }
+      16% { opacity: 1; }
+      78% { left: calc(100% - 22px); opacity: 1; }
+      92%, 100% { left: calc(100% - 22px); opacity: 0; }
+    }
+    .dock .up { width: 28px; height: 28px; border-radius: 50%; border: 0; background: var(--ink); color: var(--paper); }
+
+    /* Ticket */
+    .ticket {
+      height: 100%;
+      background:
+        radial-gradient(circle at 0 18px, transparent 8px, #f7f1e4 9px) 0 0 / 16px 28px repeat-y,
+        radial-gradient(circle at 100% 18px, transparent 8px, #f7f1e4 9px) 100% 0 / 16px 28px repeat-y,
+        #efe4cc;
+      padding: 22px 26px; display: flex; flex-direction: column;
+    }
+    .ticket .perf { border-top: 1px dashed #b9a88a; margin: 14px 0; }
+    .ticket .admit { letter-spacing: 0.2em; font-size: 10px; text-transform: uppercase; color: var(--clay); }
+    .ticket .huge { font-family: var(--serif); font-size: 3.4rem; letter-spacing: 0.06em; line-height: 1; margin: 8px 0; }
+    .ticket .stack { margin-top: auto; font-size: 12px; color: var(--fog); }
+    .stub-btn { margin-top: 8px; border: 1px solid var(--ink); background: transparent; font: inherit; padding: 8px 10px; cursor: pointer; }
+
+    /* Classifieds */
+    .backpage { height: 100%; padding: 16px; background: #efe6d4; }
+    .cols { column-count: 2; column-gap: 14px; font-size: 12px; }
+    .ad { break-inside: avoid; padding: 8px 0; border-top: 1px solid var(--ink); }
+    .ad b { font-family: var(--serif); display: block; font-size: 0.95rem; }
+
+    /* Envelope */
+    .sealed { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #e7d3b0; padding: 20px; }
+    .env {
+      width: 230px; height: 150px; background: #f7f1e4; position: relative;
+      box-shadow: 0 16px 30px rgba(80,40,20,0.15);
+    }
+    .env:before {
+      content: ""; position: absolute; left: 0; right: 0; top: 0;
+      border-left: 115px solid transparent; border-right: 115px solid transparent;
+      border-top: 78px solid #f3e2c4;
+    }
+    .wax {
+      position: absolute; left: 50%; top: 62px; transform: translateX(-50%);
+      width: 36px; height: 36px; border-radius: 50%; background: var(--clay);
+      color: #f7f1e4; display: grid; place-items: center; font-family: var(--serif); z-index: 1;
+    }
+    .env-copy { width: 230px; margin-top: 16px; text-align: center; }
+    .env-copy b { font-family: var(--serif); font-size: 1.3rem; display: block; }
+    .reasons { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 8px; }
+    .reasons i { font-style: normal; font-size: 11px; border: 1px solid var(--clay); color: var(--clay); padding: 3px 7px; }
+
+    /* Stationery */
+    .sheet { height: 100%; background:
+      repeating-linear-gradient(var(--paper), var(--paper) 27px, rgba(27,22,18,0.08) 28px);
+      padding: 16px;
+    }
+    .stamp {
+      float: right; width: 74px; height: 86px; border: 2px dashed var(--clay);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; transform: rotate(3deg);
+      background: rgba(255,255,255,0.35);
+    }
+    .stamp b { font-family: var(--serif); font-size: 0.95rem; letter-spacing: 0; text-transform: none; }
+    .to-line { margin-top: 78px; font-family: var(--serif); font-size: 1.4rem; border-bottom: 1px solid var(--ink); }
+    .to-line span { color: var(--fog); font-style: italic; }
+
+    /* Colophon */
+    .colo { height: 100%; padding: 20px 18px; background: var(--ink); color: var(--paper); }
+    .colo h3 { font-family: var(--serif); font-size: 2.2rem; margin: 0; }
+    .colo .staff { margin-top: 16px; border-top: 1px solid rgba(243,234,215,0.3); }
+    .colo .staff div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid rgba(243,234,215,0.18); font-size: 13px; }
+    .colo p { color: rgba(243,234,215,0.72); font-size: 13px; }
+
+    .notes .note { display: none; }
+    .notes .note.on { display: block; }
+    .note h3 { font-family: var(--serif); font-size: 1.8rem; margin: 0 0 8px; }
+    .note p, .note li { color: rgba(246,239,228,0.75); }
+    .note ul { margin: 0; padding-left: 1.1rem; }
+
+    .atlas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .col { background: rgba(243,234,215,0.04); border: 1px solid rgba(246,239,228,0.1); border-radius: 18px; padding: 14px 14px 6px; }
+    .col h3 { font-family: var(--serif); margin: 0; font-size: 1.4rem; }
+    .col header p { color: rgba(246,239,228,0.5); margin: 4px 0 8px; font-size: 0.88rem; }
+    .tag { color: #e7c27a; letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.68rem; }
+    .feat { padding: 9px 0; border-top: 1px solid rgba(246,239,228,0.1); }
+    .feat b { display: block; }
+    .feat span { color: rgba(246,239,228,0.68); font-size: 0.9rem; }
+
+    .sheet-block {
+      background: var(--paper); color: var(--ink); border-radius: 18px; padding: 18px;
+    }
+    .steps { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 22px; }
+    .steps b { font-family: var(--serif); font-size: 1.15rem; }
+    .phases { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .phase { min-height: 160px; padding: 14px; background: var(--paper); color: var(--ink); }
+    .phase span { letter-spacing: 0.14em; text-transform: uppercase; font-size: 0.72rem; color: var(--clay); }
+    .phase b { display: block; font-family: var(--serif); font-size: 1.45rem; margin: 8px 0; }
+    footer { padding: 8px 0 40px; color: rgba(246,239,228,0.45); font-size: 0.88rem; }
+
+    @media (max-width: 980px) {
+      .principles, .atlas, .phases, .explorer, .steps { grid-template-columns: 1fr; }
+      .screen-nav { position: static; flex-direction: row; overflow: auto; }
+      .screen-nav button { min-width: 150px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="top">
+    <div class="wrap">
+      <a class="mark" href="#top">Cove</a>
+      <div class="links">
+        <a href="#idea">Idea</a>
+        <a href="#screens">Edition</a>
+        <a href="#features">Features</a>
+        <a href="#path">Path</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero wrap" id="top">
+    <div class="kicker">Working title · A messenger with no chat list</div>
+    <h1>The daily edition.</h1>
+    <p class="lede">Cove reads like a paper you open, not a list you scroll. The newest message from a person is the headline. Your reply is the next line of a letter. Codes, ads, and suspicious texts are inserts in that paper: a ticket, the classifieds, a sealed envelope.</p>
+    <div class="meta">
+      <span class="pill">No bubbles</span>
+      <span class="pill">No avatar rows</span>
+      <span class="pill">No category tabs</span>
+      <span class="pill">Design only · 6 Nov 2026</span>
+    </div>
+  </header>
+
+  <section id="idea">
+    <div class="wrap">
+      <h2>The idea</h2>
+      <p class="sub">Every major SMS app is a contact list that opens into balloons. Cove uses a different object. You are reading today’s edition of your own messages, and you write back in the margin.</p>
+      <div class="principles">
+        <article class="principle">
+          <strong>The message is the page</strong>
+          <span>The latest unread line from a person is set in headline type. You read it before you tap anything.</span>
+        </article>
+        <article class="principle">
+          <strong>A letter, not a bubble</strong>
+          <span>A conversation is one manuscript. Their words sit on the rule. Yours sit in italic in the margin.</span>
+        </article>
+        <article class="principle">
+          <strong>Machines are inserts</strong>
+          <span>A code is a ticket. Offers are classifieds. A risky text arrives sealed, with the reason on the outside.</span>
+        </article>
+        <article class="principle">
+          <strong>Reply without entering</strong>
+          <span>The front page has a line under the headline. Most replies never open the letter.</span>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="screens">
+    <div class="wrap">
+      <h2>Today’s edition</h2>
+      <p class="sub">Eight states. Switch them from the list, or tap the headline, the ticket, and the stamp inside the phone.</p>
+      <div class="explorer">
+        <div class="screen-nav" id="screenNav">
+          <button class="on" data-go="people">Front page<small>The headline is the message</small></button>
+          <button data-go="thread">The letter<small>One manuscript</small></button>
+          <button data-go="codes">The ticket<small>A code you can tear off</small></button>
+          <button data-go="offers">Classifieds<small>Offers, set in columns</small></button>
+          <button data-go="alerts">Telegrams<small>Banks and deliveries</small></button>
+          <button data-go="held">Sealed<small>Reason on the envelope</small></button>
+          <button data-go="compose">Stationery<small>A blank sheet and a stamp</small></button>
+          <button data-go="you">Colophon<small>The staff box of the paper</small></button>
+        </div>
+
+        <div class="device">
+          <div class="glass">
+            <div class="screen on" data-id="people">
+              <div class="mast"><span>Fri 6 Nov</span><b>Cove</b><button class="hit" data-go="you" style="width:auto;letter-spacing:0.14em;font-size:10px">YOU</button></div>
+              <div class="dbl"></div>
+              <button class="hit lead" data-go="thread">
+                <div class="eyebrow">Unread · Personal</div>
+                <h3>Reached. Gate’s on the left.</h3>
+                <div class="by"><em>Asha</em> · just now</div>
+              </button>
+              <div class="replyline">Write back on the page…</div>
+              <div class="also">
+                <div class="label">Also on the page</div>
+                <div class="index">
+                  <span class="marktime">*</span>
+                  <button><b>Rohan</b> <span>Send the deck when you can</span></button>
+                  <span class="marktime">*</span>
+                  <button><b>Ma</b> <span>Call when you’re free</span></button>
+                  <span class="marktime"></span>
+                  <button><b>Vikram</b> <span>Photo · yesterday</span></button>
+                  <span class="marktime"></span>
+                  <button><b>Flat group</b> <span>You · Milk is in the fridge</span></button>
+                </div>
+              </div>
+              <button class="ticket-peek" data-go="codes">
+                <small>Insert</small>
+                <b>3 codes · pull the ticket</b>
+              </button>
+            </div>
+
+            <div class="screen" data-id="thread">
+              <div class="letter">
+                <div class="letter-head">
+                  <button data-go="people">← Today’s edition</button>
+                  <h3>Asha</h3>
+                  <small>One letter · newest at the bottom</small>
+                </div>
+                <div class="manuscript">
+                  <div class="daybreak">Yesterday</div>
+                  <div class="line"><time>8:02</time><p>Can you pick up the keys?</p></div>
+                  <div class="line mine"><time>8:05</time><p>I’ll get them after 7.<span class="state">Delivered</span></p></div>
+                  <div class="daybreak">Today</div>
+                  <div class="line"><time>9:16</time><p><span class="paste"></span>Gate from the street.</p></div>
+                  <div class="line"><time>9:18</time><p>Gate code is 4412.</p></div>
+                  <div class="line mine"><time>9:21</time><p>Leaving now.<span class="state">Sent</span></p></div>
+                  <div class="line"><time>9:40</time><p>Reached. Gate’s on the left.</p></div>
+                </div>
+                <div class="dock">
+                  <button class="stampchip">Personal</button>
+                  <div class="field" aria-hidden="true">
+                    <span class="rule"></span>
+                    <svg class="nib" viewBox="0 0 16 16" fill="none">
+                      <path d="M2 13c4-1 7-6 8-11" stroke="#1b1612" stroke-width="1.4" stroke-linecap="round"/>
+                      <path d="M10 2l4 1-3 4" fill="#a33b2b"/>
+                    </svg>
+                  </div>
+                  <button class="up">↑</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="screen" data-id="codes">
+              <div class="ticket">
+                <button class="hit" data-go="people" style="width:auto;color:var(--fog);font-size:12px">← Front page</button>
+                <div class="admit">Ticket · HDFC Bank · about 4 min</div>
+                <div class="huge">482 913</div>
+                <div class="perf"></div>
+                <div>One-time code. Copy, and the stub leaves the stack.</div>
+                <button class="stub-btn">Tear off a copy</button>
+                <div class="stack">2 more tickets underneath · Swiggy, Amazon</div>
+              </div>
+            </div>
+
+            <div class="screen" data-id="offers">
+              <div class="backpage">
+                <div class="mast" style="padding:0 0 8px"><span>The back page</span><button class="hit" data-go="people" style="width:auto;font-size:10px;letter-spacing:0.14em">CLOSE</button></div>
+                <div class="cols">
+                  <div class="ad"><b>Weekend fare sale</b>Airline. One line, then silence until tomorrow’s edition.</div>
+                  <div class="ad"><b>20% on groceries</b>Store. Mute this sender and the column drops them.</div>
+                  <div class="ad"><b>Loan pre-approved</b>Lender. Offers never share the front page.</div>
+                  <div class="ad"><b>12 more</b>Folded until the morning digest.</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="screen" data-id="alerts">
+              <div class="backpage">
+                <div class="mast" style="padding:0 0 8px"><b style="font-size:1.4rem">Telegrams</b><button class="hit" data-go="people" style="width:auto;font-size:10px;letter-spacing:0.14em">CLOSE</button></div>
+                <div class="ad"><b>HDFC BANK</b> Debit of ₹1,240 at the store. STOP</div>
+                <div class="ad"><b>DELIVERY</b> Out for delivery today. STOP</div>
+                <button class="hit ad" data-go="held"><b>HELD</b> A sealed envelope is waiting with the post.</button>
+              </div>
+            </div>
+
+            <div class="screen" data-id="held">
+              <div class="sealed">
+                <button class="hit" data-go="alerts" style="width:auto;align-self:flex-start;color:var(--fog);font-size:12px">← Telegrams</button>
+                <div class="env"><div class="wax">C</div></div>
+                <div class="env-copy">
+                  <b>Sealed on purpose</b>
+                  <div>The outside already says why.</div>
+                  <div class="reasons"><i>Urgent threat</i><i>New sender</i><i>Login link</i></div>
+                  <button class="stub-btn" style="margin-top:12px">Break the seal</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="screen" data-id="compose">
+              <div class="sheet">
+                <button class="hit" data-go="people" style="width:auto;font-size:12px;color:var(--fog)">← Close the sheet</button>
+                <div class="stamp"><span>Stamp</span><b>Personal</b><span>tap for Work</span></div>
+                <div class="to-line"><span>To </span>Ma</div>
+                <p style="font-family:var(--serif);font-style:italic;font-size:1.3rem;margin-top:28px;color:var(--fog)">The first line of the letter…</p>
+              </div>
+            </div>
+
+            <div class="screen" data-id="you">
+              <div class="colo">
+                <div class="kicker" style="color:#e7c27a">Colophon</div>
+                <h3>Printed on this phone.</h3>
+                <div class="staff">
+                  <div><span>Edition</span><span>Paper</span></div>
+                  <div><span>Interruptions</span><span>People only</span></div>
+                  <div><span>Archive</span><span>On device</span></div>
+                  <div><span>Refused senders</span><span>14</span></div>
+                  <div><span>Other apps</span><span>None</span></div>
+                </div>
+                <p>A finance app can subscribe to a column later. The colophon lists every field that leaves, and you cancel it here.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="notes">
+          <article class="note on" data-id="people">
+            <h3>Front page</h3>
+            <p>There is no row of faces. The newest human message is the headline, with a reply line under it. Everyone else is an index: a name, then the line, with a clay star in the margin when they are unread.</p>
+            <ul>
+              <li>Search pulls down from the masthead and covers the edition.</li>
+              <li>The ticket at the foot is the only machine on this page. Its count is codes, not a mixed badge.</li>
+              <li>A new message starts from a blank sheet, reached by writing a name into the reply line when it is empty.</li>
+            </ul>
+          </article>
+          <article class="note" data-id="thread">
+            <h3>The letter</h3>
+            <p>This is the conversation. One scrolling manuscript, oldest toward the top, the latest line just above the pen. Their words are roman on the red rule. Yours are italic, moss, and indented, with a small status under the line: Sent, Delivered, or a plain failure such as “Personal has no signal.”</p>
+            <ul>
+              <li>A day change is a centered label, Yesterday or Today, not a new bubble group.</li>
+              <li>A photo is a print pasted into the paragraph, with the caption on the next line.</li>
+              <li>The dock is the pen. While a line is being written, the nib travels the rule and lifts at the end. The letters stay the normal manuscript type. Attachments sit behind a long-press on the stamp.</li>
+              <li>Long-press a line for copy, forward, remind, or remove.</li>
+            </ul>
+          </article>
+          <article class="note" data-id="codes">
+            <h3>The ticket</h3>
+            <p>One code fills the screen, set like an admission stub. Tear-off copies the digits. The next ticket is already underneath, so the stack has a count you can feel.</p>
+          </article>
+          <article class="note" data-id="offers">
+            <h3>Classifieds</h3>
+            <p>Promotions are the back page, in two narrow columns, delivered once in the morning. They never become headlines.</p>
+          </article>
+          <article class="note" data-id="alerts">
+            <h3>Telegrams</h3>
+            <p>Banks, deliveries, and bookings are short strips that end in STOP. A held message is not opened here. It is handed over as a sealed envelope.</p>
+          </article>
+          <article class="note" data-id="held">
+            <h3>Sealed</h3>
+            <p>The reason is printed on the outside. Breaking the seal shows the original text. The judgment is made on the phone.</p>
+          </article>
+          <article class="note" data-id="compose">
+            <h3>Stationery</h3>
+            <p>A blank ruled sheet. The SIM is a postage stamp in the corner: Personal or Work. The letter begins at To.</p>
+          </article>
+          <article class="note" data-id="you">
+            <h3>Colophon</h3>
+            <p>Settings read as the staff box of a paper: edition, who may interrupt you, where the archive lives, who is refused, and which other apps hold a subscription.</p>
+          </article>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <div class="wrap">
+      <h2>What still has to work</h2>
+      <p class="sub">The object is new. The duties of a messenger stay. The left column is the daily product. The middle is depth. The right is what this shape makes possible.</p>
+      <div class="atlas">
+        <div class="col">
+          <header><div class="tag">Duties</div><h3>A real messenger</h3><p>Required, expressed in the edition.</p></header>
+          <div class="feat"><b>Default SMS role</b><span>Send, receive, and post the system notification.</span></div>
+          <div class="feat"><b>Letters and groups</b><span>Text, photo, video, audio, contact, location. A group is a letter with several hands.</span></div>
+          <div class="feat"><b>Two stamps</b><span>Each SIM is a named stamp. The letter remembers which stamp it uses.</span></div>
+          <div class="feat"><b>Notifications</b><span>A person can interrupt. The ticket and the classifieds cannot, except the morning edition.</span></div>
+          <div class="feat"><b>Search</b><span>Pull the masthead. The index is on the phone.</span></div>
+          <div class="feat"><b>Organize</b><span>Pin a letter to the top of the index, archive it, mute it, mark it unread.</span></div>
+          <div class="feat"><b>Block</b><span>Refused senders never make the edition.</span></div>
+          <div class="feat"><b>Schedule and undo</b><span>A line can wait until evening. A short hold lets you pull a line back.</span></div>
+          <div class="feat"><b>Lock and archive</b><span>The paper opens with the device lock. A backup is a bound copy on the device.</span></div>
+          <div class="feat"><b>Large screens</b><span>Front page on the left, the open letter on the right.</span></div>
+        </div>
+        <div class="col">
+          <header><div class="tag">Depth</div><h3>Later editions</h3><p>After the daily paper already feels finished.</p></header>
+          <div class="feat"><b>Private letters</b><span>A second unlock keeps selected names out of the index and out of notifications.</span></div>
+          <div class="feat"><b>Reply later</b><span>Fold a letter until evening. It returns as a headline.</span></div>
+          <div class="feat"><b>Reminders</b><span>One line becomes a local reminder.</span></div>
+          <div class="feat"><b>Your lines</b><span>Short replies you wrote, inserted by you.</span></div>
+          <div class="feat"><b>Prints</b><span>Every photo in a letter, in a strip you can fan open.</span></div>
+          <div class="feat"><b>On-device assists</b><span>Suggested lines and translation, off until you ask.</span></div>
+          <div class="feat"><b>Read aloud</b><span>The letter can be spoken.</span></div>
+          <div class="feat"><b>Night edition</b><span>Ink paper after dark. The red margin stays.</span></div>
+          <div class="feat"><b>Watch</b><span>A headline and a one-line reply on the wrist.</span></div>
+          <div class="feat"><b>Carrier chat</b><span>Only if Android lets a normal SMS app use it. The promise is SMS and MMS.</span></div>
+        </div>
+        <div class="col">
+          <header><div class="tag">Only this shape</div><h3>What others skipped</h3><p>These need the paper. A themed chat list cannot host them.</p></header>
+          <div class="feat"><b>Headline reply</b><span>Answer the newest person from the front page.</span></div>
+          <div class="feat"><b>Margin voices</b><span>Two speakers, told by position and italic, with no balloons.</span></div>
+          <div class="feat"><b>Ticket stack</b><span>Codes as tear-off stubs with an expiry, one at a time.</span></div>
+          <div class="feat"><b>Back page</b><span>Offers in columns, one morning delivery.</span></div>
+          <div class="feat"><b>Sealed post</b><span>A risky text stays closed until you break the seal. The reason is on the outside.</span></div>
+          <div class="feat"><b>Telegram strip</b><span>Machine alerts in a few words, separate from letters.</span></div>
+          <div class="feat"><b>Subscription receipt</b><span>Another app may take a column you name. The colophon lists the fields and the cancel.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="sheet-block">
+        <h2 style="color:var(--ink)">A day with the paper</h2>
+        <div class="steps">
+          <div><b>Morning</b><p>The edition opens on Asha’s line, large enough to read at arm’s length. Two clay stars mark Rohan and Ma. A ticket sticks out at the bottom.</p></div>
+          <div><b>A login</b><p>You pull the ticket, tear off 482 913, and drop back to the headline. The front page never listed the bank.</p></div>
+          <div><b>A strange text</b><p>Telegrams include a sealed envelope. Urgent threat, new sender, login link. You leave it sealed.</p></div>
+          <div><b>Evening</b><p>You continue Asha’s letter in italic. A line to Ma is stamped Personal and set to send at 8.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="path">
+    <div class="wrap">
+      <h2>Build path</h2>
+      <p class="sub">Each phase is a paper you can already use. Later phases add inserts and crafts. They do not turn the edition back into a chat list.</p>
+      <div class="phases">
+        <article class="phase"><span>Phase 1</span><b>Edition</b>Front page, letters, stamps, notifications, search, block, lock, on-device archive.</article>
+        <article class="phase"><span>Phase 2</span><b>Inserts</b>Tickets, classifieds, telegrams, sealed post with on-device reasons.</article>
+        <article class="phase"><span>Phase 3</span><b>Craft</b>Scheduled lines, undo, folded letters, private names, reminders, wide layout, watch.</article>
+        <article class="phase"><span>Phase 4</span><b>Subscriptions</b>A colophon receipt, then an optional Money Inbox column of fields you tick.</article>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">Cove remains a working title for a future RR Parallel Studio messenger. This edition replaces the earlier chat-list mock in the same file. Open it in a browser and switch the pages.</div>
+  </footer>
+
+  <script>
+    function show(id) {
+      document.querySelectorAll(".screen, .note, #screenNav button").forEach(function (el) {
+        var key = el.dataset.id || el.dataset.go;
+        if (el.classList.contains("screen") || el.classList.contains("note") || (el.parentElement && el.parentElement.id === "screenNav")) {
+          el.classList.toggle("on", key === id);
+        }
+      });
+    }
+    function pinLetter() {
+      var scroller = document.querySelector('.screen.on .manuscript');
+      if (scroller) scroller.scrollTop = scroller.scrollHeight;
+    }
+    document.addEventListener("click", function (event) {
+      var target = event.target.closest("[data-go]");
+      if (!target) return;
+      show(target.dataset.go);
+      pinLetter();
+    });
+    pinLetter();
+  </script>
+</body>
+</html>

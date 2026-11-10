@@ -2,14 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Required for Approval Center inbox scan (local on-device read only). -->
-    <uses-permission android:name="android.permission.READ_SMS" />
-    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <!-- READ_SMS / RECEIVE_SMS omitted for Play (restricted). Re-add with
+         MmrSmsTelephonyPolicy.INBOX_SCAN_AND_RECEIVE_ENABLED when shipping a non-Play SMS build.
+         Planned Play intake: SMS Backup & Restore XML import. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission
         android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
@@ -26,6 +27,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.MoneyInbox">
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="${admobAppId}" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -45,17 +49,8 @@
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
-        <receiver
-            android:name=".widget.MmrPendingApprovalsWidgetReceiver"
-            android:exported="true"
-            android:label="@string/widget_pending_approvals_title">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/mmr_widget_pending_approvals_info" />
-        </receiver>
+        <!-- Pending-approvals widget: keep Kotlin + xml/mmr_widget_pending_approvals_info.xml.
+             Re-register when MmrSmsTelephonyPolicy.PENDING_APPROVALS_WIDGET_ENABLED is true. -->
 
         <receiver
             android:name=".widget.MmrMonthSpendWidgetReceiver"
@@ -98,14 +93,7 @@
             android:name=".sms.SmsApprovalNotificationReceiver"
             android:exported="false" />
 
-        <receiver
-            android:name=".sms.IncomingSmsReceiver"
-            android:exported="true"
-            android:permission="android.permission.BROADCAST_SMS">
-            <intent-filter android:priority="999">
-                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
-            </intent-filter>
-        </receiver>
+        <!-- IncomingSmsReceiver kept in source; not registered without RECEIVE_SMS. -->
 
         <provider
             android:name="androidx.startup.InitializationProvider"

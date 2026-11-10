@@ -1,0 +1,35 @@
+---
+description: Keep the in-app Introduction (FTUE) aligned with user-facing features it teaches
+alwaysApply: true
+---
+
+# First-time introduction (FTUE) maintenance
+
+Money Inbox shows **`MmrFtueWelcomeFlow`** on first launch (and via Settings → **Replay introduction**). Copy and visuals live in:
+
+- **`app/src/main/java/com/rrparallelstudio/miapp/ui/ftue/FtueWelcomeCatalog.kt`** — step titles, body text, bullets
+- **`app/src/main/java/com/rrparallelstudio/miapp/ui/ftue/FtueBulletIcons.kt`** — icon chips for bullets (summary strip, nav tabs, settings)
+- **`app/src/main/java/com/rrparallelstudio/miapp/ui/ftue/MmrFtueWelcomeFlow.kt`** — layout / chrome
+
+## When to update FTUE
+
+In the **same change** (or immediately after) when you change user-visible behavior that the introduction describes or that a new user must know, update FTUE so it stays accurate. Examples:
+
+- Home: view-mode dropdown, summary strip icons, carry-over rules, FAB, top-bar search/approvals, swipe periods
+- Main tabs: Trends (was Stats), Budgets, Assets, Scheduled, Settings visibility / Configuration
+- Approval Center: how SMS is added (paste, scan policy), approve/reject/link flows
+- Settings sections cited in the tour (Appearance, Accounts, Categories, Backup, Drive, LAN, Web Manage)
+- Renamed menu items, removed features, or new defaults called out in the tour
+
+If the change is **minor** (wording only, colors) and not mentioned in FTUE, skip.
+
+## How to update
+
+1. Edit **`FtueWelcomeCatalog`** steps/bullets; use **`FtueBulletIcon`** where the UI has a recognizable icon (reuse **`MmrHomeSummaryIcons`**, nav icons via **`mmrDestinationIconPair`**, Home chrome icons).
+2. Add a new **`FtueBulletIcon`** + mapping in **`FtueBulletIcons.kt`** when teaching a new control.
+3. Note material FTUE changes in **`PROJECT_MEMORY.md`** and, if shipping a build, **`MmrReleaseNotesCatalog`** when user-visible.
+
+## Do not
+
+- Promise features the Play build does not ship (e.g. live SMS scan when policy disables it).
+- Leave stale text like renamed settings rows or old interaction patterns.

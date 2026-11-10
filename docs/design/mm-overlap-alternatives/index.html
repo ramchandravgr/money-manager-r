@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MMR — Alternatives to Money Manager–style Home &amp; Stats overlap</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --page-bg: #0f1118;
+      --panel: #1a1d28;
+      --panel-2: #232733;
+      --border: rgba(255, 255, 255, 0.09);
+      --text: #e8eaef;
+      --muted: #9ca3af;
+      --accent: #f0c4c8;
+      --accent-2: #6bdfc4;
+      --mm-badge: #fcd34d;
+      --warn: #fbbf24;
+      --radius: 14px;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      background: var(--page-bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 28px 20px 80px;
+    }
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin: 0 0 10px;
+      letter-spacing: -0.02em;
+    }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .pill {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      padding: 5px 11px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+    .pill.design { color: var(--mm-badge); border-color: rgba(252, 211, 77, 0.35); }
+    .pill.ref { color: var(--accent-2); border-color: rgba(107, 223, 196, 0.35); }
+    .intro {
+      color: var(--muted);
+      font-size: 0.92rem;
+      max-width: 78ch;
+      margin-bottom: 28px;
+    }
+    .intro strong { color: var(--text); }
+    .intro code {
+      font-family: var(--mono);
+      font-size: 0.82em;
+      color: #fde68a;
+      background: rgba(252, 211, 77, 0.08);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+    @media (max-width: 960px) {
+      .layout { grid-template-columns: 1fr; }
+      .toc { position: static !important; }
+    }
+    .toc {
+      position: sticky;
+      top: 16px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 12px;
+      max-height: calc(100vh - 32px);
+      overflow-y: auto;
+    }
+    .toc h2 {
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin: 0 12px 8px;
+      font-weight: 600;
+    }
+    .toc a {
+      display: block;
+      font-size: 0.84rem;
+      color: var(--text);
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: 10px;
+      opacity: 0.92;
+    }
+    .toc a:hover { background: var(--panel-2); }
+    .toc a span { color: var(--muted); font-size: 0.75rem; }
+    section {
+      margin-bottom: 48px;
+      scroll-margin-top: 20px;
+    }
+    section > h2 {
+      font-size: 1.15rem;
+      margin: 0 0 6px;
+      font-weight: 700;
+    }
+    .overlap-note {
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin: 0 0 18px;
+      padding: 10px 14px;
+      background: rgba(251, 191, 36, 0.08);
+      border: 1px solid rgba(251, 191, 36, 0.22);
+      border-radius: 10px;
+      max-width: 78ch;
+    }
+    .overlap-note em { color: var(--warn); font-style: normal; font-weight: 600; }
+    .grid-10 {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+    }
+    .alt-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 100%;
+    }
+    .alt-num {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .alt-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -0.01em;
+    }
+    .alt-desc {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin: 0;
+      flex: 1;
+    }
+    .alt-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .tag {
+      font-size: 0.62rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: var(--panel-2);
+      color: #c4cad4;
+    }
+    .tag.diff-high { background: rgba(107, 223, 196, 0.15); color: #a7f3d0; }
+    .tag.diff-med { background: rgba(147, 197, 253, 0.12); color: #bfdbfe; }
+    .tag.compose { background: rgba(240, 196, 200, 0.12); color: var(--accent); }
+    .sketch {
+      height: 72px;
+      border-radius: 10px;
+      background: #12141c;
+      border: 1px dashed rgba(255,255,255,0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      color: #6b7280;
+      text-align: center;
+      padding: 8px;
+      line-height: 1.35;
+      font-family: var(--mono);
+    }
+    .sketch.wide { height: 56px; }
+    .legend {
+      margin-top: 40px;
+      padding: 18px 20px;
+      background: var(--panel);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+    .legend h3 {
+      font-size: 0.9rem;
+      color: var(--text);
+      margin: 0 0 10px;
+    }
+    .legend ul { margin: 0; padding-left: 1.2rem; }
+    .legend li { margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="badge-row">
+      <span class="pill design">Design exploration</span>
+      <span class="pill ref">Not in app</span>
+    </div>
+    <h1>10 alternatives per MM-overlapping component</h1>
+    <p class="intro" style="padding:12px 14px;background:rgba(107,223,196,.1);border:1px solid rgba(107,223,196,.35);border-radius:12px;max-width:100%">
+      <strong style="color:#a7f3d0">Prefer real screen mockups?</strong>
+      Open <a href="visual.html" style="color:#6bdfc4;font-weight:700">visual.html</a> — miniature phones for all 100 alternatives plus a gold “shipped today” reference per section.
+    </p>
+    <p class="intro">
+      Money Inbox’s <strong>Home</strong> and <strong>Stats</strong> shells share patterns with classic Money Manager (Realbyte):
+      centered month title, <code>HomeMonthPickerDialog</code> (Date / THIS MONTH / year chevrons / 3×4 months),
+      Daily·Calendar·Monthly·Total tabs, Income|Expenses|Total strip, grouped ledger rows, and Stats period + Income/Expense + pie breakdown.
+      Below: <strong>10 distinct product directions</strong> for each overlapping surface—pick one axis at a time to avoid redesign thrash.
+      Shipped today: see <code>docs/home-stats-differentiation-mockups.html</code>.
+    </p>
+
+    <div class="layout">
+      <nav class="toc" aria-label="Components">
+        <h2>Components</h2>
+        <a href="#c1">1. Period picker UI <span>dialog + trigger</span></a>
+        <a href="#c2">2. Home top period chrome <span>‹ month › bar</span></a>
+        <a href="#c3">3. Home ledger view tabs <span>4-way switch</span></a>
+        <a href="#c4">4. Home summary strip <span>Income·Expense·Total</span></a>
+        <a href="#c5">5. Transaction list grouping <span>dates + rows</span></a>
+        <a href="#c6">6. Primary add action <span>FAB</span></a>
+        <a href="#c7">7. Stats period chrome <span>header + range</span></a>
+        <a href="#c8">8. Stats mode switcher <span>Income vs Expense</span></a>
+        <a href="#c9">9. Stats category viz <span>pie + drill-down</span></a>
+        <a href="#c10">10. Main bottom navigation <span>tab bar</span></a>
+      </nav>
+
+      <main>
+        <!-- 1 -->
+        <section id="c1">
+          <h2>1. Period picker (month / year)</h2>
+          <p class="overlap-note">Shipped: <em>Money Manager–style dialog</em> — <code>HomeMonthPickerDialog.kt</code> (Date header, THIS MONTH, year row, 3×4 month grid). Reused on Stats.</p>
+          <div class="grid-10">
+            <article class="alt-card"><span class="alt-num">#01</span><h3 class="alt-title">Material 3 date picker</h3><p class="alt-desc">Full-screen or compact Material calendar; pick any day but commit to month boundaries on dismiss. Feels Google-native, not MM.</p><div class="sketch">[ M3 Calendar · OK ]</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span><span class="tag compose">mmrDatePickerColors</span></div></article>
+            <article class="alt-card"><span class="alt-num">#02</span><h3 class="alt-title">Bottom sheet month wheels</h3><p class="alt-desc">Two vertical scroll wheels (month + year) like iOS timer; thumb-friendly, no grid. “Done” applies month.</p><div class="sketch">[ Jan ▲▼ ] [ 2026 ▲▼ ]</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#03</span><h3 class="alt-title">Horizontal month carousel</h3><p class="alt-desc">Bottom sheet shows 12 cards in a horizontal pager; year chip filters set. Swipe month, tap year chip for year list.</p><div class="sketch">◀ Oct · Nov · Dec ▶</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#04</span><h3 class="alt-title">Inline expandable year matrix</h3><p class="alt-desc">Tapping top-bar month expands a panel below header (no modal): collapsible 4×3 grid + sticky “This month”.</p><div class="sketch">Header ▼ → panel under bar</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#05</span><h3 class="alt-title">Relative range chips</h3><p class="alt-desc">Picker is chip row: This month · Last month · Last 3 months · Custom… Custom opens M3 range. De-emphasizes year grid.</p><div class="sketch">[This mo] [Last mo] [Custom…]</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#06</span><h3 class="alt-title">Text field + parser</h3><p class="alt-desc">Single field “Oct 2026” with locale parsing and validation; power-user fast path, optional calendar icon.</p><div class="sketch">[ Oct 2026        📅 ]</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#07</span><h3 class="alt-title">Mini timeline scrubber</h3><p class="alt-desc">Continuous horizontal timeline of months (last 24); pinch-zoom to years. Selected month centers with haptic tick.</p><div class="sketch">════●════ Oct 2026 ════</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#08</span><h3 class="alt-title">Voice / search period</h3><p class="alt-desc">Search box: “September last year”, “Q3 2025”. NLP or rule-based; fits inbox-first positioning.</p><div class="sketch">🔍 When was…?</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#09</span><h3 class="alt-title">Budget-aligned fiscal picker</h3><p class="alt-desc">Months labeled by <em>your</em> budget period (e.g. 26th–25th) with dual label “Oct (period 26 Sep–25 Oct)”.</p><div class="sketch">Period rows, not calendar months</div><div class="alt-tags"><span class="tag diff-med">MMR-native</span></div></article>
+            <article class="alt-card"><span class="alt-num">#10</span><h3 class="alt-title">Keep grid, reskin only</h3><p class="alt-desc">Same 3×4 topology as MM but MMR dialog kit: <code>MmrContentDialog</code>, no “Date” clone title, month full names, rose-gold chrome.</p><div class="sketch">Same layout · new visual language</div><div class="alt-tags"><span class="tag">Low effort</span><span class="tag compose">HomeMonthPickerDialog</span></div></article>
+          </div>
+        </section>
+
+        <!-- 2 -->
+        <section id="c2">
+          <h2>2. Home top period chrome</h2>
+          <p class="overlap-note">Shipped: center <em>Month YYYY ▾</em>, flanked ‹ ›, balanced icon slots (brand, search, approvals). MM-style month navigation.</p>
+          <div class="grid-10">
+            <article class="alt-card"><span class="alt-num">#01</span><h3 class="alt-title">Large title (Material large top app bar)</h3><p class="alt-desc">“October” collapses on scroll; year as subtitle; chevrons move to overflow or swipe-only.</p><div class="sketch wide">October ↓ collapse</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#02</span><h3 class="alt-title">Period pill only (no chevrons)</h3><p class="alt-desc">Single tappable pill; month change only via picker or horizontal period swipe on list.</p><div class="sketch wide">[ Oct 2026 ▾ ]</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#03</span><h3 class="alt-title">Dual-line inbox header</h3><p class="alt-desc">Line 1: “Money Inbox” brand; line 2: period + pending SMS count inline (approvals story first).</p><div class="sketch wide">Money Inbox / 3 to approve · Oct</div><div class="alt-tags"><span class="tag diff-high">MMR-native</span></div></article>
+            <article class="alt-card"><span class="alt-num">#04</span><h3 class="alt-title">Segmented week · month</h3><p class="alt-desc">Header toggles Week | Month scope without leaving Home; title shows ISO week or month.</p><div class="sketch wide">[Week][Month]  W42 2026</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#05</span><h3 class="alt-title">Floating period island</h3><p class="alt-desc">Detaches from app bar: glassy chip over expressive canvas; icons elsewhere in bottom quick row.</p><div class="sketch wide">╭ Oct 2026 ╮ over art</div><div class="alt-tags"><span class="tag diff-high">Expressive fit</span></div></article>
+            <article class="alt-card"><span class="alt-num">#06</span><h3 class="alt-title">Left-aligned period stack</h3><p class="alt-desc">Breaks MM symmetry: period left, actions right (Search, Mail). More “Reader” / Apple Wallet.</p><div class="sketch wide">Oct 2026 ▾ ······ 🔍 ✉</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#07</span><h3 class="alt-title">Calendar peek strip</h3><p class="alt-desc">Below header: 7-day strip with spend dots; tap day filters Daily list (header shows day not month).</p><div class="sketch wide">M T W T F S S ••</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#08</span><h3 class="alt-title">Gesture-only month change</h3><p class="alt-desc">No ‹ › in chrome; educate via coachmark: swipe list changes month (<code>MmrPeriodSwipeBox</code> already exists).</p><div class="sketch wide">Title static · swipe hint</div><div class="alt-tags"><span class="tag diff-med">Low chrome</span></div></article>
+            <article class="alt-card"><span class="alt-num">#09</span><h3 class="alt-title">Net-first hero header</h3><p class="alt-desc">Header shows net amount large; period as secondary chip (see differentiation mockup strategy 2).</p><div class="sketch wide">−₹12,450  [Oct ▾]</div><div class="alt-tags"><span class="tag diff-high">Differentiation doc</span></div></article>
+            <article class="alt-card"><span class="alt-num">#10</span><h3 class="alt-title">MM layout, MMR typography</h3><p class="alt-desc">Keep center balance + chevrons but swap to Plus Jakarta + no ALL CAPS months in bar; subtle approval dot on mail only.</p><div class="sketch wide">Same geometry · new type</div><div class="alt-tags"><span class="tag">Low effort</span></div></article>
+          </div>
+        </section>
+
+        <!-- 3 -->
+        <section id="c3">
+          <h2>3. Home ledger view tabs</h2>
+          <p class="overlap-note">Shipped: <em>Daily · Calendar · Monthly · Total</em> — same four-up ledger modes as MM-family apps.</p>
+          <div class="grid-10">
+            <article class="alt-card"><span class="alt-num">#01</span><h3 class="alt-title">Two tabs: Feed · Accounts</h3><p class="alt-desc">Collapse Calendar/Monthly into Feed filters; Total becomes Accounts summary screen linked from second tab.</p><div class="sketch">[Feed][Accounts]</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#02</span><h3 class="alt-title">Single scroll morphing view</h3><p class="alt-desc">One list: pinch or speed-scroll switches density (day groups → month blocks). No tab row.</p><div class="sketch">List zoom levels</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#03</span><h3 class="alt-title">Dropdown view mode</h3><p class="alt-desc">One tab label “Daily ▾” opens menu: Daily, Week grid, Month rollup, Accounts total.</p><div class="sketch">Daily ▾ menu</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#04</span><h3 class="alt-title">Inbox triage + Ledger</h3><p class="alt-desc">Tab 1 Pending approvals queue; Tab 2 Posted ledger (replaces mental model of “home = transactions only”).</p><div class="sketch">[Inbox][Ledger]</div><div class="alt-tags"><span class="tag diff-high">MMR-native</span></div></article>
+            <article class="alt-card"><span class="alt-num">#05</span><h3 class="alt-title">Icon-only scrollable tabs</h3><p class="alt-desc">Keep four modes but icons + tooltips (list, grid, bars, wallet); saves width on small phones.</p><div class="sketch">☰ ⊞ ▥ ∑</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#06</span><h3 class="alt-title">Calendar as root, list as sheet</h3><p class="alt-desc">Default Calendar tab; tapping a day slides up transaction sheet (Google Calendar meets finance).</p><div class="sketch">Grid + bottom sheet</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#07</span><h3 class="alt-title">Segmented control in summary band</h3><p class="alt-desc">Move tabs into colored band under strip; header stays minimal.</p><div class="sketch">Strip → [D|C|M|T] → list</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#08</span><h3 class="alt-title">User-pinned default view</h3><p class="alt-desc">Settings picks default; UI shows one view + “More layouts” link instead of always-visible four tabs.</p><div class="sketch">Daily + ⋯ layouts</div><div class="alt-tags"><span class="tag diff-med">Settings-driven</span></div></article>
+            <article class="alt-card"><span class="alt-num">#09</span><h3 class="alt-title">Vertical side rail (tablet)</h3><p class="alt-desc">On wide: modes in left rail; phone keeps bottom chips. De-clones phone MM layout.</p><div class="sketch">Rail │ content</div><div class="alt-tags"><span class="tag diff-med">Form factor</span></div></article>
+            <article class="alt-card"><span class="alt-num">#10</span><h3 class="alt-title">Rename, same four</h3><p class="alt-desc">Daily → Transactions; Monthly → By category; Total → Balances. Same pager, fresher vocabulary.</p><div class="sketch">New labels only</div><div class="alt-tags"><span class="tag">Low effort</span></div></article>
+          </div>
+        </section>
+
+        <!-- 4 -->
+        <section id="c4">
+          <h2>4. Home period summary strip</h2>
+          <p class="overlap-note">Shipped: <em>Income | Expenses | Total</em> three-column strip (often with carry-forward line). Classic MM period totals row.</p>
+          <div class="grid-10">
+            <article class="alt-card"><span class="alt-num">#01</span><h3 class="alt-title">Net hero + expandable detail</h3><p class="alt-desc">One big net number; tap expands Income/Expense breakdown accordion.</p><div class="sketch">−₹12,450 ▾</div><div class="alt-tags"><span class="tag diff-high">Differentiation doc</span></div></article>
+            <article class="alt-card"><span class="alt-num">#02</span><h3 class="alt-title">Waterfall bar</h3><p class="alt-desc">Horizontal stacked bar: income (+) vs expense (−) from zero baseline; numeric labels on ends.</p><div class="sketch">[+++|-----]</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#03</span><h3 class="alt-title">Budget vs actual single meter</h3><p class="alt-desc">One progress: spend vs budget cap; income optional second line. Less MM, more YNAB-lite.</p><div class="sketch">Budget ████░░ 72%</div><div class="alt-tags"><span class="tag diff-high">MMR budgets</span></div></article>
+            <article class="alt-card"><span class="alt-num">#04</span><h3 class="alt-title">Approval-aware strip</h3><p class="alt-desc">Third slot: “Unposted ₹X” pending SMS instead of Total—or badge on Total until approved.</p><div class="sketch">Inc | Exp | Pending</div><div class="alt-tags"><span class="tag diff-high">MMR-native</span></div></article>
+            <article class="alt-card"><span class="alt-num">#05</span><h3 class="alt-title">Sparkline strip</h3><p class="alt-desc">Mini 30-day sparkline of daily net; tap opens Stats. Numbers demoted to caption.</p><div class="sketch">~~~∿~~~ trend</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#06</span><h3 class="alt-title">Cash-flow lanes</h3><p class="alt-desc">Two rows: Inflows (accounts) / Outflows (categories top-3) — not symmetric three columns.</p><div class="sketch">In: … / Out: …</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#07</span><h3 class="alt-title">Hide strip on Daily</h3><p class="alt-desc">Show strip only on Monthly/Total tabs; Daily stays list-first (reduces MM chrome density).</p><div class="sketch">Tab-conditional strip</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#08</span><h3 class="alt-title">Floating summary card</h3><p class="alt-desc">Elevated card over list with blur; collapses to 1-line on scroll (iOS Maps style).</p><div class="sketch">Card over list</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#09</span><h3 class="alt-title">Compare prior month inline</h3><p class="alt-desc">Each column shows Δ% vs last month (MM Total tab does this elsewhere—bring to strip).</p><div class="sketch">Exp ₹X (+12%)</div><div class="alt-tags"><span class="tag">MM-adjacent</span></div></article>
+            <article class="alt-card"><span class="alt-num">#10</span><h3 class="alt-title">Monospace ledger row</h3><p class="alt-desc">Single full-width row: IBM Plex Mono aligned columns—same data, editorial “ledger” not MM coral tiles.</p><div class="sketch">Inc · Exp · Net monospace</div><div class="alt-tags"><span class="tag diff-med">Ledger accent doc</span></div></article>
+          </div>
+        </section>
+
+        <!-- 5 -->
+        <section id="c5">
+          <h2>5. Transaction list grouping &amp; row chrome</h2>
+          <p class="overlap-note">Shipped: day headers (<em>day, weekday, month, year</em>), compact rows (category, account, amount). MM-style grouped ledger list.</p>
+          <div class="grid-10">
+            <article class="alt-card"><span class="alt-num">#01</span><h3 class="alt-title">Chronological flat (no headers)</h3><p class="alt-desc">Sticky mini-date at row start only; continuous scroll like messaging apps.</p><div class="sketch">12 Oct · Food · −₹</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#02</span><h3 class="alt-title">Thread by source</h3><p class="alt-desc">Groups: Manual · SMS approved · Recurring · Import; date secondary within thread.</p><div class="sketch">SMS thread / Manual</div><div class="alt-tags"><span class="tag diff-high">MMR-native</span></div></article>
+            <article class="alt-card"><span class="alt-num">#03</span><h3 class="alt-title">Envelope / category sections</h3><p class="alt-desc">Within month, collapse by category with subtotals (YNAB envelope metaphor).</p><div class="sketch">▼ Food (₹…)</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#04</span><h3 class="alt-title">Today / Yesterday labels</h3><p class="alt-desc">Human-relative headers instead of full date string—breaks MM literal date convention.</p><div class="sketch">Today / Yesterday</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#05</span><h3 class="alt-title">Card tiles per txn</h3><p class="alt-desc">Larger cards with merchant initial, receipt thumb, approval link icon—less dense MM row.</p><div class="sketch">[img] Merchant card</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#06</span><h3 class="alt-title">Split list: pending ghost rows</h3><p class="alt-desc">Faded unapproved SMS at bottom of each day group until posted—visual pipeline.</p><div class="sketch">Ghost −₹ (pending)</div><div class="alt-tags"><span class="tag diff-high">MMR-native</span></div></article>
+            <article class="alt-card"><span class="alt-num">#07</span><h3 class="alt-title">Ruled paper / margin line</h3><p class="alt-desc">Ledger handwritten accent: ruled background, Fraunces amounts (see ledger design HTML).</p><div class="sketch">│ ruled margin</div><div class="alt-tags"><span class="tag diff-med">Design doc</span></div></article>
+            <article class="alt-card"><span class="alt-num">#08</span><h3 class="alt-title">Multi-column tablet</h3><p class="alt-desc">Date | Payee | Category | Account | Amount columns on wide width; phone keeps compact.</p><div class="sketch">table columns</div><div class="alt-tags"><span class="tag diff-med">Form factor</span></div></article>
+            <article class="alt-card"><span class="alt-num">#09</span><h3 class="alt-title">Swipe actions primary</h3><p class="alt-desc">Row design assumes swipe-to-approve duplicate edit; thinner row, icons on reveal.</p><div class="sketch">← swipe actions</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#10</span><h3 class="alt-title">Same density, new hierarchy</h3><p class="alt-desc">Keep grouping; emphasize amount + category on line 1; demote account to caption; hide time by default setting.</p><div class="sketch">Tweak typography only</div><div class="alt-tags"><span class="tag">Low effort</span></div></article>
+          </div>
+        </section>
+
+        <!-- 6 -->
+        <section id="c6">
+          <h2>6. Primary add-transaction action</h2>
+          <p class="overlap-note">Shipped: <em>FAB</em> on Home (MM-standard entry point). MMR also routes approvals separately via mail icon.</p>
+          <div class="grid-10">
+            <article class="alt-card"><span class="alt-num">#01</span><h3 class="alt-title">Bottom bar “+” between tabs</h3><p class="alt-desc">Center cutout tab triggers add; no floating FAB over list.</p><div class="sketch">Tab bar ⊕ notch</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#02</span><h3 class="alt-title">Speed dial FAB</h3><p class="alt-desc">Long-press or tap expands: Expense, Income, Transfer, Paste SMS.</p><div class="sketch">+ → fan menu</div><div class="alt-tags"><span class="tag diff-med">MMR-native</span></div></article>
+            <article class="alt-card"><span class="alt-num">#03</span><h3 class="alt-title">Header “+” only</h3><p class="alt-desc">Add in top app bar; list full-bleed without FAB occlusion.</p><div class="sketch">··· + in header</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#04</span><h3 class="alt-title">Empty-state CTA</h3><p class="alt-desc">No global FAB; first-run and empty month show inline “Record expense” button.</p><div class="sketch">Empty list button</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#05</span><h3 class="alt-title">Paste SMS as equal primary</h3><p class="alt-desc">Dual CTAs docked: Paste bank SMS · Manual entry (inbox-first positioning).</p><div class="sketch">[Paste][Manual]</div><div class="alt-tags"><span class="tag diff-high">MMR-native</span></div></article>
+            <article class="alt-card"><span class="alt-num">#06</span><h3 class="alt-title">Keyboard shortcut row</h3><p class="alt-desc">Pinned row above nav: ₹ expense template chips user configures.</p><div class="sketch">[Coffee][Fuel][+]</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#07</span><h3 class="alt-title">Voice / OCR capture</h3><p class="alt-desc">Mic FAB opens voice amount+note; camera for receipt—different iconography from MM +.</p><div class="sketch">🎤 FAB</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#08</span><h3 class="alt-title">Contextual day FAB</h3><p class="alt-desc">On Calendar day detail only; Home Daily uses row swipe “Add same day”.</p><div class="sketch">FAB on day sheet</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#09</span><h3 class="alt-title">Mini FAB that hides on scroll</h3><p class="alt-desc">Material extended FAB shrinks to icon on scroll down; MM keeps full FAB always.</p><div class="sketch">scroll-hide</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#10</span><h3 class="alt-title">Brand check FAB</h3><p class="alt-desc">Keep position/size; icon = approve check not plus—signals “confirm money” not generic add.</p><div class="sketch">✓ coral FAB</div><div class="alt-tags"><span class="tag diff-med">Branding</span></div></article>
+          </div>
+        </section>
+
+        <!-- 7 -->
+        <section id="c7">
+          <h2>7. Stats period chrome</h2>
+          <p class="overlap-note">Shipped: same month picker + centered period label + mode chip (<code>MmrHeaderBar</code>); overlaps Home period UX and MM stats period row.</p>
+          <div class="grid-10">
+            <article class="alt-card"><span class="alt-num">#01</span><h3 class="alt-title">Unified global period</h3><p class="alt-desc">One app-wide period in Settings syncs Home + Stats; Stats header shows read-only “Synced with Home”.</p><div class="sketch">🔗 same period</div><div class="alt-tags"><span class="tag diff-med">Product</span></div></article>
+            <article class="alt-card"><span class="alt-num">#02</span><h3 class="alt-title">Stats-only presets bar</h3><p class="alt-desc">Week | Month | Year | YTD chips—no month dialog; custom range last.</p><div class="sketch">[W][M][Y][YTD]</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#03</span><h3 class="alt-title">Comparison period toggle</h3><p class="alt-desc">Primary period + ghost “vs last month” overlay on all charts.</p><div class="sketch">Oct vs Sep</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#04</span><h3 class="alt-title">Brush-select on chart</h3><p class="alt-desc">Drag range on line/bar chart to set period; header updates live.</p><div class="sketch">drag range ═══</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#05</span><h3 class="alt-title">Fiscal year anchor</h3><p class="alt-desc">Stats opens on FY2026 with quarter sub-chips; month picker secondary.</p><div class="sketch">Q2 FY26</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#06</span><h3 class="alt-title">Split start / end chips</h3><p class="alt-desc">Already partially in Stats—double down: two tappable chips, no single center title.</p><div class="sketch">1 Oct – 31 Oct</div><div class="alt-tags"><span class="tag diff-med">Medium</span><span class="tag compose">Stats period chips</span></div></article>
+            <article class="alt-card"><span class="alt-num">#07</span><h3 class="alt-title">Minimal title, period in chart</h3><p class="alt-desc">Header = “Stats”; period annotation inside chart card footer only.</p><div class="sketch">Stats (no month bar)</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#08</span><h3 class="alt-title">Swipe period like Home</h3><p class="alt-desc">Full-screen horizontal period change with chart cross-fade; hide chevrons.</p><div class="sketch">swipe whole screen</div><div class="alt-tags"><span class="tag diff-med">Reuse MmrPeriodSwipeBox</span></div></article>
+            <article class="alt-card"><span class="alt-num">#09</span><h3 class="alt-title">Saved report bookmarks</h3><p class="alt-desc">Dropdown of saved filters (Web Manage presets pattern on mobile).</p><div class="sketch">Reports ▾</div><div class="alt-tags"><span class="tag diff-high">MMR web parity</span></div></article>
+            <article class="alt-card"><span class="alt-num">#10</span><h3 class="alt-title">Keep picker, drop center title</h3><p class="alt-desc">Period chip right-aligned; back + “Stats” left—less MM twin of Home header.</p><div class="sketch">Stats ··· [Oct ▾]</div><div class="alt-tags"><span class="tag">Low effort</span></div></article>
+          </div>
+        </section>
+
+        <!-- 8 -->
+        <section id="c8">
+          <h2>8. Stats income vs expense mode</h2>
+          <p class="overlap-note">Shipped: <em>Income | Expenses</em> tabs with totals + horizontal pager to pie/list — classic MM stats ledger split.</p>
+          <div class="grid-10">
+            <article class="alt-card"><span class="alt-num">#01</span><h3 class="alt-title">Single combined view</h3><p class="alt-desc">One pie with green/red hemispheres or dual-ring donut; toggle highlights slice set.</p><div class="sketch">dual-ring donut</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#02</span><h3 class="alt-title">Net categories only</h3><p class="alt-desc">Show categories that dominate net flow; signed amounts, no tab split.</p><div class="sketch">signed bars ±</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#03</span><h3 class="alt-title">Sankey cash flow</h3><p class="alt-desc">Income sources → accounts → expense categories; replaces tab pager entirely.</p><div class="sketch">Sankey diagram</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#04</span><h3 class="alt-title">Toggle pill (not tabs)</h3><p class="alt-desc">Segmented pill in chart card header instead of full-width tab row under app bar.</p><div class="sketch">card header toggle</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#05</span><h3 class="alt-title">Expense default, income drawer</h3><p class="alt-desc">Open on expenses; income via bottom sheet “Show inflows”.</p><div class="sketch">Exp main · sheet</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#06</span><h3 class="alt-title">Account-type lenses</h3><p class="alt-desc">Tabs: Cash spending | Cards | Transfers | Income — MM-adjacent but not identical pair.</p><div class="sketch">Cash|Card|Xfer|In</div><div class="alt-tags"><span class="tag diff-med">Home Total overlap</span></div></article>
+            <article class="alt-card"><span class="alt-num">#07</span><h3 class="alt-title">Merchant rank list first</h3><p class="alt-desc">No pie default; sorted merchant list with bar sparks; pie optional drill-down.</p><div class="sketch">ranked list</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#08</span><h3 class="alt-title">Cylinder inspect (existing spec)</h3><p class="alt-desc">Lean into Stats cylinder hero + category bridge instead of MM-style pie pager.</p><div class="sketch">cylinder + pills</div><div class="alt-tags"><span class="tag compose">StatsCategoryBridge</span></div></article>
+            <article class="alt-card"><span class="alt-num">#09</span><h3 class="alt-title">Approval-adjusted toggle</h3><p class="alt-desc">Switch: Posted only vs Include pending SMS amounts in projections.</p><div class="sketch">[Posted][+Pending]</div><div class="alt-tags"><span class="tag diff-high">MMR-native</span></div></article>
+            <article class="alt-card"><span class="alt-num">#10</span><h3 class="alt-title">Rename tabs</h3><p class="alt-desc">“Inflows” / “Outflows” or localized Hindi labels—same pager, less MM vocabulary.</p><div class="sketch">copy change</div><div class="alt-tags"><span class="tag">Low effort</span></div></article>
+          </div>
+        </section>
+
+        <!-- 9 -->
+        <section id="c9">
+          <h2>9. Stats category breakdown (viz + list)</h2>
+          <p class="overlap-note">Shipped: Compose pie + category list + drill-down detail with bar chart — MM stats pattern family.</p>
+          <div class="grid-10">
+            <article class="alt-card"><span class="alt-num">#01</span><h3 class="alt-title">Horizontal bar rank</h3><p class="alt-desc">Sorted bars replace pie as primary; pie optional in detail.</p><div class="sketch">████░░ bars</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#02</span><h3 class="alt-title">Treemap</h3><p class="alt-desc">Nested rectangles by spend; tap zooms category tree.</p><div class="sketch">treemap tiles</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#03</span><h3 class="alt-title">Heat calendar</h3><p class="alt-desc">GitHub-style intensity grid; category filter in chip row.</p><div class="sketch">░░▓▓░ grid</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#04</span><h3 class="alt-title">Pills + list only (no chart)</h3><p class="alt-desc">Category chips with % badge; list is source of truth—minimal chart chrome.</p><div class="sketch">pills → list</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#05</span><h3 class="alt-title">Small multiples</h3><p class="alt-desc">Spark pie per top-5 category in a grid; tap opens detail.</p><div class="sketch">5× mini pies</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#06</span><h3 class="alt-title">Waterfall by category</h3><p class="alt-desc">Running total stepping through categories—narrative “where money went”.</p><div class="sketch">waterfall steps</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#07</span><h3 class="alt-title">Budget burn lanes</h3><p class="alt-desc">Each category row: budget cap bar + actual overlay (ties Home budgets tab).</p><div class="sketch">budget ███░</div><div class="alt-tags"><span class="tag diff-high">MMR-native</span></div></article>
+            <article class="alt-card"><span class="alt-num">#08</span><h3 class="alt-title">Interactive pie → morph list</h3><p class="alt-desc">Tap slice; pie morphs into filtered txn list in-place (shared element transition).</p><div class="sketch">pie → list morph</div><div class="alt-tags"><span class="tag diff-med">Motion</span></div></article>
+            <article class="alt-card"><span class="alt-num">#09</span><h3 class="alt-title">Accessibility table first</h3><p class="alt-desc">Default sortable table (category, %, ₹); chart under “Visual summary” disclosure.</p><div class="sketch">table default</div><div class="alt-tags"><span class="tag diff-med">A11y</span></div></article>
+            <article class="alt-card"><span class="alt-num">#10</span><h3 class="alt-title">Keep pie, change legend</h3><p class="alt-desc">Donut with outside labels + “Other” explainer; list syncs highlight on hover/focus.</p><div class="sketch">labeled donut</div><div class="alt-tags"><span class="tag">Low effort</span></div></article>
+          </div>
+        </section>
+
+        <!-- 10 -->
+        <section id="c10">
+          <h2>10. Main bottom navigation</h2>
+          <p class="overlap-note">Shipped: scrollable bottom bar, outline/filled icons, Plus Jakarta labels — same information architecture family as MM (Transactions / Stats / …).</p>
+          <div class="grid-10">
+            <article class="alt-card"><span class="alt-num">#01</span><h3 class="alt-title">Three destinations only</h3><p class="alt-desc">Inbox · Ledger · More (settings/stats/loans inside More hub).</p><div class="sketch">3 tabs</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#02</span><h3 class="alt-title">Navigation rail default</h3><p class="alt-desc">Phone: compact rail left after onboarding; bottom bar for one-hand mode toggle.</p><div class="sketch">rail │ body</div><div class="alt-tags"><span class="tag diff-med">Already on tablet</span></div></article>
+            <article class="alt-card"><span class="alt-num">#03</span><h3 class="alt-title">Search-first home</h3><p class="alt-desc">Omni search tab center; others peripheral—less MM tab clone.</p><div class="sketch">🔍 center tab</div><div class="alt-tags"><span class="tag diff-high">High differentiation</span></div></article>
+            <article class="alt-card"><span class="alt-num">#04</span><h3 class="alt-title">Approvals tab (when policy allows)</h3><p class="alt-desc">Dedicated Inbox tab with badge—not buried under mail icon on Home.</p><div class="sketch">Inbox tab badge</div><div class="alt-tags"><span class="tag diff-high">MMR-native</span></div></article>
+            <article class="alt-card"><span class="alt-num">#05</span><h3 class="alt-title">Floating glass dock</h3><p class="alt-desc">Detached pill dock over expressive canvas; blur + fewer icons visible.</p><div class="sketch">floating dock</div><div class="alt-tags"><span class="tag diff-med">Expressive</span></div></article>
+            <article class="alt-card"><span class="alt-num">#06</span><h3 class="alt-title">Gesture app shell</h3><p class="alt-desc">Edge swipe between 2–3 hubs; no persistent tab bar (high learning curve).</p><div class="sketch">edge swipe</div><div class="alt-tags"><span class="tag diff-high">Risky</span></div></article>
+            <article class="alt-card"><span class="alt-num">#07</span><h3 class="alt-title">Contextual nav</h3><p class="alt-desc">On Home: ledger tabs only; leaving Home shows global nav—split local vs global.</p><div class="sketch">local vs global</div><div class="alt-tags"><span class="tag diff-med">Medium</span></div></article>
+            <article class="alt-card"><span class="alt-num">#08</span><h3 class="alt-title">Text-only minimal bar</h3><p class="alt-desc">No icons—words only (Cove/manuscript aesthetic crossover).</p><div class="sketch">Home Stats Settings</div><div class="alt-tags"><span class="tag diff-med">Brand</span></div></article>
+            <article class="alt-card"><span class="alt-num">#09</span><h3 class="alt-title">User-curated bar</h3><p class="alt-desc">Extend hiddenMainNavIds: user picks 3–5 pins; rest in overflow—already partially shipped.</p><div class="sketch">custom pins</div><div class="alt-tags"><span class="tag compose">hiddenMainNavIds</span></div></article>
+            <article class="alt-card"><span class="alt-num">#10</span><h3 class="alt-title">MM slots, MMR visual</h3><p class="alt-desc">Keep routes; monochrome icons, rose-gold selected state, no label truncation pattern from MM.</p><div class="sketch">re-skin only</div><div class="alt-tags"><span class="tag">Low effort</span></div></article>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="legend">
+      <h3>How to use this catalog</h3>
+      <ul>
+        <li><strong>Pick one component</strong> where MM similarity hurts most (usually <code>#1 Period picker</code> + <code>#2 Top chrome</code>).</li>
+        <li><strong>Tag “High differentiation”</strong> options change mental model; <strong>“Low effort”</strong> options preserve behavior and swap copy/chrome.</li>
+        <li><strong>Compose touchpoints</strong> called out where an alternative maps to existing code (<code>HomeMonthPickerDialog</code>, <code>MmrPeriodSwipeBox</code>, <code>MmrHeaderBar</code>, <code>MmrScrollableBottomBar</code>, Stats category bridge).</li>
+        <li>Mixing all ten #01 variants at once will fight; pair e.g. <em>picker #05 chips</em> + <em>strip #01 net hero</em> + <em>list #02 source threads</em> for a coherent “Inbox-first” story.</li>
+        <li>Open locally: <code>docs/design/mm-overlap-alternatives/index.html</code> (static; no build step).</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>

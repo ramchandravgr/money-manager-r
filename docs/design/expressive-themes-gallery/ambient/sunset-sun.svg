@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 520" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="horizonHaze" x1="140" y1="100" x2="140" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fdba74" stop-opacity="0.35"/>
+      <stop offset="55%" stop-color="#fb923c" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#ea580c" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="sunHalo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#fef08a" stop-opacity="0.75"/>
+      <stop offset="35%" stop-color="#fbbf24" stop-opacity="0.45"/>
+      <stop offset="70%" stop-color="#f97316" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#ea580c" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sunDisc" x1="0.35" y1="0.2" x2="0.7" y2="0.85">
+      <stop offset="0%" stop-color="#fef9c3"/>
+      <stop offset="45%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
+    <clipPath id="aboveHorizon">
+      <rect x="0" y="0" width="280" height="158"/>
+    </clipPath>
+  </defs>
+  <!-- Warm sky wash -->
+  <rect x="0" y="40" width="280" height="160" fill="url(#horizonHaze)"/>
+  <!-- Outer glow (full circle, clipped so bottom sits on horizon) -->
+  <g clip-path="url(#aboveHorizon)">
+    <circle cx="140" cy="118" r="78" fill="url(#sunHalo)"/>
+    <circle cx="140" cy="118" r="34" fill="url(#sunDisc)" fill-opacity="0.92"/>
+    <circle cx="140" cy="118" r="28" fill="#fde047" fill-opacity="0.85"/>
+    <ellipse cx="132" cy="110" rx="10" ry="8" fill="#fffbeb" fill-opacity="0.35"/>
+  </g>
+  <!-- Horizon line -->
+  <line x1="0" y1="158" x2="280" y2="158" stroke="#ea580c" stroke-opacity="0.2" stroke-width="1"/>
+  <!-- Ground warmth below horizon -->
+  <rect x="0" y="158" width="280" height="40" fill="url(#horizonHaze)" opacity="0.5"/>
+</svg>

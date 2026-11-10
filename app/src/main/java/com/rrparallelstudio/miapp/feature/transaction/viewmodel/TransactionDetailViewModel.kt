@@ -1,0 +1,307 @@
+package com.rrparallelstudio.miapp.feature.transaction.viewmodel
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.rrparallelstudio.miapp.core.common.display.MmrMoneyFormat
+import com.rrparallelstudio.miapp.core.common.display.TransactionCategoryLabels
+import com.rrparallelstudio.miapp.core.data.preferences.LanSyncIdentityStore
+import com.rrparallelstudio.miapp.core.domain.repository.TransactionAttachmentRepository
+import com.rrparallelstudio.miapp.core.domain.repository.TransactionRepository
+import com.rrparallelstudio.miapp.core.loan.LoanLinkedTransactionDeleteMode
+import com.rrparallelstudio.miapp.core.model.enums.CardNetwork
+import com.rrparallelstudio.miapp.core.model.enums.SmsLinkRole
+import com.rrparallelstudio.miapp.core.model.enums.TransactionType
+import com.rrparallelstudio.miapp.core.parser.model.SmsInstrument
+import com.rrparallelstudio.miapp.core.parser.model.SmsPaymentChannel
+import com.rrparallelstudio.miapp.feature.transaction.model.LinkedSmsItemUi
+import com.rrparallelstudio.miapp.feature.transaction.model.TransactionDetailUiEvent
+import com.rrparallelstudio.miapp.feature.transaction.model.TransactionDetailUiState
+import com.rrparallelstudio.miapp.feature.transaction.model.TransactionReceiptUi
+import com.rrparallelstudio.miapp.ui.state.MmrUiMessages
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import javax.inject.Inject
+
+@HiltViewModel
+class TransactionDetailViewModel
+    @Inject
+    constructor(
+        private val transactionRepository: TransactionRepository,
+        private val attachmentRepository: TransactionAttachmentRepository,
+        private val lanSyncIdentityStore: LanSyncIdentityStore,
+        savedStateHandle: SavedStateHandle,
+    ) : ViewModel() {
+        private val transactionId: Long = checkNotNull(savedStateHandle["transactionId"])
+
+        private data class DetailOverlays(
+            val showDeleteConfirmDialog: Boolean = false,
+            val showLoanDeleteDialog: Boolean = false,
+            val showDuplicateDateDialog: Boolean = false,
+            val isDeleting: Boolean = false,
+        )
+
+        private val overlayState = MutableStateFlow(DetailOverlays())
+        private val _deleted = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+        val deleted = _deleted.asSharedFlow()
+
+        private val _duplicateNavigation = MutableSharedFlow<DuplicateNavigation>(extraBufferCapacity = 1)
+        val duplicateNavigation = _duplicateNavigation.asSharedFlow()
+
+        data class DuplicateNavigation(
+            val sourceTransactionId: Long,
+            val dateMillis: Long,
+        )
+
+        private fun formatPaymentChannel(raw: String?): String? {
+            raw ?: return null
+            return runCatching { SmsPaymentChannel.valueOf(raw) }
+                .getOrNull()
+                ?.name
+                ?.replace('_', ' ')
+                ?.lowercase(Locale.getDefault())
+                ?.replaceFirstChar { it.titlecase(Locale.getDefault()) }
+                ?: raw
+        }
+
+        private fun formatPaymentInstrument(raw: String?): String? {
+            raw ?: return null
+            return runCatching { SmsInstrument.valueOf(raw) }
+                .getOrNull()
+                ?.name
+                ?.replace('_', ' ')
+                ?.lowercase(Locale.getDefault())
+                ?.replaceFirstChar { it.titlecase(Locale.getDefault()) }
+                ?: raw
+        }
+
+        private fun formatCardMetadata(
+            lastFour: String?,
+            network: CardNetwork?,
+        ): String? {
+            val parts = mutableListOf<String>()
+            network?.let { parts.add(it.name) }
+            lastFour?.takeIf { it.length == 4 }?.let { parts.add("•••• $it") }
+            return parts.takeIf { it.isNotEmpty() }?.joinToString(" · ")
+        }
+
+        private val receiptsFlow =
+            transactionRepository.getApprovedTransactionsDetailed().flatMapLatest {
+                flow {
+                    emit(
+                        attachmentRepository.listForTransaction(transactionId).mapNotNull { entity ->
+                            val path = attachmentRepository.localFile(entity)?.absolutePath ?: return@mapNotNull null
+                            TransactionReceiptUi(id = entity.id, filePath = path)
+                        },
+                    )
+                }
+            }
+
+        val uiState: StateFlow<TransactionDetailUiState> =
+            combine(
+                transactionRepository.getApprovedTransactionsDetailed().map { list ->
+                    list.find { it.transaction.id == transactionId }
+                },
+                transactionRepository.getLinkedSmsForTransaction(transactionId),
+                receiptsFlow,
+                overlayState,
+            ) { details, smsRecords, receipts, overlays ->
+                if (details == null) {
+                    TransactionDetailUiState(
+                        isLoading = false,
+                        transactionId = transactionId,
+                        errorMessage = "Transaction not found.",
+                        showDeleteConfirmDialog = overlays.showDeleteConfirmDialog,
+                        showLoanDeleteDialog = overlays.showLoanDeleteDialog,
+                        showDuplicateDateDialog = overlays.showDuplicateDateDialog,
+                        isDeleting = overlays.isDeleting,
+                    )
+                } else {
+                    val txn = details.transaction
+                    val dateFormat = SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault())
+                    val isIncome = txn.type == TransactionType.INCOME
+                    val sign = if (isIncome) "+" else "-"
+                    val typeLabel =
+                        txn.type.name
+                            .lowercase(Locale.getDefault())
+                            .replaceFirstChar { it.titlecase(Locale.getDefault()) }
+                    val refundSummary =
+                        txn.originalAmount?.let { original ->
+                            val refunded = txn.refundedTotal
+                            if (refunded > 0.0) {
+                                "Original ${MmrMoneyFormat.format(original, "₹")} · Refunded " +
+                                    "${MmrMoneyFormat.format(refunded, "₹")} · Net " +
+                                    "${MmrMoneyFormat.format(txn.amount, "₹")}"
+                            } else {
+                                null
+                            }
+                        }
+                    val smsUi =
+                        smsRecords.map { sms ->
+                            LinkedSmsItemUi(
+                                id = sms.id,
+                                sender = sms.sender,
+                                snippet = sms.messageBodySnippet,
+                                receivedLabel = dateFormat.format(Date(sms.receivedTime)),
+                                amountFormatted =
+                                    sms.parsedAmount?.let { MmrMoneyFormat.format(it, "₹") },
+                                roleLabel =
+                                    when (sms.linkRole) {
+                                        SmsLinkRole.REFUND -> "Refund"
+                                        SmsLinkRole.PURCHASE -> "Purchase"
+                                        null -> null
+                                    },
+                            )
+                        }
+                    TransactionDetailUiState(
+                        isLoading = false,
+                        transactionId = txn.id,
+                        title =
+                            txn.note?.trim()?.takeIf { it.isNotEmpty() }
+                                ?: details.category?.name ?: "Transaction",
+                        amountFormatted =
+                            if (sign.isEmpty()) {
+                                MmrMoneyFormat.formatWithSpace(txn.amount, "₹")
+                            } else {
+                                "$sign${MmrMoneyFormat.format(txn.amount, "₹")}"
+                            },
+                        typeLabel = typeLabel,
+                        dateTimeLabel = dateFormat.format(Date(txn.dateTime)),
+                        dateTimeMillis = txn.dateTime,
+                        categoryLabel =
+                            TransactionCategoryLabels.format(
+                                details.category?.name,
+                                details.subcategory?.name,
+                            ),
+                        accountLabel = details.account?.name ?: "Account",
+                        note = txn.note,
+                        paymentChannelLabel = formatPaymentChannel(txn.paymentChannel),
+                        paymentInstrumentLabel = formatPaymentInstrument(txn.paymentInstrument),
+                        cardMetadataLabel = formatCardMetadata(txn.cardLastFour, txn.cardNetwork),
+                        syncedFromLabel = formatCreatedByLabel(txn.createdByProfileId, txn.createdByDisplayName),
+                        refundSummaryLabel = refundSummary,
+                        linkedSms = smsUi,
+                        receipts = receipts,
+                        showDeleteConfirmDialog = overlays.showDeleteConfirmDialog,
+                        showLoanDeleteDialog = overlays.showLoanDeleteDialog,
+                        showDuplicateDateDialog = overlays.showDuplicateDateDialog,
+                        isDeleting = overlays.isDeleting,
+                    )
+                }
+            }.catch {
+                emit(
+                    TransactionDetailUiState(
+                        isLoading = false,
+                        transactionId = transactionId,
+                        errorMessage = MmrUiMessages.friendly(it.message, MmrUiMessages.GENERIC_LOAD),
+                    ),
+                )
+            }.stateIn(
+                viewModelScope,
+                SharingStarted.WhileSubscribed(5000),
+                TransactionDetailUiState(isLoading = true, transactionId = transactionId),
+            )
+
+        fun onEvent(event: TransactionDetailUiEvent) {
+            when (event) {
+                TransactionDetailUiEvent.OnDeleteClick -> {
+                    overlayState.update { it.copy(showDeleteConfirmDialog = true) }
+                }
+
+                TransactionDetailUiEvent.OnDismissDeleteConfirm -> {
+                    overlayState.update { it.copy(showDeleteConfirmDialog = false) }
+                }
+
+                TransactionDetailUiEvent.OnConfirmDelete -> {
+                    overlayState.update { it.copy(showDeleteConfirmDialog = false) }
+                    viewModelScope.launch {
+                        val linked = transactionRepository.hasLinkedLoanPayment(transactionId)
+                        if (linked) {
+                            overlayState.update { it.copy(showLoanDeleteDialog = true) }
+                        } else {
+                            deleteTransaction(LoanLinkedTransactionDeleteMode.UNLINK)
+                        }
+                    }
+                }
+
+                TransactionDetailUiEvent.OnDismissLoanDeleteDialog -> {
+                    overlayState.update { it.copy(showLoanDeleteDialog = false) }
+                }
+
+                is TransactionDetailUiEvent.OnConfirmDeleteWithLoanPolicy -> {
+                    overlayState.update { it.copy(showLoanDeleteDialog = false) }
+                    deleteTransaction(event.mode)
+                }
+
+                TransactionDetailUiEvent.OnDuplicateClick -> {
+                    overlayState.update { it.copy(showDuplicateDateDialog = true) }
+                }
+
+                TransactionDetailUiEvent.OnDismissDuplicateDateDialog -> {
+                    overlayState.update { it.copy(showDuplicateDateDialog = false) }
+                }
+
+                TransactionDetailUiEvent.OnDuplicateSameDate -> {
+                    overlayState.update { it.copy(showDuplicateDateDialog = false) }
+                    val millis = uiState.value.dateTimeMillis
+                    _duplicateNavigation.tryEmit(
+                        DuplicateNavigation(
+                            sourceTransactionId = transactionId,
+                            dateMillis = millis,
+                        ),
+                    )
+                }
+
+                TransactionDetailUiEvent.OnDuplicateToday -> {
+                    overlayState.update { it.copy(showDuplicateDateDialog = false) }
+                    _duplicateNavigation.tryEmit(
+                        DuplicateNavigation(
+                            sourceTransactionId = transactionId,
+                            dateMillis = System.currentTimeMillis(),
+                        ),
+                    )
+                }
+            }
+        }
+
+        private fun deleteTransaction(mode: LoanLinkedTransactionDeleteMode) {
+            viewModelScope.launch {
+                overlayState.update { it.copy(isDeleting = true) }
+                try {
+                    val existing =
+                        transactionRepository.getTransactionDetailedById(transactionId)
+                            ?: throw IllegalArgumentException("Transaction not found.")
+                    transactionRepository.deleteTransactionWithLoanPolicy(existing.transaction, mode)
+                    _deleted.tryEmit(Unit)
+                } catch (e: Exception) {
+                    overlayState.update { it.copy(isDeleting = false) }
+                }
+            }
+        }
+
+        private fun formatCreatedByLabel(
+            profileId: String?,
+            snapshotName: String?,
+        ): String? {
+            if (!lanSyncIdentityStore.isLanSyncEnabled()) return null
+            if (profileId.isNullOrBlank()) return null
+            if (profileId == lanSyncIdentityStore.ownerProfileId) return null
+            val name = snapshotName?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+            return "Created by $name"
+        }
+    }

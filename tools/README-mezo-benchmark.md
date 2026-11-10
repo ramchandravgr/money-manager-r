@@ -24,7 +24,7 @@ Copy-Item tools\mezo_ledger_export.csv app\src\test\resources\mezo_ledger_export
 
 ```powershell
 cd D:\Development\MMR
-.\gradlew :app:testDebugUnitTest --tests com.mmr.core.parser.MezoLedgerParserComparisonTest
+.\gradlew :app:testDebugUnitTest --tests com.rrparallelstudio.miapp.core.parser.MezoLedgerParserComparisonTest
 ```
 
 Report: `tools/mezo_mmr_gap_report.txt`

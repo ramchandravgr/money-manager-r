@@ -1,0 +1,58 @@
+package com.rrparallelstudio.miapp.core.database.dao
+
+import androidx.room.*
+import com.rrparallelstudio.miapp.core.database.entity.SmsMessageRecordEntity
+import kotlinx.coroutines.flow.Flow
+
+@Dao
+interface SmsMessageRecordDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(record: SmsMessageRecordEntity): Long
+
+    @Update
+    suspend fun update(record: SmsMessageRecordEntity)
+
+    @Query("SELECT * FROM sms_message_records WHERE approvalState = 'PENDING' ORDER BY receivedTime DESC")
+    fun getPendingSmsRecords(): Flow<List<SmsMessageRecordEntity>>
+
+    @Query("SELECT * FROM sms_message_records WHERE id = :id LIMIT 1")
+    suspend fun getById(id: Long): SmsMessageRecordEntity?
+
+    @Query("SELECT * FROM sms_message_records WHERE messageBodyHash = :hash LIMIT 1")
+    suspend fun findByHash(hash: String): SmsMessageRecordEntity?
+
+    @Query("SELECT EXISTS(SELECT 1 FROM sms_message_records WHERE messageBodyHash = :hash)")
+    suspend fun isDuplicateHash(hash: String): Boolean
+
+    @Query("SELECT MAX(receivedTime) FROM sms_message_records")
+    suspend fun maxReceivedTime(): Long?
+
+    @Query(
+        """
+        SELECT * FROM sms_message_records
+        WHERE matchedTransactionId = :transactionId
+        ORDER BY receivedTime DESC
+        """,
+    )
+    fun getByMatchedTransactionId(transactionId: Long): Flow<List<SmsMessageRecordEntity>>
+
+    @Query(
+        """
+        SELECT COUNT(*) FROM sms_message_records
+        WHERE matchedTransactionId = :transactionId
+        """,
+    )
+    suspend fun countByMatchedTransactionId(transactionId: Long): Int
+
+    @Query(
+        """
+        UPDATE sms_message_records
+        SET matchedTransactionId = :newId
+        WHERE matchedTransactionId IN (:oldIds)
+        """,
+    )
+    suspend fun reassignMatchedTransactions(
+        oldIds: List<Long>,
+        newId: Long,
+    )
+}

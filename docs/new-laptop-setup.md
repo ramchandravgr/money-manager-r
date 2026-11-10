@@ -73,7 +73,7 @@ GOOGLE_WEB_CLIENT_ID=<Web OAuth client ID from Google Cloud Console>
 ```
 
 - Drives **`BuildConfig.GOOGLE_WEB_CLIENT_ID`** for Drive backup / Credential Manager (`app/build.gradle.kts`).
-- **Android** OAuth client in Cloud Console: package `com.mmr.app` + **debug keystore SHA-1** (new laptop = new debug SHA-1 unless you copy `~/.android/debug.keystore` — if you copy the keystore, SHA-1 stays the same).
+- **Android** OAuth client in Cloud Console: package `com.rrparallelstudio.miapp` + **debug keystore SHA-1** (new laptop = new debug SHA-1 unless you copy `~/.android/debug.keystore` — if you copy the keystore, SHA-1 stays the same).
 - Details: `PROJECT_MEMORY.md` (Google OAuth / Drive backup).
 
 ---
@@ -82,7 +82,7 @@ GOOGLE_WEB_CLIENT_ID=<Web OAuth client ID from Google Cloud Console>
 
 | Field | Value |
 |-------|--------|
-| Application ID | `com.mmr.app` |
+| Application ID | `com.rrparallelstudio.miapp` |
 | `versionCode` / `versionName` | `900` / `0.9.0` (semver; see [`docs/versioning.md`](versioning.md)) |
 | `minSdk` | 24 |
 | `compileSdk` / `targetSdk` | 35 |

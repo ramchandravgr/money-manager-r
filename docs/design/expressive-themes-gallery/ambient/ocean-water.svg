@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 520" preserveAspectRatio="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="pool" x1="140" y1="0" x2="140" y2="520" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7dd3fc" stop-opacity="0.35"/>
+      <stop offset="18%" stop-color="#22d3ee" stop-opacity="0.42"/>
+      <stop offset="48%" stop-color="#0891b2" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#155e75" stop-opacity="0.7"/>
+    </linearGradient>
+    <linearGradient id="floor" x1="0" y1="320" x2="280" y2="520" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#67e8f9" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#0e7490" stop-opacity="0.35"/>
+    </linearGradient>
+    <radialGradient id="spec" cx="0.5" cy="0.35" r="0.55">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.55"/>
+      <stop offset="45%" stop-color="#a5f3fc" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <!-- Full-page pool body -->
+  <rect width="280" height="520" fill="url(#pool)"/>
+  <rect y="280" width="280" height="240" fill="url(#floor)"/>
+  <!-- Pool-floor caustics: bright refraction, not surface waves -->
+  <g fill="#ecfeff" fill-opacity="0.22">
+    <ellipse cx="48" cy="210" rx="38" ry="11" transform="rotate(-18 48 210)"/>
+    <ellipse cx="118" cy="248" rx="52" ry="13" transform="rotate(12 118 248)"/>
+    <ellipse cx="198" cy="222" rx="44" ry="10" transform="rotate(-8 198 222)"/>
+    <ellipse cx="72" cy="318" rx="58" ry="14" transform="rotate(16 72 318)"/>
+    <ellipse cx="168" cy="348" rx="64" ry="16" transform="rotate(-14 168 348)"/>
+    <ellipse cx="236" cy="312" rx="36" ry="9" transform="rotate(22 236 312)"/>
+    <ellipse cx="42" cy="402" rx="46" ry="12" transform="rotate(-10 42 402)"/>
+    <ellipse cx="132" cy="438" rx="70" ry="18" transform="rotate(8 132 438)"/>
+    <ellipse cx="220" cy="408" rx="50" ry="13" transform="rotate(-18 220 408)"/>
+    <ellipse cx="94" cy="478" rx="40" ry="10" transform="rotate(6 94 478)"/>
+  </g>
+  <g fill="#67e8f9" fill-opacity="0.2">
+    <ellipse cx="88" cy="278" rx="28" ry="8" transform="rotate(28 88 278)"/>
+    <ellipse cx="196" cy="268" rx="34" ry="9" transform="rotate(-22 196 268)"/>
+    <ellipse cx="154" cy="388" rx="42" ry="11" transform="rotate(4 154 388)"/>
+    <ellipse cx="58" cy="358" rx="24" ry="7" transform="rotate(-30 58 358)"/>
+  </g>
+  <!-- Sky reflection on the water surface -->
+  <ellipse cx="90" cy="175" rx="70" ry="28" fill="url(#spec)"/>
+  <ellipse cx="210" cy="195" rx="48" ry="18" fill="#ffffff" fill-opacity="0.16"/>
+  <!-- Specular glints -->
+  <ellipse cx="64" cy="188" rx="10" ry="3.2" fill="#ffffff" fill-opacity="0.45" transform="rotate(-20 64 188)"/>
+  <ellipse cx="176" cy="204" rx="14" ry="3.6" fill="#ffffff" fill-opacity="0.38" transform="rotate(12 176 204)"/>
+  <ellipse cx="238" cy="248" rx="8" ry="2.4" fill="#ffffff" fill-opacity="0.32" transform="rotate(-8 238 248)"/>
+  <ellipse cx="42" cy="330" rx="7" ry="2" fill="#ffffff" fill-opacity="0.28" transform="rotate(18 42 330)"/>
+</svg>

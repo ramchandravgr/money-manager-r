@@ -1,0 +1,94 @@
+package com.rrparallelstudio.miapp.core.transaction
+
+import com.rrparallelstudio.miapp.core.database.entity.TransactionEntity
+import com.rrparallelstudio.miapp.core.model.enums.LoanType
+import com.rrparallelstudio.miapp.core.model.enums.RecordStatus
+import com.rrparallelstudio.miapp.core.model.enums.TransactionType
+
+/**
+ * How approved transactions contribute to Home / Stats income & expense totals.
+ * Loan repayments are stored as [TransactionType.TRANSFER] but count as cash out (borrowed)
+ * or cash in (lent). Loan top-ups are excluded (liability / principal movement).
+ */
+object TransactionCashFlow {
+    fun isLoanTopUp(transaction: TransactionEntity): Boolean =
+        transaction.sourceReferenceId?.startsWith(LOAN_TOP_UP_REF_PREFIX) == true
+
+    /** Opening disbursal or additional top-up — visible in the ledger, not income/expense. */
+    fun isLoanPrincipalMovement(transaction: TransactionEntity): Boolean {
+        val ref = transaction.sourceReferenceId ?: return false
+        return ref.startsWith(LOAN_TOP_UP_REF_PREFIX) || ref.startsWith(LOAN_DISBURSAL_REF_PREFIX)
+    }
+
+    /** These transfers are informational for cash-flow; liability is on account opening balance (+ top-up bumps). */
+    fun skipsAccountBalanceRecompute(transaction: TransactionEntity): Boolean = isLoanPrincipalMovement(transaction)
+
+    fun expenseAmount(
+        transaction: TransactionEntity,
+        loanType: LoanType?,
+    ): Double {
+        if (transaction.status != RecordStatus.APPROVED) return 0.0
+        return when (transaction.type) {
+            TransactionType.EXPENSE -> transaction.amount
+            TransactionType.TRANSFER ->
+                if (
+                    isLoanRepaymentTransfer(transaction, loanType, LoanType.BORROWED)
+                ) {
+                    transaction.amount
+                } else {
+                    0.0
+                }
+            else -> 0.0
+        }
+    }
+
+    fun incomeAmount(
+        transaction: TransactionEntity,
+        loanType: LoanType?,
+    ): Double {
+        if (transaction.status != RecordStatus.APPROVED) return 0.0
+        return when (transaction.type) {
+            TransactionType.INCOME -> transaction.amount
+            TransactionType.TRANSFER ->
+                if (
+                    isLoanRepaymentTransfer(transaction, loanType, LoanType.LENT)
+                ) {
+                    transaction.amount
+                } else {
+                    0.0
+                }
+            else -> 0.0
+        }
+    }
+
+    fun countsAsExpense(
+        transaction: TransactionEntity,
+        loanType: LoanType?,
+    ): Boolean = expenseAmount(transaction, loanType) > 0.0
+
+    fun countsAsIncome(
+        transaction: TransactionEntity,
+        loanType: LoanType?,
+    ): Boolean = incomeAmount(transaction, loanType) > 0.0
+
+    /** Signed cash impact: income positive, expense negative (for running balance). */
+    fun netSignedAmount(
+        transaction: TransactionEntity,
+        loanType: LoanType?,
+    ): Double = incomeAmount(transaction, loanType) - expenseAmount(transaction, loanType)
+
+    private fun isLoanRepaymentTransfer(
+        transaction: TransactionEntity,
+        loanType: LoanType?,
+        expectedType: LoanType,
+    ): Boolean {
+        val loanId = transaction.loanId ?: return false
+        if (loanId <= 0L) return false
+        if (loanType != expectedType) return false
+        if (isLoanPrincipalMovement(transaction)) return false
+        return transaction.type == TransactionType.TRANSFER
+    }
+
+    private const val LOAN_TOP_UP_REF_PREFIX = "loan_topup:"
+    private const val LOAN_DISBURSAL_REF_PREFIX = "loan_disbursal:"
+}

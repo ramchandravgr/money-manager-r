@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rose Gold — currency background concept (HTML mockup)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    /* Rose Gold light palette (MmrThemePresets.roseGoldLight) — reference only */
+    :root {
+      --rg-list-bg: #faf7f8;
+      --rg-header: #6b4e5d;
+      --rg-accent: #e8b4b8;
+      --rg-week-hi: #fce7f3;
+      --rg-nav: #ffffff;
+      --rg-text-strong: #4b4b4b;
+      --rg-text-muted: #8e8e93;
+      --rg-gold-wash: rgba(212, 175, 119, 0.14);
+      --rg-rose-wash: rgba(232, 180, 184, 0.22);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      background: #12141c;
+      color: #e8eaef;
+      min-height: 100vh;
+      line-height: 1.45;
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 20px 64px;
+    }
+
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin: 0 0 8px;
+      letter-spacing: -0.02em;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #fcd34d;
+      border: 1px solid rgba(252, 211, 77, 0.4);
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+
+    .intro {
+      color: #9ca3af;
+      font-size: 0.9rem;
+      max-width: 70ch;
+      margin-bottom: 28px;
+    }
+    .intro strong { color: #f3f4f6; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 880px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      background: #1a1d28;
+    }
+
+    .panel h2 {
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin: 0;
+      padding: 14px 18px;
+      background: rgba(0, 0, 0, 0.25);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      color: #d1d5db;
+    }
+
+    /* —— Phone chrome —— */
+    .phone-wrap {
+      position: relative;
+      padding: 18px;
+      min-height: 420px;
+    }
+
+    .phone {
+      position: relative;
+      margin: 0 auto;
+      width: min(320px, 100%);
+      border-radius: 28px;
+      border: 1px solid rgba(107, 78, 93, 0.35);
+      box-shadow:
+        0 24px 48px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      overflow: hidden;
+    }
+
+    .status {
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      color: rgba(75, 75, 75, 0.65);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, var(--rg-nav) 100%);
+    }
+
+    .header-bar {
+      height: 52px;
+      display: flex;
+      align-items: center;
+      padding: 0 14px;
+      background: linear-gradient(135deg, var(--rg-header) 0%, #554049 100%);
+      color: #fff;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .scrim {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 120% 80% at 100% 0%, var(--rg-rose-wash) 0%, transparent 55%),
+        radial-gradient(ellipse 90% 70% at 0% 100%, var(--rg-gold-wash) 0%, transparent 50%);
+      z-index: 1;
+    }
+
+    .canvas {
+      position: relative;
+      min-height: 320px;
+      background: var(--rg-list-bg);
+      z-index: 0;
+    }
+
+    /* Decorative SVG layer (notes + coins) — stays behind content */
+    .money-layer {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      opacity: 0.92;
+    }
+
+    .money-layer svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .content {
+      position: relative;
+      z-index: 2;
+      padding: 14px 12px 20px;
+    }
+
+    .card {
+      background: var(--rg-nav);
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(107, 78, 93, 0.08);
+      border: 1px solid rgba(107, 78, 93, 0.12);
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      font-size: 0.82rem;
+      color: var(--rg-text-strong);
+    }
+
+    .card .label {
+      font-size: 0.68rem;
+      color: var(--rg-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 4px;
+    }
+
+    .amount {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-weight: 500;
+      font-size: 1rem;
+      color: var(--rg-header);
+    }
+
+    .nav-bar {
+      position: relative;
+      z-index: 2;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      background: rgba(255, 255, 255, 0.94);
+      border-top: 1px solid rgba(107, 78, 93, 0.1);
+      font-size: 0.62rem;
+      color: var(--rg-text-muted);
+    }
+    .nav-bar span.on { color: var(--rg-accent); font-weight: 600; }
+
+    /* Dark variant panel */
+    .phone.dark .canvas {
+      background: linear-gradient(180deg, #171116 0%, #141018 100%);
+    }
+    .phone.dark .status {
+      background: linear-gradient(180deg, #252028 0%, #171116 100%);
+      color: rgba(232, 180, 184, 0.45);
+    }
+    .phone.dark .header-bar {
+      background: linear-gradient(135deg, #3d2a32 0%, #2a1e24 100%);
+    }
+    .phone.dark .card {
+      background: rgba(28, 24, 30, 0.92);
+      border-color: rgba(232, 180, 184, 0.14);
+      color: #ece8ea;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+    }
+    .phone.dark .card .label { color: rgba(232, 180, 184, 0.55); }
+    .phone.dark .amount { color: #f0c4c8; }
+    .phone.dark .nav-bar {
+      background: rgba(20, 16, 24, 0.95);
+      border-top-color: rgba(232, 180, 184, 0.12);
+      color: rgba(212, 184, 196, 0.55);
+    }
+    .phone.dark .nav-bar span.on { color: #f0c4c8; }
+
+    .phone.dark .scrim {
+      background:
+        radial-gradient(ellipse 120% 90% at 90% 10%, rgba(232, 180, 184, 0.15) 0%, transparent 55%),
+        radial-gradient(ellipse 80% 60% at 10% 90%, rgba(212, 175, 119, 0.1) 0%, transparent 45%);
+    }
+
+    .legend {
+      margin-top: 18px;
+      padding: 12px 14px;
+      font-size: 0.75rem;
+      color: #9ca3af;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .legend code {
+      font-size: 0.7rem;
+      color: #fcd34d;
+      background: rgba(252, 211, 77, 0.08);
+      padding: 1px 6px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <span class="badge">Design reference · shipped in app (Rose Gold theme)</span>
+    <h1>Rose Gold — currency &amp; notes background</h1>
+    <p class="intro">
+      Visual-only concept for <strong>Money Inbox → Rose Gold</strong> expressive canvas: soft banknote silhouettes,
+      coin orbits, and guilloché-style curves so the scene feels <em>financial</em> without real currency art or photography.
+      Palette tokens match <code style="color:#fde68a;font-size:0.85em;">roseGoldLight()</code> in <code style="color:#fde68a;font-size:0.85em;">MmrThemePresets.kt</code>.
+      Compose implementation: <code style="color:#fde68a;font-size:0.85em;">MmrExpressiveScreenArt.drawRoseGold</code> (guilloché tiling, stacked note rects, coin gradients).
+    </p>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Light appearance (list background #FAF7F8)</h2>
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="status">9:41</div>
+            <div class="header-bar">Transactions</div>
+            <div class="canvas">
+              <div class="money-layer" aria-hidden="true">
+                <svg viewBox="0 0 360 400" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="note1" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style="stop-color:#fce7f3;stop-opacity:0.55" />
+                      <stop offset="100%" style="stop-color:#e8b4b8;stop-opacity:0.25" />
+                    </linearGradient>
+                    <linearGradient id="note2" x1="100%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style="stop-color:#fdf2f8;stop-opacity:0.45" />
+                      <stop offset="100%" style="stop-color:#d4b8c4;stop-opacity:0.22" />
+                    </linearGradient>
+                    <radialGradient id="coinMetal" cx="35%" cy="35%" r="65%">
+                      <stop offset="0%" style="stop-color:#f5e6c8;stop-opacity:0.85" />
+                      <stop offset="50%" style="stop-color:#d4af77;stop-opacity:0.65" />
+                      <stop offset="100%" style="stop-color:#8b7355;stop-opacity:0.35" />
+                    </radialGradient>
+                    <pattern id="guilloche" width="40" height="40" patternUnits="userSpaceOnUse">
+                      <path d="M0 20 Q10 0 20 20 T40 20" fill="none" stroke="rgba(107,78,93,0.06)" stroke-width="0.8"/>
+                      <path d="M20 0 Q40 10 20 20 T20 40" fill="none" stroke="rgba(232,180,184,0.12)" stroke-width="0.6"/>
+                    </pattern>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#guilloche)" opacity="0.85" />
+
+                  <!-- Stacked notes -->
+                  <g transform="translate(20 48) rotate(-8 80 36)">
+                    <rect x="0" y="8" width="160" height="64" rx="6" fill="url(#note2)" stroke="rgba(107,78,93,0.14)" stroke-width="1"/>
+                    <rect x="4" y="0" width="160" height="64" rx="6" fill="url(#note1)" stroke="rgba(107,78,93,0.18)" stroke-width="1"/>
+                    <rect x="70" y="22" width="28" height="20" rx="3" fill="rgba(107,78,93,0.08)"/>
+                    <line x1="16" y1="44" x2="120" y2="44" stroke="rgba(107,78,93,0.1)" stroke-width="2" stroke-dasharray="3 4"/>
+                  </g>
+                  <g transform="translate(200 120) rotate(14 80 36)">
+                    <rect x="0" y="6" width="150" height="58" rx="5" fill="url(#note2)" stroke="rgba(107,78,93,0.12)" stroke-width="1"/>
+                    <rect x="3" y="0" width="150" height="58" rx="5" fill="url(#note1)" stroke="rgba(107,78,93,0.16)" stroke-width="1"/>
+                    <text x="14" y="36" font-family="IBM Plex Mono, monospace" font-size="13" fill="rgba(107,78,93,0.2)">∗∗∗∗</text>
+                  </g>
+                  <g transform="translate(40 220) rotate(-4 80 36)">
+                    <rect x="0" y="5" width="140" height="52" rx="5" fill="rgba(252,231,243,0.5)" stroke="rgba(232,180,184,0.35)" stroke-width="1"/>
+                  </g>
+
+                  <!-- Coins -->
+                  <g transform="translate(260 260)">
+                    <circle r="34" fill="url(#coinMetal)" stroke="rgba(139,115,85,0.25)" stroke-width="1"/>
+                    <circle r="26" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="0.8"/>
+                    <text x="0" y="5" text-anchor="middle" font-family="Plus Jakarta Sans, sans-serif" font-size="15" font-weight="600" fill="rgba(107,78,93,0.35)">₹</text>
+                  </g>
+                  <g transform="translate(48 300)">
+                    <circle r="22" fill="url(#coinMetal)" stroke="rgba(139,115,85,0.2)" stroke-width="1" opacity="0.85"/>
+                    <text x="0" y="5" text-anchor="middle" font-size="12" font-weight="600" fill="rgba(107,78,93,0.28)">$</text>
+                  </g>
+                  <g transform="translate(180 20)">
+                    <circle r="18" fill="url(#coinMetal)" opacity="0.55"/>
+                  </g>
+
+                  <!-- Floating micro-bills -->
+                  <g opacity="0.35">
+                    <rect x="300" y="60" width="44" height="22" rx="3" transform="rotate(22 322 71)" fill="#fce7f3" stroke="rgba(107,78,93,0.15)"/>
+                    <rect x="10" y="200" width="36" height="18" rx="2" transform="rotate(-15 28 209)" fill="#fdf2f8" stroke="rgba(107,78,93,0.12)"/>
+                  </g>
+                </svg>
+              </div>
+              <div class="scrim"></div>
+              <div class="content">
+                <div class="card">
+                  <div class="label">This month</div>
+                  <div class="amount">−₹12,450</div>
+                </div>
+                <div class="card">
+                  <div class="label">Salary</div>
+                  <div class="amount" style="color:#6b9080">+₹85,000</div>
+                </div>
+              </div>
+            </div>
+            <div class="nav-bar">
+              <span class="on">Home</span>
+              <span>Stats</span>
+              <span>Settings</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Dark appearance (tintDark — illustrative)</h2>
+        <div class="phone-wrap">
+          <div class="phone dark">
+            <div class="status">9:41</div>
+            <div class="header-bar">Transactions</div>
+            <div class="canvas">
+              <div class="money-layer" aria-hidden="true">
+                <svg viewBox="0 0 360 400" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="dn1" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style="stop-color:#e8b4b8;stop-opacity:0.12" />
+                      <stop offset="100%" style="stop-color:#6b4e5d;stop-opacity:0.08" />
+                    </linearGradient>
+                    <linearGradient id="dcoin" cx="40%" cy="35%" r="70%">
+                      <stop offset="0%" style="stop-color:#e8d4b8;stop-opacity:0.35" />
+                      <stop offset="100%" style="stop-color:#5c4a38;stop-opacity:0.15" />
+                    </linearGradient>
+                    <pattern id="dguill" width="36" height="36" patternUnits="userSpaceOnUse">
+                      <path d="M0 18 Q9 0 18 18 T36 18" fill="none" stroke="rgba(232,180,184,0.06)" stroke-width="0.7"/>
+                    </pattern>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#dguill)" opacity="0.9" />
+                  <g transform="translate(24 56) rotate(-10 78 34)" opacity="0.9">
+                    <rect x="0" y="6" width="156" height="62" rx="6" fill="url(#dn1)" stroke="rgba(232,180,184,0.15)" stroke-width="1"/>
+                    <rect x="5" y="0" width="156" height="62" rx="6" fill="rgba(55,40,48,0.45)" stroke="rgba(232,180,184,0.12)" stroke-width="1"/>
+                    <line x1="20" y1="42" x2="110" y2="42" stroke="rgba(232,180,184,0.1)" stroke-width="2" stroke-dasharray="4 5"/>
+                  </g>
+                  <g transform="translate(210 130) rotate(12 74 30)">
+                    <rect x="0" y="4" width="148" height="56" rx="5" fill="rgba(62,45,54,0.5)" stroke="rgba(232,180,184,0.1)" stroke-width="1"/>
+                  </g>
+                  <g transform="translate(248 256)">
+                    <circle r="36" fill="url(#dcoin)" stroke="rgba(232,180,184,0.12)" stroke-width="1"/>
+                    <text x="0" y="6" text-anchor="middle" font-size="16" font-weight="600" fill="rgba(240,196,200,0.35)">₹</text>
+                  </g>
+                  <g transform="translate(52 292)" opacity="0.85">
+                    <circle r="20" fill="url(#dcoin)"/>
+                  </g>
+                </svg>
+              </div>
+              <div class="scrim"></div>
+              <div class="content">
+                <div class="card">
+                  <div class="label">This month</div>
+                  <div class="amount">−₹12,450</div>
+                </div>
+                <div class="card">
+                  <div class="label">Salary</div>
+                  <div class="amount" style="color:#6bdfc4">+₹85,000</div>
+                </div>
+              </div>
+            </div>
+            <div class="nav-bar">
+              <span class="on">Home</span>
+              <span>Stats</span>
+              <span>Settings</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <strong style="color:#e5e7eb">Notes for product / art</strong><br />
+      Motifs are abstract (no real note designs). Tune opacity and counts for readability — see
+      <code>MmrExpressiveScreenArt.kt</code> (<code>drawRoseGold</code>). Open this file locally:
+      <code>docs/design/rose-gold-currency-background-mockup.html</code>
+    </div>
+  </div>
+</body>
+</html>

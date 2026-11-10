@@ -40,6 +40,8 @@ Status keys used in tables: `Done` | `Partial` | `Todo`
 | Category add (Settings app bar) | `CategoryAddFlowUiTest` | Done |
 | Account add (Settings app bar) | `AccountAddFlowUiTest` | Done |
 | Settings → Accounts / Categories / Backup / Peer Device Sync / Web Manage | `SettingsNavigationUiTest` | Done |
+| Peer Device Sync — enable, pairing code, Sync now disabled without peer | `PeerDeviceSyncFlowUiTest` | Done (Wi‑Fi; `MmrUiTestShell` + device prefs) |
+| Peer Device Sync — two phones pair + ledger over LAN | `PeerDeviceSyncE2eUiTest` | Partial (`scripts/run-peer-sync-dual-device-ui-test.ps1`; host/client roles) |
 | Web Manage ↔ Peer Device Sync mutual exclusion | `WebManageMutualExclusionUiTest` | Done |
 | Account CRUD | — | Partial (list nav only) |
 | Loan create (flexible) | `LoanCreateFlowUiTest` | Done |
@@ -72,7 +74,9 @@ Status keys used in tables: `Done` | `Partial` | `Todo`
 | LAN sync post-merge balance warnings | `LanSyncAccountBalanceValidatorInstrumentedTest` | Done |
 | Backup JSON `appSettings` round-trip | `BackupJsonCodecInstrumentedTest` | Done |
 | LAN sync merge (account + transaction) | `LanSyncMergerInstrumentedTest` | Done |
+| LAN sync full payload handshake (txn, recurring, loan, budget, asset, rules) | `LanSyncComprehensivePayloadInstrumentedTest` | Done (SM-S938B; bidirectional merge simulation) |
 | LAN sync HTTP server handler | `LanSyncHttpServerInstrumentedTest` | Done (loopback; no NSD) |
+| Two physical devices paired + Sync now (UI) | `PeerDeviceSyncE2eUiTest` | Partial (manual script; both on same Wi‑Fi) |
 | Web Manage HTTP API (status, login, chart) | `WebManageHttpServerInstrumentedTest` | Done (loopback) |
 
 ---
@@ -128,7 +132,7 @@ Status keys used in tables: `Done` | `Partial` | `Todo`
 
 - After each feature PR: add a row here and at least one **Done** test (JVM or UI).
 - Full device suite (USB phone): `.\gradlew :app:connectedDebugAndroidTest`
-- **Real SMS on device**: before `ApprovalInboxScanUiTest`, ensure READ_SMS is allowed and at least one parseable transaction SMS exists within the app’s SMS scan month setting. CI emulator job skips this class (see workflow).
-- Full emulator CI suite: `connectedDebugAndroidTest` with `notClass` for `ApprovalInboxScanUiTest`
+- Peer Device Sync sweep (JVM + LAN instrumented + UI on one phone): `.\scripts\run-peer-sync-full-functionality-test.ps1`
+- **Approval Center SMS intake**: `ApprovalInboxScanUiTest` asserts inbox scan is hidden and paste empty-state copy is shown (no READ_SMS on Play).
 - JVM suite: `.\gradlew :app:testDebugUnitTest`
 - UI tests call `MmrUiTestFixtures.resetUiTestDatabase()` in `@Before` to reduce cross-test pollution.

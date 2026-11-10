@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 520" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="leafA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#a7f3d0"/>
+      <stop offset="45%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#065f46"/>
+    </linearGradient>
+    <linearGradient id="leafB" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0%" stop-color="#6ee7b7"/>
+      <stop offset="50%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#064e3b"/>
+    </linearGradient>
+    <linearGradient id="leafC" x1="0" y1="0.5" x2="1" y2="0.5">
+      <stop offset="0%" stop-color="#5eead4"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+    <path id="maple" d="M0 -14 L 5 -4 L 16 -7 L 7 3 L 11 16 L 0 9 L -11 16 L -7 3 L -16 -7 L -5 -4 Z"/>
+    <path id="oak" d="M0 22 C -4 18 -9 12 -8 4 C -10 -2 -6 -9 0 -11 C 6 -9 10 -2 8 4 C 9 12 4 18 0 22 Z"/>
+    <path id="beech" d="M0 -18 C 9 -16 12 -4 10 8 C 8 18 0 22 -2 18 C -10 10 -9 -2 -4 -14 C -2 -17 0 -18 0 -18 Z"/>
+  </defs>
+  <g opacity="0.92">
+    <g transform="translate(32 88) rotate(-28)" opacity="0.32">
+      <use href="#maple" fill="url(#leafA)" stroke="#6ee7b7" stroke-width="0.6" stroke-opacity="0.35"/>
+      <path d="M0 -10 V12" stroke="#a7f3d0" stroke-width="0.5" opacity="0.5"/>
+      <path d="M0 -2 L-6 4 M0 0 L6 5 M0 4 L-5 9" stroke="#34d399" stroke-width="0.35" opacity="0.45"/>
+    </g>
+    <g transform="translate(218 132) rotate(22) scale(0.82)" opacity="0.28">
+      <use href="#beech" fill="url(#leafB)" stroke="#6ee7b7" stroke-width="0.55" stroke-opacity="0.3"/>
+      <path d="M0 -14 V16" stroke="#a7f3d0" stroke-width="0.45"/>
+      <path d="M0 -4 Q-8 0 -6 8 M0 -2 Q8 2 7 10" stroke="#34d399" stroke-width="0.3"/>
+    </g>
+    <g transform="translate(108 205) rotate(-6) scale(1.15)" opacity="0.34">
+      <use href="#oak" fill="url(#leafC)" stroke="#6ee7b7" stroke-width="0.65" stroke-opacity="0.32"/>
+      <path d="M0 -8 V18" stroke="#a7f3d0" stroke-width="0.5"/>
+    </g>
+    <g transform="translate(42 298) rotate(38) scale(0.72)" opacity="0.26">
+      <use href="#maple" fill="url(#leafB)" stroke="#34d399" stroke-width="0.5"/>
+      <path d="M0 -8 V10" stroke="#6ee7b7" stroke-width="0.4"/>
+    </g>
+    <g transform="translate(238 268) rotate(-18) scale(0.95)" opacity="0.3">
+      <use href="#beech" fill="url(#leafA)" stroke="#6ee7b7" stroke-width="0.55"/>
+      <path d="M0 -12 V14" stroke="#a7f3d0" stroke-width="0.45"/>
+    </g>
+    <g transform="translate(162 368) rotate(14) scale(0.88)" opacity="0.31">
+      <use href="#oak" fill="url(#leafB)" stroke="#34d399" stroke-width="0.6"/>
+      <path d="M0 -6 V16" stroke="#6ee7b7" stroke-width="0.48"/>
+    </g>
+    <g transform="translate(68 418) rotate(-12) scale(1.05)" opacity="0.29">
+      <use href="#maple" fill="url(#leafA)" stroke="#6ee7b7" stroke-width="0.55"/>
+      <path d="M0 -9 V11" stroke="#34d399" stroke-width="0.42"/>
+    </g>
+    <g transform="translate(202 448) rotate(32) scale(0.68)" opacity="0.24">
+      <use href="#beech" fill="url(#leafC)" stroke="#6ee7b7" stroke-width="0.5"/>
+    </g>
+    <g transform="translate(248 72) rotate(48) scale(0.55)" opacity="0.22">
+      <use href="#maple" fill="url(#leafB)" stroke="#34d399" stroke-width="0.45"/>
+    </g>
+    <g transform="translate(12 168) rotate(-42) scale(0.6)" opacity="0.23">
+      <use href="#beech" fill="url(#leafA)" stroke="#6ee7b7" stroke-width="0.45"/>
+    </g>
+  </g>
+</svg>

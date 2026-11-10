@@ -1,6 +1,6 @@
 # MMR security audit — 2026-11-04
 
-Canonical record of vulnerability / static security work on the **Money Inbox (MMR)** Android app (`com.mmr.app`).  
+Canonical record of vulnerability / static security work on the **Money Inbox (MMR)** Android app (`com.rrparallelstudio.miapp`).  
 Repository: `E:/STM/MMR`. Branch reviewed: **`main`** at `53f8030` plus local uncommitted hardening.
 
 ---

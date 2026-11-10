@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Money Inbox — sliding pill</title>
+  <style>
+    :root {
+      --header: #3f4671;
+      --header-icon: #ffffff;
+      --tab-muted: #9da2bf;
+      --accent: #ff6255;
+      --canvas: #f7f7fa;
+      --surface: #ffffff;
+      --border: #e6e6ee;
+      --text: #1c1c28;
+      --muted: #6b6f86;
+      --income: #059669;
+      --expense: #ef4444;
+      --nav-sel: #3f4671;
+      --track: #ececf3;
+      --pill: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: #d8d8e2;
+      color: var(--text);
+    }
+    .app {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 430px;
+      height: 100%;
+      margin: 0 auto;
+      background: var(--canvas);
+    }
+    .status {
+      height: 28px;
+      background: var(--header);
+      color: #fff;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+    }
+    .header {
+      background: var(--header);
+      color: var(--header-icon);
+      display: grid;
+      grid-template-columns: 36px 1fr 36px minmax(72px, auto);
+      align-items: center;
+      min-height: 52px;
+      padding: 4px 8px 8px;
+    }
+    .header button {
+      background: none;
+      border: 0;
+      color: inherit;
+      font-size: 22px;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .header-title {
+      text-align: center;
+      font-size: 17px;
+      font-weight: 600;
+    }
+    .header-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 4px;
+    }
+    .header-actions button.icon {
+      font-size: 18px;
+      width: 36px;
+    }
+    .period-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      background: #fff;
+      color: var(--header);
+      border-radius: 999px;
+      padding: 6px 8px 6px 12px;
+      font-size: 13px;
+      font-weight: 650;
+      width: auto;
+      box-shadow: 0 1px 3px rgba(28, 28, 40, 0.16);
+    }
+    .period-pill .caret {
+      font-size: 9px;
+      opacity: 0.55;
+      transform: translateY(1px);
+    }
+    .scrim {
+      position: fixed;
+      inset: 0;
+      background: rgba(28, 28, 40, 0.45);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 20;
+    }
+    .sheet {
+      width: 100%;
+      max-width: 430px;
+      background: var(--surface);
+      border-radius: 16px 16px 0 0;
+      padding: 8px 0 20px;
+    }
+    .sheet h2 {
+      margin: 8px 20px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .sheet button.opt {
+      display: flex;
+      width: 100%;
+      border: 0;
+      background: none;
+      padding: 14px 20px;
+      font-size: 16px;
+      text-align: left;
+      color: var(--text);
+      cursor: pointer;
+      justify-content: space-between;
+    }
+    .sheet button.opt[aria-current="true"] { font-weight: 700; }
+    .band {
+      background: var(--surface);
+      border-bottom: 0.5px solid var(--border);
+      padding: 10px 16px 12px;
+    }
+    .pill-track {
+      position: relative;
+      display: grid;
+      background: var(--track);
+      border-radius: 999px;
+      padding: 3px;
+      isolation: isolate;
+    }
+    .pill-track.n4 { grid-template-columns: repeat(4, 1fr); }
+    .pill-track.n2 { grid-template-columns: repeat(2, 1fr); max-width: 280px; margin: 0 auto; }
+    .pill-thumb {
+      position: absolute;
+      top: 3px;
+      bottom: 3px;
+      left: 3px;
+      width: calc((100% - 6px) / var(--n, 4));
+      border-radius: 999px;
+      background: var(--pill);
+      box-shadow: 0 1px 3px rgba(28,28,40,0.12);
+      transform: translateX(calc(var(--i, 0) * 100%));
+      transition: transform 180ms ease;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .pill-track button {
+      position: relative;
+      z-index: 1;
+      border: 0;
+      background: transparent;
+      padding: 8px 4px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 999px;
+    }
+    .pill-track button[aria-pressed="true"] {
+      color: var(--text);
+      font-weight: 650;
+    }
+    .filters {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px 8px;
+      overflow-x: auto;
+    }
+    .chip {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: 12px;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .chip.on {
+      background: #ececf6;
+      border-color: #cfd1e0;
+      font-weight: 600;
+    }
+    main {
+      flex: 1;
+      overflow: auto;
+      background: var(--canvas);
+      padding: 8px 12px 16px;
+    }
+    .day {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 10px 4px 6px;
+    }
+    .txn {
+      background: var(--surface);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      border: 1px solid var(--border);
+    }
+    .txn .name { font-size: 14px; font-weight: 600; }
+    .txn .meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .amt-ex { color: var(--expense); font-weight: 650; }
+    .amt-in { color: var(--income); font-weight: 650; }
+    .cal {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 8px;
+      border: 1px solid var(--border);
+    }
+    .cal span {
+      text-align: center;
+      font-size: 11px;
+      padding: 8px 0;
+      color: var(--muted);
+    }
+    .cal .d { color: var(--text); font-size: 13px; border-radius: 8px; }
+    .cal .sel { background: #ececf6; font-weight: 700; }
+    .week-row, .month-row {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .summary-grid .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+    }
+    .summary-grid .k { font-size: 12px; color: var(--muted); }
+    .summary-grid .v { font-size: 18px; font-weight: 700; margin-top: 4px; }
+    .h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 4px 4px 12px;
+    }
+    .donut-wrap {
+      display: flex;
+      justify-content: center;
+      padding: 8px 0 16px;
+    }
+    .donut {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      background: conic-gradient(#f59e0b 0 38%, #38bdf8 38% 66%, #b91c1c 66% 84.4%, #7c3aed 84.4% 93.7%, #16a34a 93.7% 100%);
+      display: grid;
+      place-items: center;
+    }
+    .donut::after {
+      content: "";
+      width: 108px;
+      height: 108px;
+      background: var(--canvas);
+      border-radius: 50%;
+    }
+    .cat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .cat b { font-size: 14px; }
+    .strip {
+      background: var(--surface);
+      border-top: 0.5px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 8px 4px 6px;
+      text-align: center;
+    }
+    .strip .k { font-size: 10px; color: var(--muted); }
+    .strip .v { font-size: 12px; font-weight: 700; margin-top: 2px; }
+    .nav {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      background: var(--surface);
+      border-top: 0.5px solid var(--border);
+      padding: 6px 0 10px;
+    }
+    .nav button {
+      border: 0;
+      background: none;
+      font-size: 10px;
+      color: var(--muted);
+      cursor: pointer;
+    }
+    .nav button[aria-current="page"] { color: var(--nav-sel); font-weight: 700; }
+    .nav .ico { display: block; font-size: 16px; margin-bottom: 2px; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="status"><span>6:42</span><span>5G  89%</span></div>
+    <header class="header" id="hdr">
+      <button type="button" id="hdrPrev" aria-label="Previous">‹</button>
+      <div class="header-title" id="hdrTitle">November 2026</div>
+      <button type="button" id="hdrNext" aria-label="Next">›</button>
+      <div class="header-actions" id="hdrActions"></div>
+    </header>
+
+    <div class="band" id="ledgerBand">
+      <div class="pill-track n4" id="ledgerPill" style="--n:4; --i:0">
+        <div class="pill-thumb"></div>
+        <button type="button" aria-pressed="true" data-i="0">Daily</button>
+        <button type="button" aria-pressed="false" data-i="1">Weekly</button>
+        <button type="button" aria-pressed="false" data-i="2">Monthly</button>
+        <button type="button" aria-pressed="false" data-i="3">Summary</button>
+      </div>
+    </div>
+    <div class="band" id="trendsBand" hidden>
+      <div class="pill-track n2" id="spendPill" style="--n:2; --i:0">
+        <div class="pill-thumb"></div>
+        <button type="button" aria-pressed="true" data-i="0">Spending</button>
+        <button type="button" aria-pressed="false" data-i="1">Income</button>
+      </div>
+    </div>
+
+    <div class="filters" id="filters">
+      <span class="chip on">All</span>
+      <span class="chip">Income</span>
+      <span class="chip">Expense</span>
+      <span class="chip">Transfer</span>
+    </div>
+
+    <main id="main"></main>
+
+    <div class="strip" id="strip">
+      <div><div class="k">Income</div><div class="v amt-in" id="sIn">₹12,400</div></div>
+      <div><div class="k">Expense</div><div class="v amt-ex" id="sEx">₹8,345</div></div>
+      <div><div class="k">Carry</div><div class="v">₹1,200</div></div>
+      <div><div class="k">Total</div><div class="v">₹5,255</div></div>
+    </div>
+    <nav class="nav" aria-label="Main">
+      <button type="button" data-tab="ledger" aria-current="page"><span class="ico">☰</span>Ledger</button>
+      <button type="button" data-tab="trends"><span class="ico">◉</span>Trends</button>
+      <button type="button"><span class="ico">▤</span>Budgets</button>
+      <button type="button"><span class="ico">⌂</span>Assets</button>
+      <button type="button"><span class="ico">↻</span>Scheduled</button>
+      <button type="button"><span class="ico">⚙</span>Settings</button>
+    </nav>
+    <div class="scrim" id="periodScrim" hidden>
+      <div class="sheet" role="dialog" aria-label="Period">
+        <h2>Show totals for</h2>
+        <button type="button" class="opt" data-mode="weekly">Week <span></span></button>
+        <button type="button" class="opt" data-mode="monthly">Month <span></span></button>
+        <button type="button" class="opt" data-mode="annually">Year <span></span></button>
+        <button type="button" class="opt" data-mode="period">Period <span></span></button>
+      </div>
+    </div>
+  </div>
+  <script>
+    const main = document.getElementById("main");
+    const ledgerBand = document.getElementById("ledgerBand");
+    const trendsBand = document.getElementById("trendsBand");
+    const filters = document.getElementById("filters");
+    const strip = document.getElementById("strip");
+    const hdrTitle = document.getElementById("hdrTitle");
+    const hdrActions = document.getElementById("hdrActions");
+    const periodScrim = document.getElementById("periodScrim");
+    let tab = "ledger";
+    let ledger = 0;
+    let spend = 0;
+    let periodMode = "monthly";
+    const periodTitles = {
+      weekly: "3–9 Nov 2026",
+      monthly: "November 2026",
+      annually: "2026",
+      period: "01/10/26 ~ 10/11/26",
+    };
+    const periodLabels = {
+      weekly: "Week",
+      monthly: "Month",
+      annually: "Year",
+      period: "Period",
+    };
+
+    const views = {
+      0: () => `
+        <div class="day">Today · 10 Nov</div>
+        <div class="txn"><div><div class="name">Meesho</div><div class="meta">Shopping · HDFC UPI</div></div><div class="amt-ex">−₹187</div></div>
+        <div class="txn"><div><div class="name">Salary</div><div class="meta">Income · NEFT</div></div><div class="amt-in">+₹12,000</div></div>
+        <div class="txn"><div><div class="name">Zepto</div><div class="meta">Food · Pluxee</div></div><div class="amt-ex">−₹385</div></div>
+        <div class="day">Yesterday · 9 Nov</div>
+        <div class="txn"><div><div class="name">CRED</div><div class="meta">Bills · HDFC UPI</div></div><div class="amt-ex">−₹998</div></div>
+      `,
+      1: () => `
+        <div class="week-row"><span>3–9 Nov</span><span><span class="amt-in">₹2,100</span> · <span class="amt-ex">₹4,220</span></span></div>
+        <div class="week-row"><span>27 Oct–2 Nov</span><span><span class="amt-in">₹800</span> · <span class="amt-ex">₹3,110</span></span></div>
+        <div class="week-row"><span>20–26 Oct</span><span><span class="amt-in">₹12,000</span> · <span class="amt-ex">₹6,440</span></span></div>
+      `,
+      2: () => {
+        const cells = ["S","M","T","W","T","F","S"].map(d => `<span>${d}</span>`).join("") +
+          Array.from({length:30}, (_, i) => `<span class="d${i===9?" sel":""}">${i+1}</span>`).join("");
+        return `<div class="cal">${cells}</div>
+          <div class="day">10 Nov</div>
+          <div class="txn"><div><div class="name">Meesho</div><div class="meta">Shopping</div></div><div class="amt-ex">−₹187</div></div>`;
+      },
+      3: () => `
+        <div class="summary-grid">
+          <div class="card"><div class="k">HDFC Savings</div><div class="v">₹46,572</div></div>
+          <div class="card"><div class="k">Axis CC xx0099</div><div class="v amt-ex">₹8,814 due</div></div>
+          <div class="card"><div class="k">Pluxee</div><div class="v">₹19,671</div></div>
+          <div class="card"><div class="k">Net this month</div><div class="v amt-in">₹5,255</div></div>
+        </div>
+      `,
+    };
+
+    const spendHtml = {
+      0: () => `
+        <div class="h2">Categories</div>
+        <div class="donut-wrap"><div class="donut" role="img" aria-label="Spending by category"></div></div>
+        <div class="cat"><b>Food and Dining</b><span class="amt-ex">₹3,936</span></div>
+        <div class="cat"><b>Shopping</b><span class="amt-ex">₹2,900</span></div>
+        <div class="cat"><b>Bills and Utilities</b><span class="amt-ex">₹1,899</span></div>
+        <div class="cat"><b>Travelling</b><span class="amt-ex">₹960</span></div>
+        <div class="cat"><b>Entertainment</b><span class="amt-ex">₹650</span></div>
+      `,
+      1: () => `
+        <div class="h2">Categories</div>
+        <div class="donut-wrap"><div class="donut" style="background:conic-gradient(#059669 0 72%, #38bdf8 72% 88%, #7c3aed 88% 100%)" role="img" aria-label="Income by category"></div></div>
+        <div class="cat"><b>Salary</b><span class="amt-in">₹12,000</span></div>
+        <div class="cat"><b>Refunds</b><span class="amt-in">₹972</span></div>
+        <div class="cat"><b>Interest</b><span class="amt-in">₹248</span></div>
+      `,
+    };
+
+    function bindPill(el, onPick) {
+      el.querySelectorAll("button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const i = Number(btn.dataset.i);
+          el.style.setProperty("--i", String(i));
+          el.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", b === btn ? "true" : "false"));
+          onPick(i);
+        });
+      });
+    }
+
+    function render() {
+      if (tab === "ledger") {
+        ledgerBand.hidden = false;
+        trendsBand.hidden = true;
+        filters.hidden = ledger !== 0 && ledger !== 3;
+        strip.hidden = false;
+        hdrTitle.textContent = "November 2026";
+        hdrActions.innerHTML =
+          '<button type="button" class="icon" aria-label="Search">⌕</button><button type="button" class="icon" aria-label="Approvals">✉</button>';
+        main.innerHTML = views[ledger]();
+      } else {
+        ledgerBand.hidden = true;
+        trendsBand.hidden = false;
+        filters.hidden = true;
+        strip.hidden = true;
+        hdrTitle.textContent = periodTitles[periodMode];
+        hdrActions.innerHTML =
+          `<button type="button" class="period-pill" id="periodBtn" aria-haspopup="listbox">${periodLabels[periodMode]}<span class="caret">▾</span></button>`;
+        document.getElementById("periodBtn").addEventListener("click", () => {
+          periodScrim.hidden = false;
+          periodScrim.querySelectorAll(".opt").forEach((b) => {
+            b.setAttribute("aria-current", b.dataset.mode === periodMode ? "true" : "false");
+            b.querySelector("span").textContent = b.dataset.mode === periodMode ? "✓" : "";
+          });
+        });
+        main.innerHTML = spendHtml[spend]();
+      }
+    }
+
+    bindPill(document.getElementById("ledgerPill"), (i) => { ledger = i; render(); });
+    bindPill(document.getElementById("spendPill"), (i) => { spend = i; render(); });
+    document.querySelectorAll(".nav button[data-tab]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        tab = btn.dataset.tab;
+        document.querySelectorAll(".nav button[data-tab]").forEach((b) => {
+          if (b.dataset.tab) b.setAttribute("aria-current", b === btn ? "page" : null);
+        });
+        render();
+      });
+    });
+    periodScrim.addEventListener("click", (e) => {
+      if (e.target === periodScrim) periodScrim.hidden = true;
+    });
+    periodScrim.querySelectorAll(".opt").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        periodMode = btn.dataset.mode;
+        periodScrim.hidden = true;
+        render();
+      });
+    });
+    render();
+  </script>
+</body>
+</html>

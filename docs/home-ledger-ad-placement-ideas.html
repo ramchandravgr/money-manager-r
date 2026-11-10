@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Home ledger — minimal ad placement ideas (Money Inbox)</title>
+  <style>
+    :root {
+      --bg: #f4f3f6;
+      --card: #ffffff;
+      --ink: #1a1a1e;
+      --muted: #5c5c66;
+      --line: #e2e0e6;
+      --accent: #e85d4a;
+      --accent-soft: #fde8e4;
+      --ad: #eef1f4;
+      --ad-border: #c8d0d8;
+      --ad-label: #6b7280;
+      --phone: #2d2a32;
+      --radius: 12px;
+      --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.55;
+      color: var(--ink);
+      background: var(--bg);
+    }
+    header {
+      padding: 2rem 1.25rem 1.5rem;
+      max-width: 920px;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 1.65rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem;
+      letter-spacing: -0.02em;
+    }
+    .lede {
+      color: var(--muted);
+      max-width: 52rem;
+      margin: 0;
+    }
+  .meta {
+      margin-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    main {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 0 1.25rem 3rem;
+      display: grid;
+      gap: 1.25rem;
+    }
+    article.idea {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.35rem;
+    }
+    article.idea h2 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin: 0 0 0.35rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.5rem;
+    }
+    .num {
+      color: var(--accent);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin: 0.5rem 0 0.75rem;
+    }
+    .tag {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      background: var(--bg);
+      color: var(--muted);
+    }
+    .tag.vis { background: var(--accent-soft); color: #9a3d30; }
+    p { margin: 0.4rem 0; color: var(--ink); }
+    p.hint { font-size: 0.9rem; color: var(--muted); }
+    .mock {
+      margin-top: 1rem;
+      border-radius: 10px;
+      background: var(--phone);
+      padding: 10px;
+      max-width: 280px;
+    }
+    .screen {
+      background: #faf9fb;
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 9px;
+      color: #333;
+    }
+    .bar {
+      height: 22px;
+      background: #4a3d52;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-weight: 600;
+    }
+    .strip {
+      display: flex;
+      gap: 4px;
+      padding: 6px 8px;
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }
+    .pill {
+      flex: 1;
+      text-align: center;
+      padding: 4px 2px;
+      background: #f0eeef;
+      border-radius: 4px;
+      font-size: 7px;
+    }
+    .pill.ad-pill {
+      background: var(--ad);
+      border: 1px dashed var(--ad-border);
+      color: var(--ad-label);
+    }
+    .row {
+      padding: 5px 8px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+    }
+    .ad-slot {
+      margin: 6px 8px;
+      padding: 8px 6px;
+      background: var(--ad);
+      border: 1px solid var(--ad-border);
+      border-radius: 6px;
+      text-align: center;
+      color: var(--ad-label);
+      font-size: 7px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .ad-slot.banner { padding: 10px 6px; }
+    .ad-slot.native { text-align: left; padding: 6px 8px; }
+    .ad-slot.native span { display: block; font-weight: 400; font-size: 6px; margin-top: 2px; }
+    .fab {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin: 4px 8px 8px auto;
+      opacity: 0.9;
+    }
+    .dual {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+    .dual div { font-size: 0.85rem; }
+    .dual strong { color: var(--muted); font-weight: 500; font-size: 0.75rem; display: block; margin-bottom: 0.2rem; }
+    footer {
+      max-width: 920px;
+      margin: 0 auto;
+      padding: 0 1.25rem 2.5rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+    @media (min-width: 720px) {
+      main { grid-template-columns: 1fr 1fr; }
+      article.idea.featured { grid-column: 1 / -1; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Home ledger — 20 minimal ad placements</h1>
+    <p class="lede">
+      Ideas for <strong>Money Inbox</strong> Home (Daily ledger: summary strip, grouped transaction list, period chrome).
+      Each option aims for <em>low visual weight</em> but enough contrast and size to count as “visible” for advertisers and users.
+    </p>
+    <p class="meta">Product context only — not implementation. Pair with “Sponsored” labeling, frequency caps, and paid / privacy settings.
+      <strong>Full-screen ledger mockups:</strong> <a href="home-ledger-ad-placement-fullscreens.html">home-ledger-ad-placement-fullscreens.html</a></p>
+  </header>
+
+  <main>
+    <article class="idea">
+      <h2><span class="num">01</span> Below summary strip, above first day group</h2>
+      <div class="tags"><span class="tag vis">High visibility</span><span class="tag">320×50 banner</span></div>
+      <p>Single horizontal banner in the list’s top padding — first thing after Income | Expense | Total.</p>
+      <p class="hint">Stays on screen while user reads today’s transactions; feels like a section header if labeled “Sponsored”.</p>
+      <div class="mock"><div class="screen">
+        <div class="bar">Nov 2025 ‹ ›</div>
+        <div class="strip"><motionless class="pill">Inc</motionless><div class="pill">Exp</div><div class="pill">Net</div></div>
+        <div class="ad-slot banner">AD · LEADERBOARD</div>
+        <div class="row"><span>Today</span><span>₹0</span></div>
+        <div class="row">Transaction row…</div>
+      </div></div>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">02</span> Native card between day groups</h2>
+      <div class="tags"><span class="tag vis">Native</span><span class="tag">Minimal chrome</span></div>
+      <p>Insert one sponsored row-card after every <em>N</em> date headers (e.g. after 2nd group), same corner radius as txn rows.</p>
+      <p class="hint">Icon + headline + CTA; height ~1.2× a transaction row so it blends but the “Ad” badge stays readable.</p>
+      <div class="mock"><div class="screen">
+        <div class="row"><span>Yesterday</span></div>
+        <div class="row">Groceries · −₹420</div>
+        <div class="ad-slot native">Sponsored · Save on bills<span>Short body line · Learn more</span></div>
+        <div class="row"><span>Mon 3</span></div>
+      </div></div>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">03</span> Collapsed “tip” strip under summary (expandable)</h2>
+      <div class="tags"><span class="tag">Minimal default</span><span class="tag vis">Tap to expand</span></div>
+      <p>28dp row: “Partner offer” + chevron; expands to full mini-card once per session.</p>
+      <p class="hint">Collapsed state is minimal; expanded state satisfies visibility for fill-based ads.</p>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">04</span> Fourth chip in summary strip</h2>
+      <div class="tags"><span class="tag">Always visible</span><span class="tag">Subtle</span></div>
+      <p>Replace or add a narrow 4th metric slot (e.g. “Offers”) with muted styling; opens sponsored bottom sheet.</p>
+      <p class="hint">Uses existing strip real estate — high visibility without scrolling; keep distinct from financial metrics.</p>
+      <div class="mock"><div class="screen">
+        <div class="strip">
+          <div class="pill">Income</div><div class="pill">Expense</div><div class="pill">Total</div>
+          <div class="pill ad-pill">Offers</div>
+        </div>
+      </div></div>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">05</span> Sticky footer banner above bottom nav</h2>
+      <div class="tags"><span class="tag vis">Persistent</span><span class="tag">50dp max</span></div>
+      <p>Anchor adaptive banner above the tab bar on Home only; list scrolls underneath with bottom content padding.</p>
+      <p class="hint">Classic pattern — minimal height, always visible; may compete with FAB — offset FAB upward.</p>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">06</span> Empty-state hero (no transactions in period)</h2>
+      <div class="tags"><span class="tag">Contextual</span><span class="tag vis">Large format</span></div>
+      <p>When ledger is empty, show one medium rectangle where the list would start — still show summary strip.</p>
+      <p class="hint">Zero clutter on busy ledgers; maximum visibility when screen has whitespace.</p>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">07</span> Pull-down reveal under month header</h2>
+      <div class="tags"><span class="tag">Opt-in</span><span class="tag">Minimal</span></div>
+      <p>Small affordance on month row: “pull for offers”; rubber-band reveals 80dp ad panel (once per day).</p>
+      <p class="hint">Power users skip it; engaged users see a clear, full-width unit.</p>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">08</span> Inline after carry-over row</h2>
+      <div class="tags"><span class="tag">Finance-adjacent</span><span class="tag vis">One slot</span></div>
+      <p>When carry-over appears on first day of period, place a single native ad directly below that read-only row.</p>
+      <p class="hint">Natural pause in scanning; message can be savings / credit themed without mimicking a transaction.</p>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">09</span> Medium rectangle at list midpoint</h2>
+      <div class="tags"><span class="tag">Scroll</span><span class="tag vis">MREC 300×250</span></div>
+      <p>At ~50% of scroll height (or after 15 txn rows), insert centered MREC with 12dp vertical margin.</p>
+      <p class="hint">Visible during normal browsing of a full month; not shown on very short lists (&lt;8 rows).</p>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">10</span> “Sponsored insight” text line</h2>
+      <div class="tags"><span class="tag">Ultra-minimal</span><span class="tag">Text + link</span></div>
+      <p>Single line under summary: muted “Sponsored: Compare FD rates →” — no image; tap opens landing.</p>
+      <p class="hint">Lowest visual weight; visibility comes from placement + periodic rotation of copy.</p>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">11</span> Floating companion chip (FAB-adjacent)</h2>
+      <div class="tags"><span class="tag">Visible</span><span class="tag">Non-blocking</span></div>
+      <p>Small pill stacked 8dp above FAB: brand logo only; dismiss × persists 7 days.</p>
+      <p class="hint">Always on screen in Daily view; keep ≤40dp height so FAB remains primary action.</p>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">12</span> End-of-scroll footer card</h2>
+      <div class="tags"><span class="tag">Non-intrusive</span><span class="tag vis">Full width</span></div>
+      <p>Last item in <code>LazyColumn</code>: card “You’ve reached the end” + sponsored unit (not mistaken for txn).</p>
+      <p class="hint">Minimal for users who don’t scroll far; visible for thorough reviewers.</p>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">13</span> View-mode dropdown sponsor line</h2>
+      <div class="tags"><span class="tag">Rare exposure</span><span class="tag">Micro</span></div>
+      <p>When opening Daily | Weekly | Monthly selector, show one text ad in sheet footer (finance category only).</p>
+      <p class="hint">Minimal on main ledger; visible in intentional navigation moment.</p>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">14</span> Time-of-day slot (morning / evening)</h2>
+      <div class="tags"><span class="tag">Scheduled</span><span class="tag vis">One banner</span></div>
+      <p>Show top banner only 7–10am or 6–9pm — commute windows; hide midday for cleaner ledger.</p>
+      <p class="hint">Balances minimal daily feel with predictable high-visibility windows.</p>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">15</span> Category-themed native (from spend signals)</h2>
+      <div class="tags"><span class="tag">Relevant</span><span class="tag">On-device</span></div>
+      <p>If week’s top category is Food, show one native ad in ledger styled like a “deal” row — no PII off device.</p>
+      <p class="hint">Higher CTR with same footprint as idea #2.</p>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">16</span> Swipe-period interstitial (light)</h2>
+      <div class="tags"><span class="tag">Intermittent</span><span class="tag vis">Full screen</span></div>
+      <p>Every 5th month swipe (not every swipe): 3s skippable interstitial before new period loads.</p>
+      <p class="hint">Not minimal in moment, but keeps main ledger clean — use sparingly.</p>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">17</span> Divider + label between weeks (Weekly view)</h2>
+      <div class="tags"><span class="tag">Weekly mode</span><span class="tag">Banner</span></div>
+      <p>In Weekly home mode only, thin banner between week sections — hidden in Daily to reduce noise.</p>
+      <p class="hint">Targets users already thinking in week boundaries.</p>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">18</span> Outstream video thumbnail row</h2>
+      <div class="tags"><span class="tag vis">Thumb + play</span><span class="tag">Muted autoplay off</span></div>
+      <p>One 16:9 thumbnail row between groups; plays only on tap (compliance-friendly).</p>
+      <p class="hint">More visible than static banner; keep height capped (~120dp).</p>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">19</span> House promo for premium (ad replacement)</h2>
+      <div class="tags"><span class="tag">Minimal</span><span class="tag">Upsell</span></div>
+      <p>Same slot as #1 but copy: “Remove ads — Upgrade” with soft coral accent; rotates with third-party fill.</p>
+      <p class="hint">Single slot stays visible; improves monetization mix without new UI.</p>
+    </article>
+
+    <article class="idea">
+      <h2><span class="num">20</span> Hybrid: one global slot + rules engine</h2>
+      <div class="tags"><span class="tag vis">Recommended pattern</span><span class="tag">Policy</span></div>
+      <p>Implement <strong>one</strong> physical placement (e.g. #1 or #2) and rotate formats by rules: empty list → MREC; &gt;20 txns → native; paid user → off.</p>
+      <div class="dual">
+        <div><strong>Minimal</strong>Only one ad container in layout; no stacking.</div>
+        <div><strong>Visible</strong>Format escalates when scroll depth or session count increases.</div>
+      </div>
+      <p class="hint">Avoid combining #5 + #1 + #2 on the same screen — pick a primary + optional empty-state boost (#6).</p>
+    </article>
+
+    <article class="idea featured">
+      <h2>Quick comparison</h2>
+      <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+        <thead>
+          <tr style="text-align:left; border-bottom:1px solid var(--line);">
+            <th style="padding:0.5rem 0;">Idea</th>
+            <th>Minimal</th>
+            <th>Always visible</th>
+            <th>Best format</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:0.4rem 0;">01 Below strip</td><td>●●●○</td><td>Yes (top)</td><td>Adaptive banner</td></tr>
+          <tr><td>02 Between groups</td><td>●●●●</td><td>On scroll</td><td>Native</td></tr>
+          <tr><td>05 Sticky above nav</td><td>●●○○</td><td>Yes</td><td>Anchor banner</td></tr>
+          <tr><td>10 Text line</td><td>●●●●●</td><td>Yes</td><td>Custom / affiliate</td></tr>
+          <tr><td>20 Rules engine</td><td>●●●●</td><td>Depends</td><td>Mixed</td></tr>
+        </tbody>
+      </table>
+      <p class="hint" style="margin-top:0.75rem;">
+        For a finance app ledger: prefer <strong>#01 + #02</strong> or <strong>#20</strong> alone; avoid sticky + top banner together.
+        Disclose “Ad” / “Sponsored”, honor Android ad policy and user opt-out in Settings if you add a paid tier.
+      </p>
+    </article>
+  </main>
+
+  <footer>
+    Money Inbox (MMR) — ideation doc · open in any browser · not wired to the app.
+  </footer>
+</body>
+</html>

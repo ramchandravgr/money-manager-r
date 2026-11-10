@@ -15,6 +15,6 @@ Examples:
 
 **Do not** transform user-entered data (transaction notes, loan names, category names). Use `applyStaticLabelCaseToTitle = false` on `MmrTopAppBar` when the title is user content.
 
-Implementation: `String.mmrStaticLabelCase()` in `com.mmr.app.ui.copy.MmrStaticUiCopy`. Shared chrome (`MmrFormSectionLabel`, settings rows, form pickers, primary buttons, dialog titles) applies it at render time. New raw `Text("…")` labels in features should either use those components or call `mmrStaticLabelCase()` explicitly.
+Implementation: `String.mmrStaticLabelCase()` in `com.rrparallelstudio.miapp.ui.copy.MmrStaticUiCopy`. Shared chrome (`MmrFormSectionLabel`, settings rows, form pickers, primary buttons, dialog titles) applies it at render time. New raw `Text("…")` labels in features should either use those components or call `mmrStaticLabelCase()` explicitly.
 
 Sentence-style **messages** (dialog body, errors, footers) stay normal sentence case unless they are short labels.

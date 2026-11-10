@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Home — period summary strip (icon labels mockup)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --page: #0e1016;
+      --panel: #1a1d28;
+      --border: rgba(255,255,255,.12);
+      --text: #e8eaef;
+      --muted: #9ca3af;
+      --rg-h: #6b4e5d;
+      --rg-bg: #faf7f8;
+      --strip: #f4f5f8;
+      --inc: #0d9488;
+      --exp: #e11d48;
+      --net: #4b5563;
+      --carry: #7c6a9a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      background: var(--page);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .page { max-width: 1100px; margin: 0 auto; padding: 24px 16px 64px; }
+    h1 { font-size: 1.3rem; margin: 0 0 10px; }
+    h3 { font-size: 1rem; margin: 28px 0 12px; color: var(--text); }
+    .intro { color: var(--muted); font-size: 0.9rem; max-width: 72ch; margin-bottom: 22px; }
+    .controls {
+      display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center;
+      background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+      padding: 14px 18px; margin-bottom: 24px;
+    }
+    .controls label { font-size: 0.85rem; color: var(--muted); display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .controls input[type="range"] { width: 100px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+    @media (max-width: 780px) { .grid { grid-template-columns: 1fr; } }
+    .col h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin: 0 0 12px; }
+    .phone {
+      width: 290px; max-width: 100%; margin: 0 auto;
+      border-radius: 28px; border: 5px solid #1f1f1f;
+      background: var(--rg-bg); overflow: hidden;
+      box-shadow: 0 24px 48px rgba(0,0,0,.45);
+    }
+    .st { height: 22px; background: #fff; text-align: center; font-size: 10px; color: #888; line-height: 22px; }
+    .hdr {
+      background: var(--rg-h); color: #fff; padding: 10px 12px;
+      text-align: center; font-weight: 600; font-size: 13px;
+    }
+    .list-area {
+      min-height: 120px; background: #fff; padding: 12px;
+      font-size: 11px; color: #888; text-align: center;
+    }
+    .bn {
+      display: flex; border-top: 1px solid #e5e7eb; background: #fff;
+      font-size: 10px; padding: 10px 4px; color: #888;
+    }
+    .bn span { flex: 1; text-align: center; }
+    .bn span.on { color: var(--rg-h); font-weight: 700; }
+    .strip {
+      background: var(--strip);
+      border-top: 1px solid #e2e4ea;
+      padding: 10px 6px 8px;
+    }
+    .strip-cells { display: flex; justify-content: space-evenly; align-items: flex-end; gap: 2px; }
+    .cell { flex: 1; text-align: center; min-width: 0; }
+    .cell .lbl {
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 2px; min-height: 20px;
+    }
+    .cell .lbl.text-only { font-size: 10px; color: #6b7280; font-weight: 600; }
+    .cell .amt {
+      font-size: 11px; font-weight: 700; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    .cell .amt.small { font-size: 10px; }
+    .ico {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 20px; height: 20px; border-radius: 5px;
+      font-size: 11px; font-weight: 700; line-height: 1;
+    }
+    .ico.inc { background: rgba(13,148,136,.12); color: var(--inc); }
+    .ico.exp { background: rgba(225,29,72,.1); color: var(--exp); }
+    .ico.carry { background: rgba(124,106,154,.14); color: var(--carry); }
+    .ico.net { background: rgba(75,85,99,.12); color: var(--net); }
+    .ico svg { width: 13px; height: 13px; display: block; }
+    .amt.inc { color: var(--inc); }
+    .amt.exp { color: var(--exp); }
+    .amt.carry-pos { color: var(--inc); }
+    .amt.carry-neg { color: var(--exp); }
+    .amt.net { color: var(--net); }
+    .strip-divider { height: 1px; background: #e2e4ea; margin-top: 8px; }
+    .catalog {
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 18px 20px; margin-top: 28px;
+    }
+    .catalog > p { margin: 0 0 14px; font-size: 0.85rem; color: var(--muted); }
+    .pick-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+      gap: 10px;
+    }
+    .pick {
+      background: rgba(255,255,255,.04);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 10px 8px;
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      color: inherit;
+      transition: border-color .15s, background .15s;
+    }
+    .pick:hover { border-color: rgba(232,180,184,.4); background: rgba(255,255,255,.06); }
+    .pick.on { border-color: #e8b4b8; background: rgba(232,180,184,.1); box-shadow: 0 0 0 1px rgba(232,180,184,.25); }
+    .pick-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .pick .ico { flex-shrink: 0; }
+    .pick-name { font-size: 0.78rem; font-weight: 700; color: var(--text); line-height: 1.2; }
+    .pick-meta { font-size: 0.68rem; color: var(--muted); line-height: 1.35; }
+    .pick-meta code { font-size: 0.65rem; color: #fde68a; background: rgba(252,211,77,.08); padding: 1px 4px; border-radius: 3px; }
+    .selection-hint {
+      font-size: 0.82rem; color: #c4b5fd; margin: 16px 0 0;
+    }
+    .note { font-size: 0.82rem; color: var(--muted); margin-top: 14px; max-width: 75ch; }
+    .warn { color: #fde68a; font-size: 0.82rem; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Period summary strip — icon labels</h1>
+    <p class="intro">
+      Fixed: <strong>↓ income</strong>, <strong>↑ expense</strong>. Below: <strong>13 carry-over</strong> and <strong>12 total</strong> alternatives — click any tile to preview on the phone strip.
+      Default carry-over: <strong>13 Calendar →</strong> (right arrow inside the calendar). File: <code>docs/design/home-summary-strip-icons/index.html</code>
+    </p>
+
+    <div class="controls">
+      <label><input type="checkbox" id="chkCarry" checked /> Show carry-over column</label>
+      <label><input type="checkbox" id="chkNegCarry" /> Negative carry-over</label>
+      <label>Net total: <input type="range" id="rngNet" min="-50000" max="50000" step="500" value="-12400" /></label>
+      <span id="netLabel" style="font-size:0.85rem;color:var(--muted)">−₹12.4k</span>
+    </div>
+
+    <div class="grid">
+      <div class="col">
+        <h2>Shipped today (text labels)</h2>
+        <div class="phone">
+          <div class="st">9:41</div>
+          <div class="hdr">November 2026</div>
+          <div class="list-area">Transaction list</div>
+          <div class="strip" id="strip-old"></div>
+          <div class="bn"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Settings</span></div>
+        </div>
+      </div>
+      <div class="col">
+        <h2>Proposed (icon labels)</h2>
+        <div class="phone">
+          <div class="st">9:41</div>
+          <div class="hdr">November 2026</div>
+          <div class="list-area">Transaction list</div>
+          <div class="strip" id="strip-new"></div>
+          <div class="bn"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Settings</span></div>
+        </div>
+        <p class="selection-hint" id="pickHint">Carry: <strong id="hintCarry">1 Bridge</strong> · Total: <strong id="hintTotal">1 Plus in circle</strong></p>
+      </div>
+    </div>
+
+    <div class="catalog">
+      <h3>Carry-over — 13 options</h3>
+      <p>Balance from before this period. <strong>Option 13</strong> = calendar with <strong>→</strong> inside (prior month rolls into current). Material names are suggestions.</p>
+      <div class="pick-grid" id="carryGrid"></div>
+    </div>
+
+    <div class="catalog">
+      <h3>Total (net) — 12 options</h3>
+      <p>Period net including carry-over when enabled.</p>
+      <div class="pick-grid" id="totalGrid"></div>
+    </div>
+
+    <p class="warn">↓ = income and ↑ = expense is unconventional vs many apps. Every icon-only cell still needs a TalkBack string (Income, Expenses, Carry-over, Total).</p>
+    <p class="note">Four columns on compact phones: prefer 11–12sp amounts or drop carry-over from the strip when amount is ₹0 and keep it only in the list row.</p>
+  </div>
+
+  <script>
+    const S = { stroke: "currentColor", fill: "none", sw: 2.1, lc: "round", lj: "round" };
+    function svg(paths, viewBox = "0 0 24 24") {
+      const attrs = `viewBox="${viewBox}" fill="none" stroke="${S.stroke}" stroke-width="${S.sw}" stroke-linecap="${S.lc}" stroke-linejoin="${S.lj}"`;
+      return `<svg ${attrs}>${paths}</svg>`;
+    }
+
+    const CARRY_OPTIONS = [
+      { id: "c01", name: "1 Bridge", md: "Horizontal rule + pillars", a11y: "Carry-over",
+        html: svg('<path d="M7 4v16M7 20H5a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2h2"/><path d="M17 4v16M17 20h2a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-2"/><path d="M9 12h6"/>') },
+      { id: "c02", name: "2 History", md: "Icons.Outlined.History", a11y: "Carry-over",
+        html: svg('<path d="M3 12a9 9 0 1 0 3 6.7"/><path d="M3 12h4"/><path d="M11 7v5l3 2"/>') },
+      { id: "c03", name: "3 Restore", md: "Icons.Restore", a11y: "Carry-over",
+        html: svg('<path d="M4 12a8 8 0 0 1 14-5"/><path d="M4 4v6h6"/><path d="M12 8v8M9 14h6"/>') },
+      { id: "c04", name: "4 Layers", md: "Icons.Layers", a11y: "Carry-over",
+        html: svg('<path d="M12 4 20 8 12 12 4 8Z"/><path d="M4 12l8 4 8-4"/><path d="M4 16l8 4 8-4"/>') },
+      { id: "c05", name: "5 BF pill", md: "Text BF 8sp", a11y: "Carry-over, brought forward",
+        text: "BF" },
+      { id: "c06", name: "6 Skip previous", md: "SkipPrevious", a11y: "Carry-over",
+        html: svg('<path d="M6 6v12"/><path d="M18 6v12"/><path d="M6 12h8l4-4v8l-4-4H6"/>') },
+      { id: "c07", name: "7 Calendar dots", md: "DateRange (no arrow)", a11y: "Carry-over",
+        html: svg('<rect x="4" y="6" width="16" height="14" rx="2"/><path d="M8 4v4M16 4v4M4 10h16"/><path d="M8 15h2"/>') },
+      { id: "c08", name: "8 Link", md: "Icons.Link", a11y: "Carry-over",
+        html: svg('<path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1"/><path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1"/>') },
+      { id: "c09", name: "9 Inbox down", md: "Download into tray", a11y: "Carry-over",
+        html: svg('<path d="M4 8h16v11H4Z"/><path d="M12 4v9"/><path d="M9 10l3 3 3-3"/>') },
+      { id: "c10", name: "10 Corner carry", md: "Opening bracket", a11y: "Carry-over",
+        text: "⌞" },
+      { id: "c11", name: "11 Rewind", md: "FastRewind", a11y: "Carry-over",
+        html: svg('<path d="M11 6v12"/><path d="M18 6v12"/><path d="M4 12h6l4-4v8l-4-4H4"/>') },
+      { id: "c12", name: "12 Archive", md: "Inventory2", a11y: "Carry-over",
+        html: svg('<rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10h14V9"/><path d="M10 13h4"/>') },
+      { id: "c13", name: "13 Calendar →", md: "Filled arrow, edge-to-edge", a11y: "Carry-over",
+        html:
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+          '<rect x="3.5" y="7" width="17" height="14" rx="2"/>' +
+          '<path d="M7.5 4.5v3.5M16.5 4.5v3.5M3.5 11h17"/>' +
+          '<path fill="currentColor" stroke="none" d="M4.4 13.6h8.35V11.15L19.6 16.4l-6.85 5.25V19.1H4.4z"/>' +
+          '</svg>' },
+    ];
+
+    const TOTAL_OPTIONS = [
+      { id: "t01", name: "1 Plus in circle", md: "AddCircleOutline", a11y: "Total",
+        html: svg('<circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/>') },
+      { id: "t02", name: "2 Sigma", md: "Functions / Σ text", a11y: "Total",
+        text: "Σ" },
+      { id: "t03", name: "3 Balance scale", md: "Balance", a11y: "Total",
+        html: svg('<path d="M12 3v18"/><path d="M5 8h14"/><path d="M6 8 4 14h6L8 8"/><path d="M18 8l2 6h-6l2-6"/>') },
+      { id: "t04", name: "4 Wallet", md: "AccountBalanceWallet", a11y: "Total",
+        html: svg('<path d="M6 8h12a2 2 0 0 1 2 2v8H6V8Z"/><path d="M6 8V6a2 2 0 0 1 2-2h8"/><circle cx="17" cy="14" r="1" fill="currentColor" stroke="none"/>') },
+      { id: "t05", name: "5 Equals", md: "DragHandle / =", a11y: "Total",
+        text: "=" },
+      { id: "t06", name: "6 Plus minus", md: "Exposure ±", a11y: "Total",
+        html: svg('<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/><path d="M12 9v6" stroke-dasharray="2 2"/><path d="M8 9h8" opacity=".5"/>') },
+      { id: "t07", name: "7 Target", md: "Adjust / GPS", a11y: "Total",
+        html: svg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>') },
+      { id: "t08", name: "8 Bank", md: "AccountBalance", a11y: "Total",
+        html: svg('<path d="M4 10 12 5l8 5"/><path d="M6 10v8M10 10v8M14 10v8M18 10v8"/><path d="M4 18h16"/>') },
+      { id: "t09", name: "9 Net bar", md: "Baseline tick", a11y: "Total",
+        html: svg('<path d="M4 12h16"/><path d="M12 8v8"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/>') },
+      { id: "t10", name: "10 Sigma ring", md: "Σ in circle", a11y: "Total",
+        text: "Σ", ring: true },
+      { id: "t11", name: "11 Trend flat", md: "TrendingFlat", a11y: "Total",
+        html: svg('<path d="M4 14h16"/><path d="M16 10l4 4-4 4"/>') },
+      { id: "t12", name: "12 Receipt sum", md: "ReceiptLong", a11y: "Total",
+        html: svg('<path d="M6 4h12v16l-2-1-2 1-2-1-2 1-2-1-2 1V4Z"/><path d="M9 9h6M9 12h6M9 15h4"/>') },
+    ];
+
+    let selCarry = "c13";
+    let selTotal = "t01";
+
+    const sample = { income: 0, expense: 12400, carry: 3200 };
+
+    function fmt(n) {
+      const abs = Math.abs(n);
+      const s = abs >= 1000 ? "₹" + (abs / 1000).toFixed(1).replace(/\.0$/, "") + "k" : "₹" + abs.toFixed(0);
+      return n < 0 ? "−" + s : s;
+    }
+
+    function iconHtml(opt, kind) {
+      if (opt.html) return `<span class="ico ${kind}">${opt.html}</span>`;
+      if (opt.ring) return `<span class="ico ${kind}" style="font-size:10px;border:1.5px solid currentColor;border-radius:50%">${opt.text}</span>`;
+      return `<span class="ico ${kind}">${opt.text}</span>`;
+    }
+
+    function buildPicks(container, options, group, selectedId) {
+      container.innerHTML = options.map((o) => `
+        <button type="button" class="pick ${o.id === selectedId ? "on" : ""}" data-group="${group}" data-id="${o.id}">
+          <div class="pick-top">${iconHtml(o, group === "carry" ? "carry" : "net")}<span class="pick-name">${o.name}</span></div>
+          <div class="pick-meta"><code>${o.md}</code><br>${o.a11y}</div>
+        </button>`).join("");
+    }
+
+    function getOpt(options, id) {
+      return options.find((o) => o.id === id) || options[0];
+    }
+
+    function cellText(label, amt, cls, small) {
+      return `<div class="cell"><div class="lbl text-only">${label}</div><div class="amt ${cls} ${small ? "small" : ""}">${amt}</div></div>`;
+    }
+
+    function cellIcon(kind, opt, amt, cls, small) {
+      return `<div class="cell"><div class="lbl">${iconHtml(opt, kind)}</div><div class="amt ${cls} ${small ? "small" : ""}">${amt}</div></div>`;
+    }
+
+    function render() {
+      const showCarry = document.getElementById("chkCarry").checked;
+      const carryVal = document.getElementById("chkNegCarry").checked ? -sample.carry : sample.carry;
+      const net = +document.getElementById("rngNet").value;
+      const carryOpt = getOpt(CARRY_OPTIONS, selCarry);
+      const totalOpt = getOpt(TOTAL_OPTIONS, selTotal);
+
+      let oldH = `<div class="strip-cells">`;
+      oldH += cellText("Income", fmt(sample.income), "inc");
+      oldH += cellText("Expenses", fmt(sample.expense), "exp");
+      if (showCarry) oldH += cellText("Carry", fmt(carryVal), carryVal >= 0 ? "carry-pos" : "carry-neg", true);
+      oldH += cellText("Total", fmt(net), "net");
+      oldH += `</div><div class="strip-divider"></div>`;
+      document.getElementById("strip-old").innerHTML = oldH;
+
+      let newH = `<div class="strip-cells">`;
+      newH += cellIcon("inc", { text: "↓" }, fmt(sample.income), "inc");
+      newH += cellIcon("exp", { text: "↑" }, fmt(sample.expense), "exp");
+      if (showCarry) newH += cellIcon("carry", carryOpt, fmt(carryVal), carryVal >= 0 ? "carry-pos" : "carry-neg", true);
+      newH += cellIcon("net", totalOpt, fmt(net), "net");
+      newH += `</div><div class="strip-divider"></div>`;
+      document.getElementById("strip-new").innerHTML = newH;
+
+      document.getElementById("netLabel").textContent = fmt(net);
+      document.getElementById("hintCarry").textContent = carryOpt.name;
+      document.getElementById("hintTotal").textContent = totalOpt.name;
+
+      buildPicks(document.getElementById("carryGrid"), CARRY_OPTIONS, "carry", selCarry);
+      buildPicks(document.getElementById("totalGrid"), TOTAL_OPTIONS, "total", selTotal);
+    }
+
+    document.body.addEventListener("click", (e) => {
+      const btn = e.target.closest(".pick");
+      if (!btn) return;
+      const id = btn.dataset.id;
+      if (btn.dataset.group === "carry") selCarry = id;
+      else selTotal = id;
+      render();
+    });
+
+    ["chkCarry", "chkNegCarry", "rngNet"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", render);
+    });
+    render();
+  </script>
+</body>
+</html>

@@ -1,6 +1,20 @@
 # Copy to local.properties (gitignored) and fill in from Google Cloud Console.
-# Web application OAuth client ID (Credential Manager / Sign in with Google).
+# Web application OAuth client ID (Drive / Identity Authorization via app/build.gradle.kts → BuildConfig).
 GOOGLE_WEB_CLIENT_ID=
+# Web client secret: not read by Gradle or the app — optional note for your password manager / backend only.
+# GOOGLE_WEB_CLIENT_SECRET=
+
+# Optional: labeled ad layout boxes in debug builds (default off — no placeholder until AdMob loads).
+# ADS_DEBUG_PLACEHOLDERS=true
+
+# Optional: send Crashlytics reports from debug builds (default off; release always on when google-services.json exists).
+# CRASHLYTICS_DEBUG=true
+
+# AdMob (optional — Google test IDs used when omitted). See docs/ads-admob-firebase-setup.md
+# ADMOB_APP_ID=ca-app-pub-xxxxxxxxxxxxxxxx~yyyyyyyyyy
+# ADMOB_UNIT_HOME_BANNER=ca-app-pub-.../...
+# ADMOB_UNIT_HOME_MREC=ca-app-pub-.../...
+# ADMOB_UNIT_STATS_NATIVE=ca-app-pub-.../...
 
 # Optional: Android SDK path (Android Studio usually creates this automatically)
 # sdk.dir=C\:\\Users\\You\\AppData\\Local\\Android\\Sdk

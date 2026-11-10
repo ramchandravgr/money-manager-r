@@ -6,7 +6,7 @@ Instrumented UI tests capture **pre** and **post** PNG frames for every traced a
 
 Files are written under:
 
-`Android/data/com.mmr.app/files/ui-test-trace/<runId>/<TestClass>/<testMethod>/`
+`Android/data/com.rrparallelstudio.miapp/files/ui-test-trace/<runId>/<TestClass>/<testMethod>/`
 
 Each folder contains:
 

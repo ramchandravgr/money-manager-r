@@ -1,0 +1,984 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MMR — Expressive themes (9 × 10 gallery)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=DM+Sans:wght@400;500;600&family=Fraunces:opsz,wght@9..144,560;9..144,640&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Lora:ital,wght@0,600;1,600&family=Outfit:wght@360;480;560&family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@500;600;700&family=Source+Serif+4:wght@600&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --page-bg: #0e1016;
+      --page-text: #e8eaef;
+      --page-muted: #9ca3af;
+      --panel: #1a1d28;
+      --panel-border: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      background: var(--page-bg);
+      color: var(--page-text);
+      line-height: 1.5;
+    }
+    a { color: #93c5fd; }
+    .wrap { width: min(1400px, calc(100% - 32px)); margin: 0 auto; padding: 28px 0 64px; }
+    h1 { font-size: 1.45rem; margin: 0 0 8px; letter-spacing: -0.02em; }
+    .intro { max-width: 72ch; color: var(--page-muted); font-size: 0.92rem; margin-bottom: 24px; }
+    .intro strong { color: #f3f4f6; }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+    }
+    @media (max-width: 900px) { .controls { grid-template-columns: 1fr; } }
+    .controls label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--page-muted); margin-bottom: 6px; }
+    .controls select {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--panel-border);
+      background: #12141c;
+      color: var(--page-text);
+      font: inherit;
+    }
+    .personality {
+      grid-column: 1 / -1;
+      font-size: 0.88rem;
+      padding-top: 8px;
+      border-top: 1px solid var(--panel-border);
+    }
+    .personality em { color: #fcd34d; font-style: normal; font-weight: 600; }
+
+    .hero-preview {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 24px;
+      align-items: start;
+      margin-bottom: 40px;
+    }
+    @media (max-width: 900px) { .hero-preview { grid-template-columns: 1fr; } }
+    .preview-meta h2 { font-size: 1.1rem; margin: 0 0 8px; }
+    .preview-meta p { margin: 0 0 12px; font-size: 0.86rem; color: var(--page-muted); }
+    .preview-meta ul { margin: 0; padding-left: 1.1rem; font-size: 0.84rem; color: #d1d5db; }
+    .preview-meta li { margin-bottom: 6px; }
+
+    h2.section {
+      font-size: 1rem;
+      margin: 0 0 12px;
+      padding-top: 8px;
+    }
+    .matrix-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      background: var(--panel);
+      padding: 12px;
+    }
+    table.matrix {
+      border-collapse: separate;
+      border-spacing: 8px;
+      font-size: 0.7rem;
+    }
+    table.matrix th {
+      font-weight: 600;
+      color: var(--page-muted);
+      text-align: center;
+      vertical-align: bottom;
+      padding: 4px 2px 8px;
+      max-width: 120px;
+      line-height: 1.25;
+    }
+    table.matrix th.row-head {
+      text-align: right;
+      padding-right: 10px;
+      max-width: 140px;
+    }
+    table.matrix td { vertical-align: top; padding: 0; }
+    .matrix-btn {
+      border: 1px solid transparent;
+      background: transparent;
+      padding: 4px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: block;
+    }
+    .matrix-btn:hover, .matrix-btn.on {
+      border-color: rgba(147, 197, 253, 0.45);
+      background: rgba(147, 197, 253, 0.08);
+    }
+
+    /* —— Phone shell (layout locked across themes) —— */
+    .phone {
+      --phone-w: 280px;
+      --phone-h: 520px;
+      width: var(--phone-w);
+      height: var(--phone-h);
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid var(--t-border, #e2e4ea);
+      display: flex;
+      flex-direction: column;
+      font-size: 10px;
+      text-align: left;
+      color: var(--t-ink, #1a2332);
+      font-family: var(--t-font-ui, "Plus Jakarta Sans", sans-serif);
+      background: var(--t-screen-bg, var(--t-surface, #fff));
+      box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+      position: relative;
+      isolation: isolate;
+    }
+    /* Full-screen canvas layers (behind all chrome) */
+    .phone::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--t-screen-ambient, none);
+      background-size: var(--t-ambient-size, 100% 100%);
+      background-repeat: no-repeat;
+      background-position: center top;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .phone::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: var(--t-screen-vignette, none);
+      pointer-events: none;
+      z-index: 0;
+    }
+    .phone > * { position: relative; z-index: 1; }
+    @keyframes mmr-twinkle {
+      0%, 100% { opacity: 1; }
+      40% { opacity: 0.78; }
+      55% { opacity: 1; }
+      70% { opacity: 0.86; }
+    }
+    .phone[data-theme="midnight"]::before {
+      animation: mmr-twinkle 3.2s ease-in-out infinite;
+    }
+    /* MMR layout shell — identical across themes (themes recolor canvas + borders only) */
+    .phone {
+      --t-card-radius: 12px;
+      --t-hero-border: 1px dotted var(--t-border);
+      --t-field-border: 1px dotted var(--t-border);
+      --t-btn-outline: 1px dotted var(--t-border);
+      --t-btn-secondary-bg: rgba(255, 255, 255, 0.92);
+    }
+    .phone.mini {
+      --phone-w: 112px;
+      --phone-h: 208px;
+      font-size: 4px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+    .phone .hdr {
+      background: var(--t-header-bg, var(--t-header, #3f4671));
+      color: var(--t-header-fg, #fff);
+      padding: 8px 10px;
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+      font-weight: 600;
+      font-size: 1.1em;
+    }
+    .phone .hdr .mid { flex: 1; text-align: center; font-family: var(--t-font-display, inherit); }
+    .phone .hdr .ico { opacity: 0.9; font-size: 1.2em; }
+    .phone .tabs {
+      display: flex;
+      background: var(--t-chrome-bg, var(--t-chrome, #fff));
+      backdrop-filter: var(--t-chrome-blur, none);
+      -webkit-backdrop-filter: var(--t-chrome-blur, none);
+      border-bottom: 1px dotted var(--t-border);
+      flex-shrink: 0;
+    }
+    .phone .tab {
+      flex: 1;
+      text-align: center;
+      padding: 7px 2px;
+      font-size: 0.85em;
+      color: var(--t-muted);
+    }
+    .phone .tab.on {
+      color: var(--t-header);
+      font-weight: 600;
+      box-shadow: var(--t-tab-on, inset 0 -2px 0 var(--t-accent));
+    }
+    .phone .strip {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      text-align: center;
+      padding: 9px 6px;
+      background: var(--t-strip-bg, var(--t-chrome-bg, var(--t-chrome)));
+      backdrop-filter: var(--t-chrome-blur, none);
+      -webkit-backdrop-filter: var(--t-chrome-blur, none);
+      border-bottom: 1px dotted var(--t-border);
+      flex-shrink: 0;
+    }
+    .phone .strip .lbl { font-size: 0.72em; color: var(--t-muted); letter-spacing: var(--t-label-track, 0); text-transform: var(--t-label-case, none); }
+    .phone .strip .num {
+      font-size: 1.05em;
+      font-weight: 600;
+      font-family: var(--t-font-amount, inherit);
+      font-variant-numeric: tabular-nums;
+      margin-top: 2px;
+    }
+    .phone .body {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      background: var(--t-scroll-bg, var(--t-list-bg, var(--t-list, #f4f5f8)));
+      background-size: var(--t-scroll-bg-size, auto);
+      padding: var(--t-list-pad, 8px);
+    }
+    .phone .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      padding: var(--t-row-pad, 8px 10px);
+      margin-bottom: var(--t-row-gap, 6px);
+      background: var(--t-row-bg, #fff);
+      border: var(--t-row-border, 1px dotted var(--t-border));
+      border-radius: var(--t-row-radius, 10px);
+      box-shadow: var(--t-row-shadow, none);
+    }
+    .phone .row .t { font-weight: 600; font-family: var(--t-font-row-title, inherit); font-size: 1em; }
+    .phone .row .s { font-size: 0.78em; color: var(--t-muted); margin-top: 2px; }
+    .phone .row .a {
+      font-weight: 600;
+      font-family: var(--t-font-amount, inherit);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .phone .exp { color: var(--t-exp, #ef4444); }
+    .phone .inc { color: var(--t-inc, #059669); }
+    .phone .fab-rail {
+      text-align: center;
+      background: var(--t-rail-bg, var(--t-scroll-bg, var(--t-list-bg, var(--t-list))));
+      padding-bottom: 4px;
+      flex-shrink: 0;
+    }
+    .phone .fab {
+      width: 40px;
+      height: 40px;
+      margin: -18px auto 6px;
+      background: var(--t-accent);
+      color: #fff;
+      border-radius: var(--t-fab-radius, 12px);
+      box-shadow: var(--t-fab-shadow, 0 2px 8px rgba(0,0,0,0.2));
+      border: var(--t-fab-border, none);
+    }
+    .phone .bnav {
+      display: flex;
+      justify-content: space-around;
+      padding: 6px 4px 8px;
+      border-top: 1px dotted var(--t-border);
+      background: var(--t-nav-bg, var(--t-chrome-bg, var(--t-chrome)));
+      backdrop-filter: var(--t-chrome-blur, none);
+      -webkit-backdrop-filter: var(--t-chrome-blur, none);
+      font-size: 0.78em;
+      color: var(--t-muted);
+      flex-shrink: 0;
+    }
+    .phone .bnav .on { color: var(--t-header); font-weight: 600; }
+    .phone .hero {
+      background: var(--t-hero-bg, #eceef4);
+      border: var(--t-hero-border, 1px dotted var(--t-border));
+      border-radius: var(--t-hero-radius, 12px);
+      padding: 10px;
+      margin-bottom: 6px;
+    }
+    .phone .hero .ht { font-size: 1.25em; font-weight: 600; font-family: var(--t-font-display, inherit); margin: 0; }
+    .phone .hero .ha { font-size: 1.75em; font-weight: 700; font-family: var(--t-font-amount, inherit); margin: 4px 0 0; }
+    .phone .meta {
+      background: var(--t-row-bg, #fff);
+      border-radius: var(--t-card-radius, 12px);
+      border: var(--t-row-border, 1px dotted var(--t-border));
+      padding: 2px 10px;
+    }
+    .phone .mr {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      font-size: 0.95em;
+      border-bottom: 1px dotted var(--t-rule, var(--t-border));
+    }
+    .phone .mr:last-child { border-bottom: 0; }
+    .phone .mr .k { color: var(--t-muted); font-size: 0.85em; text-transform: var(--t-label-case, none); letter-spacing: var(--t-label-track, 0); }
+    .phone .mr .v { font-family: var(--t-font-row-title, inherit); text-align: right; max-width: 55%; }
+    .phone .sect { font-weight: 700; font-size: 1.05em; margin: 4px 0 2px; font-family: var(--t-font-display, inherit); }
+    .phone .chip {
+      display: inline-block;
+      font-size: 0.75em;
+      padding: 3px 6px;
+      border-radius: var(--t-chip-radius, 6px);
+      background: var(--t-chip-bg, #e8eaef);
+      color: var(--t-header);
+      margin-bottom: 4px;
+    }
+    .phone .foot {
+      padding: 8px 10px;
+      border-top: 1px dotted var(--t-border);
+      background: var(--t-foot-bg, var(--t-scroll-bg, var(--t-list-bg, var(--t-list))));
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex-shrink: 0;
+    }
+    .phone .btn-p {
+      border: none;
+      border-radius: var(--t-btn-radius, 10px);
+      padding: 9px;
+      background: var(--t-btn-primary, var(--t-accent));
+      color: var(--t-btn-primary-fg, #fff);
+      font: inherit;
+      font-weight: 600;
+      font-size: 1.05em;
+      box-shadow: var(--t-btn-shadow, none);
+    }
+    .phone .btn-o {
+      border: var(--t-btn-outline, 1px dotted var(--t-border));
+      border-radius: var(--t-btn-radius, 10px);
+      padding: 8px;
+      background: var(--t-btn-secondary-bg, #fff);
+      font: inherit;
+      font-size: 0.95em;
+    }
+    .phone .field {
+      background: var(--t-row-bg, #fff);
+      border: var(--t-row-border, 1px dotted var(--t-border));
+      border-radius: var(--t-row-radius, 10px);
+      padding: 8px 10px;
+      margin-bottom: 5px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.95em;
+    }
+    .phone .field .k { color: var(--t-muted); }
+    .phone .pie {
+      height: 56px;
+      margin: 6px 0;
+      border-radius: var(--t-row-radius, 10px);
+      background: var(--t-pie, linear-gradient(135deg, var(--t-accent) 40%, var(--t-header) 40% 70%, var(--t-inc) 70%));
+      opacity: 0.9;
+    }
+    .phone .settings-panel {
+      border: 1px dotted var(--t-border);
+      border-radius: var(--t-card-radius, 12px);
+      overflow: hidden;
+      background: var(--t-row-bg, #fff);
+    }
+    .phone .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 10px;
+      background: var(--t-row-bg, #fff);
+      border-bottom: 1px dotted var(--t-rule, var(--t-border));
+    }
+    .phone .settings-row:first-child { border-radius: var(--t-row-radius, 10px) var(--t-row-radius, 10px) 0 0; }
+    .phone .settings-row:last-child { border-radius: 0 0 var(--t-row-radius, 10px) var(--t-row-radius, 10px); border-bottom: 0; }
+    .phone .swatches { display: flex; gap: 4px; margin-top: 6px; }
+    .phone .sw { width: 14px; height: 14px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.1); }
+
+    /* —— Per-theme expressive skins (colors from MmrThemePresets light) —— */
+    /* Screen canvas tokens: --t-screen-bg, --t-screen-ambient, --t-screen-vignette,
+       --t-scroll-bg, --t-chrome-bg + blur, --t-strip-bg, --t-nav-bg, --t-rail-bg */
+
+    .phone[data-theme="ocean"] {
+      --t-header: #0e4d64; --t-accent: #22d3ee; --t-list: #f4f9fb; --t-chrome: #fff; --t-ink: #0c2a36;
+      --t-border: rgba(14,77,100,0.15); --t-muted: #5b8a9a; --t-inc: #14b8a6; --t-exp: #e11d48;
+      --t-header-bg: linear-gradient(135deg, #0e4d64 0%, #0891b2 55%, #0e7490 100%);
+      --t-screen-bg: #1d7bb5;
+      --t-screen-ambient: url("ambient/ocean-surface.jpg");
+      --t-ambient-size: cover;
+      --t-screen-vignette: linear-gradient(180deg, rgba(236, 254, 255, 0.18), transparent 28%), radial-gradient(ellipse at bottom, rgba(8, 47, 73, 0.22), transparent 55%);
+      --t-scroll-bg: linear-gradient(180deg, rgba(236, 254, 255, 0.12), transparent 18%);
+      --t-row-bg: rgba(255, 255, 255, 0.86);
+      --t-chrome-bg: rgba(244, 249, 251, 0.55); --t-chrome-blur: blur(12px);
+      --t-nav-bg: rgba(255, 255, 255, 0.5); --t-rail-bg: linear-gradient(180deg, transparent, rgba(34, 211, 238, 0.2));
+    }
+    .phone[data-theme="forest"] {
+      --t-header: #2d4a3e; --t-accent: #52b788; --t-list: #f6faf7; --t-chrome: #faf6ef; --t-ink: #1a2e24;
+      --t-border: rgba(45,74,62,0.18); --t-muted: #6b8578; --t-inc: #16a34a; --t-exp: #dc2626;
+      --t-header-bg: linear-gradient(180deg, #3a5c4c, #2d4a3e 60%, #1e3329);
+      --t-screen-bg:
+        radial-gradient(ellipse 70% 50% at 10% 10%, rgba(82, 183, 136, 0.22), transparent 55%),
+        linear-gradient(165deg, #d8e8dc 0%, #f0f5f1 40%, #e8f0ea 100%);
+      --t-screen-ambient: url("ambient/forest-leaves.svg");
+      --t-screen-vignette: radial-gradient(ellipse at 50% 100%, rgba(45, 74, 62, 0.15), transparent 55%);
+      --t-scroll-bg:
+        linear-gradient(180deg, rgba(255,254,249,0.6), transparent 25%),
+        radial-gradient(ellipse at 20% 80%, rgba(82, 183, 136, 0.14), transparent 50%),
+        radial-gradient(ellipse at 90% 15%, rgba(45, 74, 62, 0.06), transparent 45%),
+        linear-gradient(0deg, rgba(82, 183, 136, 0.08), transparent 50%);
+      --t-chrome-bg: rgba(250, 246, 239, 0.7); --t-chrome-blur: blur(10px);
+      --t-nav-bg: rgba(255, 254, 249, 0.75); --t-rail-bg: linear-gradient(180deg, transparent, rgba(82, 183, 136, 0.15));
+    }
+    .phone[data-theme="slate"] {
+      --t-header: #3d4f5c; --t-accent: #6366f1; --t-list: #f5f6f8; --t-chrome: #fff; --t-ink: #1e293b;
+      --t-border: #cbd5e1; --t-muted: #64748b; --t-inc: #4338ca; --t-exp: #3730a3;
+      --t-header-bg: repeating-linear-gradient(90deg, transparent, transparent 11px, rgba(255,255,255,0.05) 11px, rgba(255,255,255,0.05) 12px), linear-gradient(180deg, #4a5f6e, #3d4f5c);
+      --t-screen-bg: linear-gradient(145deg, #e2e8f0 0%, #f8fafc 50%, #eef2ff 100%);
+      --t-screen-ambient:
+        linear-gradient(rgba(99,102,241,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,102,241,0.06) 1px, transparent 1px);
+      --t-scroll-bg-size: 14px 14px;
+      --t-screen-vignette: none;
+      --t-scroll-bg:
+        linear-gradient(rgba(99,102,241,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,102,241,0.05) 1px, transparent 1px),
+        radial-gradient(circle at 80% 0%, rgba(99, 102, 241, 0.12), transparent 45%),
+        linear-gradient(180deg, #f1f5f9, #f8fafc);
+      --t-chrome-bg: rgba(248, 250, 252, 0.85); --t-chrome-blur: blur(8px);
+    }
+    .phone[data-theme="royal"] {
+      --t-header: #4a3768; --t-accent: #e879f9; --t-list: #f9f7fc; --t-chrome: #fdfcff; --t-ink: #2a1f3d;
+      --t-border: rgba(74,55,104,0.2); --t-muted: #8b7aa8; --t-inc: #7e22ce; --t-exp: #9333ea;
+      --t-header-bg: linear-gradient(180deg, #5c457e, #4a3768 55%, #352750);
+      --t-screen-bg:
+        radial-gradient(ellipse 80% 45% at 50% 0%, rgba(232, 121, 249, 0.15), transparent 60%),
+        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(212, 175, 55, 0.12), transparent 55%),
+        linear-gradient(180deg, #f3eef9, #f9f7fc 50%, #efe8f8);
+      --t-screen-ambient: repeating-linear-gradient(0deg, transparent, transparent 23px, rgba(212, 175, 55, 0.08) 23px, rgba(212, 175, 55, 0.08) 24px);
+      --t-screen-vignette: radial-gradient(ellipse, transparent 45%, rgba(74, 55, 104, 0.08) 100%);
+      --t-scroll-bg:
+        linear-gradient(180deg, rgba(253, 252, 255, 0.7), transparent 30%),
+        repeating-linear-gradient(0deg, transparent, transparent 22px, rgba(212, 175, 55, 0.06) 22px, rgba(212, 175, 55, 0.06) 23px);
+      --t-chrome-bg: rgba(253, 252, 255, 0.6); --t-chrome-blur: blur(12px);
+      --t-strip-bg: linear-gradient(180deg, rgba(212, 175, 55, 0.1), rgba(253, 252, 255, 0.5));
+    }
+    .phone[data-theme="sunset"] {
+      --t-header: #5c3d2e; --t-accent: #f97316; --t-list: #fcf8f5; --t-chrome: #fffaf5; --t-ink: #3d281c;
+      --t-border: rgba(92,61,46,0.16); --t-muted: #a18072; --t-inc: #c2410c; --t-exp: #ea580c;
+      --t-header-bg: linear-gradient(120deg, #5c3d2e, #c2410c 65%, #f97316);
+      --t-screen-bg:
+        radial-gradient(ellipse 120% 70% at 50% -25%, rgba(249, 115, 22, 0.35), transparent 58%),
+        radial-gradient(ellipse 90% 60% at 0% 80%, rgba(194, 65, 12, 0.2), transparent 50%),
+        linear-gradient(175deg, #ffedd5 0%, #fcf8f5 42%, #fed7aa 100%);
+      --t-screen-ambient:
+        url("ambient/sunset-sun.svg"),
+        radial-gradient(circle at 50% 22%, rgba(255, 237, 213, 0.12), transparent 48%);
+      --t-ambient-size: 100% 100%, auto;
+      --t-screen-vignette: radial-gradient(ellipse at bottom, rgba(92, 61, 46, 0.18), transparent 65%);
+      --t-scroll-bg:
+        linear-gradient(180deg, rgba(255,250,245,0.55), transparent 35%),
+        radial-gradient(ellipse at 30% 90%, rgba(249, 115, 22, 0.15), transparent 50%);
+      --t-chrome-bg: rgba(255, 250, 245, 0.55); --t-chrome-blur: blur(10px);
+      --t-rail-bg: linear-gradient(180deg, transparent, rgba(249, 115, 22, 0.2));
+    }
+    .phone[data-theme="midnight"] {
+      --t-header: #0f172a; --t-accent: #38bdf8; --t-list: #f1f5f9; --t-chrome: #fff; --t-ink: #0f172a;
+      --t-border: rgba(15,23,42,0.12); --t-muted: #475569; --t-inc: #0369a1; --t-exp: #1d4ed8;
+      --t-header-bg: linear-gradient(180deg, #020617, #0f172a 45%, #1e293b);
+      --t-header-fg: #f8fafc;
+      --t-screen-bg:
+        radial-gradient(ellipse 80% 40% at 80% 32%, rgba(226, 232, 240, 0.2), transparent 42%),
+        radial-gradient(ellipse 100% 55% at 50% 0%, rgba(56, 189, 248, 0.18), transparent 55%),
+        linear-gradient(180deg, #1e293b 0%, #0f172a 48%, #020617 100%);
+      --t-screen-ambient: url("ambient/midnight-sky.svg?v=2");
+      --t-ambient-size: 100% 100%;
+      --t-screen-vignette: radial-gradient(ellipse, transparent 48%, rgba(2, 6, 23, 0.4) 100%);
+      --t-scroll-bg: linear-gradient(180deg, rgba(15, 23, 42, 0.08), transparent 16%);
+      --t-row-bg: rgba(248, 250, 252, 0.9);
+      --t-hero-bg: rgba(248, 250, 252, 0.9);
+      --t-chrome-bg: rgba(248, 250, 252, 0.42); --t-chrome-blur: blur(14px);
+      --t-nav-bg: rgba(248, 250, 252, 0.55);
+      --t-rail-bg: linear-gradient(180deg, transparent, rgba(56, 189, 248, 0.22));
+    }
+    .phone[data-theme="rose-gold"] {
+      --t-header: #6b4e5d; --t-accent: #e8b4b8; --t-list: #faf7f8; --t-chrome: #fff9fb; --t-ink: #4a3540;
+      --t-border: rgba(107,78,93,0.15); --t-muted: #9d6b8a; --t-inc: #9d6b8a; --t-exp: #db7093;
+      --t-header-bg: linear-gradient(135deg, #6b4e5d, #9d6b8a 70%, #c9a0a8);
+      --t-screen-bg:
+        radial-gradient(ellipse 90% 60% at 80% 0%, rgba(232, 180, 184, 0.45), transparent 55%),
+        radial-gradient(ellipse 70% 50% at 0% 100%, rgba(157, 107, 138, 0.2), transparent 50%),
+        linear-gradient(160deg, #fce7f3 0%, #faf7f8 50%, #fdf2f8 100%);
+      --t-screen-ambient: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.5), transparent 45%);
+      --t-screen-vignette: radial-gradient(ellipse, transparent 50%, rgba(107, 78, 93, 0.1) 100%);
+      --t-scroll-bg:
+        radial-gradient(circle at 80% 0%, rgba(232,180,184,0.3), transparent 45%),
+        linear-gradient(180deg, rgba(255,255,255,0.35), transparent 40%);
+      --t-chrome-bg: rgba(255, 249, 251, 0.5); --t-chrome-blur: blur(16px);
+      --t-nav-bg: rgba(255, 249, 251, 0.65); --t-rail-bg: linear-gradient(180deg, transparent, rgba(232, 180, 184, 0.35));
+    }
+    .phone[data-theme="mint"] {
+      --t-header: #1e4d47; --t-accent: #2dd4bf; --t-list: #f0fdfa; --t-chrome: #fff; --t-ink: #134e4a;
+      --t-border: rgba(30,77,71,0.14); --t-muted: #5b8a82; --t-inc: #0d9488; --t-exp: #0f766e;
+      --t-header-bg: linear-gradient(90deg, #1e4d47, #115e59 60%, #0f766e);
+      --t-screen-bg:
+        linear-gradient(180deg, rgba(45, 212, 191, 0.25) 0%, transparent 35%),
+        linear-gradient(165deg, #ccfbf1 0%, #f0fdfa 45%, #ecfeff 100%);
+      --t-screen-ambient:
+        repeating-linear-gradient(90deg, transparent, transparent 48px, rgba(45, 212, 191, 0.06) 48px, rgba(45, 212, 191, 0.06) 49px);
+      --t-screen-vignette: none;
+      --t-scroll-bg:
+        linear-gradient(180deg, rgba(255,255,255,0.5), transparent 28%),
+        linear-gradient(0deg, rgba(45, 212, 191, 0.12), transparent 50%),
+        repeating-linear-gradient(0deg, transparent, transparent 18px, rgba(13, 148, 136, 0.05) 18px, rgba(13, 148, 136, 0.05) 19px);
+      --t-chrome-bg: rgba(240, 253, 250, 0.55); --t-chrome-blur: blur(12px);
+      --t-strip-bg: linear-gradient(180deg, rgba(45, 212, 191, 0.2), rgba(255, 255, 255, 0.45));
+    }
+    .phone[data-theme="charcoal-gold"] {
+      --t-header: #2d2d2d; --t-accent: #d4af37; --t-list: #f5f5f4; --t-chrome: #fafaf9; --t-ink: #1c1917;
+      --t-border: rgba(212,175,55,0.35); --t-muted: #78716c; --t-inc: #b45309; --t-exp: #57534e;
+      --t-header-bg: linear-gradient(180deg, #0f0f0f, #2d2d2d 50%, #1a1a1a);
+      --t-screen-bg:
+        radial-gradient(ellipse 80% 50% at 50% 0%, rgba(212, 175, 55, 0.15), transparent 55%),
+        linear-gradient(180deg, #d6d3d1 0%, #f5f5f4 40%, #e7e5e4 100%);
+      --t-screen-ambient:
+        repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(212, 175, 55, 0.04) 8px, rgba(212, 175, 55, 0.04) 9px);
+      --t-screen-vignette: radial-gradient(ellipse, transparent 42%, rgba(28, 25, 23, 0.12) 100%);
+      --t-scroll-bg:
+        linear-gradient(180deg, rgba(255,255,255,0.35), transparent 30%),
+        linear-gradient(0deg, rgba(212, 175, 55, 0.1), transparent 55%),
+        linear-gradient(180deg, #ececec, #f5f5f4);
+      --t-chrome-bg: rgba(250, 250, 249, 0.65); --t-chrome-blur: blur(10px);
+      --t-strip-bg: linear-gradient(180deg, rgba(212, 175, 55, 0.14), rgba(250, 250, 249, 0.5));
+      --t-hero-bg: rgba(255,255,255,0.75);
+    }
+    .phone[data-theme="slate"]::before { background-size: 14px 14px; }
+
+    /* —— Dark / OLED: same canvas system, remapped surfaces (design-only) —— */
+    .phone[data-appearance="dark"],
+    .phone[data-appearance="oled"] { --t-chrome-blur: blur(14px); }
+
+    .phone[data-appearance="dark"][data-theme="ocean"],
+    .phone[data-appearance="oled"][data-theme="ocean"] {
+      --t-ink: #ecfeff; --t-muted: #94a3b8; --t-border: rgba(255,255,255,0.1);
+      --t-header-bg: linear-gradient(135deg, #062a36, #083848, #0e4d64);
+      --t-screen-bg: #0c1924;
+      --t-screen-ambient: url("ambient/ocean-surface.jpg");
+      --t-ambient-size: cover;
+      --t-screen-vignette: linear-gradient(180deg, rgba(6, 42, 54, 0.45), rgba(6, 42, 54, 0.22) 40%, rgba(6, 42, 54, 0.35));
+      --t-scroll-bg: linear-gradient(180deg, rgba(12,25,36,0.15), transparent 20%);
+      --t-chrome-bg: rgba(12,25,36,0.75); --t-nav-bg: rgba(12,25,36,0.92);
+      --t-row-bg: rgba(15,35,48,0.9); --t-hero-bg: rgba(15,35,48,0.88);
+    }
+    .phone[data-appearance="oled"][data-theme="ocean"] {
+      --t-screen-bg: #000; --t-scroll-bg: transparent;
+      --t-chrome-bg: rgba(0,0,0,0.82); --t-row-bg: rgba(0,15,22,0.98);
+    }
+
+    .phone[data-appearance="dark"][data-theme="forest"],
+    .phone[data-appearance="oled"][data-theme="forest"] {
+      --t-ink: #ecfdf5; --t-muted: #9ca3af; --t-border: rgba(255,255,255,0.09);
+      --t-header-bg: linear-gradient(180deg, #1e3329, #15261e);
+      --t-screen-bg: radial-gradient(ellipse at 10% 0%, rgba(82,183,136,0.12), transparent 50%), #0f1a14;
+      --t-screen-ambient: url("ambient/forest-leaves-dark.svg");
+      --t-scroll-bg:
+        radial-gradient(ellipse at 15% 85%, rgba(82,183,136,0.08), transparent 45%),
+        linear-gradient(180deg, rgba(82,183,136,0.05), transparent), #0f1a14;
+      --t-chrome-bg: rgba(15,26,20,0.75); --t-nav-bg: rgba(15,26,20,0.9);
+      --t-row-bg: rgba(22,38,30,0.92); --t-hero-bg: rgba(22,38,30,0.9);
+    }
+    .phone[data-appearance="oled"][data-theme="forest"] {
+      --t-screen-bg: #000; --t-scroll-bg: #000; --t-row-bg: rgba(0,12,8,0.98);
+    }
+
+    .phone[data-appearance="dark"][data-theme="slate"],
+    .phone[data-appearance="oled"][data-theme="slate"] {
+      --t-ink: #e2e8f0; --t-muted: #94a3b8; --t-border: rgba(148,163,184,0.25);
+      --t-header-bg: linear-gradient(180deg, #2a3842, #1f2a32);
+      --t-screen-bg: #141a20;
+      --t-scroll-bg: linear-gradient(rgba(99,102,241,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.06) 1px, transparent 1px), #141a20;
+      --t-scroll-bg-size: 14px 14px;
+      --t-chrome-bg: rgba(20,26,32,0.78); --t-row-bg: rgba(30,38,46,0.92);
+    }
+    .phone[data-appearance="oled"][data-theme="slate"] {
+      --t-screen-bg: #000; --t-scroll-bg: linear-gradient(rgba(99,102,241,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.05) 1px, transparent 1px), #000;
+    }
+
+    .phone[data-appearance="dark"][data-theme="royal"],
+    .phone[data-appearance="oled"][data-theme="royal"] {
+      --t-ink: #f5f3ff; --t-muted: #c4b5fd; --t-border: rgba(212,175,55,0.2);
+      --t-header-bg: linear-gradient(180deg, #352750, #261c3a);
+      --t-screen-bg: radial-gradient(ellipse at 50% 0%, rgba(126,34,206,0.15), transparent), #1a1228;
+      --t-scroll-bg: repeating-linear-gradient(0deg, transparent, transparent 22px, rgba(212,175,55,0.05) 22px, rgba(212,175,55,0.05) 23px), #1a1228;
+      --t-chrome-bg: rgba(26,18,40,0.75); --t-row-bg: rgba(36,26,52,0.88);
+    }
+    .phone[data-appearance="oled"][data-theme="royal"] { --t-screen-bg: #000; --t-scroll-bg: #000; }
+
+    .phone[data-appearance="dark"][data-theme="sunset"],
+    .phone[data-appearance="oled"][data-theme="sunset"] {
+      --t-ink: #fff7ed; --t-muted: #d6d3d1; --t-border: rgba(255,255,255,0.1);
+      --t-header-bg: linear-gradient(120deg, #3d281c, #7c2d12, #9a3412);
+      --t-screen-bg: radial-gradient(ellipse at 50% -20%, rgba(249,115,22,0.18), transparent), #1c120c;
+      --t-screen-ambient:
+        url("ambient/sunset-sun.svg"),
+        radial-gradient(circle at 70% 25%, rgba(249, 115, 22, 0.12), transparent 45%);
+      --t-ambient-size: 100% 100%, auto;
+      --t-scroll-bg: linear-gradient(180deg, rgba(249,115,22,0.06), transparent), #1c120c;
+      --t-chrome-bg: rgba(28,18,12,0.75); --t-row-bg: rgba(40,26,18,0.9);
+    }
+    .phone[data-appearance="oled"][data-theme="sunset"] { --t-screen-bg: #000; --t-scroll-bg: #000; }
+
+    .phone[data-appearance="dark"][data-theme="midnight"],
+    .phone[data-appearance="oled"][data-theme="midnight"] {
+      --t-ink: #f1f5f9; --t-muted: #94a3b8; --t-border: rgba(255,255,255,0.1);
+      --t-header-bg: linear-gradient(180deg, #000, #020617);
+      --t-screen-bg: radial-gradient(ellipse at 50% 0%, rgba(56,189,248,0.2), transparent 55%), #0b1120;
+      --t-screen-ambient: url("ambient/midnight-sky-dark.svg?v=2");
+      --t-ambient-size: 100% 100%;
+      --t-scroll-bg: linear-gradient(180deg, rgba(11,17,32,0.1), transparent 18%);
+      --t-chrome-bg: rgba(11,17,32,0.78); --t-row-bg: rgba(15,23,42,0.92);
+    }
+    .phone[data-appearance="oled"][data-theme="midnight"] { --t-screen-bg: #000; --t-scroll-bg: transparent; }
+
+    .phone[data-appearance="dark"][data-theme="rose-gold"],
+    .phone[data-appearance="oled"][data-theme="rose-gold"] {
+      --t-ink: #fdf2f8; --t-muted: #d4b8c4; --t-border: rgba(232,180,184,0.2);
+      --t-header-bg: linear-gradient(135deg, #4a3540, #352630);
+      --t-screen-bg: radial-gradient(ellipse at 80% 0%, rgba(157,107,138,0.2), transparent), #1a1216;
+      --t-scroll-bg: linear-gradient(180deg, rgba(232,180,184,0.07), transparent), #1a1216;
+      --t-chrome-bg: rgba(26,18,22,0.75); --t-row-bg: rgba(36,26,32,0.88);
+    }
+    .phone[data-appearance="oled"][data-theme="rose-gold"] { --t-screen-bg: #000; --t-scroll-bg: #000; }
+
+    .phone[data-appearance="dark"][data-theme="mint"],
+    .phone[data-appearance="oled"][data-theme="mint"] {
+      --t-ink: #ecfdf5; --t-muted: #5eead4; --t-border: rgba(45,212,191,0.15);
+      --t-header-bg: linear-gradient(90deg, #123830, #0d2924);
+      --t-screen-bg: linear-gradient(180deg, rgba(45,212,191,0.1), transparent 40%), #0a1f1c;
+      --t-scroll-bg: repeating-linear-gradient(0deg, transparent, transparent 18px, rgba(13,148,136,0.06) 18px, rgba(13,148,136,0.06) 19px), #0a1f1c;
+      --t-chrome-bg: rgba(10,31,28,0.78); --t-row-bg: rgba(15,45,40,0.9);
+    }
+    .phone[data-appearance="oled"][data-theme="mint"] { --t-screen-bg: #000; --t-scroll-bg: #000; }
+
+    .phone[data-appearance="dark"][data-theme="charcoal-gold"],
+    .phone[data-appearance="oled"][data-theme="charcoal-gold"] {
+      --t-ink: #fafaf9; --t-muted: #a8a29e; --t-border: rgba(212,175,55,0.28);
+      --t-header-bg: linear-gradient(180deg, #0a0a0a, #1a1a1a);
+      --t-screen-bg: radial-gradient(ellipse at 50% 0%, rgba(212,175,55,0.12), transparent), #141414;
+      --t-scroll-bg: linear-gradient(180deg, rgba(212,175,55,0.06), transparent), #141414;
+      --t-chrome-bg: rgba(20,20,20,0.8); --t-row-bg: rgba(28,28,28,0.92);
+    }
+    .phone[data-appearance="oled"][data-theme="charcoal-gold"] { --t-screen-bg: #000; --t-scroll-bg: #000; --t-row-bg: rgba(12,12,12,0.98); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Expressive themes — 9 presets × 10 screens</h1>
+    <p class="intro">
+      Design-only gallery for expressive <strong>MmrAppColorTheme</strong> directions (nine presets — <strong>Classic Coral omitted</strong> here; too close to generic money-manager chrome).
+      Still maps to the same Settings theme IDs where listed. <strong>Shared MMR layout</strong> on every theme (list rows, detail cards, FAB, tabs — same alignment and box radii as today).
+      Themes differ by <strong>color grading + screen canvas</strong> only; borders use a <strong>dotted</strong> stroke instead of solid.
+      Forest, Ocean, Midnight, and Sunset use a <strong>single full-page scene</strong> (scattered leaves, soft water, stars and moon, light sun) — not repeating tiles.
+      Use <strong>Appearance</strong> for Light / Dark / OLED.
+    </p>
+
+    <div class="controls">
+      <div>
+        <label for="themeSelect">Theme</label>
+        <select id="themeSelect"></select>
+      </div>
+      <div>
+        <label for="screenSelect">Screen</label>
+        <select id="screenSelect"></select>
+      </div>
+      <div>
+        <label for="appearanceSelect">Appearance</label>
+        <select id="appearanceSelect">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="oled">OLED (pure black)</option>
+        </select>
+      </div>
+      <p class="personality" id="personalityBlurb"></p>
+    </div>
+
+    <div class="hero-preview">
+      <div id="largePreview"></div>
+      <div class="preview-meta">
+        <h2 id="previewTitle">Preview</h2>
+        <p id="previewDesc"></p>
+        <ul id="previewTokens"></ul>
+      </div>
+    </div>
+
+    <h2 class="section">Full matrix — 90 combinations (click a cell)</h2>
+    <p class="intro" style="margin-bottom:12px;">Rows = screens · columns = themes. Miniatures use the same markup as the large preview.</p>
+    <div class="matrix-wrap">
+      <table class="matrix" id="matrix"></table>
+    </div>
+  </div>
+
+  <script>
+    const THEMES = [
+      { id: "ocean", label: "Ocean", codename: "Tidal log", tokens: ["photo ocean surface", "cover fill", "translucent list wash", "dotted borders"] },
+      { id: "forest", label: "Forest", codename: "Trail journal", tokens: ["canopy green mesh", "realistic scattered leaves", "green scroll wash", "dotted borders"] },
+      { id: "slate", label: "Slate", codename: "Workshop sheet", tokens: ["blueprint grid ambient", "indigo scroll bloom", "dotted borders", "same card geometry"] },
+      { id: "royal", label: "Royal", codename: "Court registry", tokens: ["purple + gold mesh", "gold ruled ambient", "dotted meta rows", "canvas only"] },
+      { id: "sunset", label: "Sunset", codename: "Road diary", tokens: ["sunrise mesh", "visible sun disc at horizon", "peach scroll", "dotted borders"] },
+      { id: "midnight", label: "Midnight", codename: "After hours", tokens: ["night sky canvas", "sparkle stars + moon in gutters", "twinkle", "dotted borders"] },
+      { id: "rose-gold", label: "Rose Gold", codename: "Atelier", tokens: ["blush mesh", "rose scroll gradient", "dotted cards (no pills)", "canvas only"] },
+      { id: "mint", label: "Mint", codename: "Fresh books", tokens: ["mint band mesh", "stripe ambient", "ruled scroll tint", "dotted borders"] },
+      { id: "charcoal-gold", label: "Charcoal & Gold", codename: "Vault folio", tokens: ["gold crown mesh", "diagonal weave ambient", "marble scroll", "dotted borders"] },
+    ];
+
+    const SCREENS = [
+      { id: "home", label: "Home (Daily ledger)", desc: "Month header, view tabs, income/expense/total strip, grouped list, FAB, bottom nav.", hasNav: true },
+      { id: "stats", label: "Stats", desc: "Period header, income/expense tabs, pie, category breakdown, bottom nav.", hasNav: true },
+      { id: "loans", label: "Loans", desc: "Loan list with balance chips, FAB, bottom nav.", hasNav: true },
+      { id: "more", label: "More (settings hub)", desc: "Settings sections: backup, sync, categories, configuration.", hasNav: true },
+      { id: "transaction-detail", label: "Transaction detail", desc: "Design 12: hero, meta card, linked SMS, footer Edit/Duplicate/Delete.", hasNav: false },
+      { id: "approval", label: "Approval center", desc: "Pending SMS cards with approve/reject affordances.", hasNav: false },
+      { id: "add-transaction", label: "Add transaction", desc: "Amount, type, category, account fields + save.", hasNav: false },
+      { id: "search", label: "Transaction search", desc: "Filter chips + result list.", hasNav: false },
+      { id: "configuration", label: "Configuration", desc: "Theme picker swatches, amount colors, display options.", hasNav: false },
+      { id: "categories", label: "Categories", desc: "Category list with expense/income grouping.", hasNav: false },
+    ];
+
+    function bottomNav(active) {
+      const items = ["Home", "Stats", "Loans", "More"];
+      return `<div class="bnav">${items.map((t) => `<span class="${t.toLowerCase() === active ? "on" : ""}">${t}</span>`).join("")}</div>`;
+    }
+
+    function headerBar(title, icons = true) {
+      return `<div class="hdr"><span class="ico">◀</span><span class="mid">${title}</span>${icons ? `<span class="ico">🔍 ✉</span>` : `<span></span>`}</div>`;
+    }
+
+    function backBar(title, trailing = "") {
+      return `<div class="hdr"><span class="ico">←</span><span class="mid">${title}</span><span class="ico">${trailing}</span></div>`;
+    }
+
+    function screenHtml(id) {
+      switch (id) {
+        case "home":
+          return `
+            ${headerBar("November 2026 ▾")}
+            <div class="tabs"><div class="tab on">Daily</div><div class="tab">Calendar</div><div class="tab">Monthly</div><div class="tab">Total</div></div>
+            <div class="strip">
+              <div><div class="lbl">Income</div><div class="num inc">₹12,500</div></div>
+              <div><div class="lbl">Expenses</div><div class="num exp">₹3,240</div></div>
+              <div><div class="lbl">Total</div><div class="num">+₹9,260</div></div>
+            </div>
+            <div class="body">
+              <div class="row"><div><div class="t">Salary</div><div class="s">HDFC · Income</div></div><div class="a inc">+₹12,500</div></div>
+              <div class="row"><div><div class="t">Swiggy</div><div class="s">UPI · Food</div></div><div class="a exp">−₹420</div></div>
+              <div class="row"><div><div class="t">Metro</div><div class="s">Card · Transport</div></div><div class="a exp">−₹180</div></div>
+            </div>
+            <div class="fab-rail"><div class="fab"></div></div>
+            ${bottomNav("home")}
+          `;
+        case "stats":
+          return `
+            ${headerBar("November 2026 ▾", false)}
+            <div class="tabs"><div class="tab">Income</div><div class="tab on">Expenses</div></div>
+            <div class="body" style="padding-top:10px">
+              <div class="pie"></div>
+              <div class="row"><div><div class="t">Food</div></div><div class="a exp">₹520</div></div>
+              <div class="row"><div><div class="t">Transport</div></div><div class="a exp">₹340</div></div>
+              <div class="row"><div><div class="t">Other</div></div><div class="a exp">₹922</div></div>
+            </div>
+            ${bottomNav("stats")}
+          `;
+        case "loans":
+          return `
+            ${headerBar("Loans", false)}
+            <div class="body" style="padding-top:10px">
+              <div class="row"><div><div class="t">Home EMI</div><div class="s">Due 12 Nov · 8% p.a.</div></div><div class="a exp">₹4.2L</div></div>
+              <div class="row"><div><div class="t">Personal</div><div class="s">Friend · Flexible</div></div><div class="a exp">₹25,000</div></div>
+            </div>
+            <div class="fab-rail"><div class="fab"></div></div>
+            ${bottomNav("loans")}
+          `;
+        case "more":
+          return `
+            ${headerBar("More", false)}
+            <div class="body" style="padding:6px">
+              <div class="chip">Account</div>
+              <div class="settings-panel">
+              <div class="settings-row"><span>Backup &amp; restore</span><span>›</span></div>
+              <div class="settings-row"><span>Peer device sync</span><span>›</span></div>
+              <div class="settings-row"><span>Categories</span><span>›</span></div>
+              <div class="settings-row"><span>Configuration</span><span>›</span></div>
+              </div>
+            </div>
+            ${bottomNav("more")}
+          `;
+        case "transaction-detail":
+          return `
+            ${backBar("Transaction")}
+            <div class="body">
+              <div class="hero"><p class="ht">Swiggy — lunch</p><p class="ha exp">−₹420</p></div>
+              <div class="meta">
+                <div class="mr"><span class="k">Type</span><span class="v">Expense</span></div>
+                <div class="mr"><span class="k">Category</span><span class="v">Food</span></div>
+                <div class="mr"><span class="k">Account</span><span class="v">HDFC UPI</span></div>
+              </div>
+              <div class="sect">Linked SMS (1)</div>
+              <div class="row" style="margin-top:4px"><div><div class="t">VM-SWIGGY</div><div class="s">INR 420 debited…</div></div></div>
+            </div>
+            <div class="foot">
+              <button type="button" class="btn-p">Edit</button>
+              <button type="button" class="btn-o">Duplicate</button>
+            </div>
+          `;
+        case "approval":
+          return `
+            ${headerBar("Approvals", false)}
+            <div class="body">
+              <div class="row"><div><div class="t">HDFC · Debit</div><div class="s">Today · Food?</div></div><div class="a exp">−₹420</div></div>
+              <div class="row"><div><div class="t">Paytm · Credit</div><div class="s">Yesterday · Income</div></div><div class="a inc">+₹500</div></div>
+            </div>
+          `;
+        case "add-transaction":
+          return `
+            ${backBar("Add transaction")}
+            <div class="body">
+              <div class="field"><span class="k">Amount</span><span class="a exp">₹420</span></div>
+              <div class="field"><span class="k">Type</span><span>Expense</span></div>
+              <div class="field"><span class="k">Category</span><span>Food</span></div>
+              <div class="field"><span class="k">Account</span><span>HDFC UPI</span></div>
+            </div>
+            <div class="foot"><button type="button" class="btn-p">Save</button></div>
+          `;
+        case "search":
+          return `
+            ${headerBar("Search", false)}
+            <div class="tabs"><div class="tab on">All</div><div class="tab">Food</div><div class="tab">Nov</div></div>
+            <div class="body">
+              <div class="row"><div><div class="t">Swiggy</div><div class="s">6 Nov</div></div><div class="a exp">−₹420</div></div>
+              <div class="row"><div><div class="t">Swiggy</div><div class="s">2 Nov</div></div><div class="a exp">−₹310</div></div>
+            </div>
+          `;
+        case "configuration":
+          return `
+            ${backBar("Configuration")}
+            <div class="body">
+              <div class="sect">App color theme</div>
+              <div class="swatches">${THEMES.slice(0, 5).map((t) => `<span class="sw" title="${t.label}"></span>`).join("")}</div>
+              <div class="field" style="margin-top:8px"><span class="k">Theme mode</span><span>System</span></div>
+              <div class="field"><span class="k">Amount colors</span><span>Set B</span></div>
+            </div>
+          `;
+        case "categories":
+          return `
+            ${backBar("Categories", "+")}
+            <div class="body">
+              <div class="chip">Expense</div>
+              <div class="row"><div><div class="t">Food</div></div><span>›</span></div>
+              <div class="row"><div><div class="t">Transport</div></div><span>›</span></div>
+              <div class="chip" style="margin-top:6px">Income</div>
+              <div class="row"><div><div class="t">Salary</div></div><span>›</span></div>
+            </div>
+          `;
+        default:
+          return "";
+      }
+    }
+
+    function buildPhone(themeId, screenId, mini) {
+      const el = document.createElement("div");
+      el.className = "phone" + (mini ? " mini" : "");
+      el.dataset.theme = themeId;
+      el.dataset.appearance = currentAppearance;
+      el.innerHTML = screenHtml(screenId);
+      return el;
+    }
+
+    let currentTheme = THEMES[0].id;
+    let currentScreen = SCREENS[0].id;
+    let currentAppearance = "light";
+
+    const APPEARANCE_LABEL = { light: "Light", dark: "Dark", oled: "OLED" };
+
+    function syncAllPhonesAppearance() {
+      document.querySelectorAll(".phone").forEach((p) => {
+        p.dataset.appearance = currentAppearance;
+      });
+    }
+
+    function renderLarge() {
+      const host = document.getElementById("largePreview");
+      host.innerHTML = "";
+      host.appendChild(buildPhone(currentTheme, currentScreen, false));
+      const theme = THEMES.find((t) => t.id === currentTheme);
+      const screen = SCREENS.find((s) => s.id === currentScreen);
+      document.getElementById("previewTitle").textContent =
+        `${theme.label} · ${screen.label} · ${APPEARANCE_LABEL[currentAppearance]}`;
+      document.getElementById("previewDesc").textContent = screen.desc;
+      const ul = document.getElementById("previewTokens");
+      ul.innerHTML = theme.tokens.map((x) => `<li>${x}</li>`).join("");
+      document.getElementById("personalityBlurb").innerHTML =
+        `<em>${theme.codename}</em> — ${theme.tokens.join(" · ")}`;
+      document.querySelectorAll(".matrix-btn").forEach((btn) => {
+        btn.classList.toggle("on", btn.dataset.theme === currentTheme && btn.dataset.screen === currentScreen);
+      });
+    }
+
+    function initSelects() {
+      const ts = document.getElementById("themeSelect");
+      const ss = document.getElementById("screenSelect");
+      THEMES.forEach((t) => {
+        const o = document.createElement("option");
+        o.value = t.id;
+        o.textContent = t.label;
+        ts.appendChild(o);
+      });
+      SCREENS.forEach((s) => {
+        const o = document.createElement("option");
+        o.value = s.id;
+        o.textContent = s.label;
+        ss.appendChild(o);
+      });
+      ts.addEventListener("change", () => { currentTheme = ts.value; renderLarge(); });
+      ss.addEventListener("change", () => { currentScreen = ss.value; renderLarge(); });
+      document.getElementById("appearanceSelect").addEventListener("change", (e) => {
+        currentAppearance = e.target.value;
+        syncAllPhonesAppearance();
+        renderLarge();
+      });
+    }
+
+    function buildMatrix() {
+      const table = document.getElementById("matrix");
+      const head = document.createElement("tr");
+      head.innerHTML = `<th class="row-head">Screen ↓ · Theme →</th>` +
+        THEMES.map((t) => `<th>${t.label}</th>`).join("");
+      table.appendChild(head);
+      SCREENS.forEach((screen) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<th class="row-head">${screen.label}</th>`;
+        THEMES.forEach((theme) => {
+          const td = document.createElement("td");
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "matrix-btn";
+          btn.dataset.theme = theme.id;
+          btn.dataset.screen = screen.id;
+          btn.title = `${theme.label} — ${screen.label}`;
+          btn.appendChild(buildPhone(theme.id, screen.id, true));
+          btn.addEventListener("click", () => {
+            currentTheme = theme.id;
+            currentScreen = screen.id;
+            document.getElementById("themeSelect").value = currentTheme;
+            document.getElementById("screenSelect").value = currentScreen;
+            renderLarge();
+            document.getElementById("largePreview").scrollIntoView({ behavior: "smooth", block: "nearest" });
+          });
+          td.appendChild(btn);
+          tr.appendChild(td);
+        });
+        table.appendChild(tr);
+      });
+    }
+
+    initSelects();
+    buildMatrix();
+    renderLarge();
+  </script>
+</body>
+</html>

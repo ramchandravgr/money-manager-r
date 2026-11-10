@@ -31,5 +31,4 @@ jobs:
           disable-animations: true
           script: >
             ./gradlew :app:connectedDebugAndroidTest
-            -Pandroid.testInstrumentationRunnerArguments.notClass=com.mmr.app.ApprovalInboxScanUiTest
             --no-daemon --stacktrace

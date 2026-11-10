@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Home ledger — full-screen ad mockups (20)</title>
+  <style>
+    :root {
+      --page: #e8e6ea;
+      --ink: #1a1a1e;
+      --muted: #5c5c66;
+      --card: #fff;
+      --line: #e2e0e6;
+      --accent: #e85d4a;
+      --header: #4a3d52;
+      --income: #0d9488;
+      --expense: #dc2626;
+      --canvas: #f5e8ec;
+      --surface: #ffffff;
+      --txn-border: #f0ecef;
+      --ad-bg: #e8edf2;
+      --ad-edge: #9aa8b5;
+      --nav: #faf9fb;
+      --fab: #e85d4a;
+      --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: var(--font);
+      background: var(--page);
+      color: var(--ink);
+      line-height: 1.45;
+    }
+    header {
+      padding: 1.5rem 1rem 1rem;
+      text-align: center;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    h1 { font-size: 1.4rem; font-weight: 600; margin: 0 0 0.35rem; }
+    .lede { color: var(--muted); font-size: 0.95rem; margin: 0 auto; max-width: 40rem; }
+    nav.toc {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.35rem;
+      padding: 1rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    nav.toc a {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--ink);
+      text-decoration: none;
+    }
+    nav.toc a:hover { border-color: var(--accent); color: var(--accent); }
+    main {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1rem 3rem;
+      display: grid;
+      gap: 2.5rem;
+    }
+  section.placement {
+      background: var(--card);
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      padding: 1.25rem;
+      scroll-margin-top: 1rem;
+    }
+    section.placement h2 {
+      font-size: 1.05rem;
+      margin: 0 0 0.25rem;
+      font-weight: 600;
+    }
+    section.placement .desc {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin: 0 0 1rem;
+      max-width: 36rem;
+    }
+    .gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.25rem;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    /* —— Phone chrome —— */
+    .phone {
+      width: 390px;
+      height: 844px;
+      border-radius: 36px;
+      background: #111;
+      padding: 10px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.18);
+      position: relative;
+      flex-shrink: 0;
+    }
+    .phone-inner {
+      width: 100%;
+      height: 100%;
+      border-radius: 28px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      background: var(--canvas);
+      position: relative;
+    }
+    .status {
+      height: 28px;
+      padding: 6px 20px 0;
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--header);
+      color: #fff;
+    }
+    .topbar {
+      background: var(--header);
+      color: #fff;
+      padding: 4px 12px 10px;
+      display: grid;
+      grid-template-columns: 28px 1fr 28px 28px 28px;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+    .topbar .month { text-align: center; font-weight: 600; font-size: 13px; }
+    .topbar .icon {
+      width: 26px; height: 26px; border-radius: 8px;
+      background: rgba(255,255,255,.12);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px;
+    }
+    .topbar .badge { position: relative; }
+    .topbar .badge::after {
+      content: "2";
+      position: absolute; top: -2px; right: -2px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--accent); font-size: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .scroll-body {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+    .ledger-list {
+      flex: 1;
+      overflow: hidden;
+      padding: 0 0 8px;
+    }
+    .view-mode {
+      margin: 10px 14px 6px;
+      padding: 8px 12px;
+      background: var(--surface);
+      border-radius: 10px;
+      border: 1px solid var(--txn-border);
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .summary {
+      margin: 0 14px 8px;
+      background: var(--surface);
+      border-radius: 12px;
+      border: 1px solid var(--txn-border);
+      padding: 10px 8px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+      text-align: center;
+    }
+    .summary.col4 { grid-template-columns: repeat(4, 1fr); }
+    .summary .lbl { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+    .summary .val { font-size: 12px; font-weight: 600; margin-top: 2px; }
+    .summary .val.inc { color: var(--income); }
+    .summary .val.exp { color: var(--expense); }
+    .summary .val.offers { color: #7c6f9e; font-size: 10px; }
+    .carry {
+      margin: 0 14px 8px;
+      padding: 8px 12px;
+      background: var(--surface);
+      border-radius: 8px;
+      font-size: 11px;
+      color: var(--muted);
+      display: flex; justify-content: space-between;
+    }
+    .carry strong { color: var(--income); }
+    .day-hdr {
+      margin: 8px 14px 4px;
+      padding: 6px 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--txn-border);
+    }
+    .day-hdr .left { display: flex; align-items: center; gap: 6px; }
+    .day-hdr .num { font-size: 18px; font-weight: 700; color: var(--accent); }
+    .day-hdr .pill { font-size: 9px; background: #f0e8ea; padding: 2px 5px; border-radius: 4px; }
+    .day-hdr .sums { text-align: right; font-size: 10px; }
+    .day-hdr .sums .inc { color: var(--income); }
+    .day-hdr .sums .exp { color: var(--expense); }
+    .txn {
+      margin: 0 14px;
+      padding: 10px 4px;
+      border-bottom: 1px solid var(--txn-border);
+      display: grid;
+      grid-template-columns: 52px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      font-size: 11px;
+      background: var(--surface);
+    }
+    .txn .cat { color: var(--muted); font-size: 10px; }
+    .txn .title { font-weight: 500; }
+    .txn .sub { color: var(--muted); font-size: 9px; }
+    .txn .amt { font-weight: 600; font-size: 11px; }
+    .txn .amt.neg { color: var(--expense); }
+    .txn .amt.pos { color: var(--income); }
+    .txn .time { font-size: 9px; color: var(--muted); text-align: right; }
+    /* Ad blocks */
+    .ad {
+      margin: 8px 14px;
+      border-radius: 10px;
+      border: 1.5px dashed var(--ad-edge);
+      background: linear-gradient(135deg, var(--ad-bg) 0%, #dce4ec 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .ad .ad-tag {
+      position: absolute;
+      top: 4px; left: 6px;
+      font-size: 8px;
+      font-weight: 700;
+      color: var(--ad-edge);
+      letter-spacing: .05em;
+    }
+    .ad.banner {
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: #4a5568;
+    }
+    .ad.native {
+      padding: 10px 10px 10px 12px;
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+    .ad.native .thumb {
+      width: 40px; height: 40px; border-radius: 8px;
+      background: #c5d0db;
+    }
+    .ad.native .head { font-size: 11px; font-weight: 600; }
+    .ad.native .body { font-size: 9px; color: var(--muted); margin-top: 2px; }
+    .ad.native .cta { font-size: 9px; color: #2563eb; margin-top: 4px; font-weight: 600; }
+    .ad.mrec {
+      height: 130px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .ad.mrec .box {
+      width: 88%; height: 70%;
+      background: #cbd5e1;
+      border-radius: 6px;
+    }
+    .ad.textline {
+      border: none;
+      background: transparent;
+      padding: 4px 14px;
+      font-size: 10px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .ad.textline a { color: #2563eb; font-weight: 600; text-decoration: none; }
+    .ad.collapse {
+      margin: 6px 14px;
+      padding: 8px 12px;
+      background: var(--surface);
+      border: 1px solid var(--txn-border);
+      border-radius: 8px;
+      font-size: 11px;
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+    }
+    .ad.video {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+    }
+    .ad.video .play {
+      width: 56px; height: 56px; border-radius: 8px;
+      background: #94a3b8;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 18px;
+    }
+    .ad-chip {
+      position: absolute;
+      right: 68px;
+      bottom: 118px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 6px 10px;
+      font-size: 9px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.12);
+      display: flex; align-items: center; gap: 4px;
+    }
+    .ad-chip .dot { width: 8px; height: 8px; border-radius: 50%; background: #3b82f6; }
+    .sticky-ad {
+      flex-shrink: 0;
+      height: 50px;
+      margin: 0;
+      border-radius: 0;
+      border-left: none;
+      border-right: none;
+    }
+    .bottom-nav {
+      height: 56px;
+      background: var(--nav);
+      border-top: 1px solid var(--line);
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      align-items: center;
+      text-align: center;
+      font-size: 8px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+    .bottom-nav .on { color: var(--accent); font-weight: 600; }
+    .fab {
+      position: absolute;
+      right: 22px;
+      bottom: 72px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--fab);
+      color: #fff;
+      font-size: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 16px rgba(232,93,74,.45);
+      line-height: 1;
+    }
+    .fab.raise { bottom: 128px; }
+    .empty-hero {
+      margin: 12px 14px;
+      height: 200px;
+      border-radius: 12px;
+      border: 2px dashed var(--ad-edge);
+      background: var(--ad-bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      font-size: 11px;
+      text-align: center;
+      gap: 8px;
+    }
+    .pull-hint {
+      text-align: center;
+      font-size: 9px;
+      color: var(--muted);
+      padding: 4px;
+    }
+    .end-card {
+      margin: 12px 14px 20px;
+      padding: 12px;
+      background: #f8f6f8;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 10px;
+      color: var(--muted);
+    }
+    /* Overlays */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: 28px;
+      background: rgba(0,0,0,.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+    }
+    .interstitial {
+      width: 85%;
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    .interstitial .ad.big {
+      height: 180px;
+      margin: 12px 0;
+      border-radius: 8px;
+    }
+    .sheet {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      background: #fff;
+      border-radius: 16px 16px 0 0;
+      padding: 12px 16px 24px;
+      z-index: 15;
+      box-shadow: 0 -8px 30px rgba(0,0,0,.15);
+    }
+    .sheet h3 { margin: 0 0 8px; font-size: 14px; }
+    .sheet .opt { padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+    .sheet .sheet-ad {
+      margin-top: 10px;
+      padding: 10px;
+      background: var(--ad-bg);
+      border-radius: 8px;
+      font-size: 10px;
+      color: var(--muted);
+    }
+    .pull-panel {
+      margin: 0 14px;
+      padding: 12px;
+      background: var(--ad-bg);
+      border-radius: 0 0 10px 10px;
+      border: 1px solid var(--ad-edge);
+      font-size: 10px;
+      text-align: center;
+    }
+    .week-sep {
+      margin: 12px 14px 6px;
+      padding: 6px;
+      font-size: 9px;
+      color: var(--muted);
+      text-align: center;
+      background: rgba(255,255,255,.6);
+      border-radius: 6px;
+    }
+    .caption {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+      max-width: 390px;
+    }
+    .two-phones { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+    @media (max-width: 420px) {
+      .phone { width: 100%; max-width: 390px; height: auto; min-height: 720px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Full ledger mockups — 20 ad placements</h1>
+    <p class="lede">Money Inbox Home · Daily view · illustrative data · Rose Gold–style canvas. Each frame is ~390×844 (phone). Highlighted areas = ad slot.</p>
+  </header>
+  <nav class="toc" aria-label="Jump to placement">
+    <a href="#p01">01</a><a href="#p02">02</a><a href="#p03">03</a><a href="#p04">04</a><a href="#p05">05</a>
+    <a href="#p06">06</a><a href="#p07">07</a><a href="#p08">08</a><a href="#p09">09</a><a href="#p10">10</a>
+    <a href="#p11">11</a><a href="#p12">12</a><a href="#p13">13</a><a href="#p14">14</a><a href="#p15">15</a>
+    <a href="#p16">16</a><a href="#p17">17</a><a href="#p18">18</a><a href="#p19">19</a><a href="#p20">20</a>
+  </nav>
+
+  <main>
+    <!-- Helper: repeated txn blocks shortened via copy in each section -->
+
+    <section class="placement" id="p01">
+      <h2>01 · Banner below summary strip</h2>
+      <p class="desc">First scroll position after Income / Expense / Total — adaptive banner before “Sat 8” group.</p>
+      <div class="gallery">
+        <div>
+          <div class="phone"><div class="phone-inner">
+            <div class="status"><span>2:46</span><span>▮▯ Wi‑Fi</span></div>
+            <div class="topbar">
+              <div class="icon">M</div>
+              <div class="month">‹ November 2025 ›</div>
+              <div class="icon">⌕</div>
+              <div class="icon badge">✉</div>
+              <div></div>
+            </div>
+            <div class="scroll-body">
+              <div class="view-mode">Daily <span>▾</span></div>
+              <div class="summary">
+                <div><div class="lbl">Income</div><div class="val inc">₹42,500</div></div>
+                <div><div class="lbl">Expense</div><div class="val exp">₹28,120</div></div>
+                <div><div class="lbl">Total</div><div class="val">₹14,380</div></div>
+              </div>
+              <div class="ad banner"><span class="ad-tag">AD</span>320×50 · Partner banner</div>
+              <div class="ledger-list">
+                <div class="day-hdr"><div class="left"><span class="num">8</span><span class="pill">Sat</span><span style="font-size:9px;color:var(--muted)">Nov 2025</span></div><div class="sums"><div class="inc">₹0</div><div class="exp">₹1,240</div></div></div>
+                <div class="txn"><div class="cat">Food</div><div><div class="title">Swiggy</div><div class="sub">UPI · HDFC</div></div><div><div class="amt neg">−₹420</div><div class="time">1:12 pm</div></div></div>
+                <div class="txn"><div class="cat">Travel</div><div><div class="title">Uber</div><div class="sub">Card</div></div><div><div class="amt neg">−₹820</div><div class="time">9:05 am</div></div></div>
+                <div class="day-hdr"><div class="left"><span class="num">7</span><span class="pill">Fri</span></div><div class="sums"><div class="inc">₹5,000</div><div class="exp">₹2,100</div></div></div>
+                <div class="txn"><div class="cat">Salary</div><div><div class="title">Acme Corp</div></div><div><div class="amt pos">+₹5,000</div><div class="time">10:00 am</div></div></div>
+              </div>
+            </div>
+            <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+            <div class="fab">+</div>
+          </div></div>
+          <p class="caption">Banner sits between summary and ledger — always visible at rest.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="placement" id="p02">
+      <h2>02 · Native card between day groups</h2>
+      <p class="desc">Same row rhythm as transactions; “Sponsored” badge + icon.</p>
+      <div class="gallery">
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ November 2025 ›</div><div class="icon">⌕</div><div class="icon badge">✉</div><div></div></div>
+          <div class="scroll-body">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹42,500</div></div><div><div class="lbl">Expense</div><div class="val exp">₹28,120</div></div><div><div class="lbl">Total</div><div class="val">₹14,380</div></div></div>
+            <div class="ledger-list">
+              <div class="day-hdr"><div class="left"><span class="num">8</span><span class="pill">Sat</span></div><div class="sums"><div class="exp">₹1,240</div></div></div>
+              <div class="txn"><div class="cat">Food</div><div><div class="title">Swiggy</div></div><div><div class="amt neg">−₹420</div></div></div>
+              <div class="day-hdr"><div class="left"><span class="num">7</span><span class="pill">Fri</span></div></div>
+              <div class="txn"><div class="cat">Bills</div><div><div class="title">Electricity</div></div><div><div class="amt neg">−₹1,890</div></div></div>
+              <div class="ad native"><span class="ad-tag">SPONSORED</span><div class="thumb"></div><div><div class="head">Pay bills, earn cashback</div><div class="body">Automate utilities from one app</div><div class="cta">Learn more →</div></div></div>
+              <div class="day-hdr"><div class="left"><span class="num">6</span><span class="pill">Thu</span></div></div>
+              <div class="txn"><div class="cat">Shopping</div><div><div class="title">Amazon</div></div><div><div class="amt neg">−₹2,499</div></div></div>
+            </div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+          <div class="fab">+</div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="placement" id="p03">
+      <h2>03 · Collapsed tip strip (expanded state)</h2>
+      <p class="desc">Left: collapsed “Partner offer ›”. Right: expanded mini-card after tap.</p>
+      <div class="two-phones">
+        <div><div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ November 2025 ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="scroll-body">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹42,500</div></div><div><div class="lbl">Expense</div><div class="val exp">₹28,120</div></div><div><div class="lbl">Total</div><div class="val">₹14,380</div></div></div>
+            <div class="ad collapse">Partner offer <span>›</span></div>
+            <div class="ledger-list">
+              <div class="day-hdr"><div class="left"><span class="num">8</span><span class="pill">Sat</span></div></div>
+              <div class="txn"><div class="cat">Food</div><div><div class="title">Swiggy</div></div><div><div class="amt neg">−₹420</div></div></div>
+            </div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+          <div class="fab">+</div>
+        </div></div><p class="caption">Collapsed</p></div>
+        <div><div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ November 2025 ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="scroll-body">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹42,500</div></div><div><div class="lbl">Expense</div><div class="val exp">₹28,120</div></div><div><div class="lbl">Total</div><div class="val">₹14,380</div></div></div>
+            <div class="ad native" style="margin-top:6px"><span class="ad-tag">AD</span><div class="thumb"></div><div><div class="head">FD rates up to 7.5%</div><div class="cta">Dismiss ×</div></div></div>
+            <div class="ledger-list">
+              <div class="day-hdr"><div class="left"><span class="num">8</span><span class="pill">Sat</span></div></div>
+              <div class="txn"><div class="cat">Food</div><div><div class="title">Swiggy</div></div><div><div class="amt neg">−₹420</div></div></div>
+            </div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+          <div class="fab">+</div>
+        </div></div><p class="caption">Expanded</p></div>
+      </div>
+    </section>
+
+    <section class="placement" id="p04">
+      <h2>04 · Fourth “Offers” chip in summary strip</h2>
+      <p class="desc">Tappable metric; opens sponsored sheet (not a balance figure).</p>
+      <div class="gallery">
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ November 2025 ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="scroll-body">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary col4">
+              <div><div class="lbl">Income</div><div class="val inc">₹42.5k</div></div>
+              <div><div class="lbl">Expense</div><div class="val exp">₹28.1k</div></div>
+              <div><div class="lbl">Total</div><div class="val">₹14.4k</div></div>
+              <div><div class="lbl">Offers</div><div class="val offers">2 new ›</div></div>
+            </div>
+            <div class="ledger-list">
+              <div class="day-hdr"><div class="left"><span class="num">8</span><span class="pill">Sat</span></div></div>
+              <div class="txn"><div class="cat">Food</div><div><div class="title">Swiggy</div></div><div><div class="amt neg">−₹420</div></div></div>
+              <div class="txn"><div class="cat">Travel</div><div><div class="title">Uber</div></div><div><div class="amt neg">−₹820</div></div></div>
+            </div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+          <div class="fab">+</div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="placement" id="p05">
+      <h2>05 · Sticky banner above bottom nav</h2>
+      <p class="desc">FAB lifted; list scrolls above anchored banner.</p>
+      <div class="gallery">
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ November 2025 ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="scroll-body">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹42,500</div></div><div><div class="lbl">Expense</div><div class="val exp">₹28,120</div></div><div><div class="lbl">Total</div><div class="val">₹14,380</div></div></div>
+            <div class="ledger-list">
+              <div class="day-hdr"><div class="left"><span class="num">8</span><span class="pill">Sat</span></div></div>
+              <div class="txn"><div class="cat">Food</div><div><div class="title">Swiggy</div></div><div><div class="amt neg">−₹420</div></div></div>
+              <div class="txn"><div class="cat">Travel</div><div><div class="title">Uber</div></div><div><div class="amt neg">−₹820</div></div></div>
+              <div class="txn"><div class="cat">Bills</div><div><div class="title">Jio recharge</div></div><div><div class="amt neg">−₹299</div></div></div>
+            </div>
+            <div class="ad banner sticky-ad"><span class="ad-tag">AD</span>Adaptive anchor · always visible</div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+          <div class="fab raise">+</div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="placement" id="p06">
+      <h2>06 · Empty-state MREC (no transactions)</h2>
+      <p class="desc">Summary strip still shown; large unit where list would be.</p>
+      <div class="gallery">
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ November 2025 ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="scroll-body">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹0</div></div><div><div class="lbl">Expense</div><div class="val exp">₹0</div></div><div><div class="lbl">Total</div><div class="val">₹0</div></div></div>
+            <div class="empty-hero"><div style="font-size:13px;color:var(--ink)">No transactions this period</div><div class="ad mrec" style="width:90%;margin:0"><span class="ad-tag">AD</span><div class="box"></div>300×250</div></div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+          <div class="fab">+</div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="placement" id="p07">
+      <h2>07 · Pull-down offer panel under month header</h2>
+      <p class="desc">Rubber-band reveal — panel attached below top bar region.</p>
+      <div class="gallery">
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ November 2025 ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="pull-hint">↓ Pull for partner offers</div>
+          <div class="pull-panel">Sponsored · Compare credit cards — 0 fee first year</div>
+          <div class="scroll-body">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹42,500</div></div><div><div class="lbl">Expense</div><div class="val exp">₹28,120</div></div><div><div class="lbl">Total</div><div class="val">₹14,380</div></div></div>
+            <div class="ledger-list">
+              <div class="day-hdr"><div class="left"><span class="num">8</span><span class="pill">Sat</span></div></div>
+              <div class="txn"><div class="cat">Food</div><div><div class="title">Swiggy</div></div><div><div class="amt neg">−₹420</div></div></div>
+            </div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+          <div class="fab">+</div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="placement" id="p08">
+      <h2>08 · Below carry-over row (period start)</h2>
+      <p class="desc">Carry-over visible on first day of custom month; ad immediately under.</p>
+      <div class="gallery">
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ 1 Nov – 30 Nov ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="scroll-body">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹8,000</div></div><div><div class="lbl">Expense</div><div class="val exp">₹3,200</div></div><div><div class="lbl">Total</div><div class="val">₹4,800</div></div></div>
+            <div class="carry">Carry-over from prior period <strong>+₹1,150</strong></div>
+            <div class="ad native"><span class="ad-tag">SPONSORED</span><div class="thumb"></div><div><div class="head">Grow idle cash</div><div class="body">Liquid funds · no lock-in</div></div></div>
+            <div class="ledger-list">
+              <div class="day-hdr"><div class="left"><span class="num">1</span><span class="pill">Sat</span></div></div>
+              <div class="txn"><div class="cat">Transfer</div><div><div class="title">Carry-over</div></div><div><div class="amt pos">+₹1,150</div></div></div>
+            </div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+          <div class="fab">+</div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="placement" id="p09">
+      <h2>09 · MREC at list midpoint</h2>
+      <p class="desc">After several day groups — user has scrolled ~half the month.</p>
+      <div class="gallery">
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ November 2025 ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="scroll-body">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹42,500</div></div><div><div class="lbl">Expense</div><div class="val exp">₹28,120</div></div><div><div class="lbl">Total</div><div class="val">₹14,380</div></div></div>
+            <div class="ledger-list">
+              <div class="day-hdr"><div class="left"><span class="num">8</span><span class="pill">Sat</span></div></div>
+              <div class="txn"><div class="cat">Food</div><div><div class="title">Swiggy</div></div><div><div class="amt neg">−₹420</div></div></div>
+              <div class="day-hdr"><div class="left"><span class="num">5</span><span class="pill">Wed</span></div></div>
+              <div class="txn"><div class="cat">EMI</div><div><div class="title">Home loan</div></div><div><div class="amt neg">−₹18,500</div></div></div>
+              <div class="ad mrec"><span class="ad-tag">AD</span><div class="box"></div><span>Medium rectangle</span></div>
+              <div class="day-hdr"><div class="left"><span class="num">4</span><span class="pill">Tue</span></div></div>
+              <div class="txn"><div class="cat">Shopping</div><div><div class="title">Flipkart</div></div><div><div class="amt neg">−₹3,299</div></div></div>
+            </div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+          <div class="fab">+</div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="placement" id="p10">
+      <h2>10 · Sponsored insight text line</h2>
+      <p class="desc">Ultra-minimal single line under summary — no image.</p>
+      <div class="gallery">
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ November 2025 ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="scroll-body">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹42,500</div></div><div><div class="lbl">Expense</div><div class="val exp">₹28,120</div></div><div><div class="lbl">Total</div><div class="val">₹14,380</div></div></div>
+            <div class="ad textline">Sponsored: <a href="#">Compare FD rates →</a></div>
+            <div class="ledger-list">
+              <div class="day-hdr"><div class="left"><span class="num">8</span><span class="pill">Sat</span></div></div>
+              <div class="txn"><div class="cat">Food</div><div><div class="title">Swiggy</div></div><div><div class="amt neg">−₹420</div></div></div>
+              <div class="txn"><div class="cat">Travel</div><div><div class="title">Uber</div></div><div><div class="amt neg">−₹820</div></div></div>
+            </div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+          <div class="fab">+</div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="placement" id="p11">
+      <h2>11 · FAB-adjacent floating chip</h2>
+      <p class="desc">Small sponsor pill above + FAB; dismissible.</p>
+      <div class="gallery">
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ November 2025 ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="scroll-body">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹42,500</div></div><div><div class="lbl">Expense</div><div class="val exp">₹28,120</div></div><div><div class="lbl">Total</div><div class="val">₹14,380</div></div></div>
+            <div class="ledger-list">
+              <div class="day-hdr"><div class="left"><span class="num">8</span><span class="pill">Sat</span></div></div>
+              <div class="txn"><div class="cat">Food</div><div><div class="title">Swiggy</div></div><div><div class="amt neg">−₹420</div></div></div>
+              <div class="txn"><div class="cat">Travel</div><div><div class="title">Uber</div></div><div><div class="amt neg">−₹820</div></div></div>
+            </div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+          <div class="ad-chip"><span class="dot"></span> Navi · Apply ×</div>
+          <div class="fab">+</div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="placement" id="p12">
+      <h2>12 · End-of-scroll footer card</h2>
+      <p class="desc">Last lazy-list item — not styled as a transaction.</p>
+      <div class="gallery">
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ November 2025 ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="scroll-body">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹42,500</div></div><div><div class="lbl">Expense</div><div class="val exp">₹28,120</div></div><div><div class="lbl">Total</div><div class="val">₹14,380</div></div></div>
+            <div class="ledger-list">
+              <div class="day-hdr"><div class="left"><span class="num">1</span><span class="pill">Sat</span></div></div>
+              <div class="txn"><div class="cat">Rent</div><div><div class="title">Landlord</div></div><div><div class="amt neg">−₹22,000</div></div></div>
+              <div class="end-card">End of November transactions</div>
+              <div class="ad banner"><span class="ad-tag">AD</span>Footer sponsor unit</div>
+            </div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+          <div class="fab">+</div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="placement" id="p13">
+      <h2>13 · View-mode sheet footer ad</h2>
+      <p class="desc">Daily / Weekly / Monthly picker open with ad in sheet.</p>
+      <div class="gallery">
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ November 2025 ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="scroll-body" style="opacity:.7">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹42,500</div></div><div><div class="lbl">Expense</div><div class="val exp">₹28,120</div></div><div><div class="lbl">Total</div><div class="val">₹14,380</div></div></div>
+            <div class="txn"><div class="cat">Food</div><div><div class="title">Swiggy</div></div><div><div class="amt neg">−₹420</div></div></div>
+          </div>
+          <div class="sheet">
+            <h3>View mode</h3>
+            <div class="opt">✓ Daily</div>
+            <div class="opt">Weekly</div>
+            <div class="opt">Monthly</div>
+            <div class="sheet-ad">Sponsored · Tax-saving funds explained →</div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="placement" id="p14">
+      <h2>14 · Morning window banner (7–10am)</h2>
+      <p class="desc">Same as #01 but only shown in commute window — mock shows banner present.</p>
+      <div class="gallery">
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>8:12</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ November 2025 ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="scroll-body">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹42,500</div></div><div><div class="lbl">Expense</div><div class="val exp">₹28,120</div></div><div><div class="lbl">Total</div><div class="val">₹14,380</div></div></div>
+            <div class="ad banner"><span class="ad-tag">AD · 8am slot</span>Breakfast deals · Partner</div>
+            <div class="ledger-list">
+              <div class="day-hdr"><div class="left"><span class="num">8</span><span class="pill">Sat</span></div></div>
+              <div class="txn"><div class="cat">Food</div><div><div class="title">Cafe</div></div><div><div class="amt neg">−₹180</div></div></div>
+            </div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+          <div class="fab">+</div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="placement" id="p15">
+      <h2>15 · Category-themed native (top spend = Food)</h2>
+      <p class="desc">Contextual copy; still one native row in ledger.</p>
+      <div class="gallery">
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ November 2025 ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="scroll-body">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹42,500</div></div><div><div class="lbl">Expense</div><div class="val exp">₹28,120</div></div><div><div class="lbl">Total</div><div class="val">₹14,380</div></div></div>
+            <div class="ledger-list">
+              <div class="day-hdr"><div class="left"><span class="num">8</span><span class="pill">Sat</span></div></div>
+              <div class="txn"><div class="cat">Food</div><div><div class="title">Swiggy</div></div><div><div class="amt neg">−₹420</div></div></div>
+              <div class="ad native"><span class="ad-tag">FOR YOU</span><div class="thumb"></div><div><div class="head">Food delivery — 40% off</div><div class="body">Based on your dining spend</div></div></div>
+              <div class="txn"><div class="cat">Food</div><div><div class="title">Zomato</div></div><div><div class="amt neg">−₹650</div></div></div>
+            </div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+          <div class="fab">+</div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="placement" id="p16">
+      <h2>16 · Light interstitial on every 5th month swipe</h2>
+      <p class="desc">Ledger dimmed; skippable full-screen unit before new period.</p>
+      <div class="gallery">
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ October 2025 ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="scroll-body" style="filter:brightness(.85)">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹38,000</div></div><div><div class="lbl">Expense</div><div class="val exp">₹31,000</div></div><div><div class="lbl">Total</div><div class="val">₹7,000</div></div></div>
+            <div class="txn"><div class="cat">Food</div><div><div class="title">…</div></div><div><div class="amt neg">−₹420</div></div></div>
+          </div>
+          <div class="overlay">
+            <div class="interstitial">
+              <div style="font-size:12px;color:var(--muted)">Sponsored</div>
+              <div class="ad big banner">Full-screen interstitial</div>
+              <button style="padding:8px 20px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:12px">Skip · 2s</button>
+            </div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="placement" id="p17">
+      <h2>17 · Banner between weeks (Weekly view)</h2>
+      <p class="desc">View mode = Weekly; ad only between week sections.</p>
+      <div class="gallery">
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ Week of 3 Nov ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="scroll-body">
+            <div class="view-mode">Weekly <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹12,000</div></div><div><div class="lbl">Expense</div><div class="val exp">₹9,400</div></div><div><div class="lbl">Total</div><div class="val">₹2,600</div></div></div>
+            <div class="ledger-list">
+              <div class="week-sep">Week 1 · 1–2 Nov</div>
+              <div class="txn"><div class="cat">Bills</div><div><div class="title">Internet</div></div><div><div class="amt neg">−₹999</div></div></div>
+              <div class="ad banner"><span class="ad-tag">AD</span>Between weeks</div>
+              <div class="week-sep">Week 2 · 3–9 Nov</div>
+              <div class="txn"><div class="cat">Food</div><div><div class="title">Swiggy</div></div><div><div class="amt neg">−₹420</div></div></div>
+            </div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+          <div class="fab">+</div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="placement" id="p18">
+      <h2>18 · Video thumbnail row (tap to play)</h2>
+      <p class="desc">16:9 thumb between groups; no autoplay.</p>
+      <div class="gallery">
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ November 2025 ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="scroll-body">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹42,500</div></div><div><div class="lbl">Expense</div><div class="val exp">₹28,120</div></div><div><div class="lbl">Total</div><div class="val">₹14,380</div></div></div>
+            <div class="ledger-list">
+              <div class="day-hdr"><div class="left"><span class="num">8</span><span class="pill">Sat</span></div></div>
+              <div class="txn"><div class="cat">Food</div><div><div class="title">Swiggy</div></div><div><div class="amt neg">−₹420</div></div></div>
+              <div class="ad video"><span class="ad-tag">AD</span><div class="play">▶</div><div><div class="head">How to start an SIP</div><div class="body">45 sec · Tap to play</div></div></div>
+              <div class="day-hdr"><div class="left"><span class="num">7</span><span class="pill">Fri</span></div></div>
+              <div class="txn"><div class="cat">Salary</div><div><div class="title">Acme</div></div><div><div class="amt pos">+₹5,000</div></div></div>
+            </div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+          <div class="fab">+</div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="placement" id="p19">
+      <h2>19 · House promo rotating in banner slot</h2>
+      <p class="desc">Same footprint as #01 — “Remove ads” upsell vs third-party fill.</p>
+      <div class="gallery">
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ November 2025 ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="scroll-body">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹42,500</div></div><div><div class="lbl">Expense</div><div class="val exp">₹28,120</div></div><div><div class="lbl">Total</div><div class="val">₹14,380</div></div></div>
+            <div class="ad banner" style="border-color:var(--accent);background:var(--accent-soft)">
+              <span class="ad-tag" style="color:var(--accent)">PLUS</span>
+              Remove ads · Upgrade Money Inbox
+            </div>
+            <div class="ledger-list">
+              <div class="day-hdr"><div class="left"><span class="num">8</span><span class="pill">Sat</span></div></div>
+              <div class="txn"><div class="cat">Food</div><div><div class="title">Swiggy</div></div><div><div class="amt neg">−₹420</div></div></div>
+            </div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+          <div class="fab">+</div>
+        </div></div>
+      </div>
+    </section>
+
+    <section class="placement" id="p20">
+      <h2>20 · Single slot + rules (example: native today, banner tomorrow)</h2>
+      <p class="desc">Only one container in layout — mock shows native when list has 8+ rows.</p>
+      <div class="gallery">
+        <div class="phone"><div class="phone-inner">
+          <div class="status"><span>2:46</span><span>▮▯</span></div>
+          <div class="topbar"><div class="icon">M</div><div class="month">‹ November 2025 ›</div><div class="icon">⌕</div><div class="icon">✉</div><div></div></div>
+          <div class="scroll-body">
+            <div class="view-mode">Daily <span>▾</span></div>
+            <div class="summary"><div><div class="lbl">Income</div><div class="val inc">₹42,500</div></div><div><div class="lbl">Expense</div><div class="val exp">₹28,120</div></div><div><div class="lbl">Total</div><div class="val">₹14,380</div></div></div>
+            <div class="ledger-list">
+              <div class="day-hdr"><div class="left"><span class="num">8</span><span class="pill">Sat</span></div></div>
+              <div class="txn"><div class="cat">Food</div><div><div class="title">Swiggy</div></div><div><div class="amt neg">−₹420</div></div></div>
+              <!-- single slot -->
+              <div class="ad native" style="outline:2px solid var(--accent);outline-offset:2px"><span class="ad-tag">SLOT A</span><div class="thumb"></div><div><div class="head">Rules: native if rows≥8</div><div class="body">Else banner · empty → MREC</div></div></div>
+              <div class="txn"><div class="cat">Travel</div><div><div class="title">Uber</div></div><div><div class="amt neg">−₹820</div></div></div>
+              <div class="day-hdr"><div class="left"><span class="num">7</span><span class="pill">Fri</span></div></div>
+              <div class="txn"><div class="cat">Bills</div><div><div class="title">Electricity</div></div><div><div class="amt neg">−₹1,890</div></div></div>
+            </div>
+          </div>
+          <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Assets</span><span>Settings</span></div>
+          <div class="fab">+</div>
+        </div></div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

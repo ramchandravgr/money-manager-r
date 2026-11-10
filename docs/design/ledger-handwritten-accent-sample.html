@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MMR — Handwritten ledger accent (sample only)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,640;1,9..144,560&family=Outfit:wght@360;480;560&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --header: #3f4671;
+      --accent: #ff6255;
+      --border: #e2e4ea;
+      --text-muted: #666;
+      --list: #f4f5f8;
+      --danger: #ef4444;
+      --income: #0d9488;
+      --phone-w: 280px;
+      --sans-ui: "Plus Jakarta Sans", system-ui, sans-serif;
+      /* Cove-inspired ledger skin (accent only) */
+      --ink: #1b1612;
+      --paper: #f3ead7;
+      --paper-2: #e7dcc4;
+      --rule: rgba(27, 22, 18, 0.16);
+      --fog: #7c7368;
+      --moss: #1d4a3e;
+      --clay: #a33b2b;
+      --margin-line: rgba(163, 59, 43, 0.42);
+      --serif: "Fraunces", Georgia, serif;
+      --sans-accent: "Outfit", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 28px 20px 56px;
+      font-family: var(--sans-ui);
+      background: linear-gradient(165deg, #dce3ef, #f4f6fa);
+      color: #1a2332;
+      line-height: 1.5;
+    }
+    h1 { font-size: 1.35rem; margin: 0 0 8px; }
+    .intro {
+      max-width: 62rem;
+      font-size: 0.92rem;
+      color: #4b5563;
+      margin-bottom: 28px;
+    }
+    .intro code { font-size: 0.88em; }
+    .demo-controls {
+      margin-bottom: 20px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px dotted var(--border);
+      background: #fff;
+      max-width: 420px;
+      font-size: 0.88rem;
+    }
+    .demo-controls select { margin-left: 8px; padding: 6px 10px; font: inherit; border-radius: 8px; border: 1px solid var(--border); }
+    body[data-appearance="dark"] .phone {
+      --list: #12141c;
+      --border: #2e313c;
+      --text-muted: #ababb3;
+    }
+    body[data-appearance="dark"] .phone .tabs-row,
+    body[data-appearance="dark"] .phone .summary-strip,
+    body[data-appearance="dark"] .phone .carry,
+    body[data-appearance="dark"] .phone .bottom-nav,
+    body[data-appearance="dark"] .phone .row-item { background: #1c1f2a; color: #f2f2f5; }
+    body[data-appearance="dark"] .phone .list-area,
+    body[data-appearance="dark"] .phone .detail-body,
+    body[data-appearance="dark"] .phone .footer-cta { background: #12141c; }
+    body[data-appearance="dark"] .skin-ledger .list-area,
+    body[data-appearance="dark"] .skin-ledger .detail-body {
+      background:
+        repeating-linear-gradient(transparent, transparent 23px, rgba(255,255,255,0.04) 23px, rgba(255,255,255,0.04) 24px),
+        linear-gradient(90deg, transparent 28px, rgba(163, 59, 43, 0.25) 28px, rgba(163, 59, 43, 0.25) 29px, transparent 29px),
+        #1a1612;
+    }
+    body[data-appearance="oled"] .phone .list-area,
+    body[data-appearance="oled"] .phone .detail-body,
+    body[data-appearance="oled"] .phone .footer-cta,
+    body[data-appearance="oled"] .skin-ledger .list-area,
+    body[data-appearance="oled"] .skin-ledger .detail-body { background: #000; }
+    body[data-appearance="oled"] .phone .fab-wrap { background: #000; }
+    h2 {
+      font-size: 1.05rem;
+      margin: 40px 0 8px;
+      padding-top: 12px;
+      border-top: 2px solid var(--border);
+    }
+    h2:first-of-type { border-top: none; margin-top: 0; padding-top: 0; }
+    .lede { font-size: 0.86rem; color: #6b7280; max-width: 62rem; margin: 0 0 16px; }
+    .compare {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 22px;
+      align-items: flex-start;
+    }
+    .col { flex: 0 0 auto; width: var(--phone-w); }
+    .col-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 8px;
+    }
+    .tag {
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      color: #fff;
+      font-weight: 700;
+    }
+    .tag.now { background: #6b7280; }
+    .tag.next { background: #1d4a3e; }
+    .note {
+      flex: 1 1 240px;
+      max-width: 360px;
+      font-size: 0.84rem;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid #c9d4e8;
+      background: #fff;
+      color: #374151;
+    }
+    .note ul { margin: 8px 0 0; padding-left: 1.15rem; }
+    .note li { margin-bottom: 6px; }
+
+    /* —— Shared phone chrome (layout locked) —— */
+    .phone {
+      width: var(--phone-w);
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px dotted var(--border);
+      background: #fff;
+      font-size: 10px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+    }
+    .header {
+      background: var(--header);
+      color: #fff;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 36px;
+      flex-shrink: 0;
+    }
+    .header-center { text-align: center; flex: 1; font-weight: 600; font-size: 11px; }
+    .header-icons { display: flex; gap: 4px; align-items: center; font-size: 14px; }
+    .badge-count {
+      background: #ef4444;
+      color: #fff;
+      font-size: 7px;
+      padding: 1px 4px;
+      border-radius: 6px;
+    }
+    .tabs-row {
+      display: flex;
+      border-bottom: 1px dotted var(--border);
+      background: #fff;
+      flex-shrink: 0;
+    }
+    .tab {
+      flex: 1;
+      text-align: center;
+      padding: 7px 2px;
+      font-size: 9px;
+      color: var(--text-muted);
+    }
+    .tab.on {
+      color: var(--header);
+      font-weight: 600;
+      box-shadow: inset 0 -2px 0 var(--header);
+    }
+    .summary-strip {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      text-align: center;
+      padding: 10px 6px;
+      background: #fff;
+      border-bottom: 1px dotted var(--border);
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .summary-strip .lbl { font-size: 8px; color: var(--text-muted); }
+    .summary-strip .amt { font-size: 11px; font-weight: 600; margin-top: 2px; font-variant-numeric: tabular-nums; }
+    .inc { color: var(--income); }
+    .exp { color: var(--danger); }
+    .carry {
+      font-size: 8px;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 0 8px 8px;
+      background: #fff;
+      flex-shrink: 0;
+    }
+    .list-area {
+      background: var(--list);
+      min-height: 168px;
+      padding: 8px;
+      flex: 1;
+    }
+    .day-label {
+      font-size: 8px;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 2px 2px 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .row-item {
+      background: #fff;
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border: 1px dotted var(--border);
+      gap: 8px;
+    }
+    .row-item .title { font-size: 10px; font-weight: 600; line-height: 1.25; }
+    .row-item .sub { font-size: 8px; color: var(--text-muted); margin-top: 2px; }
+    .row-item .amt-col {
+      font-size: 10px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      padding-top: 1px;
+    }
+    .fab-wrap { text-align: center; background: var(--list); padding-bottom: 4px; flex-shrink: 0; }
+    .fab {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--accent);
+      margin: -20px auto 8px;
+      box-shadow: 0 2px 8px rgba(255, 98, 85, 0.4);
+    }
+    .bottom-nav {
+      display: flex;
+      justify-content: space-around;
+      padding: 6px 4px 8px;
+      border-top: 1px dotted var(--border);
+      font-size: 8px;
+      color: var(--text-muted);
+      background: #fff;
+      flex-shrink: 0;
+    }
+    .bottom-nav .on { color: var(--header); font-weight: 600; }
+
+    /* Detail screen (Design 12 layout) */
+    .phone.detail { min-height: 520px; }
+    .bar {
+      background: var(--header);
+      color: #fff;
+      padding: 10px 10px 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .bar .back {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.12);
+      border: none;
+      color: #fff;
+      font-size: 12px;
+    }
+    .bar .title { flex: 1; font-weight: 600; font-size: 12px; }
+    .detail-body {
+      flex: 1;
+      background: var(--list);
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow: hidden;
+    }
+    .hero {
+      background: #eceef4;
+      border-radius: 12px;
+      padding: 10px 10px 9px;
+      border: 1px dotted var(--border);
+    }
+    .hero .t { font-size: 13px; font-weight: 600; margin: 0; line-height: 1.25; }
+    .hero .a { font-size: 18px; font-weight: 700; margin: 4px 0 0; font-variant-numeric: tabular-nums; }
+    .hero .a.neg { color: var(--danger); }
+    .hero .s { font-size: 8px; color: var(--text-muted); margin-top: 4px; }
+    .meta-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 4px 10px;
+      border: 1px dotted var(--border);
+    }
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 5px 0;
+      font-size: 10px;
+      border-bottom: 1px dotted #eef0f4;
+    }
+    .meta-row:last-child { border-bottom: 0; }
+    .meta-row .k { color: var(--text-muted); }
+    .meta-row .v { text-align: right; font-weight: 500; max-width: 58%; }
+    .sect {
+      font-size: 11px;
+      font-weight: 700;
+      margin: 2px 0 0;
+    }
+    .hint { font-size: 9px; color: var(--text-muted); line-height: 1.35; }
+    .sms-card {
+      background: #f4f5f8;
+      border-radius: 10px;
+      padding: 7px 9px;
+      border: 1px dotted var(--border);
+    }
+    .sms-card .from { font-weight: 600; font-size: 10px; }
+    .sms-card .meta { font-size: 8px; color: var(--text-muted); }
+    .sms-card .snippet { font-size: 8px; line-height: 1.35; margin-top: 3px; }
+    .footer-cta {
+      flex-shrink: 0;
+      background: var(--list);
+      border-top: 1px dotted var(--border);
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .btn-p {
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      padding: 9px;
+      background: var(--accent);
+      color: #fff;
+      font: inherit;
+      font-weight: 600;
+      font-size: 11px;
+    }
+    .btn-o {
+      width: 100%;
+      border: 1px dotted var(--border);
+      border-radius: 10px;
+      padding: 8px;
+      background: #fff;
+      font: inherit;
+      font-size: 10px;
+    }
+    .btn-t { border: none; background: transparent; color: var(--text-muted); font: inherit; font-size: 10px; padding: 4px; }
+    .btn-d { color: var(--danger); }
+
+    /* —— Ledger book accent (same boxes & spacing) —— */
+    .skin-ledger .phone {
+      border-color: rgba(27, 22, 18, 0.12);
+      box-shadow: 0 8px 28px rgba(48, 32, 16, 0.12);
+    }
+    .skin-ledger .header,
+    .skin-ledger .bar {
+      background: var(--ink);
+      color: var(--paper);
+      font-family: var(--sans-accent);
+      font-weight: 480;
+    }
+    .skin-ledger .tabs-row,
+    .skin-ledger .summary-strip,
+    .skin-ledger .carry,
+    .skin-ledger .bottom-nav {
+      background: var(--paper);
+      border-color: var(--rule);
+      font-family: var(--sans-accent);
+      font-weight: 360;
+    }
+    .skin-ledger .tab.on {
+      color: var(--ink);
+      box-shadow: inset 0 -2px 0 var(--ink);
+    }
+    .skin-ledger .summary-strip .lbl {
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-size: 7px;
+      color: var(--fog);
+    }
+    .skin-ledger .summary-strip .amt {
+      font-family: var(--serif);
+      font-weight: 640;
+      font-size: 12px;
+    }
+    .skin-ledger .summary-strip .inc { color: var(--moss); }
+    .skin-ledger .summary-strip .exp { color: var(--clay); }
+    .skin-ledger .list-area {
+      background:
+        repeating-linear-gradient(
+          transparent,
+          transparent 23px,
+          var(--rule) 23px,
+          var(--rule) 24px
+        ),
+        linear-gradient(90deg, transparent 28px, var(--margin-line) 28px, var(--margin-line) 29px, transparent 29px),
+        radial-gradient(120% 80% at 20% 0%, rgba(255, 255, 255, 0.35), transparent 55%),
+        var(--paper);
+      padding: 8px 8px 8px 10px;
+    }
+    .skin-ledger .day-label {
+      font-family: var(--sans-accent);
+      letter-spacing: 0.14em;
+      color: var(--fog);
+      padding-left: 22px;
+    }
+    .skin-ledger .row-item {
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      border-bottom: 1px dotted var(--rule);
+      margin-bottom: 0;
+      padding: 8px 10px 8px 22px;
+    }
+    .skin-ledger .row-item:last-child { border-bottom: 0; }
+    .skin-ledger .row-item .title {
+      font-family: var(--serif);
+      font-weight: 560;
+      font-size: 11px;
+    }
+    .skin-ledger .row-item .sub { font-family: var(--sans-accent); color: var(--fog); }
+    .skin-ledger .row-item .amt-col {
+      font-family: var(--serif);
+      font-weight: 640;
+      font-size: 11px;
+    }
+    .skin-ledger .row-item .exp { color: var(--clay); }
+    .skin-ledger .row-item .inc { color: var(--moss); }
+    .skin-ledger .fab-wrap { background: var(--paper-2); }
+    .skin-ledger .fab {
+      background: var(--ink);
+      box-shadow: 0 3px 10px rgba(27, 22, 18, 0.25);
+    }
+    .skin-ledger .bottom-nav .on { color: var(--ink); }
+
+    .skin-ledger .detail-body {
+      background:
+        repeating-linear-gradient(
+          transparent,
+          transparent 23px,
+          var(--rule) 23px,
+          var(--rule) 24px
+        ),
+        linear-gradient(90deg, transparent 24px, var(--margin-line) 24px, var(--margin-line) 25px, transparent 25px),
+        var(--paper);
+      padding: 8px 10px 8px 12px;
+    }
+    .skin-ledger .hero {
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid var(--ink);
+      border-radius: 0;
+      padding: 10px 8px 10px 18px;
+    }
+    .skin-ledger .hero .t {
+      font-family: var(--serif);
+      font-weight: 560;
+      font-size: 14px;
+    }
+    .skin-ledger .hero .a {
+      font-family: var(--serif);
+      font-weight: 640;
+      font-style: italic;
+    }
+    .skin-ledger .hero .a.neg { color: var(--clay); }
+    .skin-ledger .hero .s {
+      font-family: var(--serif);
+      font-style: italic;
+      color: var(--fog);
+    }
+    .skin-ledger .meta-card {
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      padding: 2px 8px 2px 18px;
+    }
+    .skin-ledger .meta-row {
+      border-bottom-color: var(--rule);
+      font-family: var(--sans-accent);
+      font-weight: 360;
+    }
+    .skin-ledger .meta-row .k {
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 8px;
+      color: var(--fog);
+    }
+    .skin-ledger .meta-row .v {
+      font-family: var(--serif);
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .skin-ledger .sect {
+      font-family: var(--serif);
+      font-weight: 640;
+      padding-left: 18px;
+    }
+    .skin-ledger .hint {
+      font-family: var(--serif);
+      font-style: italic;
+      padding-left: 18px;
+    }
+    .skin-ledger .sms-card {
+      background: rgba(247, 241, 228, 0.85);
+      border: 1px dotted #b9a88a;
+      border-radius: 8px;
+      margin-left: 14px;
+      transform: rotate(-0.4deg);
+    }
+    .skin-ledger .footer-cta {
+      background: var(--paper-2);
+      border-top: 1px dotted var(--ink);
+    }
+    .skin-ledger .btn-p {
+      background: var(--ink);
+      font-family: var(--sans-accent);
+      border-radius: 8px;
+    }
+    .skin-ledger .btn-o {
+      background: transparent;
+      border: 1px dotted var(--ink);
+      font-family: var(--sans-accent);
+    }
+  </style>
+</head>
+<body>
+  <h1>Handwritten ledger accent — sample only</h1>
+  <p class="intro">
+    Inspired by <a href="cove-messages/index.html">Cove messages</a> (paper, margin rule, serif “manuscript” type).
+    <strong>Layout is unchanged:</strong> same header height, tab row, 3-column summary, row padding, FAB offset, bottom nav, and Design&nbsp;12 detail structure.
+    Only surface treatment (background, typography, borders) shifts toward a cash-book feel.
+    Toggle <strong>Appearance</strong> for Dark/OLED screen backgrounds (HTML only).
+  </p>
+  <div class="demo-controls">
+    <label for="appearanceSelect">Appearance
+      <select id="appearanceSelect">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <option value="oled">OLED</option>
+      </select>
+    </label>
+  </div>
+
+  <h2>Ledger screen (Home — Daily tab)</h2>
+  <p class="lede">Left = current MMR chrome. Right = ledger accent on the list + summary; navigation chrome stays familiar.</p>
+  <div class="compare">
+    <div class="col">
+      <div class="col-label"><span class="tag now">Before</span> Shipped</div>
+      <div class="phone">
+        <div class="header">
+          <span>◀</span>
+          <span class="header-center">November 2026 ▾</span>
+          <span class="header-icons">🔍 ✉<span class="badge-count">2</span></span>
+        </div>
+        <div class="tabs-row">
+          <div class="tab on">Daily</div>
+          <div class="tab">Calendar</div>
+          <div class="tab">Monthly</div>
+          <div class="tab">Total</div>
+        </div>
+        <div class="summary-strip">
+          <div><div class="lbl">Income</div><div class="amt inc">₹12,500</div></div>
+          <div><div class="lbl">Expenses</div><div class="amt exp">₹3,240</div></div>
+          <div><div class="lbl">Total</div><div class="amt">+₹9,260</div></div>
+        </div>
+        <div class="carry">Includes ₹500 carried forward</div>
+        <div class="list-area">
+          <div class="day-label">Today</div>
+          <div class="row-item">
+            <div><div class="title">Salary credit</div><div class="sub">HDFC · Income</div></div>
+            <div class="amt-col inc">+₹12,500</div>
+          </div>
+          <div class="row-item">
+            <div><div class="title">Swiggy</div><div class="sub">UPI · Food</div></div>
+            <div class="amt-col exp">−₹420</div>
+          </div>
+          <div class="row-item">
+            <div><div class="title">Metro pass</div><div class="sub">Card · Transport</div></div>
+            <div class="amt-col exp">−₹180</div>
+          </div>
+        </div>
+        <div class="fab-wrap"><div class="fab"></div></div>
+        <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Loans</span><span>More</span></div>
+      </div>
+    </div>
+
+    <div class="col skin-ledger">
+      <div class="col-label"><span class="tag next">After</span> Ledger accent</div>
+      <div class="phone">
+        <div class="header">
+          <span>◀</span>
+          <span class="header-center">November 2026 ▾</span>
+          <span class="header-icons">🔍 ✉<span class="badge-count">2</span></span>
+        </div>
+        <div class="tabs-row">
+          <div class="tab on">Daily</div>
+          <div class="tab">Calendar</div>
+          <div class="tab">Monthly</div>
+          <div class="tab">Total</div>
+        </div>
+        <div class="summary-strip">
+          <div><div class="lbl">Income</div><div class="amt inc">₹12,500</div></div>
+          <div><div class="lbl">Expenses</div><div class="amt exp">₹3,240</div></div>
+          <div><div class="lbl">Total</div><div class="amt">+₹9,260</div></div>
+        </div>
+        <div class="carry">Includes ₹500 carried forward</div>
+        <div class="list-area">
+          <div class="day-label">Today</div>
+          <div class="row-item">
+            <div><div class="title">Salary credit</div><div class="sub">HDFC · Income</div></div>
+            <div class="amt-col inc">+₹12,500</div>
+          </div>
+          <div class="row-item">
+            <div><div class="title">Swiggy</div><div class="sub">UPI · Food</div></div>
+            <div class="amt-col exp">−₹420</div>
+          </div>
+          <div class="row-item">
+            <div><div class="title">Metro pass</div><div class="sub">Card · Transport</div></div>
+            <div class="amt-col exp">−₹180</div>
+          </div>
+        </div>
+        <div class="fab-wrap"><div class="fab"></div></div>
+        <div class="bottom-nav"><span class="on">Home</span><span>Stats</span><span>Loans</span><span>More</span></div>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>What moves (accent only)</strong>
+      <ul>
+        <li>Ruled paper + red margin in the scroll area (Cove “letter” cue).</li>
+        <li>Fraunces for titles &amp; amounts; tabular nums keep column alignment.</li>
+        <li>Cards → ink rules; same 8×10px row padding (+ margin inset).</li>
+        <li>Moss / clay semantics instead of bright teal / red on paper.</li>
+        <li><strong>Unchanged:</strong> tab grid, summary 3-up, carry line, FAB, nav.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Transaction view (detail screen)</h2>
+  <p class="lede">Same Design&nbsp;12 blocks and footer CTAs; manuscript hero + ledger meta rows on paper.</p>
+  <div class="compare">
+    <div class="col">
+      <div class="col-label"><span class="tag now">Before</span> Shipped</div>
+      <div class="phone detail">
+        <div class="bar">
+          <button type="button" class="back" aria-label="Back">←</button>
+          <div class="title">Transaction</div>
+        </div>
+        <div class="detail-body">
+          <div class="hero">
+            <p class="t">Swiggy — lunch</p>
+            <p class="a neg">−₹420.00</p>
+            <p class="s">Synced from SMS</p>
+          </div>
+          <div class="meta-card">
+            <div class="meta-row"><span class="k">Type</span><span class="v">Expense</span></div>
+            <div class="meta-row"><span class="k">Date</span><span class="v">6 Nov 2026, 1:42 PM</span></div>
+            <div class="meta-row"><span class="k">Category</span><span class="v">Food</span></div>
+            <div class="meta-row"><span class="k">Account</span><span class="v">HDFC UPI</span></div>
+            <div class="meta-row"><span class="k">Note</span><span class="v">Team lunch</span></div>
+          </div>
+          <div class="sect">Linked SMS (1)</div>
+          <div class="sms-card">
+            <div class="from">Debit · VM-SWIGGY</div>
+            <div class="meta">Received 6 Nov, 1:41 PM</div>
+            <div class="snippet">INR 420.00 debited from A/c … Swiggy order …</div>
+          </div>
+        </div>
+        <div class="footer-cta">
+          <button type="button" class="btn-p">Edit</button>
+          <button type="button" class="btn-o">Duplicate</button>
+          <button type="button" class="btn-t btn-d">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col skin-ledger">
+      <div class="col-label"><span class="tag next">After</span> Ledger accent</div>
+      <div class="phone detail">
+        <div class="bar">
+          <button type="button" class="back" aria-label="Back">←</button>
+          <div class="title">Transaction</div>
+        </div>
+        <div class="detail-body">
+          <div class="hero">
+            <p class="t">Swiggy — lunch</p>
+            <p class="a neg">−₹420.00</p>
+            <p class="s">Synced from SMS</p>
+          </div>
+          <div class="meta-card">
+            <div class="meta-row"><span class="k">Type</span><span class="v">Expense</span></div>
+            <div class="meta-row"><span class="k">Date</span><span class="v">6 Nov 2026, 1:42 PM</span></div>
+            <div class="meta-row"><span class="k">Category</span><span class="v">Food</span></div>
+            <div class="meta-row"><span class="k">Account</span><span class="v">HDFC UPI</span></div>
+            <div class="meta-row"><span class="k">Note</span><span class="v">Team lunch</span></div>
+          </div>
+          <div class="sect">Linked SMS (1)</div>
+          <div class="sms-card">
+            <div class="from">Debit · VM-SWIGGY</div>
+            <div class="meta">Received 6 Nov, 1:41 PM</div>
+            <div class="snippet">INR 420.00 debited from A/c … Swiggy order …</div>
+          </div>
+        </div>
+        <div class="footer-cta">
+          <button type="button" class="btn-p">Edit</button>
+          <button type="button" class="btn-o">Duplicate</button>
+          <button type="button" class="btn-t btn-d">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <strong>Implementation hint (later)</strong>
+      <ul>
+        <li>Keep <code>MmrDetailScreenScaffold</code> spacing; swap theme tokens + list background drawable.</li>
+        <li>Serif only on hero, amounts, meta values — labels stay small caps sans.</li>
+        <li>Linked SMS as slight “ticket” tilt is optional; easy to tone down.</li>
+        <li>Dark mode would need a separate paper palette (not shown here).</li>
+      </ul>
+    </div>
+  </div>
+  <script>
+    document.getElementById("appearanceSelect").addEventListener("change", (e) => {
+      document.body.dataset.appearance = e.target.value;
+    });
+  </script>
+</body>
+</html>

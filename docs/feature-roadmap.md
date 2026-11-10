@@ -55,8 +55,9 @@ From peer-sync product notes and in-progress LAN work.
 
 | Status | Item | Notes |
 |--------|------|--------|
-| `[x]` | **Live inbound** notify toggle | `IncomingSmsReceiver` → `ProcessIncomingSmsWorker` → summary notification |
-| `[x]` | Tie notify toggle to **READ_SMS** (optional, once) | Prompt when enabling live SMS; `read_sms_inbound_prompt_shown` |
+| `[x]` | **Live inbound** notify toggle | Implemented; **disabled on Play** (`MmrSmsTelephonyPolicy`, no `RECEIVE_SMS`) |
+| `[~]` | **SMS Backup & Restore XML import** | **Settings → Transaction scan**: scan months + backup folder URI (`SmsBackupFolderStore`); **import coordinator** on Approval refresh / launch still `[ ]` |
+| `[-]` | Tie notify toggle to **READ_SMS** | Removed from Play manifest 2026-11-06 |
 | `[x]` | **POST_NOTIFICATIONS** when enabling (API 33+) | Settings toggle flow |
 | `[x]` | Notification **actions**: Approve / Open only | Tap opens Approval Center; **Approve** quick-approves latest non–card-refund pending (`SmsApprovalNotificationReceiver`) |
 | `[~]` | **reconcilePendingWithCurrentParser()** | Manual from Approval Center; **no** daily WorkManager job yet |
@@ -146,7 +147,7 @@ Priority stack aligned with what’s already built:
 2. `[~]` **Loan/recurring local notifications** (reuse SMS summary notification pattern)  
 3. `[ ]` **Budgets** tied to Stats categories  
 4. `[~]` **Categorization rules** UI  
-5. `[x]` Polish **live SMS** (READ_SMS on enable); `[ ]` optional **approve-from-notification**
+5. `[ ]` **SMS Backup & Restore XML import**; `[ ]` optional **approve-from-notification**
 
 ---
 

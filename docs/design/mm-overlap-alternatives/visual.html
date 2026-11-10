@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MMR — Visual alternatives (real screen mockups)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --page: #0e1016;
+      --panel: #1a1d28;
+      --border: rgba(255,255,255,.1);
+      --text: #e8eaef;
+      --muted: #9ca3af;
+      --mm-h: #3f4671;
+      --mm-a: #ff6255;
+      --rg-h: #6b4e5d;
+      --rg-a: #e8b4b8;
+      --rg-bg: #faf7f8;
+      --inc: #0d9488;
+      --exp: #e11d48;
+      --list: #f4f5f8;
+      --card: #fff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+      background: var(--page);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    .page { max-width: 1320px; margin: 0 auto; padding: 24px 16px 64px; }
+    h1 { font-size: 1.35rem; margin: 0 0 8px; }
+    .sub { color: var(--muted); font-size: 0.88rem; max-width: 70ch; margin-bottom: 20px; }
+    .sub a { color: #a7f3d0; }
+    .toc {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px;
+    }
+    .toc a {
+      font-size: 0.78rem; padding: 8px 12px; border-radius: 10px;
+      background: var(--panel); border: 1px solid var(--border); color: var(--text);
+      text-decoration: none; font-weight: 600;
+    }
+    .toc a:hover { border-color: var(--rg-a); }
+    section { margin-bottom: 48px; scroll-margin-top: 12px; }
+    section h2 { font-size: 1.05rem; margin: 0 0 8px; }
+    .ship-note {
+      font-size: 0.8rem; color: var(--muted); margin: 0 0 14px; max-width: 72ch;
+    }
+    .ref-row {
+      display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end;
+      margin-bottom: 20px; padding: 14px; background: rgba(251,191,36,.07);
+      border: 1px solid rgba(251,191,36,.22); border-radius: 14px;
+    }
+    .ref-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: .06em;
+      color: #fcd34d; font-weight: 700; margin-bottom: 6px; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+      padding: 12px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .card h3 { margin: 0; font-size: 0.82rem; font-weight: 700; line-height: 1.3; }
+    .card p { margin: 0; font-size: 0.72rem; color: var(--muted); flex: 1; }
+    .num { font-size: 0.65rem; color: var(--rg-a); font-weight: 700; }
+    .phone {
+      width: 200px; max-width: 100%; height: 368px; margin: 0 auto;
+      border-radius: 22px; border: 4px solid #222; background: var(--rg-bg);
+      overflow: hidden; position: relative; box-shadow: 0 12px 32px rgba(0,0,0,.35);
+      font-size: 9px; color: #4b4b4b;
+    }
+    .phone.stats-theme { background: var(--list); }
+    .st {
+      height: 16px; background: linear-gradient(#fff,#f0f0f0); text-align: center;
+      font-size: 7px; color: #888; line-height: 16px; letter-spacing: .08em;
+    }
+    .hb {
+      background: var(--mm-h); color: #fff; padding: 6px 8px;
+      display: grid; grid-template-columns: 18px 1fr 52px; align-items: center; gap: 4px;
+      min-height: 32px; font-weight: 600;
+    }
+    .hb.rg { background: var(--rg-h); }
+    .hc { text-align: center; font-size: 10px; }
+    .hi { display: flex; justify-content: flex-end; gap: 4px; font-size: 10px; }
+    .badge { background: #ef4444; font-size: 6px; padding: 1px 3px; border-radius: 4px; }
+    .tabs { display: flex; background: var(--card); border-bottom: 1px solid #e2e4ea; }
+    .tabs span { flex: 1; text-align: center; padding: 6px 2px; color: #888; font-size: 8px; }
+    .tabs span.on { color: var(--mm-h); font-weight: 700; box-shadow: inset 0 -2px 0 var(--mm-h); }
+    .strip { display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center;
+      padding: 8px 4px; background: var(--card); border-bottom: 1px solid #e2e4ea; }
+    .strip .l { font-size: 7px; color: #888; }
+    .strip .v { font-size: 10px; font-weight: 700; margin-top: 2px; }
+    .list { background: var(--list); flex: 1; padding: 6px; min-height: 72px; }
+    .row { background: var(--card); border-radius: 8px; padding: 6px 8px; margin-bottom: 5px;
+      border: 1px solid #e2e4ea; display: flex; justify-content: space-between; align-items: center; }
+    .row .s { font-size: 7px; color: #888; }
+    .bn { display: flex; justify-content: space-around; padding: 6px; border-top: 1px solid #e2e4ea;
+      background: var(--card); font-size: 7px; color: #888; }
+    .bn .on { color: var(--mm-h); font-weight: 700; }
+    .fab {
+      position: absolute; right: 14px; bottom: 36px; width: 36px; height: 36px; border-radius: 50%;
+      background: var(--mm-a); box-shadow: 0 4px 12px rgba(255,98,85,.45);
+    }
+    .fab.chk { background: var(--rg-h); }
+    .dim-layer { position: absolute; inset: 0; background: rgba(15,17,24,.55); z-index: 2; }
+    .dlg {
+      position: absolute; left: 8px; right: 8px; top: 50%; transform: translateY(-50%);
+      z-index: 3; border-radius: 12px; overflow: hidden; background: var(--card);
+      box-shadow: 0 16px 40px rgba(0,0,0,.35);
+    }
+    .dlg-h { background: var(--mm-h); color: #fff; padding: 8px 10px; display: flex; align-items: center; }
+    .dlg-h.rg { background: var(--rg-h); }
+    .dlg-h .t { flex: 1; font-weight: 700; font-size: 10px; }
+    .dlg-h .pill { font-size: 7px; font-weight: 700; opacity: .95; }
+    .yrow { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 12px; font-size: 14px; font-weight: 700; }
+    .months { display: grid; grid-template-columns: repeat(3,1fr); gap: 2px; padding: 0 10px 12px; text-align: center; }
+    .months span { padding: 8px 4px; font-weight: 700; font-size: 9px; color: #333; }
+    .months span.sel { color: var(--mm-a); }
+    .months.rg span.sel { color: var(--rg-h); }
+    .m3cal { padding: 10px; }
+    .m3cal .wk { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; font-size: 7px; text-align: center; color: #888; margin-bottom: 4px; }
+    .m3cal .dy { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; font-size: 8px; text-align: center; }
+    .m3cal .dy i { padding: 4px 0; border-radius: 6px; font-style: normal; }
+    .m3cal .dy i.on { background: var(--rg-h); color: #fff; }
+    .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; background: var(--card);
+      border-radius: 16px 16px 0 0; padding: 12px 14px 16px; box-shadow: 0 -8px 24px rgba(0,0,0,.2); }
+    .sheet .handle { width: 36px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 10px; }
+    .wheels { display: flex; gap: 12px; justify-content: center; }
+    .wheel { width: 72px; text-align: center; border: 1px solid #e2e4ea; border-radius: 10px; padding: 8px 4px; }
+    .wheel .big { font-size: 12px; font-weight: 700; color: var(--rg-h); }
+    .wheel .ar { font-size: 8px; color: #aaa; line-height: 1.2; }
+    .chips { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 10px; justify-content: center; }
+    .chip { padding: 6px 10px; border-radius: 999px; border: 1px solid #e2e4ea; font-size: 8px; font-weight: 600; background: var(--card); }
+    .chip.on { background: var(--rg-a); border-color: var(--rg-h); color: var(--rg-h); }
+    .expand { background: var(--card); border-bottom: 1px solid #e2e4ea; padding: 8px; }
+    .carousel { display: flex; gap: 6px; overflow: hidden; padding: 8px 10px; }
+    .carousel .c { min-width: 52px; padding: 10px 6px; border-radius: 10px; background: #fce7f3; text-align: center; font-weight: 700; font-size: 9px; border: 1px solid #e8b4b8; }
+    .carousel .c.on { background: var(--rg-h); color: #fff; }
+    .hero { padding: 12px 10px; background: var(--card); text-align: center; border-bottom: 1px solid #e2e4ea; }
+    .hero .big { font-size: 18px; font-weight: 700; color: var(--exp); }
+    .hero .sub { font-size: 8px; color: #888; margin-top: 4px; }
+    .water { height: 8px; border-radius: 4px; background: #e2e4ea; margin: 8px 10px; overflow: hidden; display: flex; }
+    .water .in { width: 30%; background: var(--inc); }
+    .water .out { width: 50%; background: var(--exp); }
+    .pie { height: 56px; margin: 8px; border-radius: 12px;
+      background: conic-gradient(var(--exp) 0 55%, var(--inc) 55% 78%, #6366f1 78%); }
+    .banner { background: rgba(255,98,85,.12); border: 1px solid rgba(255,98,85,.35);
+      margin: 6px 8px; padding: 6px 8px; border-radius: 8px; font-size: 8px; font-weight: 600; color: #b91c1c; }
+    .dock { position: absolute; bottom: 8px; left: 12px; right: 12px; height: 40px;
+      border-radius: 20px; background: rgba(255,255,255,.92); border: 1px solid #e2e4ea;
+      display: flex; align-items: center; justify-content: space-around; font-size: 7px; box-shadow: 0 4px 16px rgba(0,0,0,.12); z-index: 1; }
+    .phone-body { display: flex; flex-direction: column; height: calc(100% - 16px); position: relative; }
+    .phone-body.fill { min-height: 352px; }
+    .left-hdr { background: var(--rg-h); color:#fff; padding: 8px 10px; }
+    .left-hdr .p { font-size: 12px; font-weight: 700; }
+    .left-hdr .y { font-size: 8px; opacity: .8; }
+    .sankey { margin: 10px; height: 80px; background: linear-gradient(90deg,var(--inc),#ddd 40%,var(--exp)); border-radius: 8px; opacity: .85; }
+    .bars .b { height: 6px; border-radius: 3px; background: var(--exp); margin: 4px 10px; }
+    .bars .b:nth-child(2){ width:85% } .bars .b:nth-child(3){ width:62% } .bars .b:nth-child(4){ width:40% }
+    .thread-h { font-size: 8px; font-weight: 700; color: var(--rg-h); padding: 4px 8px; background: #fce7f3; }
+    .field { margin: 20px 10px; border: 1px solid #e2e4ea; border-radius: 10px; padding: 10px; font-size: 11px; font-weight: 600; }
+    .scrub { margin: 30px 10px; height: 4px; background: #e2e4ea; border-radius: 2px; position: relative; }
+    .scrub::after { content:""; position:absolute; left:45%; top:-5px; width:14px; height:14px; border-radius:50%; background:var(--rg-h); }
+    .search-ov { padding: 12px; }
+    .search-ov input { width:100%; border:1px solid #e2e4ea; border-radius: 10px; padding: 10px; font-size: 9px; }
+    .net-only .strip { display: none; }
+    .two-tab .tabs span { display:none; }
+    .two-tab .tabs span:nth-child(1), .two-tab .tabs span:nth-child(4) { display:block; flex:1; }
+    .no-fab .fab { display: none; }
+    .center-plus .bn::after { content:"+"; position:absolute; bottom:22px; left:50%; transform:translateX(-50%);
+      width:32px;height:32px;border-radius:50%;background:var(--mm-a);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700; }
+    .phone.center-plus .bn { position:relative; padding-bottom:28px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Visual screen mockups — 10 alternatives × 10 components</h1>
+    <p class="sub">
+      Each tile is a miniature phone (Money Inbox rose-gold list context unless noted).
+      Gold box = <strong>shipped today</strong> (Money Manager–like). Compare to the nine alternatives in that section.
+      Text-only index: <a href="index.html">index.html</a>.
+    </p>
+    <nav class="toc" id="toc"></nav>
+    <div id="root"></div>
+  </div>
+  <script>
+    function homeShell(opts = {}) {
+      const dim = opts.dim ? '<div class="dim-layer"></div>' : '';
+      const extra = opts.extra || '';
+      const cls = opts.cls || '';
+      const hb = opts.hdr || `<div class="hb"><span>‹</span><span class="hc">${opts.month || 'November 2026 ▾'}</span><span class="hi">› 🔍 <span class="badge">3</span></span></div>`;
+      const fab = opts.noFab ? '' : '<div class="fab"></div>';
+      return `<div class="phone ${cls}"><div class="st">9:41</div><div class="phone-body fill">
+        ${hb}
+        <div class="tabs"><span class="on">Daily</span><span>Calendar</span><span>Monthly</span><span>Total</span></div>
+        ${opts.strip !== false ? `<div class="strip"><div><div class="l">Income</div><div class="v inc">₹0</div></div><div><div class="l">Expenses</div><div class="v exp">₹12.4k</div></div><div><div class="l">Total</div><div class="v">−₹12.4k</div></div></div>` : ''}
+        ${opts.banner || ''}
+        <div class="list">
+          <div class="row"><div><div>Food</div><div class="s">Sat · Cash</div></div><div class="exp">−₹320</div></div>
+          <div class="row"><div><div>UPI</div><div class="s">Fri · Bank</div></div><div class="inc">+₹5k</div></div>
+        </div>
+        <div class="bn"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Settings</span></div>
+        ${fab}${dim}${extra}
+      </div></div>`;
+    }
+
+    function mmDialog() {
+      return `<div class="dlg"><div class="dlg-h"><span class="t">Date</span><span class="pill">THIS MONTH</span><span>✕</span></div>
+        <div class="yrow"><span>‹</span><span>2026</span><span>›</span></div>
+        <div class="months"><span>JAN</span><span>FEB</span><span>MAR</span><span>APR</span><span>MAY</span><span>JUN</span>
+        <span>JUL</span><span>AUG</span><span>SEP</span><span>OCT</span><span class="sel">NOV</span><span>DEC</span></div></div>`;
+    }
+
+    function statsShell(extra, dim) {
+      return `<div class="phone stats-theme"><div class="st">9:41</div><div class="phone-body fill">
+        <div class="hb"><span>←</span><span class="hc">November 2026 ▾</span><span class="hi">Week ▾</span></div>
+        <div class="tabs"><span class="on">Income<div class="v inc">₹85k</div></span><span>Expenses<div class="v exp">₹12k</div></span></div>
+        <div class="pie"></div>
+        <div class="row"><span>Food</span><span class="exp">32%</span></div>
+        <div class="row"><span>Travel</span><span>18%</span></div>
+        <div class="row"><span>Shopping</span><span>12%</span></div>
+        <div class="bn"><span class="on">Home</span><span>Stats</span><span>Budgets</span><span>Settings</span></div>
+        ${dim ? '<div class="dim-layer"></div>' : ''}${extra || ''}
+      </div></div>`;
+    }
+
+    const catalog = [
+      {
+        id: 'c1', title: '1. Period picker (month / year)',
+        shipNote: 'Shipped: HomeMonthPickerDialog — Date header, THIS MONTH, year chevrons, 3×4 month grid.',
+        shipped: homeShell({ dim: true, extra: mmDialog() }),
+        alts: [
+          { n: 1, title: 'Material 3 calendar', desc: 'Google-native month grid inside dialog; OK dismisses to month bounds.',
+            html: homeShell({ dim: true, extra: `<div class="dlg"><div class="dlg-h rg"><span class="t">Select date</span></div><div class="m3cal"><div class="wk"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div><div class="dy">${Array.from({length:28},(_,i)=>`<i${i===7?' class="on"':''}>${i+1}</i>`).join('')}</div><div style="text-align:right;padding:4px 8px;font-size:8px;color:var(--rg-h);font-weight:700">OK · Cancel</div></div></div>` }) },
+          { n: 2, title: 'Bottom sheet wheels', desc: 'Thumb scroll month + year; Done applies period.',
+            html: homeShell({ dim: true, extra: `<div class="sheet"><div class="handle"></div><div class="wheels"><div class="wheel"><div class="ar">▲</div><div class="big">Nov</div><div class="ar">▼</div></div><div class="wheel"><div class="ar">▲</div><div class="big">2026</div><div class="ar">▼</div></div></div><div style="text-align:center;margin-top:10px;font-weight:700;color:var(--rg-h)">Done</div></div>` }) },
+          { n: 3, title: 'Month carousel', desc: 'Swipe month cards; year chip on header.',
+            html: homeShell({ dim: true, extra: `<div class="sheet"><div style="font-size:8px;text-align:center;color:#888;margin-bottom:6px">Pick month</div><div class="carousel"><div class="c">Oct</div><div class="c on">Nov</div><div class="c">Dec</div></div></div>` }) },
+          { n: 4, title: 'Inline header expand', desc: 'Grid drops under app bar — no modal.',
+            html: homeShell({ extra: `<div class="expand"><div class="yrow" style="padding:6px"><span>‹</span><span>2026</span><span>›</span></div><div class="months rg"><span>OCT</span><span class="sel">NOV</span><span>DEC</span><span>JAN</span><span>FEB</span><span>MAR</span></div></div>`, dim: false }) },
+          { n: 5, title: 'Relative range chips', desc: 'This / last month + custom — no year matrix default.',
+            html: homeShell({ dim: true, extra: `<div class="sheet"><div class="chips"><span class="chip on">This month</span><span class="chip">Last month</span><span class="chip">Last 3 mo</span><span class="chip">Custom…</span></div></div>` }) },
+          { n: 6, title: 'Typed period field', desc: 'Parse “Nov 2026” — power user entry.',
+            html: homeShell({ dim: true, extra: `<div class="dlg"><div class="dlg-h rg"><span class="t">Period</span></div><div class="field">Nov 2026 📅</div></div>` }) },
+          { n: 7, title: 'Timeline scrubber', desc: '24-month rail; drag playhead.',
+            html: homeShell({ dim: true, extra: `<div class="dlg" style="top:60%"><div style="padding:14px;text-align:center;font-weight:700">2026</div><div class="scrub"></div><div style="font-size:8px;text-align:center;color:#888">◀ Nov ▶</div></div>` }) },
+          { n: 8, title: 'Search period', desc: 'Natural language / fuzzy month.',
+            html: homeShell({ dim: true, extra: `<div class="dlg"><div class="search-ov"><input value="September last year" /></div></div>` }) },
+          { n: 9, title: 'Budget-aligned period', desc: 'Labels show your month-start rule.',
+            html: homeShell({ dim: true, extra: `<div class="dlg"><div class="dlg-h rg"><span class="t">Period</span></div><div style="padding:10px;font-size:8px;line-height:1.5"><div style="font-weight:700">Nov (26 Oct – 25 Nov)</div><div style="color:#888;margin-top:8px">Dec (26 Nov – 25 Dec)</div></div></div>` }) },
+          { n: 10, title: 'Same grid, Rose Gold chrome', desc: 'Low effort: keep topology, MMR dialog kit.',
+            html: homeShell({ dim: true, extra: `<div class="dlg"><div class="dlg-h rg"><span class="t">Period</span><span class="pill">This month</span></div><div class="yrow"><span>‹</span><span>2026</span><span>›</span></div><div class="months rg"><span>SEP</span><span>OCT</span><span class="sel">NOV</span><span>DEC</span><span>JAN</span><span>FEB</span></div></div>`, hdr: `<div class="hb rg"><span>‹</span><span class="hc">November 2026 ▾</span><span class="hi">› 🔍</span></div>` }) },
+        ]
+      },
+      {
+        id: 'c2', title: '2. Home top period chrome',
+        shipNote: 'Shipped: centered month + ‹ › + balanced search & approvals.',
+        shipped: homeShell({}),
+        alts: [
+          { n: 1, title: 'Large collapsing title', desc: '“November” hero; year subtitle on scroll.',
+            html: homeShell({ hdr: `<div class="hb rg" style="flex-direction:column;align-items:flex-start;padding:10px"><div style="font-size:16px;font-weight:800">November</div><div style="font-size:8px;opacity:.85">2026 · 12 transactions</div></div>` }) },
+          { n: 2, title: 'Pill only', desc: 'No chevrons in bar — swipe list for month.',
+            html: homeShell({ hdr: `<div class="hb rg"><span></span><span class="hc" style="background:rgba(255,255,255,.15);padding:6px 12px;border-radius:999px">Nov 2026 ▾</span><span class="hi">🔍 ✉</span></div>` }) },
+          { n: 3, title: 'Inbox-first header', desc: 'Approvals story above period.',
+            html: homeShell({ banner: `<div class="banner">3 SMS to approve — tap to open</div>`, hdr: `<div class="hb rg"><span>◎</span><span class="hc">Money Inbox</span><span class="hi">🔍</span></div><div style="font-size:9px;text-align:center;padding:4px;background:#fff;color:var(--rg-h);font-weight:600">November 2026 ▾</div>` }) },
+          { n: 4, title: 'Week | Month scope', desc: 'Toggle period grain in header.',
+            html: homeShell({ hdr: `<div class="hb rg"><span>‹</span><span class="hc"><span style="opacity:.6">Week</span> | <b>Month</b></span><span class="hi">W45</span></div>` }) },
+          { n: 5, title: 'Floating period island', desc: 'Glass chip over expressive canvas.',
+            html: `<div class="phone" style="background:linear-gradient(180deg,#fce7f3,#faf7f8)"><div class="st">9:41</div><div class="phone-body fill"><div style="height:120px"></div><div style="margin:0 auto;width:120px;text-align:center;padding:8px;background:rgba(255,255,255,.85);border-radius:14px;box-shadow:0 4px 20px rgba(107,78,93,.2);font-weight:700;color:var(--rg-h)">Nov 2026 ▾</div><div class="list" style="margin-top:20px">${'<div class="row"></div>'.repeat(2)}</div><div class="dock"><span class="on">Home</span><span>Stats</span><span>⋯</span></div></div></div>` },
+          { n: 6, title: 'Left-aligned period', desc: 'Break MM center symmetry.',
+            html: homeShell({ hdr: `<div class="hb rg" style="display:flex;justify-content:space-between"><div class="left-hdr" style="background:transparent;padding:0"><div class="p">Nov 2026 ▾</div><div class="y">Swipe or tap to change</div></div><span class="hi">🔍 ✉</span></div>` }) },
+          { n: 7, title: 'Week strip under header', desc: 'Tap day filters daily list.',
+            html: homeShell({ extra: `<div style="display:flex;justify-content:space-between;padding:6px 8px;background:#fff;font-size:8px;border-bottom:1px solid #e2e4ea"><span>M</span><span>T</span><span>W</span><span style="color:var(--rg-h);font-weight:800">T•</span><span>F</span><span>S</span><span>S</span></div>` }) },
+          { n: 8, title: 'Gesture-only month', desc: 'Static title; coachmark for swipe.',
+            html: homeShell({ hdr: `<div class="hb rg"><span style="opacity:0">‹</span><span class="hc">November 2026</span><span class="hi">🔍</span></div><div style="font-size:7px;text-align:center;color:#888;padding:2px;background:#fff">Swipe list to change month</div>` }) },
+          { n: 9, title: 'Net-first header', desc: 'Amount hero; period secondary.',
+            html: homeShell({ strip: false, hdr: `<div class="hb rg" style="text-align:center;display:block;padding:10px"><div style="font-size:18px;font-weight:800;color:#ffc9c9">−₹12,450</div><div style="font-size:8px;opacity:.9">Net this month · <u>Nov ▾</u></div></div>` }) },
+          { n: 10, title: 'MM layout, new type', desc: 'Keep geometry; Plus Jakarta + softer month label.',
+            html: homeShell({ hdr: `<div class="hb rg"><span>‹</span><span class="hc" style="font-weight:600;letter-spacing:-0.02em">November 2026</span><span class="hi">› 🔍</span></div>`, month: '' }) },
+        ]
+      },
+      {
+        id: 'c3', title: '3. Home ledger view tabs',
+        shipNote: 'Shipped: Daily · Calendar · Monthly · Total.',
+        shipped: homeShell({}),
+        alts: [
+          { n: 1, title: 'Feed · Accounts', desc: 'Two tabs; Total becomes Accounts.',
+            html: homeShell({ cls: 'two-tab', extra: '' }).replace('Calendar', '').replace('Monthly', '') },
+          { n: 2, title: 'Single morphing list', desc: 'No tab row — zoom density.',
+            html: homeShell({ extra: '' }).replace('<div class="tabs">', '<div class="tabs" style="display:none">') },
+          { n: 3, title: 'View mode menu', desc: '“Daily ▾” opens layouts.',
+            html: homeShell({ hdr: `<div class="hb rg"><span>‹</span><span class="hc">Daily ▾</span><span class="hi">🔍</span></div>` }) },
+          { n: 4, title: 'Inbox · Ledger tabs', desc: 'Approvals queue as first tab.',
+            html: `<div class="phone"><div class="st">9:41</div><div class="phone-body fill"><div class="hb rg"><span>◎</span><span class="hc">Inbox (3)</span><span class="hi">✉</span></div><div class="tabs"><span class="on">Inbox</span><span>Ledger</span></div><div class="list"><div class="row"><div>HDFC SMS</div><div class="exp">−₹2.4k</div></div></div><div class="bn"><span class="on">Home</span><span>Stats</span></div></div></div>` },
+          { n: 5, title: 'Icon tabs', desc: '☰ ⊞ ▥ ∑ save width.',
+            html: `<div class="phone"><div class="st">9:41</div><div class="phone-body fill"><div class="hb rg"><span class="hc">November</span></div><div class="tabs" style="font-size:13px;padding:8px 0"><span class="on">☰</span><span>⊞</span><span>▥</span><span>∑</span></div><div class="list"><div class="row"><div>UPI</div><div class="exp">−₹120</div></div></div><div class="fab"></div><div class="bn"><span class="on">Home</span><span>Stats</span></div></div></div>` },
+          { n: 6, title: 'Calendar root', desc: 'Grid default; list in sheet.',
+            html: `<div class="phone"><div class="st">9:41</div><div class="phone-body"><div class="hb rg"><span class="hc">November 2026</span></div><div class="tabs"><span>Daily</span><span class="on">Calendar</span><span>Monthly</span><span>Total</span></div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:6px;font-size:7px;text-align:center;background:#fff"><span>1</span><span>2</span><span style="background:var(--rg-a);border-radius:4px;font-weight:700">3</span><span>4</span><span>5</span></div><div class="sheet" style="position:relative;box-shadow:none;border-top:1px solid #e2e4ea;margin-top:auto"><div style="font-weight:700">Thu 3 · 2 txns</div></div></div></div>` },
+          { n: 7, title: 'Tabs in summary band', desc: 'Modes below strip.',
+            html: homeShell({ extra: `<div class="tabs" style="background:var(--rg-bg)"><span class="on">Daily</span><span>Calendar</span><span>Monthly</span><span>Total</span></div>` }) },
+          { n: 8, title: 'Daily + ⋯ layouts', desc: 'User default view only.',
+            html: homeShell({ hdr: `<div class="hb rg"><span class="hc">Daily · Nov 2026</span><span class="hi" style="grid-column:3">⋯</span></div>`, extra: `<div class="tabs" style="display:none"></div>` }) },
+          { n: 9, title: 'Renamed tabs', desc: 'Transactions, Balances, etc.',
+            html: homeShell({}).replace('Daily', 'Txns').replace('Total', 'Balances') },
+          { n: 10, title: 'Rail on tablet', desc: 'Modes in side rail (concept).',
+            html: `<div style="display:flex;width:200px;height:368px;border-radius:22px;border:4px solid #222;overflow:hidden"><div style="width:44px;background:var(--rg-h);color:#fff;font-size:7px;padding:8px 4px;text-align:center;display:flex;flex-direction:column;gap:12px"><span style="font-weight:700">☰</span><span>⊞</span><span>▥</span></div><div style="flex:1;background:var(--rg-bg)">${homeShell({}).replace(/<div class="phone[^>]*>|<div class="st">[^<]*<\/div>/g,'').replace(/<\/div>\s*$/,'')}</div></div>` },
+        ]
+      },
+      {
+        id: 'c4', title: '4. Home summary strip',
+        shipNote: 'Shipped: Income | Expenses | Total three columns.',
+        shipped: homeShell({}),
+        alts: [
+          { n: 1, title: 'Net hero + expand', desc: 'One number; tap for inc/exp.',
+            html: homeShell({ strip: false, extra: `<div class="hero"><div class="big">−₹12,450</div><div class="sub">Income ₹0 · Expenses ₹12.4k ▾</div></div>` }) },
+          { n: 2, title: 'Waterfall bar', desc: 'Visual in vs out.',
+            html: homeShell({ strip: false, extra: `<div class="water"><div class="in"></div><div class="out"></div></div><div style="text-align:center;font-size:8px;padding:4px">Net −₹12.4k</div>` }) },
+          { n: 3, title: 'Budget meter', desc: 'Spend vs cap.',
+            html: homeShell({ strip: false, extra: `<div style="padding:10px;background:#fff"><div style="font-size:8px;color:#888">November budget</div><div style="height:10px;background:#e2e4ea;border-radius:6px;margin-top:4px;overflow:hidden"><div style="width:72%;height:100%;background:var(--exp)"></div></div><div style="font-size:9px;font-weight:700;margin-top:4px">72% used</div></div>` }) },
+          { n: 4, title: 'Unposted slot', desc: 'Pending SMS in strip.',
+            html: homeShell({ extra: '' }).replace('Total', 'Pending').replace('−₹12.4k', '₹4.2k') },
+          { n: 5, title: 'Sparkline', desc: 'Trend over amounts.',
+            html: homeShell({ strip: false, extra: `<div style="height:40px;margin:8px;background:linear-gradient(180deg,transparent 60%,var(--rg-a));border-bottom:2px solid var(--exp)"></div>` }) },
+          { n: 6, title: 'Two-row lanes', desc: 'Inflows / outflows copy.',
+            html: homeShell({ strip: false, extra: `<div style="padding:8px 10px;background:#fff;font-size:8px"><div><b>In:</b> Salary, UPI</div><div style="margin-top:4px"><b>Out:</b> Food, Travel</div></div>` }) },
+          { n: 7, title: 'Strip on Monthly only', desc: 'Daily list-first.',
+            html: homeShell({ extra: `<div style="font-size:7px;text-align:center;color:#888;padding:2px">Summary hidden on Daily</div>` }).replace('<div class="strip">', '<div class="strip" style="display:none">') },
+          { n: 8, title: 'Floating summary card', desc: 'Overlaps list.',
+            html: homeShell({ extra: `<div style="position:absolute;left:10px;right:10px;top:100px;background:#fff;border-radius:12px;padding:8px;box-shadow:0 8px 24px rgba(0,0,0,.15);z-index:2;text-align:center;font-weight:700;font-size:11px">−₹12,450 net</div>` }) },
+          { n: 9, title: 'Delta vs last month', desc: 'MM-like compare % in strip.',
+            html: homeShell({}).replace('₹12.4k', '₹12.4k <span style="font-size:7px;color:var(--exp)">+12%</span>') },
+          { n: 10, title: 'Monospace ledger row', desc: 'Editorial single row.',
+            html: homeShell({ strip: false, extra: `<div style="font-family:monospace;font-size:8px;padding:8px 10px;background:#fff;border-bottom:1px solid #e2e4ea">Inc 0.00 · Exp 12450.00 · Net −12450.00</div>` }) },
+        ]
+      },
+      {
+        id: 'c5', title: '5. List grouping & rows',
+        shipNote: 'Shipped: full date headers + compact rows.',
+        shipped: homeShell({ extra: `<div style="font-size:8px;font-weight:700;color:var(--mm-h);padding:4px 8px">Saturday, 8 November 2026</div>` }),
+        alts: [
+          { n: 1, title: 'Flat chronological', desc: 'Date inline on row only.',
+            html: `<div class="phone"><div class="st">9:41</div><div class="phone-body fill"><div class="hb rg"></div><div class="list"><div class="row"><div>8 Nov · Food · Cash</div><div class="exp">−₹320</div></div><div class="row"><div>7 Nov · Uber</div><div class="exp">−₹90</div></div></div><div class="bn"><span class="on">Home</span><span>Stats</span></div></div></div>` },
+          { n: 2, title: 'By source thread', desc: 'SMS vs manual groups.',
+            html: homeShell({ extra: `<div class="thread-h">SMS approved</div>` }) },
+          { n: 3, title: 'Category sections', desc: 'Envelope subtotals.',
+            html: homeShell({ extra: `<div class="thread-h">▼ Food — ₹4,200</div>` }) },
+          { n: 4, title: 'Today / Yesterday', desc: 'Human-relative headers.',
+            html: homeShell({ extra: `<div style="font-size:9px;font-weight:700;padding:4px 8px">Today</div>` }) },
+          { n: 5, title: 'Card tiles', desc: 'Larger rows + thumb.',
+            html: `<div class="phone"><div class="st">9:41</div><div class="phone-body fill"><div class="hb rg"></div><div class="list"><div class="row" style="padding:10px"><div style="width:28px;height:28px;background:#fce7f3;border-radius:8px;margin-right:6px;display:inline-block"></div><div style="display:inline-block;vertical-align:top"><div style="font-weight:700">Swiggy</div><div class="s">Food · Cash</div></div><div class="exp">−₹340</div></div></div></div></div>` },
+          { n: 6, title: 'Ghost pending rows', desc: 'Unapproved faded.',
+            html: homeShell({ extra: `<div class="row" style="opacity:.45;border-style:dashed"><div>HDFC SMS</div><div>−₹?</div></div>` }) },
+          { n: 7, title: 'Ruled ledger', desc: 'Margin + lines.',
+            html: `<div class="phone" style="background:#fffaf5"><div class="list" style="border-left:2px solid var(--rg-a);margin-left:10px;background:repeating-linear-gradient(transparent,transparent 23px,#fce7f3 24px)"><div class="row" style="background:transparent;border:none">Food −₹120</div></div></div>` },
+          { n: 8, title: 'Table columns', desc: 'Tablet-wide concept.',
+            html: `<div class="phone"><div style="display:grid;grid-template-columns:2fr 1fr 1fr;font-size:7px;padding:6px 8px;background:var(--rg-h);color:#fff;font-weight:700"><span>Payee</span><span>Cat</span><span>Amt</span></div><div class="row" style="margin:0;border-radius:0"><span>Food</span><span>Exp</span><span class="exp">−320</span></div></div>` },
+          { n: 9, title: 'Swipe-primary rows', desc: 'Thin row + reveal actions.',
+            html: homeShell({ extra: `<div class="row" style="padding:4px 8px"><div>Food</div><div class="exp">−₹320</div></div><div style="font-size:7px;color:#888;padding:0 8px">← swipe approve · edit</div>` }) },
+          { n: 10, title: 'Typography hierarchy', desc: 'Same groups, new emphasis.',
+            html: homeShell({ extra: `<div class="row"><div><div style="font-size:11px;font-weight:800">−₹320</div><div class="s">Food</div></div></div>` }) },
+        ]
+      },
+      {
+        id: 'c6', title: '6. Primary add action',
+        shipNote: 'Shipped: coral FAB bottom-right.',
+        shipped: homeShell({}),
+        alts: [
+          { n: 1, title: 'Tab bar center +', desc: 'Notch FAB in nav.',
+            html: `<div class="phone center-plus"><div class="st">9:41</div><div class="phone-body fill"><div class="hb rg"><span class="hc">Nov 2026</span></div><div class="list" style="flex:1"></div><div class="bn"><span>Home</span><span style="opacity:0">+</span><span>Stats</span><span>More</span></div></div></div>` },
+          { n: 2, title: 'Speed dial', desc: 'Expense · Income · Paste SMS.',
+            html: homeShell({ extra: `<div style="position:absolute;right:14px;bottom:80px;z-index:5;font-size:7px;text-align:right"><div class="chip">Paste SMS</div><div class="chip">Income</div><div class="chip on">Expense</div></div>` }) },
+          { n: 3, title: 'Header + only', desc: 'No FAB occlusion.',
+            html: homeShell({ noFab: true, hdr: `<div class="hb rg"><span>‹</span><span class="hc">November</span><span class="hi" style="font-size:16px">+</span></div>` }) },
+          { n: 4, title: 'Empty-state CTA', desc: 'Button in list when empty.',
+            html: `<div class="phone"><div class="st">9:41</div><div class="phone-body fill"><div class="hb rg"></div><div class="list" style="display:flex;align-items:center;justify-content:center;flex:1"><div style="text-align:center"><div style="font-size:8px;color:#888">No transactions</div><div class="chip on" style="margin-top:8px;display:inline-block">Record expense</div></div></div></div></div>` },
+          { n: 5, title: 'Dual dock CTAs', desc: 'Paste + Manual equal.',
+            html: homeShell({ noFab: true, extra: `<div style="display:flex;gap:6px;padding:8px;position:absolute;bottom:36px;left:8px;right:8px"><span class="chip on" style="flex:1;text-align:center">Paste SMS</span><span class="chip" style="flex:1;text-align:center">Manual</span></div>` }) },
+          { n: 6, title: 'Quick templates', desc: 'Coffee · Fuel chips.',
+            html: homeShell({ extra: `<div class="chips" style="position:absolute;bottom:44px;left:0;right:0"><span class="chip">☕</span><span class="chip">⛽</span><span class="chip">+</span></div>` }) },
+          { n: 7, title: 'Mic FAB', desc: 'Voice capture.',
+            html: `<div class="phone"><div class="st">9:41</div><div class="phone-body fill"><div class="hb rg"></div><div class="list"></div><div class="fab" style="background:#6366f1;color:#fff;text-align:center;line-height:36px;font-size:14px">🎤</div><div class="bn"><span class="on">Home</span><span>Stats</span></div></div></div>` },
+          { n: 8, title: 'FAB on day sheet only', desc: 'Calendar context.',
+            html: `<div class="phone"><div class="st">9:41</div><div class="phone-body"><div class="sheet" style="position:relative;height:100%;border-radius:0"><div style="font-weight:700;padding:8px">Thu 6 Nov</div><div class="fab" style="position:absolute;bottom:16px;right:16px"></div></div></div></div>` },
+          { n: 9, title: 'Shrinking FAB', desc: 'Icon-only on scroll.',
+            html: homeShell({ extra: `<div class="fab" style="width:28px;height:28px;right:12px;bottom:40px"></div>` }) },
+          { n: 10, title: 'Check FAB', desc: 'Approve metaphor.',
+            html: homeShell({ cls: 'no-fab', extra: `<div class="fab chk" style="font-size:16px;color:#fff;text-align:center;line-height:36px">✓</div>` }) },
+        ]
+      },
+      {
+        id: 'c7', title: '7. Stats period chrome',
+        shipNote: 'Shipped: same month picker + period mode chip.',
+        shipped: statsShell(),
+        alts: [
+          { n: 1, title: 'Synced with Home', desc: 'Read-only period link.',
+            html: statsShell(`<div style="position:absolute;top:40px;left:8px;right:8px;font-size:7px;background:#fff;padding:4px 8px;border-radius:8px;border:1px solid #e2e4ea">🔗 Same period as Home</div>`) },
+          { n: 2, title: 'W | M | Y | YTD chips', desc: 'No month dialog default.',
+            html: statsShell(`<div class="chips" style="background:#fff"><span class="chip">W</span><span class="chip on">M</span><span class="chip">Y</span><span class="chip">YTD</span></div>`) },
+          { n: 3, title: 'Compare overlay', desc: 'vs last month ghost.',
+            html: statsShell(`<div style="padding:6px 10px;font-size:8px;background:#fff">October ░░ November ██</div>`) },
+          { n: 4, title: 'Brush on chart', desc: 'Drag sets range.',
+            html: statsShell(`<div style="margin:8px;border:2px dashed var(--rg-h);height:50px;border-radius:8px;font-size:7px;display:flex;align-items:center;justify-content:center;color:var(--rg-h)">drag range ═══</div>`) },
+          { n: 5, title: 'Fiscal year', desc: 'Q2 FY26 anchor.',
+            html: statsShell(``, false).replace('November 2026', 'Q2 FY26 ▾') },
+          { n: 6, title: 'Start · end chips', desc: 'Two tappable bounds.',
+            html: statsShell(`<div style="display:flex;gap:6px;padding:8px;background:#fff;font-size:8px"><span class="chip on">1 Nov</span><span>–</span><span class="chip on">30 Nov</span></div>`) },
+          { n: 7, title: 'Period in chart only', desc: 'Minimal header.',
+            html: statsShell(``, false).replace('<span class="hc">November 2026 ▾</span>', '<span class="hc">Stats</span>') + `<div style="font-size:7px;text-align:center;color:#888">Nov 2026 · under chart</div>` },
+          { n: 8, title: 'Full-screen swipe', desc: 'Period pagers entire stats.',
+            html: statsShell(`<div style="position:absolute;inset:48px 0 40px;border-left:4px solid var(--rg-a);pointer-events:none"></div>`) },
+          { n: 9, title: 'Saved reports', desc: 'Bookmarked filters.',
+            html: statsShell(``, false).replace('Week ▾', 'Reports ▾') },
+          { n: 10, title: 'Chip right-aligned', desc: 'Less twin of Home.',
+            html: `<div class="phone stats-theme"><div class="st">9:41</div><div class="phone-body fill"><div class="hb rg" style="display:flex;justify-content:space-between;padding:8px 10px"><span>← Stats</span><span class="chip on" style="font-size:8px">Nov ▾</span></div><div class="pie"></div><div class="row"><span>Food</span><span>32%</span></div></div></div>` },
+        ]
+      },
+      {
+        id: 'c8', title: '8. Stats Income vs Expense',
+        shipNote: 'Shipped: two tabs + horizontal pager + pie.',
+        shipped: statsShell(),
+        alts: [
+          { n: 1, title: 'Dual-ring donut', desc: 'One chart, both modes.',
+            html: statsShell(`<div style="width:80px;height:80px;margin:12px auto;border-radius:50%;border:12px solid var(--exp);border-right-color:var(--inc);border-bottom-color:#6366f1"></div>`).replace('<div class="tabs">', '<div class="tabs" style="display:none">') },
+          { n: 2, title: 'Signed category bars', desc: 'No tab split.',
+            html: statsShell(`<div class="bars"><div class="b"></div><div class="b"></div><div class="b"></div></div>`).replace('tabs', 'tabs hidden') },
+          { n: 3, title: 'Sankey', desc: 'Flow diagram.',
+            html: statsShell(`<div class="sankey"></div>`).replace('pie', 'pie hidden') },
+          { n: 4, title: 'Toggle in card', desc: 'Not full-width tabs.',
+            html: statsShell(`<div class="chips" style="margin:8px"><span class="chip on">Expense</span><span class="chip">Income</span></div>`) },
+          { n: 5, title: 'Expense + income sheet', desc: 'Inflows in sheet.',
+            html: statsShell(`<div class="tabs"><span class="on">Expenses</span><span style="opacity:.5">+ Inflows sheet</span></div>`) },
+          { n: 6, title: 'Cash | Card | Xfer | In', desc: 'Account-type lenses.',
+            html: statsShell(``).replace('Income', 'Cash').replace('Expenses', 'Card') },
+          { n: 7, title: 'Merchant rank', desc: 'List-first, optional pie.',
+            html: statsShell(`<div class="row"><span>1. Swiggy</span><span>₹4.2k</span></div>`).replace('pie', '') },
+          { n: 8, title: 'Cylinder hero', desc: 'Existing stats spec.',
+            html: statsShell(`<div style="height:64px;margin:8px;background:linear-gradient(180deg,var(--rg-h),var(--rg-a));border-radius:12px"></div>`) },
+          { n: 9, title: 'Posted vs pending', desc: 'Approval-aware stats.',
+            html: statsShell(`<div class="chips"><span class="chip on">Posted</span><span class="chip">+ Pending</span></div>`) },
+          { n: 10, title: 'Inflows / Outflows', desc: 'Rename tabs only.',
+            html: statsShell(``).replace('Income', 'Inflows').replace('Expenses', 'Outflows') },
+        ]
+      },
+      {
+        id: 'c9', title: '9. Category breakdown viz',
+        shipNote: 'Shipped: pie + category list.',
+        shipped: statsShell(),
+        alts: [
+          { n: 1, title: 'Horizontal bars', desc: 'Primary rank chart.',
+            html: statsShell(`<div class="bars"><div class="b"></div><div class="b"></div></div>`).replace('class="pie"', 'class="pie" style="display:none"') },
+          { n: 2, title: 'Treemap', desc: 'Nested rectangles.',
+            html: statsShell(`<div style="display:grid;grid-template-columns:2fr 1fr;height:56px;margin:8px;gap:2px"><div style="background:var(--exp)"></div><div style="background:#f97316"></div></div>`) },
+          { n: 3, title: 'Heat calendar', desc: 'Spend intensity grid.',
+            html: statsShell(`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:1px;margin:8px;font-size:6px">${'<span style="background:#fecdd3;height:10px"></span>'.repeat(21)}</div>`) },
+          { n: 4, title: 'Pills + list only', desc: 'No default pie.',
+            html: statsShell(``).replace('pie', 'pie hidden') },
+          { n: 5, title: 'Small multiples', desc: 'Mini pies grid.',
+            html: statsShell(`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin:8px">${'<div class="pie" style="height:28px;margin:0"></div>'.repeat(3)}</div>`) },
+          { n: 6, title: 'Waterfall', desc: 'Running category steps.',
+            html: statsShell(`<div style="margin:8px;height:50px;background:repeating-linear-gradient(90deg,var(--exp) 0 20%,transparent 20% 25%)"></div>`) },
+          { n: 7, title: 'Budget burn rows', desc: 'Cap overlay per category.',
+            html: statsShell(`<div class="row"><span>Food</span><span style="width:50px;height:6px;background:#e2e4ea;border-radius:3px;display:inline-block;vertical-align:middle"><span style="display:block;width:80%;height:100%;background:var(--exp);border-radius:3px"></span></span></div>`) },
+          { n: 8, title: 'Pie morph to list', desc: 'Shared transition concept.',
+            html: statsShell(`<div class="pie" style="height:40px"></div><div class="row" style="margin-top:-20px;background:rgba(255,255,255,.9)"><span>Food selected</span></div>`) },
+          { n: 9, title: 'Table default', desc: 'Chart in disclosure.',
+            html: statsShell(`<div style="font-size:7px;padding:8px;background:#fff;font-weight:700">Category · % · ₹</div><div class="row"><span>Food</span><span>32% · ₹4k</span></div>`).replace('pie', '') },
+          { n: 10, title: 'Labeled donut', desc: 'Outside labels + list sync.',
+            html: statsShell(`<div class="pie" style="position:relative"><span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:8px;color:#fff;font-weight:700">Food 32%</span></div>`) },
+        ]
+      },
+      {
+        id: 'c10', title: '10. Main bottom navigation',
+        shipNote: 'Shipped: scrollable bottom bar, outline icons + labels.',
+        shipped: homeShell({}),
+        alts: [
+          { n: 1, title: '3 destinations', desc: 'Inbox · Ledger · More.',
+            html: `<div class="phone"><div class="st">9:41</div><div class="phone-body fill"><div class="hb rg"></div><div class="list"></div><div class="bn"><span class="on">Inbox</span><span>Ledger</span><span>More</span></div></div></div>` },
+          { n: 2, title: 'Navigation rail', desc: 'Icons on left edge.',
+            html: `<div style="display:flex;width:200px;height:368px;border:4px solid #222;border-radius:22px;overflow:hidden"><div style="width:36px;background:var(--rg-h);color:#fff;font-size:12px;padding:12px 4px;text-align:center">⌂<br>◇<br>⚙</div><div style="flex:1;background:var(--rg-bg)"></div></div>` },
+          { n: 3, title: 'Search center tab', desc: 'Omni search hub.',
+            html: homeShell({}).replace('<span class="on">Home</span>', '<span>Home</span>').replace('Stats', '<span class="on">Search</span>') },
+          { n: 4, title: 'Approvals tab', desc: 'Dedicated Inbox tab badge.',
+            html: homeShell({}).replace('Home', 'Inbox').replace('class="on">Inbox', 'class="on">Inbox (3)') },
+          { n: 5, title: 'Glass dock', desc: 'Floating over canvas.',
+            html: homeShell({ extra: `<div class="dock"><span class="on">Home</span><span>Stats</span><span>⚙</span></div>`, cls: 'no-fab' }) },
+          { n: 6, title: 'Edge swipe hubs', desc: 'No persistent bar.',
+            html: `<div class="phone"><div class="st">9:41</div><div class="phone-body fill" style="justify-content:center;align-items:center;color:#888;font-size:8px;text-align:center">← swipe hubs →<br><br>no tab bar</div></div>` },
+          { n: 7, title: 'Local vs global nav', desc: 'Home has ledger tabs only.',
+            html: homeShell({ extra: `<div class="bn" style="font-size:6px;color:#888">Global nav appears off Home</div>` }) },
+          { n: 8, title: 'Text-only bar', desc: 'No icons.',
+            html: homeShell({}).replace('bn', 'bn" style="font-size:8px;font-weight:600') },
+          { n: 9, title: 'User-pinned bar', desc: 'Hidden nav settings.',
+            html: homeShell({}).replace('Budgets', 'Loans').replace('Settings', '+ Pin') },
+          { n: 10, title: 'Rose Gold selected', desc: 'Re-skin MM slots.',
+            html: homeShell({ hdr: `<div class="hb rg"></div>` }).replace('class="on"', 'class="on" style="color:var(--rg-h)"') },
+        ]
+      }
+    ];
+
+    const toc = document.getElementById('toc');
+    const root = document.getElementById('root');
+    catalog.forEach(sec => {
+      toc.innerHTML += `<a href="#${sec.id}">${sec.title.split('. ')[0]}. ${sec.title.split('. ')[1]}</a>`;
+      let html = `<section id="${sec.id}"><h2>${sec.title}</h2><p class="ship-note">${sec.shipNote}</p>`;
+      html += `<div class="ref-row"><div><div class="ref-label">Shipped today</div>${sec.shipped}</div></div>`;
+      html += `<div class="grid">`;
+      sec.alts.forEach(a => {
+        html += `<article class="card"><span class="num">#${String(a.n).padStart(2,'0')}</span>
+          <div>${a.html}</div><h3>${a.title}</h3><p>${a.desc}</p></article>`;
+      });
+      html += `</div></section>`;
+      root.innerHTML += html;
+    });
+  </script>
+</body>
+</html>

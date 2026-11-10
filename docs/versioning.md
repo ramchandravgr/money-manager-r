@@ -7,7 +7,7 @@ User-facing releases use [Semantic Versioning](https://semver.org/) (`MAJOR.MINO
 | Field | Location |
 |-------|----------|
 | `versionName` / `versionCode` | `app/build.gradle.kts` `defaultConfig` |
-| Release notes copy | `app/src/main/java/com/mmr/app/release/MmrReleaseNotesCatalog.kt` |
+| Release notes copy | `app/src/main/java/com/rrparallelstudio/miapp/release/MmrReleaseNotesCatalog.kt` |
 | “What’s new” ack | `ReleaseNotesStore` (per `versionName`) |
 
 ### `versionCode` formula
@@ -52,6 +52,7 @@ Do **not** use fourth-number schemes (`0.9.0.1`) in `versionName`; Play uses `ve
 4. Run `:app:compileDebugKotlin` and targeted tests.
 5. Tag git optional: `v0.9.1`.
 6. Upload AAB to Play or install locally (`./gradlew :app:installDebug`).
+7. If older builds must not run after a breaking release: publish **`min_version_code`** in Firebase Remote Config (see [`docs/ads-admob-firebase-setup.md`](ads-admob-firebase-setup.md)); set to the new release’s `versionCode` after Play serves that build.
 
 ## Related (not app semver)
 

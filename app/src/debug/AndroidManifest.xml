@@ -2,7 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
         <activity
-            android:name="com.mmr.app.BackupScreenHostActivity"
+            android:name="com.rrparallelstudio.miapp.BackupScreenHostActivity"
             android:exported="false" />
+        <!-- exported=true so `adb shell am broadcast` (shell UID) can deliver on API 31+. Debug manifest only. -->
+        <receiver
+            android:name="com.rrparallelstudio.miapp.debug.MmrCrashlyticsDebugReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.rrparallelstudio.miapp.action.CRASHLYTICS_TEST_CRASH" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

@@ -1,0 +1,19 @@
+{
+  "_comment": "Download the real file (includes API key) from Project settings → Your apps → google-services.json. Save as app/google-services.json (gitignored).",
+  "_console": "https://console.firebase.google.com/project/money-inbox-156b5/settings/general/android:com.rrparallelstudio.miapp",
+  "project_info": {
+    "project_number": "174428559526",
+    "project_id": "money-inbox-156b5",
+    "storage_bucket": "money-inbox-156b5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:174428559526:android:3306e1d26b757da8afbc67",
+        "android_client_info": {
+          "package_name": "com.rrparallelstudio.miapp"
+        }
+      }
+    }
+  ]
+}
