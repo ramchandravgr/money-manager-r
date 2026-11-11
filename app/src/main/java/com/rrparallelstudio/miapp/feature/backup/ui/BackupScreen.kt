@@ -116,8 +116,8 @@ fun BackupScreen(
             showReplaceOption = !isMoneyManager,
             mergeHelper =
                 if (isMoneyManager) {
-                    "Reads the export on this device only. Income and expense rows merge into your " +
-                        "ledger; duplicates are skipped. Transfers and other Money Manager row types are not imported."
+                    "Reads the export on this device only. Income, expense, and transfers merge into " +
+                        "your ledger; paired transfer legs dedupe to one row. Duplicates are skipped."
                 } else {
                     null
                 },

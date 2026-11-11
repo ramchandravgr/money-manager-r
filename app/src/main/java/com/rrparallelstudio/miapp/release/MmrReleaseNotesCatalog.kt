@@ -13,6 +13,16 @@ object MmrReleaseNotesCatalog {
     private val entries: List<VersionNotes> =
         listOf(
             VersionNotes(
+                version = "0.11.17",
+                changesNewestFirst =
+                    listOf(
+                        "Import from Money Manager (.mmbak): income, expense, and transfers merge in; " +
+                            "paired transfer legs dedupe to one row; ISO dates map to your ledger dates.",
+                        "Pending SMS: if you edit and pick an account, the approved transaction uses " +
+                            "that account (not SMS card digits); quick approve unchanged.",
+                    ),
+            ),
+            VersionNotes(
                 version = "0.11.16",
                 changesNewestFirst =
                     listOf(

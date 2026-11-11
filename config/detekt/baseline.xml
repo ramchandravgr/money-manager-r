@@ -7,7 +7,7 @@
     <ID>ComplexCondition:AddEditRecurringRuleViewModel.kt$AddEditRecurringRuleViewModel$state.name.isBlank() || amount == null || state.accountId == null || !hasValidStart</ID>
     <ID>ComplexCondition:ApprovalCenterScreen.kt$widgetLaunchConsumed || launchApprovalId &lt;= 0L || launchAction.isBlank() || state.isLoading</ID>
     <ID>ComplexCondition:LoanPaymentProcessor.kt$LoanPaymentProcessor$loan.repaymentModeEnum() == LoanRepaymentMode.FIXED_EMI &amp;&amp; paymentType == LoanPaymentType.PART_PAYMENT &amp;&amp; split.principalComponent &gt; 0.0 &amp;&amp; partPaymentAdjustment != null</ID>
-    <ID>ComplexCondition:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$uidCol == null || dateCol == null || moneyCol == null || typeCol == null</ID>
+    <ID>ComplexCondition:MoneyManagerMmbakTransactionReader.kt$MoneyManagerMmbakTransactionReader$uidCol == null || dateCol == null || moneyCol == null || typeCol == null</ID>
     <ID>ComplexCondition:SmsBackupXmlImportCoordinator.kt$SmsBackupXmlImportCoordinator$sourceKey == smsBackupFolderStore.getLastImportSourceUri() &amp;&amp; lastModified &gt; 0L &amp;&amp; lastModified == smsBackupFolderStore.getLastImportSourceModified() &amp;&amp; watermark &gt; 0L</ID>
     <ID>ComposableNaming:MmrNavGraph.kt$scheduledScreen</ID>
     <ID>ComposableParamOrder:ApprovalCenterScreen.kt$ApprovalCandidateCard</ID>
@@ -88,8 +88,6 @@
     <ID>CyclomaticComplexMethod:MmrReceiptImage.kt$MmrReceiptImage$private fun rotateBitmap( bitmap: Bitmap, orientation: Int, ): Bitmap?</ID>
     <ID>CyclomaticComplexMethod:MmrTopAppBar.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun MmrTopAppBar( title: String, subtitle: String? = null, modifier: Modifier = Modifier, showBackNavigation: Boolean = false, onNavigateBack: (() -&gt; Unit)? = null, /** When set with back navigation, shows a text action (e.g. "Cancel") instead of the back icon. */ navigationLabel: String? = null, /** Indigo header that extends under the status bar (matches Transactions / Home). */ useBrandHeaderStyle: Boolean = false, /** Lighter header title (15sp, normal weight). Default true when [useBrandHeaderStyle]. */ useCompactHeaderTitle: Boolean? = null, /** When false, [title] is shown verbatim (user-entered names, etc.). */ applyStaticLabelCaseToTitle: Boolean = true, actions: @Composable RowScope.() -&gt; Unit = {}, )</ID>
     <ID>CyclomaticComplexMethod:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$fun readCategoryNames(database: SQLiteDatabase): Map&lt;Long, CategoryRef&gt;</ID>
-    <ID>CyclomaticComplexMethod:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$fun readTransactions(database: SQLiteDatabase): List&lt;MoneyManagerTransactionRow&gt;</ID>
-    <ID>CyclomaticComplexMethod:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$private fun extractSqliteFromZip( input: InputStream, dest: File, )</ID>
     <ID>CyclomaticComplexMethod:RecurringListScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun RecurringListScreen( onNavigateBack: () -&gt; Unit, onNavigateToDetail: (Long) -&gt; Unit, onNavigateToAddRule: () -&gt; Unit, showBackNavigation: Boolean = true, embeddedInScheduledHub: Boolean = false, viewModel: RecurringListViewModel = hiltViewModel(), )</ID>
     <ID>CyclomaticComplexMethod:SmsBackupXmlImportCoordinator.kt$SmsBackupXmlImportCoordinator$private fun parseBackupFileUnchecked( fileUri: Uri, sinceTimestamp: Long, watermarkMillis: Long, ): SmsInboxScanSummary</ID>
     <ID>CyclomaticComplexMethod:SmsBackupXmlImportCoordinator.kt$SmsBackupXmlImportCoordinator$suspend fun importLatest(updateUserMessage: Boolean): ImportResult</ID>
@@ -354,7 +352,9 @@
     <ID>Indentation:MoneyManagerMmbakLedgerImporter.kt$MoneyManagerMmbakLedgerImporter.AccountNameResolver$ </ID>
     <ID>Indentation:MoneyManagerMmbakLedgerImporter.kt$MoneyManagerMmbakLedgerImporter.CategoryNameResolver$ </ID>
     <ID>Indentation:MoneyManagerMmbakLedgerImporter.kt$MoneyManagerMmbakLedgerImporter.Companion$ </ID>
+    <ID>Indentation:MoneyManagerMmbakLedgerImporter.kt$MoneyManagerMmbakLedgerImporter.ImportCounters$ </ID>
     <ID>Indentation:MoneyManagerMmbakLedgerImporter.kt$MoneyManagerMmbakLedgerImporter.Result$ </ID>
+    <ID>Indentation:MoneyManagerMmbakTransactionReader.kt$MoneyManagerMmbakTransactionReader$ </ID>
     <ID>Indentation:PendingNotificationCoordinator.kt$PendingNotificationCoordinator$ </ID>
     <ID>Indentation:PeriodExcelDownloadsSaver.kt$PeriodExcelDownloadsSaver$ </ID>
     <ID>Indentation:PeriodExcelExporter.kt$PeriodExcelExporter$ </ID>
@@ -658,8 +658,8 @@
     <ID>LoopWithTooManyJumpStatements:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$for</ID>
     <ID>LoopWithTooManyJumpStatements:MezoLedgerParserComparisonTest.kt$MezoLedgerParserComparisonTest$for</ID>
     <ID>LoopWithTooManyJumpStatements:MmrPeriodSwipeBox.kt$while</ID>
-    <ID>LoopWithTooManyJumpStatements:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$while</ID>
     <ID>LoopWithTooManyJumpStatements:MoneyManagerMmbakLedgerImporter.kt$MoneyManagerMmbakLedgerImporter$for</ID>
+    <ID>LoopWithTooManyJumpStatements:MoneyManagerMmbakZip.kt$MoneyManagerMmbakZip$while</ID>
     <ID>LoopWithTooManyJumpStatements:RecurringAutoPostCoordinator.kt$RecurringAutoPostCoordinator$while</ID>
     <ID>LoopWithTooManyJumpStatements:RepositoryImpls.kt$TransactionRepositoryImpl$for</ID>
     <ID>LoopWithTooManyJumpStatements:SmsTemplateMatcher.kt$SmsTemplateMatcher$for</ID>
@@ -888,7 +888,6 @@
     <ID>NestedBlockDepth:LanSyncNetworkUtils.kt$LanSyncNetworkUtils$private fun wlanInterfaceIpv4Candidates(): List&lt;String&gt;</ID>
     <ID>NestedBlockDepth:MmrReceiptImage.kt$MmrReceiptImage$private fun encodeBitmapToJpegUnderMax( initial: Bitmap, maxBytes: Int, ): ByteArray</ID>
     <ID>NestedBlockDepth:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$fun readCategoryNames(database: SQLiteDatabase): Map&lt;Long, CategoryRef&gt;</ID>
-    <ID>NestedBlockDepth:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$private fun extractSqliteFromZip( input: InputStream, dest: File, )</ID>
     <ID>NestedBlockDepth:SmsBackupXmlImportCoordinator.kt$SmsBackupXmlImportCoordinator$private fun parseBackupFileUnchecked( fileUri: Uri, sinceTimestamp: Long, watermarkMillis: Long, ): SmsInboxScanSummary</ID>
     <ID>NoUnusedImports:AssetAttachmentStore.kt$com.rrparallelstudio.miapp.core.attachment.AssetAttachmentStore.kt</ID>
     <ID>NoUnusedImports:EmiAutoPostCoordinator.kt$com.rrparallelstudio.miapp.core.loan.EmiAutoPostCoordinator.kt</ID>
@@ -1104,15 +1103,17 @@
     <ID>ReturnCount:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$private fun parseSemver(version: String): SemverTriple?</ID>
     <ID>ReturnCount:MmrWidgetActionExecutor.kt$MmrWidgetActionExecutor$suspend fun approve(approvalId: Long)</ID>
     <ID>ReturnCount:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$fun openFromStream( input: InputStream, cacheDir: File, ): OpenedDatabase?</ID>
-    <ID>ReturnCount:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$fun readAssetNames(database: SQLiteDatabase): Map&lt;Long, String&gt;</ID>
+    <ID>ReturnCount:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$fun readAssetNames(database: SQLiteDatabase): Map&lt;String, String&gt;</ID>
     <ID>ReturnCount:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$fun readCategoryNames(database: SQLiteDatabase): Map&lt;Long, CategoryRef&gt;</ID>
-    <ID>ReturnCount:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$fun readTransactions(database: SQLiteDatabase): List&lt;MoneyManagerTransactionRow&gt;</ID>
-    <ID>ReturnCount:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$private fun extractSqliteFromZip( input: InputStream, dest: File, )</ID>
+    <ID>ReturnCount:MoneyManagerMmbakDate.kt$MoneyManagerMmbakDate$fun fromStorageValue( text: String?, zoneId: ZoneId = ZoneId.systemDefault(), ): Long</ID>
+    <ID>ReturnCount:MoneyManagerMmbakDate.kt$MoneyManagerMmbakDate$private fun yyyymmddToMillis( raw: Long, zoneId: ZoneId, ): Long?</ID>
     <ID>ReturnCount:MoneyManagerMmbakFormat.kt$MoneyManagerMmbakFormat$fun isProbablyMoneyManagerBackup( bytes: ByteArray, displayName: String?, ): Boolean</ID>
     <ID>ReturnCount:MoneyManagerMmbakLedgerImporter.kt$MoneyManagerMmbakLedgerImporter$private suspend fun resolveCategoryIds( categories: Map&lt;Long, MoneyManagerMmbakDatabaseOpener.CategoryRef&gt;, categoryUid: Long?, txnType: TransactionType, cache: CategoryNameResolver, ): Pair&lt;Long?, Long?&gt;</ID>
     <ID>ReturnCount:MoneyManagerMmbakLedgerImporter.kt$MoneyManagerMmbakLedgerImporter.AccountNameResolver$suspend fun resolve(name: String): Long</ID>
     <ID>ReturnCount:MoneyManagerMmbakLedgerImporter.kt$MoneyManagerMmbakLedgerImporter.CategoryNameResolver$suspend fun resolveCategory( name: String, type: CategoryType, ): Long</ID>
     <ID>ReturnCount:MoneyManagerMmbakLedgerImporter.kt$MoneyManagerMmbakLedgerImporter.CategoryNameResolver$suspend fun resolveSubcategory( parentCategoryId: Long?, name: String, ): Long?</ID>
+    <ID>ReturnCount:MoneyManagerMmbakTransactionReader.kt$MoneyManagerMmbakTransactionReader$fun readTransactions(database: SQLiteDatabase): List&lt;MoneyManagerMmbakDatabaseOpener.MoneyManagerTransactionRow&gt;</ID>
+    <ID>ReturnCount:MoneyManagerMmbakTransferPlanner.kt$MoneyManagerMmbakTransferPlanner$private fun planTransferGroup( legs: List&lt;MoneyManagerMmbakDatabaseOpener.MoneyManagerTransactionRow&gt;, ): PlannedTransfer?</ID>
     <ID>ReturnCount:PeriodExcelWriter.kt$PeriodExcelWriter$private fun noteWithTransferSuffix(item: TransactionWithDetails): String</ID>
     <ID>ReturnCount:PeriodExcelWriter.kt$PeriodExcelWriter$private fun paymentLabel( instrument: String?, channel: String?, ): String</ID>
     <ID>ReturnCount:ProcessIncomingSmsWorker.kt$ProcessIncomingSmsWorker$override suspend fun doWork(): Result</ID>
@@ -1246,6 +1247,7 @@
     <ID>UnusedParameter:HomeTotalUtils.kt$HomeTotalUtils$zoneId: ZoneId</ID>
     <ID>UnusedParameter:LoanPaymentProcessor.kt$LoanPaymentProcessor$paymentId: Long</ID>
     <ID>UnusedParameter:MmrBudgetsWidget.kt$gapSmall: Dp</ID>
+    <ID>UnusedParameter:MoneyManagerMmbakTransactionReader.kt$MoneyManagerMmbakTransactionReader$cursor: Cursor</ID>
     <ID>UnusedParameter:StatsCategoryDetailUi.kt$row: SubcategoryBreakdownUi</ID>
     <ID>UnusedParameter:TransactionReceiptSection.kt$canAddMore: Boolean = true</ID>
     <ID>UnusedParameter:TransactionReceiptSection.kt$onAddClick: () -&gt; Unit</ID>

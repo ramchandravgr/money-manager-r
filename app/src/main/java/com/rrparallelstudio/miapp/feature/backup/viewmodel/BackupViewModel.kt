@@ -9,6 +9,7 @@ import com.rrparallelstudio.miapp.core.domain.repository.BackupRepository
 import com.rrparallelstudio.miapp.core.moneymanager.MoneyManagerMmbakFormat
 import com.rrparallelstudio.miapp.feature.backup.model.BackupUiEvent
 import com.rrparallelstudio.miapp.feature.backup.model.BackupUiState
+import com.rrparallelstudio.miapp.feature.backup.moneyManagerImportStatusMessage
 import com.rrparallelstudio.miapp.ui.state.MmrUiMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -160,16 +161,7 @@ class BackupViewModel
                             MoneyManagerMmbakFormat.isProbablyMoneyManagerBackup(data, displayName)
                     val statusMessage =
                         if (inferredMoneyManager) {
-                            val mm = backupRepository.importMoneyManagerMmbak(data)
-                            buildString {
-                                append("Money Manager import complete. ${mm.added} transaction(s) added.")
-                                if (mm.skippedExisting > 0) {
-                                    append(" ${mm.skippedExisting} already on this device.")
-                                }
-                                if (mm.skippedUnsupported > 0) {
-                                    append(" ${mm.skippedUnsupported} transfer/other rows skipped.")
-                                }
-                            }
+                            moneyManagerImportStatusMessage(backupRepository.importMoneyManagerMmbak(data))
                         } else {
                             val imported = backupRepository.importBackup(data, importMode, displayName)
                             buildString {

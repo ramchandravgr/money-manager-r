@@ -19,7 +19,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Merges income/expense rows from a Realbyte Money Manager `.mmbak` into the local ledger.
+ * Merges income, expense, and transfer rows from a Realbyte Money Manager `.mmbak` into the local ledger.
  */
 @Singleton
 class MoneyManagerMmbakLedgerImporter
@@ -34,6 +34,7 @@ class MoneyManagerMmbakLedgerImporter
             val added: Int,
             val skippedExisting: Int,
             val skippedUnsupported: Int,
+            val rowsInBackup: Int = 0,
         )
 
         suspend fun importFromBytes(
@@ -66,53 +67,130 @@ class MoneyManagerMmbakLedgerImporter
                 val assetNames = MoneyManagerMmbakDatabaseOpener.readAssetNames(db)
                 val categories = MoneyManagerMmbakDatabaseOpener.readCategoryNames(db)
                 val rows = MoneyManagerMmbakDatabaseOpener.readTransactions(db)
+                val importPlan = MoneyManagerMmbakTransferPlanner.plan(rows)
                 val accountCache = AccountNameResolver(accountRepository)
                 val categoryCache = CategoryNameResolver(categoryRepository)
-                var added = 0
-                var skippedExisting = 0
-                var skippedUnsupported = 0
-                for (row in rows) {
-                    if (row.dateTimeMillis < sinceTimestampMillis) continue
-                    val ref = sourceRef(row.uid)
-                    if (transactionDao.findIdBySourceReference(ref) != null) {
-                        skippedExisting++
-                        continue
-                    }
-                    val txnType = mapTransactionType(row.doType)
-                    if (txnType == null) {
-                        skippedUnsupported++
-                        continue
-                    }
-                    val accountId =
-                        accountCache.resolve(
-                            assetNames[row.assetUid ?: -1L] ?: "Imported account",
-                        )
-                    val (categoryId, subcategoryId) =
-                        resolveCategoryIds(
-                            categories,
-                            row.categoryUid,
-                            txnType,
-                            categoryCache,
-                        )
-                    val entity =
-                        TransactionEntity(
-                            dateTime = row.dateTimeMillis,
-                            amount = row.amount,
-                            type = txnType,
-                            categoryId = categoryId,
-                            subcategoryId = subcategoryId,
-                            note = row.note,
-                            accountId = accountId,
-                            sourceType = TransactionSourceType.MONEY_MANAGER,
-                            sourceReferenceId = ref,
-                            status = RecordStatus.APPROVED,
-                        )
-                    transactionRepository.insertTransaction(entity)
-                    added++
-                }
-                Result(added = added, skippedExisting = skippedExisting, skippedUnsupported = skippedUnsupported)
+                val counters =
+                    ImportCounters(
+                        skippedUnsupported = importPlan.unsupportedRowKeys.size,
+                    )
+                mergeIncomeExpenseRows(
+                    rows = importPlan.incomeExpense,
+                    sinceTimestampMillis = sinceTimestampMillis,
+                    assetNames = assetNames,
+                    categories = categories,
+                    accountCache = accountCache,
+                    categoryCache = categoryCache,
+                    counters = counters,
+                )
+                mergeTransferRows(
+                    transfers = importPlan.transfers,
+                    sinceTimestampMillis = sinceTimestampMillis,
+                    assetNames = assetNames,
+                    accountCache = accountCache,
+                    counters = counters,
+                )
+                Result(
+                    added = counters.added,
+                    skippedExisting = counters.skippedExisting,
+                    skippedUnsupported = counters.skippedUnsupported,
+                    rowsInBackup = rows.size,
+                )
             } finally {
                 MoneyManagerMmbakDatabaseOpener.closeQuietly(opened)
+            }
+        }
+
+        private data class ImportCounters(
+            var added: Int = 0,
+            var skippedExisting: Int = 0,
+            var skippedUnsupported: Int = 0,
+        )
+
+        private suspend fun mergeIncomeExpenseRows(
+            rows: List<MoneyManagerMmbakDatabaseOpener.MoneyManagerTransactionRow>,
+            sinceTimestampMillis: Long,
+            assetNames: Map<String, String>,
+            categories: Map<Long, MoneyManagerMmbakDatabaseOpener.CategoryRef>,
+            accountCache: AccountNameResolver,
+            categoryCache: CategoryNameResolver,
+            counters: ImportCounters,
+        ) {
+            for (row in rows) {
+                if (row.dateTimeMillis < sinceTimestampMillis) continue
+                val ref = rowSourceRef(row.rowKey)
+                if (transactionDao.findIdBySourceReference(ref) != null) {
+                    counters.skippedExisting++
+                    continue
+                }
+                val txnType =
+                    mapIncomeExpenseType(row.doType) ?: run {
+                        counters.skippedUnsupported++
+                        continue
+                    }
+                val accountId =
+                    accountCache.resolve(
+                        assetNames[row.assetUid.orEmpty()] ?: "Imported account",
+                    )
+                val (categoryId, subcategoryId) =
+                    resolveCategoryIds(categories, row.categoryUid, txnType, categoryCache)
+                transactionRepository.insertTransaction(
+                    TransactionEntity(
+                        dateTime = row.dateTimeMillis,
+                        amount = row.amount,
+                        type = txnType,
+                        categoryId = categoryId,
+                        subcategoryId = subcategoryId,
+                        note = row.note,
+                        accountId = accountId,
+                        sourceType = TransactionSourceType.MONEY_MANAGER,
+                        sourceReferenceId = ref,
+                        status = RecordStatus.APPROVED,
+                    ),
+                )
+                counters.added++
+            }
+        }
+
+        private suspend fun mergeTransferRows(
+            transfers: List<MoneyManagerMmbakTransferPlanner.PlannedTransfer>,
+            sinceTimestampMillis: Long,
+            assetNames: Map<String, String>,
+            accountCache: AccountNameResolver,
+            counters: ImportCounters,
+        ) {
+            for (transfer in transfers) {
+                if (transfer.dateTimeMillis < sinceTimestampMillis) continue
+                if (transactionDao.findIdBySourceReference(transfer.sourceReferenceId) != null) {
+                    counters.skippedExisting += transfer.legRowKeys.size
+                    continue
+                }
+                val fromAccountId =
+                    accountCache.resolve(
+                        assetNames[transfer.fromAssetUid] ?: transfer.fromAssetUid,
+                    )
+                val toAccountId =
+                    accountCache.resolve(
+                        assetNames[transfer.toAssetUid] ?: transfer.toAssetUid,
+                    )
+                if (fromAccountId == toAccountId) {
+                    counters.skippedUnsupported += transfer.legRowKeys.size
+                    continue
+                }
+                transactionRepository.insertTransaction(
+                    TransactionEntity(
+                        dateTime = transfer.dateTimeMillis,
+                        amount = transfer.amount,
+                        type = TransactionType.TRANSFER,
+                        note = transfer.note,
+                        accountId = fromAccountId,
+                        relatedAccountId = toAccountId,
+                        sourceType = TransactionSourceType.MONEY_MANAGER,
+                        sourceReferenceId = transfer.sourceReferenceId,
+                        status = RecordStatus.APPROVED,
+                    ),
+                )
+                counters.added++
             }
         }
 
@@ -140,7 +218,7 @@ class MoneyManagerMmbakLedgerImporter
             }
         }
 
-        private fun mapTransactionType(doType: Int): TransactionType? =
+        private fun mapIncomeExpenseType(doType: Int): TransactionType? =
             when (doType) {
                 0 -> TransactionType.INCOME
                 1 -> TransactionType.EXPENSE
@@ -236,6 +314,6 @@ class MoneyManagerMmbakLedgerImporter
         }
 
         private companion object {
-            fun sourceRef(uid: Long): String = "mmbak:$uid"
+            fun rowSourceRef(rowKey: String): String = "mmbak:$rowKey"
         }
     }

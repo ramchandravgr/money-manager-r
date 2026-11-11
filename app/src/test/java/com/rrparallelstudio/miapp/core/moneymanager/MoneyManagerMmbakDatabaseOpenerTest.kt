@@ -3,6 +3,7 @@ package com.rrparallelstudio.miapp.core.moneymanager
 import android.database.sqlite.SQLiteDatabase
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -74,7 +75,7 @@ class MoneyManagerMmbakDatabaseOpenerTest {
     fun readTransactions_parsesAndroidSchema() {
         val rows = MoneyManagerMmbakDatabaseOpener.readTransactions(database)
         assertEquals(1, rows.size)
-        assertEquals(100L, rows[0].uid)
+        assertEquals("100", rows[0].rowKey)
         assertEquals(1, rows[0].doType)
         assertEquals(250.5, rows[0].amount, 0.01)
         assertEquals("Lunch", rows[0].note)
@@ -83,6 +84,30 @@ class MoneyManagerMmbakDatabaseOpenerTest {
     @Test
     fun readAssetNames_resolvesNickname() {
         val names = MoneyManagerMmbakDatabaseOpener.readAssetNames(database)
-        assertEquals("Cash", names[1L])
+        assertEquals("Cash", names["1"])
+    }
+
+    @Test
+    fun readTransactions_parsesIsoDateStrings() {
+        database.execSQL(
+            """
+            INSERT INTO INOUTCOME (UID, WDATE, ZMONEY, DO_TYPE, ASSETUID, CTGUID, ZCONTENT)
+            VALUES (201, '2026-11-11', 50.0, 1, 1, 10, 'ISO date')
+            """.trimIndent(),
+        )
+        val row = MoneyManagerMmbakDatabaseOpener.readTransactions(database).first { it.rowKey == "201" }
+        assertTrue(row.dateTimeMillis > 1_790_000_000_000L)
+    }
+
+    @Test
+    fun readTransactions_normalizesUnixSecondDates() {
+        database.execSQL(
+            """
+            INSERT INTO INOUTCOME (UID, WDATE, ZMONEY, DO_TYPE, ASSETUID, CTGUID, ZCONTENT)
+            VALUES (200, 1700000000, 99.0, 0, 1, 10, 'Unix seconds')
+            """.trimIndent(),
+        )
+        val row = MoneyManagerMmbakDatabaseOpener.readTransactions(database).first { it.rowKey == "200" }
+        assertTrue(row.dateTimeMillis >= 1_700_000_000_000L)
     }
 }
