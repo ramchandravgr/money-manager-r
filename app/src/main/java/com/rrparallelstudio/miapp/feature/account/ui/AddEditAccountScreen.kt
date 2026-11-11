@@ -27,6 +27,7 @@ import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsNavRow
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSection
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSingleChoiceSheet
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSwitchRow
+import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsValueRow
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsSaveTopBar
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenLayout
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenScaffold
@@ -119,6 +120,13 @@ fun AddEditAccountScreen(
                 placeholder = "Required",
                 testTag = MmrTestTags.accountFieldName,
             )
+            val smsOrigin = state.smsOriginLabel
+            if (smsOrigin != null) {
+                MmrIosSettingsValueRow(
+                    label = "SMS provisioning",
+                    value = smsOrigin,
+                )
+            }
             MmrIosSettingsNavRow(
                 label = "Type",
                 value = state.type.name,

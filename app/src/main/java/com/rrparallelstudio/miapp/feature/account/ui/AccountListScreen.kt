@@ -84,6 +84,7 @@ fun AccountListScreen(
                                     }
                                 MmrIosSettingsNavRow(
                                     label = account.name,
+                                    labelSubtitle = account.smsOriginLabel,
                                     value = value,
                                     onClick = { onNavigateToEditAccount(account.id) },
                                     showDividerBelow = index < state.accounts.lastIndex,

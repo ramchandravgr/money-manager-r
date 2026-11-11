@@ -18,3 +18,10 @@ GOOGLE_WEB_CLIENT_ID=
 
 # Optional: Android SDK path (Android Studio usually creates this automatically)
 # sdk.dir=C\:\\Users\\You\\AppData\\Local\\Android\\Sdk
+
+# Play upload signing (recommended before production). Paths relative to repo root.
+# Omit these to sign release bundles with the default debug keystore (OK for first internal test only).
+# UPLOAD_STORE_FILE=keystore/upload-keystore.jks
+# UPLOAD_STORE_PASSWORD=
+# UPLOAD_KEY_ALIAS=upload
+# UPLOAD_KEY_PASSWORD=

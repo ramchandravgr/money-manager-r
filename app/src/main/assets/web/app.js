@@ -116,10 +116,19 @@
     return cat && cat.subcategories ? cat.subcategories : [];
   }
 
+  function accountDisplayName(account) {
+    const label = account.smsOriginLabel;
+    if (!label) return account.name;
+    return account.name + ' (' + label + ')';
+  }
+
   function accountOptions(selectedId, excludeId) {
     return metaAccounts
       .filter((a) => a.id !== excludeId)
-      .map((a) => `<option value="${a.id}" ${a.id === selectedId ? 'selected' : ''}>${escapeHtml(a.name)}</option>`)
+      .map((a) => {
+        const title = accountDisplayName(a);
+        return `<option value="${a.id}" ${a.id === selectedId ? 'selected' : ''}>${escapeHtml(title)}</option>`;
+      })
       .join('');
   }
 
@@ -658,6 +667,8 @@
   function fillTxnFormInto(form, item) {
     document.getElementById(form.id).value = item.id;
     document.getElementById(form.amount).value = item.amount;
+    const metaPrefix = form === TXN_FORM_DETAIL ? 'txn-detail' : 'txn';
+    updateTxnExtraFields(item, metaPrefix);
     document.getElementById(form.type).value = item.type;
     document.getElementById(form.note).value = item.note || '';
     if (form.datetime) {
@@ -761,6 +772,27 @@
     loadTransactions();
   });
 
+  document.getElementById('txn-detail-refund-btn').addEventListener('click', async () => {
+    const id = document.getElementById('txn-detail-id').value;
+    const raw = document.getElementById('txn-detail-refund-amount').value;
+    const refundAmount = Number(raw);
+    if (!id || !Number.isFinite(refundAmount) || refundAmount <= 0) {
+      alert('Enter a refund amount greater than zero.');
+      return;
+    }
+    try {
+      const updated = await api('/transactions/' + id + '/refund', {
+        method: 'POST',
+        body: JSON.stringify({ refundAmount }),
+      });
+      document.getElementById('txn-detail-refund-amount').value = '';
+      fillTxnFormInto(TXN_FORM_DETAIL, updated);
+      await loadTransactions();
+    } catch (e) {
+      if (!handleAuthError(e)) alert(e.message || 'Could not apply refund.');
+    }
+  });
+
   function txnFilterQueryString() {
     const period = document.getElementById('txn-period').value;
     const now = Date.now();
@@ -819,7 +851,44 @@
     const acct = item.type === 'TRANSFER' && item.relatedAccountName
       ? (item.accountName || '') + ' → ' + item.relatedAccountName
       : (item.accountName || '');
-    return escapeHtml(cat + sub) + (acct ? ' · ' + escapeHtml(acct) : '');
+    let line = escapeHtml(cat + sub) + (acct ? ' · ' + escapeHtml(acct) : '');
+    if (item.refundedTotal > 0) {
+      line += ' · <span class="meta">Refunded</span>';
+    }
+    return line;
+  }
+
+  function updateTxnExtraFields(item, metaPrefix) {
+    const createdEl = document.getElementById(metaPrefix + '-created-by');
+    const refundInfoEl = document.getElementById(metaPrefix + '-refund-info');
+    const refundApplyEl = document.getElementById(metaPrefix === 'txn-detail' ? 'txn-detail-refund-apply' : null);
+    if (createdEl) {
+      if (item.createdByLabel) {
+        createdEl.textContent = item.createdByLabel;
+        createdEl.classList.remove('hidden');
+      } else {
+        createdEl.textContent = '';
+        createdEl.classList.add('hidden');
+      }
+    }
+    if (refundInfoEl) {
+      if (item.refundSummary) {
+        refundInfoEl.textContent = item.refundSummary;
+        refundInfoEl.classList.remove('hidden');
+      } else {
+        refundInfoEl.textContent = '';
+        refundInfoEl.classList.add('hidden');
+      }
+    }
+    if (metaPrefix === 'txn-detail' && refundApplyEl) {
+      const canRefund = item.type === 'EXPENSE' && item.amount > 0.001;
+      refundApplyEl.classList.toggle('hidden', !canRefund);
+      const amtInput = document.getElementById('txn-detail-refund-amount');
+      if (amtInput && canRefund) {
+        amtInput.max = String(item.amount);
+        if (!amtInput.value) amtInput.placeholder = 'Max ' + formatMoney(item.amount);
+      }
+    }
   }
 
   function readTxnFilterState() {
@@ -1096,7 +1165,7 @@
     const acctSel = document.getElementById('txn-filter-account');
     const prevAcct = acctSel.value;
     acctSel.innerHTML = '<option value="">All</option>' +
-      metaAccounts.map((a) => `<option value="${a.id}">${escapeHtml(a.name)}</option>`).join('');
+      metaAccounts.map((a) => `<option value="${a.id}">${escapeHtml(accountDisplayName(a))}</option>`).join('');
     if (prevAcct) acctSel.value = prevAcct;
     const catSel = document.getElementById('txn-filter-category');
     const prevCat = catSel.value;

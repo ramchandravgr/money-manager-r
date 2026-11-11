@@ -46,6 +46,10 @@ class WebManageRepositoryImpl
         private val _sessionState = MutableStateFlow(WebManageSessionState())
         override val sessionState: StateFlow<WebManageSessionState> = _sessionState.asStateFlow()
 
+        private val onLocalNetworkChanged: () -> Unit = {
+            scope.launch { publishState() }
+        }
+
         override suspend fun refreshSessionState() {
             withContext(ioDispatcher) {
                 publishState()
@@ -117,7 +121,7 @@ class WebManageRepositoryImpl
                 WebManageSessionState(
                     enabled = preferencesStore.isWebManageEnabled(),
                     serverListening = listening,
-                    onWifi = networkUtils.isOnWifi(),
+                    onWifi = networkUtils.canUseLocalPeerSync(),
                     wifiSsid = wifi.ssid,
                     lanIpv4 = ipv4,
                     localUrl =
@@ -134,6 +138,7 @@ class WebManageRepositoryImpl
         }
 
         init {
+            networkUtils.addLocalNetworkChangeListener(onLocalNetworkChanged)
             when (coordinator.currentMode()) {
                 LocalLanServerMode.WEB_MANAGE ->
                     if (preferencesStore.hasAccessPassword()) {

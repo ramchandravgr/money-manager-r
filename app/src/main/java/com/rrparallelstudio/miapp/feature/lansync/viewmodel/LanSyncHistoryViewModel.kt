@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.rrparallelstudio.miapp.core.domain.repository.LanSyncRepository
 import com.rrparallelstudio.miapp.core.lansync.LanSyncOverrideJson
 import com.rrparallelstudio.miapp.core.lansync.LanSyncOverrideLine
+import com.rrparallelstudio.miapp.feature.lansync.LanSyncStatusMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
@@ -24,6 +25,7 @@ data class LanSyncHistorySession(
     val addedCount: Int,
     val overrides: List<LanSyncOverrideLine>,
     val counts: String,
+    val footerNote: String? = null,
 )
 
 @HiltViewModel
@@ -49,7 +51,12 @@ class LanSyncHistoryViewModel
                             )
                         session.copy(
                             counts =
-                                "${overrides.size} replaced · ${entry.unchangedCount} already in sync · ${entry.addedCount} added",
+                                LanSyncStatusMessages.formatHistoryCounts(
+                                    replaced = overrides.size,
+                                    unchanged = entry.unchangedCount,
+                                    added = entry.addedCount,
+                                ),
+                            footerNote = entry.warningsText?.trim()?.takeIf { it.isNotEmpty() },
                         )
                     }
                 }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())

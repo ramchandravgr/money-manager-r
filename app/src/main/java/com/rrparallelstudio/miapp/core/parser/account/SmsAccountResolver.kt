@@ -65,6 +65,7 @@ class SmsAccountResolver
                     name = name,
                     type = AccountType.CREDIT,
                     cardLastFour = last4,
+                    smsAutoCreated = true,
                 ),
             )
         }
@@ -84,6 +85,7 @@ class SmsAccountResolver
                 AccountEntity(
                     name = walletName,
                     type = AccountType.WALLET,
+                    smsAutoCreated = true,
                 ),
             )
         }

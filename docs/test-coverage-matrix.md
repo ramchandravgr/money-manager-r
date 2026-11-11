@@ -71,7 +71,7 @@ Status keys used in tables: `Done` | `Partial` | `Todo`
 | LAN sync JSON codec (settings + recurring) | `LanSyncJsonCodecTest` | Done |
 | LAN sync merge conflict flags | `LanSyncMergeConflictsTest` | Done |
 | LAN sync conflict detection (SMS scan, duplicate names) | `LanSyncConflictDetectorInstrumentedTest` | Done |
-| LAN sync post-merge balance warnings | `LanSyncAccountBalanceValidatorInstrumentedTest` | Done |
+| LAN sync post-merge balance recalculate | `LanSyncAccountBalanceValidatorInstrumentedTest` | Done |
 | Backup JSON `appSettings` round-trip | `BackupJsonCodecInstrumentedTest` | Done |
 | LAN sync merge (account + transaction) | `LanSyncMergerInstrumentedTest` | Done |
 | LAN sync full payload handshake (txn, recurring, loan, budget, asset, rules) | `LanSyncComprehensivePayloadInstrumentedTest` | Done (SM-S938B; bidirectional merge simulation) |

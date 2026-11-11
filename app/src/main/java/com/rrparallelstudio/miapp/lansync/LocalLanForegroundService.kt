@@ -11,9 +11,10 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import com.rrparallelstudio.miapp.MainActivity
 import com.rrparallelstudio.miapp.R
 import com.rrparallelstudio.miapp.core.lansync.LocalLanServerMode
+import com.rrparallelstudio.miapp.navigation.Screen
+import com.rrparallelstudio.miapp.navigation.buildMainActivityNavIntent
 
 class LocalLanForegroundService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
@@ -49,11 +50,23 @@ class LocalLanForegroundService : Service() {
                 LocalLanServerMode.NONE ->
                     "LAN service" to "Money Inbox"
             }
+        val navRoute =
+            when (mode) {
+                LocalLanServerMode.WEB_MANAGE -> Screen.WebManage.route
+                LocalLanServerMode.PEER_SYNC -> Screen.LanSync.route
+                LocalLanServerMode.NONE -> Screen.Settings.route
+            }
+        val requestCode =
+            when (mode) {
+                LocalLanServerMode.WEB_MANAGE -> 1
+                LocalLanServerMode.PEER_SYNC -> 2
+                LocalLanServerMode.NONE -> 3
+            }
         val openApp =
             PendingIntent.getActivity(
                 this,
-                0,
-                Intent(this, MainActivity::class.java),
+                requestCode,
+                buildMainActivityNavIntent(this, navRoute),
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
             )
         return NotificationCompat

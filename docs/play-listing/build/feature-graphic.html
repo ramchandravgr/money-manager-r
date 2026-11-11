@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face {
+    font-family: Poster;
+    src: url("Roboto-Black.ttf") format("truetype");
+    font-weight: 900;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1024px; height: 500px; overflow: hidden; }
+  .banner {
+    width: 1024px; height: 500px;
+    display: flex; align-items: center;
+    padding: 0 64px 0 48px;
+    background:
+      radial-gradient(560px 340px at 92% 0%, rgba(255, 98, 85, 0.38), transparent 62%),
+      radial-gradient(420px 280px at 0% 100%, rgba(255, 255, 255, 0.08), transparent 55%),
+      linear-gradient(128deg, #3F4671 0%, #323861 52%, #23294E 100%);
+  }
+  .mark { width: 300px; height: 300px; flex: none; }
+  .copy { margin-left: 28px; }
+  h1 {
+    font-family: Poster, sans-serif;
+    font-size: 84px; font-weight: 900; letter-spacing: -2.6px;
+    line-height: 0.92; color: #ffffff;
+  }
+  p {
+    margin-top: 22px;
+    font-family: Poster, sans-serif;
+    font-size: 30px; font-weight: 900; letter-spacing: -0.4px;
+    color: #ffb4aa;
+  }
+</style>
+</head>
+<body>
+  <div class="banner">
+    <svg class="mark" viewBox="28 30 62 54" aria-hidden="true">
+      <path d="M36,70 L36,42 L54,58 L72,42 L72,70" fill="none" stroke="#ffffff" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M58,68h5v8h-5zM65,64h5v12h-5zM72,60h5v16h-5z" fill="#FF6255"/>
+      <path d="M57,76h22v2h-22z" fill="#FF6255" fill-opacity="0.55"/>
+      <circle cx="78" cy="41" r="7" fill="#FF6255"/>
+      <path d="M74.2,41 L76.2,43.1 L81.2,38.1 L82.3,39.2 L76.2,45.3 L73.1,42.2 Z" fill="#ffffff"/>
+    </svg>
+    <div class="copy">
+      <h1>Money<br>Inbox</h1>
+      <p>Expense Tracker</p>
+    </div>
+  </div>
+</body>
+</html>

@@ -13,6 +13,112 @@ object MmrReleaseNotesCatalog {
     private val entries: List<VersionNotes> =
         listOf(
             VersionNotes(
+                version = "0.11.16",
+                changesNewestFirst =
+                    listOf(
+                        "Web Manage: account pickers show Auto Created labels; transactions show Created by after peer sync; view refunds and apply card refunds on expenses.",
+                        "Peer Device Sync: Auto sync on app open (optional) merges when trusted peers are on Wi‑Fi; off by default; new Wi‑Fi needs Sync now once; turning sync off clears auto sync.",
+                        "Peer Device Sync: Created by note under your name; On this network section; trust uses picked phone and pairing code only.",
+                        "Backup (format v5): SMS account corrections are included in export and restore; v4 backup files still import (without override rows).",
+                        "Peer Device Sync (LAN format v7): SMS account corrections (template or instrument + last 4 → account) sync between trusted phones; update both devices before pairing.",
+                    ),
+            ),
+            VersionNotes(
+                version = "0.11.15",
+                changesNewestFirst =
+                    listOf(
+                        "After you save a new manual transaction, the home ledger scrolls to the top.",
+                        "Tapping the Peer Device Sync or Web Manage notification opens that settings screen directly.",
+                        "Accounts created from SMS quick approve show Auto Created in Settings → Accounts, account edit, and account pickers; after you edit them, Auto Created - Modified.",
+                    ),
+            ),
+            VersionNotes(
+                version = "0.11.14",
+                changesNewestFirst =
+                    listOf(
+                        "If you correct the account on an SMS approval or later edit, the next similar SMS uses that account instead of creating the same credit card again.",
+                    ),
+            ),
+            VersionNotes(
+                version = "0.11.13",
+                changesNewestFirst =
+                    listOf(
+                        "Transaction note autocomplete shows matching prior notes in a dropdown under the note field.",
+                    ),
+            ),
+            VersionNotes(
+                version = "0.11.12",
+                changesNewestFirst =
+                    listOf(
+                        "Peer Device Sync: after merge, account balances are recalculated from opening plus transactions (not by adding both phones’ stored balances).",
+                    ),
+            ),
+            VersionNotes(
+                version = "0.11.11",
+                changesNewestFirst =
+                    listOf(
+                        "Peer Device Sync: simpler post-sync messages (short lines and bullet notes instead of one long warning sentence).",
+                    ),
+            ),
+            VersionNotes(
+                version = "0.11.10",
+                changesNewestFirst =
+                    listOf(
+                        "Peer Device Sync: tap a phone on the network to use its address for pairing.",
+                        "Shorter 7-character pairing codes.",
+                    ),
+            ),
+            VersionNotes(
+                version = "0.11.9",
+                changesNewestFirst =
+                    listOf(
+                        "Peer Device Sync merges categories that share a name and type, so Sync now no longer stops with HTTP 400.",
+                    ),
+            ),
+            VersionNotes(
+                version = "0.11.8",
+                changesNewestFirst =
+                    listOf(
+                        "Peer Device Sync shows why the other phone rejected a sync instead of only an HTTP code.",
+                    ),
+            ),
+            VersionNotes(
+                version = "0.11.7",
+                changesNewestFirst =
+                    listOf(
+                        "Peer Device Sync sends this phone's trust token, so Sync now is accepted after the other phone approves pairing.",
+                    ),
+            ),
+            VersionNotes(
+                version = "0.11.6",
+                changesNewestFirst =
+                    listOf(
+                        "Peer Device Sync keeps the connection open long enough to read the other phone's pairing reply.",
+                    ),
+            ),
+            VersionNotes(
+                version = "0.11.5",
+                changesNewestFirst =
+                    listOf(
+                        "Peer Device Sync calls the other phone over the Wi‑Fi network, so pairing works when Web Manage already can.",
+                    ),
+            ),
+            VersionNotes(
+                version = "0.11.4",
+                changesNewestFirst =
+                    listOf(
+                        "Peer Device Sync: restart LAN server when it stopped; optional other-phone address for pairing.",
+                        "Clearer pairing errors when the code is from the wrong phone or the peer is unreachable.",
+                    ),
+            ),
+            VersionNotes(
+                version = "0.11.3",
+                changesNewestFirst =
+                    listOf(
+                        "Targets Android API 36 for Google Play requirements (security and performance).",
+                    ),
+            ),
+            VersionNotes(
                 version = "0.11.2",
                 changesNewestFirst =
                     listOf(

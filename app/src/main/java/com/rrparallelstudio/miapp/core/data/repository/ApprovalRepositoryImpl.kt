@@ -33,6 +33,7 @@ import com.rrparallelstudio.miapp.core.model.enums.TransactionSourceType
 import com.rrparallelstudio.miapp.core.model.enums.TransactionType
 import com.rrparallelstudio.miapp.core.owner.MmrOwnerProfileCoordinator
 import com.rrparallelstudio.miapp.core.owner.withLocalCreatedBy
+import com.rrparallelstudio.miapp.core.parser.account.SmsAccountOverrideStore
 import com.rrparallelstudio.miapp.core.parser.account.SmsAccountResolver
 import com.rrparallelstudio.miapp.core.parser.account.parsedSmsCandidateFromApproval
 import com.rrparallelstudio.miapp.core.parser.catalog.CardMetadataExtractor
@@ -62,6 +63,7 @@ class ApprovalRepositoryImpl
         private val categoryDao: CategoryDao,
         private val transactionDao: TransactionDao,
         private val smsAccountResolver: SmsAccountResolver,
+        private val smsAccountOverrideStore: SmsAccountOverrideStore,
         private val smsParserEngine: SmsParserEngine,
         private val loanTransactionCoordinator: LoanTransactionCoordinator,
         private val categorizationRuleEngine: CategorizationRuleEngine,
@@ -156,7 +158,7 @@ class ApprovalRepositoryImpl
 
                 val categoryId = resolveCategoryId(candidate, activeCategories)
 
-                val resolvedAccountId = smsAccountResolver.findExistingAccountId(candidate)
+                val resolvedAccountId = resolveSuggestedAccountId(candidate, allowCreate = false)
                 val cardNetwork = CardMetadataExtractor.detectNetwork(candidate.rawBody)
 
                 val approvalEntity =
@@ -256,6 +258,17 @@ class ApprovalRepositoryImpl
             if (current.approvalState != SmsApprovalState.PENDING) return
             MmrValidation.requirePositiveAmount(amount)
             val resolvedAccountId = accountId?.takeIf { it > 0L }
+            if (
+                resolvedAccountId != null &&
+                resolvedAccountId != current.extractedAccountId
+            ) {
+                smsAccountOverrideStore.remember(
+                    templateId = current.extractedTemplateId,
+                    instrument = current.extractedInstrument,
+                    smsLastFour = current.extractedCardLastFour,
+                    accountId = resolvedAccountId,
+                )
+            }
             val accountPaymentOverlay =
                 resolvedAccountId?.let { id ->
                     accountDao.getById(id)?.let { acct ->
@@ -540,13 +553,14 @@ class ApprovalRepositoryImpl
                 approvalLedgerDao.getSmsRecordById(approval.smsMessageRecordId)
                     ?: throw IllegalStateException("SMS record missing for this approval.")
 
-            val accountId =
+            val accountResolution =
                 resolveAccountIdForApproval(
                     approval = approval,
                     smsRecord = smsRecord,
                     fallbackAccountId = fallbackAccountId,
                     provisionFromSms = provisionAccountFromSms,
                 )
+            val accountId = accountResolution.accountId
             if (accountId <= 0L) {
                 throw IllegalStateException("No valid account available for approval.")
             }
@@ -582,6 +596,7 @@ class ApprovalRepositoryImpl
                 resolvePaymentMetadataForApprovedTransaction(
                     approval = approval,
                     accountId = accountId,
+                    learnedAccount = accountResolution.learned,
                 )
             val transaction =
                 TransactionEntity(
@@ -893,8 +908,9 @@ class ApprovalRepositoryImpl
         private suspend fun resolvePaymentMetadataForApprovedTransaction(
             approval: TransactionApprovalEntity,
             accountId: Long,
+            learnedAccount: Boolean = false,
         ): ApprovedTransactionPaymentMetadata {
-            if (!approval.userEdited) {
+            if (!approval.userEdited && !learnedAccount) {
                 return ApprovedTransactionPaymentMetadata(
                     paymentChannel = approval.extractedPaymentChannel,
                     paymentInstrument = approval.extractedInstrument,
@@ -911,23 +927,61 @@ class ApprovalRepositoryImpl
             )
         }
 
+        private data class AccountResolution(
+            val accountId: Long,
+            val learned: Boolean,
+        )
+
+        private suspend fun resolveSuggestedAccountId(
+            candidate: ParsedSmsCandidate,
+            allowCreate: Boolean,
+        ): Long? {
+            val learned =
+                smsAccountOverrideStore.resolve(
+                    templateId = candidate.templateId,
+                    instrument = candidate.instrument?.name,
+                    smsLastFour = candidate.accountLastDigits,
+                )
+            if (learned != null) return learned
+            return if (allowCreate) {
+                smsAccountResolver.provisionAccountId(candidate)
+            } else {
+                smsAccountResolver.findExistingAccountId(candidate)
+            }
+        }
+
         private suspend fun resolveAccountIdForApproval(
             approval: TransactionApprovalEntity,
             smsRecord: SmsMessageRecordEntity,
             fallbackAccountId: Long,
             provisionFromSms: Boolean,
-        ): Long {
+        ): AccountResolution {
             if (approval.userEdited) {
-                return approval.extractedAccountId?.takeIf { it > 0L } ?: fallbackAccountId
+                return AccountResolution(
+                    approval.extractedAccountId?.takeIf { it > 0L } ?: fallbackAccountId,
+                    learned = false,
+                )
+            }
+            val candidate = parsedSmsCandidateFromApproval(approval, smsRecord)
+            val learned =
+                smsAccountOverrideStore.resolve(
+                    templateId = candidate.templateId,
+                    instrument = candidate.instrument?.name,
+                    smsLastFour = candidate.accountLastDigits,
+                )
+            if (learned != null) {
+                return AccountResolution(learned, learned = true)
             }
             if (provisionFromSms) {
-                val candidate = parsedSmsCandidateFromApproval(approval, smsRecord)
                 val provisioned = smsAccountResolver.provisionAccountId(candidate)
                 if (provisioned != null && provisioned > 0L) {
-                    return provisioned
+                    return AccountResolution(provisioned, learned = false)
                 }
             }
-            return approval.extractedAccountId?.takeIf { it > 0L } ?: fallbackAccountId
+            return AccountResolution(
+                approval.extractedAccountId?.takeIf { it > 0L } ?: fallbackAccountId,
+                learned = false,
+            )
         }
 
         private suspend fun buildEntitiesFromCandidate(
@@ -936,7 +990,7 @@ class ApprovalRepositoryImpl
         ): Pair<SmsMessageRecordEntity, TransactionApprovalEntity> {
             val activeCategories = categoryDao.getActiveCategories().firstOrNull() ?: emptyList()
             val categoryId = resolveCategoryId(candidate, activeCategories)
-            val resolvedAccountId = smsAccountResolver.findExistingAccountId(candidate)
+            val resolvedAccountId = resolveSuggestedAccountId(candidate, allowCreate = false)
             val cardNetwork = CardMetadataExtractor.detectNetwork(candidate.rawBody)
             val unparsedManual = candidate.templateId == ManualSmsParseConstants.UNPARSED_TEMPLATE_ID
 

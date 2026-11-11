@@ -8,6 +8,8 @@ data class MmrLanSyncPayload(
     val exportedAtEpochMillis: Long,
     val sourceDeviceId: String,
     val sourceDeviceName: String? = null,
+    /** This phone's Peer Device Sync listen port, so the other phone can call back on a hotspot. */
+    val sourceListenPort: Int? = null,
     val sourceProfileId: String? = null,
     val sourceProfileName: String? = null,
     val knownProfiles: List<LanOwnerProfileRecord> = emptyList(),
@@ -24,6 +26,7 @@ data class MmrLanSyncPayload(
     val assets: List<LanAssetRecord> = emptyList(),
     val assetValuations: List<LanAssetValuationRecord> = emptyList(),
     val categorizationRules: List<LanCategorizationRuleRecord> = emptyList(),
+    val smsAccountOverrides: List<LanSmsAccountOverrideRecord> = emptyList(),
     val notificationRules: List<LanNotificationRuleRecord> = emptyList(),
     val appSettings: MmrAppSettingsBackup? = null,
     val displaySettings: AppDisplaySettingsSnapshot? = null,
@@ -70,6 +73,8 @@ data class LanAccountRecord(
     val isActive: Boolean,
     val isDefault: Boolean,
     val cardLastFour: String?,
+    val smsAutoCreated: Boolean = false,
+    val smsAutoCreatedUserModified: Boolean = false,
     val createdAt: Long,
     val updatedAt: Long,
 )

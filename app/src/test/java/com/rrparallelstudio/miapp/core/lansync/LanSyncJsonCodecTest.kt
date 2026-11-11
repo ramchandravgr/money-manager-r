@@ -4,6 +4,7 @@ import com.rrparallelstudio.miapp.core.backup.model.MmrAppSettingsBackup
 import com.rrparallelstudio.miapp.core.data.preferences.AppDisplaySettingsSnapshot
 import com.rrparallelstudio.miapp.core.lansync.model.LanAttachmentRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanRecurringRuleRecord
+import com.rrparallelstudio.miapp.core.lansync.model.LanSmsAccountOverrideRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanSyncTombstoneRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanTransactionRecord
 import com.rrparallelstudio.miapp.core.lansync.model.MmrLanSyncPayload
@@ -375,5 +376,52 @@ class LanSyncJsonCodecTest {
         assertEquals(MmrTimeDisplay.NONE_ASC, decoded.timeDisplay)
         assertEquals(MmrInputOrder.FROM_AMOUNT, decoded.inputOrder)
         assertEquals(MmrAmountColorScheme.SET_B, decoded.amountColorScheme)
+    }
+
+    @Test
+    fun roundTrip_preservesSmsAccountOverrides() {
+        val payload =
+            MmrLanSyncPayload(
+                formatVersion = LanSyncJsonCodec.CURRENT_FORMAT_VERSION,
+                exportedAtEpochMillis = 1L,
+                sourceDeviceId = "device-a",
+                categories = emptyList(),
+                subcategories = emptyList(),
+                accounts = emptyList(),
+                loans = emptyList(),
+                transactions = emptyList(),
+                smsAccountOverrides =
+                    listOf(
+                        LanSmsAccountOverrideRecord(
+                            templateId = "hdfc_cc_spent",
+                            instrument = "CREDIT_CARD",
+                            smsLastFour = "3903",
+                            accountSyncId = "acct-savings",
+                            updatedAt = 99L,
+                        ),
+                    ),
+            )
+        val decoded = LanSyncJsonCodec.decode(LanSyncJsonCodec.encode(payload))
+        assertEquals(payload.smsAccountOverrides, decoded.smsAccountOverrides)
+    }
+
+    @Test
+    fun roundTrip_preservesSourceListenPort() {
+        val payload =
+            MmrLanSyncPayload(
+                formatVersion = LanSyncJsonCodec.CURRENT_FORMAT_VERSION,
+                exportedAtEpochMillis = 1L,
+                sourceDeviceId = "device-a",
+                sourceListenPort = 39403,
+                categories = emptyList(),
+                subcategories = emptyList(),
+                accounts = emptyList(),
+                loans = emptyList(),
+                transactions = emptyList(),
+            )
+        val decoded = LanSyncJsonCodec.decode(LanSyncJsonCodec.encode(payload))
+        assertEquals(39403, decoded.sourceListenPort)
+        val withoutPort = JSONObject(LanSyncJsonCodec.encode(payload)).apply { remove("sourceListenPort") }
+        assertEquals(null, LanSyncJsonCodec.decode(withoutPort.toString()).sourceListenPort)
     }
 }

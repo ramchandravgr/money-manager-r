@@ -7,9 +7,9 @@ import java.security.SecureRandom
  * Full [LanSyncPairingOffer] is fetched over the local HTTP pairing endpoint when the code matches.
  */
 object LanSyncPairingPin {
-    const val LENGTH = 12
-    const val MIN_LENGTH = 10
-    const val MAX_LENGTH = 15
+    const val LENGTH = 7
+    const val MIN_LENGTH = 7
+    const val MAX_LENGTH = 7
 
     /** Crockford-style alphabet (no I, L, O, 0, 1) for easier reading aloud. */
     private const val ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
@@ -31,6 +31,16 @@ object LanSyncPairingPin {
             .uppercase()
             .replace("-", "")
             .replace(" ", "")
+
+    /** Live pairing field: upper case, Crockford charset only, max [LENGTH] characters. */
+    fun sanitizeEntry(raw: String): String =
+        buildString {
+            for (c in normalize(raw)) {
+                if (c !in ALPHABET) continue
+                append(c)
+                if (length >= LENGTH) break
+            }
+        }
 
     fun isValidFormat(normalized: String): Boolean =
         normalized.length in MIN_LENGTH..MAX_LENGTH &&

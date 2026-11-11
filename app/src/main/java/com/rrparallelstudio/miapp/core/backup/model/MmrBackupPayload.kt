@@ -45,6 +45,7 @@ data class MmrBackupPayload(
     val trustedLanDevices: List<TrustedLanDeviceEntity> = emptyList(),
     val transactionAttachments: List<MmrBackupAttachmentRecord> = emptyList(),
     val assetAttachments: List<MmrBackupAssetAttachmentRecord> = emptyList(),
+    val smsAccountOverrides: List<MmrBackupSmsAccountOverrideRecord> = emptyList(),
 )
 
 data class BackupRestoreSummary(

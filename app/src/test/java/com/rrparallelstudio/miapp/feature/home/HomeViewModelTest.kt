@@ -5,6 +5,7 @@ import com.rrparallelstudio.miapp.core.export.PeriodExcelDownloadsSaver
 import com.rrparallelstudio.miapp.core.export.PeriodExcelExporter
 import com.rrparallelstudio.miapp.feature.home.model.HomeUiEvent
 import com.rrparallelstudio.miapp.feature.home.model.HomeViewTab
+import com.rrparallelstudio.miapp.navigation.HomeLedgerScrollToTopNotifier
 import com.rrparallelstudio.miapp.navigation.HomeLedgerTabReselectNotifier
 import com.rrparallelstudio.miapp.test.FakeApprovalRepository
 import com.rrparallelstudio.miapp.test.FakeCategoryRepository
@@ -54,6 +55,7 @@ class HomeViewModelTest {
                     PeriodExcelExporter(context, PeriodExcelDownloadsSaver(context)),
                     FakeLanSyncRepository(),
                     HomeLedgerTabReselectNotifier(),
+                    HomeLedgerScrollToTopNotifier(),
                 )
 
             backgroundScope.launch { viewModel.uiState.collect { } }
@@ -81,6 +83,7 @@ class HomeViewModelTest {
                     PeriodExcelExporter(context, PeriodExcelDownloadsSaver(context)),
                     FakeLanSyncRepository(),
                     HomeLedgerTabReselectNotifier(),
+                    HomeLedgerScrollToTopNotifier(),
                 )
 
             backgroundScope.launch { viewModel.uiState.collect { } }
@@ -108,6 +111,7 @@ class HomeViewModelTest {
                     ),
                     FakeLanSyncRepository(),
                     HomeLedgerTabReselectNotifier(),
+                    HomeLedgerScrollToTopNotifier(),
                 )
             backgroundScope.launch { viewModel.uiState.collect { } }
             viewModel.uiState.first { !it.isLoading }

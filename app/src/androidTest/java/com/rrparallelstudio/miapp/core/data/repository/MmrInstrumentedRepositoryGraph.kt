@@ -107,6 +107,13 @@ class MmrInstrumentedRepositoryGraph(
             tombstoneRecorder = tombstoneRecorder,
         )
 
+    val smsAccountOverrideStore =
+        com.rrparallelstudio.miapp.core.parser.account.SmsAccountOverrideStore(
+            overrideDao = database.smsAccountOverrideDao(),
+            accountDao = database.accountDao(),
+            transactionApprovalDao = database.transactionApprovalDao(),
+        )
+
     val transactionRepository: TransactionRepositoryImpl =
         TransactionRepositoryImpl(
             transactionDao = database.transactionDao(),
@@ -117,6 +124,7 @@ class MmrInstrumentedRepositoryGraph(
             widgetRefreshTrigger = NoOpHomeScreenWidgetRefreshTrigger,
             budgetRepository = budgetRepository,
             ownerProfileCoordinator = ownerProfileCoordinator,
+            smsAccountOverrideStore = smsAccountOverrideStore,
         )
 
     val categoryRepository: CategoryRepositoryImpl =
@@ -200,6 +208,7 @@ class MmrInstrumentedRepositoryGraph(
             categorizationRuleEngine = CategorizationRuleEngine(database.categorizationRuleDao()),
             widgetRefreshTrigger = NoOpHomeScreenWidgetRefreshTrigger,
             ownerProfileCoordinator = ownerProfileCoordinator,
+            smsAccountOverrideStore = smsAccountOverrideStore,
         )
 
     fun close() {

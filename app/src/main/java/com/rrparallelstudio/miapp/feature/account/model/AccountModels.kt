@@ -11,6 +11,8 @@ data class AccountItemUi(
     val cardLastFour: String?,
     val isActive: Boolean,
     val isPrimary: Boolean = false,
+    /** "Auto Created" or "Auto Created - Modified" when SMS-provisioned. */
+    val smsOriginLabel: String? = null,
 )
 
 data class AccountListUiState(
@@ -32,6 +34,7 @@ data class AddEditAccountUiState(
     val isSaved: Boolean = false,
     val errorMessage: String? = null,
     val canSave: Boolean = false,
+    val smsOriginLabel: String? = null,
 )
 
 sealed interface AccountListUiEvent {

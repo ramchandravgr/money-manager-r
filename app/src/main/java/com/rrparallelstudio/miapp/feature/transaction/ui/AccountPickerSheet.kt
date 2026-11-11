@@ -497,13 +497,29 @@ private fun AccountPickerRow(
                 fontWeight = FontWeight.Bold,
             )
         }
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            modifier = Modifier.weight(1f),
-            color = titleColor,
-        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                color = titleColor,
+            )
+            val originLabel = account?.smsOriginLabel
+            if (!originLabel.isNullOrBlank()) {
+                Text(
+                    text = originLabel,
+                    style = MaterialTheme.typography.bodySmall,
+                    color =
+                        if (onLightSurface) {
+                            MmrBrandColors.TextMedium
+                        } else if (useDarkCanvas) {
+                            MmrBrandColors.onCanvasMuted()
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                )
+            }
+        }
         if (selected) {
             Icon(
                 imageVector = Icons.Filled.Check,

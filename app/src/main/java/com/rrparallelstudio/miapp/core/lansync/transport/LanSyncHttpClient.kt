@@ -1,5 +1,6 @@
 package com.rrparallelstudio.miapp.core.lansync.transport
 
+import android.net.Network
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.net.InetSocketAddress
@@ -14,11 +15,9 @@ object LanSyncHttpClient {
         authToken: String,
         body: String,
         timeoutMs: Int = 30_000,
+        network: Network? = null,
     ): HttpResponse {
-        val socket = Socket()
-        socket.connect(InetSocketAddress(host, port), timeoutMs)
-        socket.soTimeout = timeoutMs
-        socket.use {
+        connectedSocket(host, port, timeoutMs, network).use { socket ->
             val request =
                 buildString {
                     append("POST $path HTTP/1.1\r\n")
@@ -30,11 +29,8 @@ object LanSyncHttpClient {
                     append("Connection: close\r\n\r\n")
                     append(body)
                 }
-            BufferedOutputStream(it.getOutputStream()).use { out ->
-                out.write(request.toByteArray(Charsets.UTF_8))
-                out.flush()
-            }
-            return readResponse(BufferedInputStream(it.getInputStream()))
+            writeRequest(socket, request)
+            return readResponse(BufferedInputStream(socket.getInputStream()))
         }
     }
 
@@ -43,22 +39,17 @@ object LanSyncHttpClient {
         port: Int,
         path: String,
         timeoutMs: Int = 15_000,
+        network: Network? = null,
     ): HttpResponse {
-        val socket = Socket()
-        socket.connect(InetSocketAddress(host, port), timeoutMs)
-        socket.soTimeout = timeoutMs
-        socket.use {
+        connectedSocket(host, port, timeoutMs, network).use { socket ->
             val request =
                 buildString {
                     append("GET $path HTTP/1.1\r\n")
                     append("Host: $host:$port\r\n")
                     append("Connection: close\r\n\r\n")
                 }
-            BufferedOutputStream(it.getOutputStream()).use { out ->
-                out.write(request.toByteArray(Charsets.UTF_8))
-                out.flush()
-            }
-            return readResponse(BufferedInputStream(it.getInputStream()))
+            writeRequest(socket, request)
+            return readResponse(BufferedInputStream(socket.getInputStream()))
         }
     }
 
@@ -69,11 +60,9 @@ object LanSyncHttpClient {
         deviceId: String,
         authToken: String,
         timeoutMs: Int = 60_000,
+        network: Network? = null,
     ): BinaryHttpResponse {
-        val socket = Socket()
-        socket.connect(InetSocketAddress(host, port), timeoutMs)
-        socket.soTimeout = timeoutMs
-        socket.use {
+        connectedSocket(host, port, timeoutMs, network).use { socket ->
             val request =
                 buildString {
                     append("GET $path HTTP/1.1\r\n")
@@ -82,11 +71,54 @@ object LanSyncHttpClient {
                     append("${LanSyncHttpConstants.HEADER_AUTH_TOKEN}: $authToken\r\n")
                     append("Connection: close\r\n\r\n")
                 }
-            BufferedOutputStream(it.getOutputStream()).use { out ->
-                out.write(request.toByteArray(Charsets.UTF_8))
-                out.flush()
-            }
-            return readBinaryResponse(BufferedInputStream(it.getInputStream()))
+            writeRequest(socket, request)
+            return readBinaryResponse(BufferedInputStream(socket.getInputStream()))
+        }
+    }
+
+    /**
+     * Flush only. Closing [Socket.getOutputStream] closes the socket, so the reply cannot be read.
+     */
+    private fun writeRequest(
+        socket: Socket,
+        request: String,
+    ) {
+        val out = BufferedOutputStream(socket.getOutputStream())
+        out.write(request.toByteArray(Charsets.UTF_8))
+        out.flush()
+    }
+
+    private fun connectedSocket(
+        host: String,
+        port: Int,
+        timeoutMs: Int,
+        network: Network?,
+    ): Socket {
+        if (network == null) {
+            return connectSocket(host, port, timeoutMs, bindNetwork = null)
+        }
+        return try {
+            connectSocket(host, port, timeoutMs, bindNetwork = network)
+        } catch (_: Exception) {
+            connectSocket(host, port, timeoutMs, bindNetwork = null)
+        }
+    }
+
+    private fun connectSocket(
+        host: String,
+        port: Int,
+        timeoutMs: Int,
+        bindNetwork: Network?,
+    ): Socket {
+        val socket = Socket()
+        try {
+            bindNetwork?.bindSocket(socket)
+            socket.connect(InetSocketAddress(host, port), timeoutMs)
+            socket.soTimeout = timeoutMs
+            return socket
+        } catch (error: Exception) {
+            runCatching { socket.close() }
+            throw error
         }
     }
 

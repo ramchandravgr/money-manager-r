@@ -38,8 +38,11 @@ object DatabaseModule {
                 context,
                 MmrDatabase::class.java,
                 "mmr_database.db",
-            ).addMigrations(MmrMigrations.MIGRATION_26_27)
-            .fallbackToDestructiveMigration(dropAllTables = true)
+            ).addMigrations(
+                MmrMigrations.MIGRATION_26_27,
+                MmrMigrations.MIGRATION_27_28,
+                MmrMigrations.MIGRATION_28_29,
+            ).fallbackToDestructiveMigration(dropAllTables = true)
             // Pre-release: no shipped DBs; bump [MmrDatabase.SCHEMA_VERSION] without migration classes.
             .addCallback(
                 object : RoomDatabase.Callback() {
@@ -82,6 +85,11 @@ object DatabaseModule {
     fun provideSmsMessageRecordDao(
         database: MmrDatabase,
     ): com.rrparallelstudio.miapp.core.database.dao.SmsMessageRecordDao = database.smsMessageRecordDao()
+
+    @Provides
+    fun provideSmsAccountOverrideDao(
+        database: MmrDatabase,
+    ): com.rrparallelstudio.miapp.core.database.dao.SmsAccountOverrideDao = database.smsAccountOverrideDao()
 
     @Provides
     fun provideTransactionApprovalDao(

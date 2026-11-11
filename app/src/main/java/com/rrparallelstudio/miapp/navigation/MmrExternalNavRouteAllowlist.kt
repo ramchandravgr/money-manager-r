@@ -12,6 +12,8 @@ object MmrExternalNavRouteAllowlist {
             Regex("^configuration$"),
             Regex("^budgets$"),
             Regex("^google_drive_backup$"),
+            Regex("^lan_sync$"),
+            Regex("^web_manage$"),
             Regex("^approval_center(\\?.*)?$"),
             Regex("^add_transaction(\\?.*)?$"),
             Regex("^loan_detail/\\d+$"),

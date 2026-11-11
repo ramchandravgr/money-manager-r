@@ -50,15 +50,39 @@ val admobUnitStatsNative =
 
 android {
     namespace = "com.rrparallelstudio.miapp"
-    compileSdk = 35
+    compileSdk = 36
+
+    signingConfigs {
+        val uploadStoreFile =
+            localProperties.getProperty("UPLOAD_STORE_FILE")?.trim()?.takeIf { it.isNotEmpty() }
+        val uploadStorePassword = localProperties.getProperty("UPLOAD_STORE_PASSWORD")?.trim()
+        val uploadKeyAlias = localProperties.getProperty("UPLOAD_KEY_ALIAS")?.trim()
+        val uploadKeyPassword = localProperties.getProperty("UPLOAD_KEY_PASSWORD")?.trim()
+        require(
+            uploadStoreFile != null &&
+                uploadStorePassword != null &&
+                uploadKeyAlias != null &&
+                uploadKeyPassword != null,
+        ) {
+            "Play requires a release upload keystore. Set UPLOAD_STORE_FILE, UPLOAD_STORE_PASSWORD, " +
+                "UPLOAD_KEY_ALIAS, and UPLOAD_KEY_PASSWORD in local.properties " +
+                "(see local.properties.example). Debug signing is rejected by Play."
+        }
+        create("release") {
+            storeFile = rootProject.file(uploadStoreFile!!)
+            storePassword = uploadStorePassword
+            keyAlias = uploadKeyAlias
+            keyPassword = uploadKeyPassword
+        }
+    }
 
     defaultConfig {
         applicationId = "com.rrparallelstudio.miapp"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         // Play versionCode: major*10000 + minor*100 + patch (0.10.1 -> 1001). Bump every upload.
-        versionCode = 1102
-        versionName = "0.11.2"
+        versionCode = 1116
+        versionName = "0.11.16"
 
         testInstrumentationRunner = "com.rrparallelstudio.miapp.HiltTestRunner"
 
@@ -81,6 +105,7 @@ android {
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             // Initial Play releases: minify off (easier release debugging; see PROJECT_MEMORY §6 Release builds, audit §12 RELEASE-R8).
             isMinifyEnabled = false
             proguardFiles(

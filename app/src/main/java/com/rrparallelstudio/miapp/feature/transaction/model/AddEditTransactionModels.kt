@@ -89,6 +89,7 @@ data class AccountUi(
     val name: String,
     val type: com.rrparallelstudio.miapp.core.model.enums.AccountType = com.rrparallelstudio.miapp.core.model.enums.AccountType.BANK,
     val typeLabel: String = "Bank",
+    val smsOriginLabel: String? = null,
 )
 
 /** Accounts grouped by type; [TransferTo] adds a **Loans** section. */

@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package com.rrparallelstudio.miapp.feature.search.viewmodel
 
 import androidx.lifecycle.SavedStateHandle
@@ -23,6 +25,7 @@ import com.rrparallelstudio.miapp.feature.search.model.TransactionSearchUiState
 import com.rrparallelstudio.miapp.feature.transaction.model.CategoryUi
 import com.rrparallelstudio.miapp.feature.transaction.model.SubcategoryUi
 import com.rrparallelstudio.miapp.navigation.Screen
+import com.rrparallelstudio.miapp.ui.copy.MmrAccountSmsOriginLabels
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
@@ -196,7 +199,15 @@ class TransactionSearchViewModel
                 },
             ) { primary, secondary ->
                 SearchShellMeta(
-                    accounts = primary.accounts.map { SearchAccountUi(it.id, it.name, it.type) },
+                    accounts =
+                        primary.accounts.map {
+                            SearchAccountUi(
+                                it.id,
+                                it.name,
+                                it.type,
+                                smsOriginLabel = MmrAccountSmsOriginLabels.labelFor(it),
+                            )
+                        },
                     categories = mapCategoryTree(primary.categories),
                     showDateRangePicker = primary.showDateRangePicker,
                     pickerHighlightedCategoryId = secondary.pickerHighlightedCategoryId,

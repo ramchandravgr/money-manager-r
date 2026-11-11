@@ -18,6 +18,7 @@ import com.rrparallelstudio.miapp.core.database.dao.LoanPaymentDao
 import com.rrparallelstudio.miapp.core.database.dao.LoanScheduleDao
 import com.rrparallelstudio.miapp.core.database.dao.NotificationRuleDao
 import com.rrparallelstudio.miapp.core.database.dao.RecurringRuleDao
+import com.rrparallelstudio.miapp.core.database.dao.SmsAccountOverrideDao
 import com.rrparallelstudio.miapp.core.database.dao.SmsMessageRecordDao
 import com.rrparallelstudio.miapp.core.database.dao.SyncTombstoneDao
 import com.rrparallelstudio.miapp.core.database.dao.TransactionApprovalDao
@@ -40,6 +41,7 @@ import com.rrparallelstudio.miapp.core.database.entity.NotificationRuleEntity
 import com.rrparallelstudio.miapp.core.database.entity.OwnerProfileEntity
 import com.rrparallelstudio.miapp.core.database.entity.PendingLanPairRequestEntity
 import com.rrparallelstudio.miapp.core.database.entity.RecurringRuleEntity
+import com.rrparallelstudio.miapp.core.database.entity.SmsAccountOverrideEntity
 import com.rrparallelstudio.miapp.core.database.entity.SmsMessageRecordEntity
 import com.rrparallelstudio.miapp.core.database.entity.SubcategoryEntity
 import com.rrparallelstudio.miapp.core.database.entity.SyncTombstoneEntity
@@ -74,14 +76,15 @@ import com.rrparallelstudio.miapp.core.database.entity.TrustedLanDeviceEntity
         AssetValuationEntity::class,
         AssetAttachmentEntity::class,
         OwnerProfileEntity::class,
+        SmsAccountOverrideEntity::class,
     ],
-    version = 27,
+    version = 29,
     exportSchema = false,
 )
 @TypeConverters(EnumConverters::class)
 abstract class MmrDatabase : RoomDatabase() {
     companion object {
-        const val SCHEMA_VERSION = 27
+        const val SCHEMA_VERSION = 29
     }
 
     abstract fun transactionDao(): TransactionDao
@@ -129,4 +132,6 @@ abstract class MmrDatabase : RoomDatabase() {
     abstract fun assetAttachmentDao(): com.rrparallelstudio.miapp.core.database.dao.AssetAttachmentDao
 
     abstract fun ownerProfileDao(): com.rrparallelstudio.miapp.core.database.dao.OwnerProfileDao
+
+    abstract fun smsAccountOverrideDao(): SmsAccountOverrideDao
 }

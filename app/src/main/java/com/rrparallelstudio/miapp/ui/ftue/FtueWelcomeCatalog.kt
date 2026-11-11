@@ -129,6 +129,9 @@ object FtueWelcomeCatalog {
                             "Refresh — import new bank SMS from your backup folder (set under Settings → Transaction scan).",
                             FtueBulletIcon.ApprovalsInbox,
                         ),
+                        FtueBullet(
+                            "If you change the account, later SMS with the same pattern use that account (included in backup and Peer Device Sync).",
+                        ),
                     ),
             ),
             FtueWelcomeStep(
@@ -174,11 +177,11 @@ object FtueWelcomeCatalog {
                             FtueBulletIcon.DriveBackup,
                         ),
                         FtueBullet(
-                            "Peer Device Sync — merge on the same Wi‑Fi. Theme stays on each phone. History lists what replaced your data.",
+                            "Peer Device Sync — merge on the same Wi‑Fi or your hotspot. Auto sync when you open the app, or tap Sync now. Theme stays on each phone.",
                             FtueBulletIcon.LanSync,
                         ),
                         FtueBullet(
-                            "Web Manage — edit the ledger from a browser on your network.",
+                            "Web Manage — edit the ledger from a browser on your Wi‑Fi or phone hotspot.",
                             FtueBulletIcon.WebManage,
                         ),
                     ),

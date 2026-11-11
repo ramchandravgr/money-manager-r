@@ -3,6 +3,7 @@ package com.rrparallelstudio.miapp.feature.lansync
 import com.rrparallelstudio.miapp.core.domain.repository.LanSyncNowResult
 import com.rrparallelstudio.miapp.core.lansync.LanSyncMergeSummary
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LanSyncStatusMessageTest {
@@ -13,13 +14,12 @@ class LanSyncStatusMessageTest {
                 LanSyncNowResult(
                     summary = emptySummary(totalChanges = 3),
                     peerSuccesses = listOf("Pixel 8", "Galaxy Tab"),
-                    peerFailures = listOf("Old phone is not on this Wi‑Fi."),
+                    peerFailures = listOf("Old phone is not on this Wi‑Fi right now."),
                 ),
             )
-        assertEquals(
-            "Synced with Pixel 8, Galaxy Tab. Failed: Old phone is not on this Wi‑Fi.. 3 change(s) applied.",
-            message,
-        )
+        assertTrue(message.contains("Sync finished with Pixel 8, Galaxy Tab."))
+        assertTrue(message.contains("Old phone is not on this Wi‑Fi right now."))
+        assertTrue(message.contains("3 items updated from the other phone."))
     }
 
     @Test
@@ -32,7 +32,31 @@ class LanSyncStatusMessageTest {
                     peerFailures = emptyList(),
                 ),
             )
-        assertEquals("Synced with Pixel 8. 1 change(s) applied.", message)
+        assertEquals(
+            "Sync with Pixel 8 finished.\n1 item updated from the other phone.",
+            message,
+        )
+    }
+
+    @Test
+    fun formatSyncNowStatus_includesBulletedWarnings() {
+        val message =
+            LanSyncStatusMessages.formatSyncNowStatus(
+                LanSyncNowResult(
+                    summary =
+                        emptySummary(totalChanges = 2).copy(
+                            warnings =
+                                listOf(
+                                    "Salary — saved balance does not match your transaction list.",
+                                ),
+                        ),
+                    peerSuccesses = listOf("ONEPLUS A5010"),
+                    peerFailures = emptyList(),
+                    warnings = listOf("Salary — saved balance does not match your transaction list."),
+                ),
+            )
+        assertTrue(message.contains("Notes (sync still completed):"))
+        assertTrue(message.contains("• Salary — saved balance does not match your transaction list."))
     }
 
     private fun emptySummary(totalChanges: Int): LanSyncMergeSummary =

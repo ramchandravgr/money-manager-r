@@ -1,5 +1,6 @@
 package com.rrparallelstudio.miapp
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -12,6 +13,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -36,6 +38,7 @@ import com.rrparallelstudio.miapp.core.data.preferences.FtueStore
 import com.rrparallelstudio.miapp.core.data.preferences.LaunchPermissionStore
 import com.rrparallelstudio.miapp.core.data.preferences.ReleaseNotesStore
 import com.rrparallelstudio.miapp.core.database.MmrDatabase
+import com.rrparallelstudio.miapp.core.lansync.LanSyncAutoSyncCoordinator
 import com.rrparallelstudio.miapp.core.loan.EmiAutoPostCoordinator
 import com.rrparallelstudio.miapp.core.recurring.RecurringAutoPostCoordinator
 import com.rrparallelstudio.miapp.drive.GoogleDriveAutoBackupTrigger
@@ -92,7 +95,19 @@ class MainActivity : FragmentActivity() {
 
     @Inject lateinit var firebaseRemoteConfigSync: MmrFirebaseRemoteConfigSync
 
+    @Inject lateinit var lanSyncAutoSyncCoordinator: LanSyncAutoSyncCoordinator
+
     private var keepSystemSplash = true
+
+    /** Bumped when a new [Intent] arrives so notification / widget routes apply while the app is open. */
+    var externalNavIntentVersion by mutableIntStateOf(0)
+        private set
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        externalNavIntentVersion++
+    }
 
     @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -130,6 +145,7 @@ class MainActivity : FragmentActivity() {
                             Lifecycle.Event.ON_START -> {
                                 lifecycleScope.launch {
                                     firebaseRemoteConfigSync.refreshFromNetworkIfDueToday()
+                                    lanSyncAutoSyncCoordinator.onAppForeground()
                                 }
                             }
                             Lifecycle.Event.ON_STOP -> {
@@ -199,21 +215,22 @@ class MainActivity : FragmentActivity() {
                             }
                         }
                         Box(modifier = Modifier.fillMaxSize()) {
-                            val navIntent = intent
-                            val trustedNav =
-                                MmrNavRouteIntentTrust.isTrustedDelivery(this@MainActivity, navIntent)
-                            val deepLinkRoute =
-                                MmrExternalNavRouteAllowlist.sanitize(
-                                    navIntent?.getStringExtra(EXTRA_NAV_ROUTE),
-                                    trustSensitiveQueryParams = trustedNav,
-                                )
-                            LaunchedEffect(deepLinkRoute) {
+                            val navIntentVersion = externalNavIntentVersion
+                            LaunchedEffect(navIntentVersion) {
+                                val navIntent = this@MainActivity.intent
+                                val trustedNav =
+                                    MmrNavRouteIntentTrust.isTrustedDelivery(this@MainActivity, navIntent)
+                                val deepLinkRoute =
+                                    MmrExternalNavRouteAllowlist.sanitize(
+                                        navIntent.getStringExtra(EXTRA_NAV_ROUTE),
+                                        trustSensitiveQueryParams = trustedNav,
+                                    )
                                 deepLinkRoute?.let { route ->
                                     navController.navigate(route) {
                                         launchSingleTop = true
                                     }
-                                    navIntent?.removeExtra(EXTRA_NAV_ROUTE)
-                                    navIntent?.removeExtra(MmrNavRouteIntentTrust.EXTRA_INTERNAL_DELIVERY)
+                                    navIntent.removeExtra(EXTRA_NAV_ROUTE)
+                                    navIntent.removeExtra(MmrNavRouteIntentTrust.EXTRA_INTERNAL_DELIVERY)
                                 }
                             }
                             MmrNavHost(

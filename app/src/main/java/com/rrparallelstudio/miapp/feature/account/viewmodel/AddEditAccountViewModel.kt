@@ -8,6 +8,7 @@ import com.rrparallelstudio.miapp.core.domain.model.AccountDeletionPreview
 import com.rrparallelstudio.miapp.core.domain.repository.AccountRepository
 import com.rrparallelstudio.miapp.feature.account.model.AddEditAccountUiEvent
 import com.rrparallelstudio.miapp.feature.account.model.AddEditAccountUiState
+import com.rrparallelstudio.miapp.ui.copy.MmrAccountSmsOriginLabels
 import com.rrparallelstudio.miapp.ui.state.MmrUiMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,6 +45,7 @@ class AddEditAccountViewModel
                                 isActive = account.isActive,
                                 isPrimary = account.isDefault,
                                 canSave = true,
+                                smsOriginLabel = MmrAccountSmsOriginLabels.labelFor(account),
                             )
                         }
                     }
@@ -126,6 +128,12 @@ class AddEditAccountViewModel
                         )
                         if (state.isPrimary) {
                             accountRepository.setPrimaryAccount(state.accountId)
+                        }
+                        val refreshed = accountRepository.getAccountById(state.accountId)
+                        if (refreshed != null) {
+                            _uiState.update {
+                                it.copy(smsOriginLabel = MmrAccountSmsOriginLabels.labelFor(refreshed))
+                            }
                         }
                     } else {
                         val newId =

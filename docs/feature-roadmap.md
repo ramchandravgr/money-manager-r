@@ -39,7 +39,7 @@ From peer-sync product notes and in-progress LAN work.
 | `[~]` | **Recurring** per-rule mine / theirs | Only remaining **sync merge** dialog; bulk mine/theirs (not per-rule list yet) |
 | `[x]` | **LAN delete tombstones** (auto-apply, no prompt) | Room `sync_tombstones`; payload v3 `tombstones[]`; txn/recurring/loan/payment/account/category/subcategory/attachment; delete vs edit via `deletedAt` vs `updatedAt` |
 | `[x]` | **Duplicate account/category** without sync dialog | Default `MERGE_BY_NAME` in `LanSyncMerger` |
-| `[x]` | Balance warnings after merge | `LanSyncAccountBalanceValidator` → sync log |
+| `[x]` | Recalculate stored account balance after merge | `LanSyncAccountBalanceValidator.reconcileAfterMerge` |
 
 ### Sync provenance & catalog
 

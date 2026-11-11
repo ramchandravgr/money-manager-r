@@ -220,6 +220,8 @@ fun MmrIosSettingsNavRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     value: String = "",
+    /** Secondary line under [label] (e.g. SMS provisioning status); not title-cased again. */
+    labelSubtitle: String? = null,
     valueContent: (@Composable () -> Unit)? = null,
     showDividerBelow: Boolean = true,
     testTag: String? = null,
@@ -242,8 +244,7 @@ fun MmrIosSettingsNavRow(
                     ),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            MmrIosSettingsRowLabelText(
-                text = label,
+            Column(
                 modifier =
                     Modifier
                         .weight(1f, fill = true)
@@ -255,7 +256,18 @@ fun MmrIosSettingsNavRow(
                                     0.dp
                                 },
                         ),
-            )
+            ) {
+                MmrIosSettingsRowLabelText(text = label)
+                if (!labelSubtitle.isNullOrBlank()) {
+                    Text(
+                        text = labelSubtitle,
+                        color = MmrBrandColors.TextMedium,
+                        fontSize = 13.sp,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
             if (valueContent != null) {
                 Box(
                     modifier =
@@ -288,6 +300,7 @@ fun MmrIosSettingsSwitchRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     showDividerBelow: Boolean = true,
     switchTestTag: String? = null,
 ) {
@@ -313,6 +326,7 @@ fun MmrIosSettingsSwitchRow(
             Switch(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
+                enabled = enabled,
                 modifier = if (switchTestTag != null) Modifier.testTag(switchTestTag) else Modifier,
                 colors =
                     SwitchDefaults.colors(

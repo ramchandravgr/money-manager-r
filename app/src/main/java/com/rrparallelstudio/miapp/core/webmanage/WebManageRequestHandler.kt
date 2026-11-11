@@ -4,7 +4,9 @@ import android.content.Context
 import android.content.res.AssetManager
 import com.rrparallelstudio.miapp.core.common.dispatcher.IoDispatcher
 import com.rrparallelstudio.miapp.core.data.preferences.AppDisplaySettingsStore
+import com.rrparallelstudio.miapp.core.data.preferences.LanSyncIdentityStore
 import com.rrparallelstudio.miapp.core.data.preferences.WebManagePreferencesStore
+import com.rrparallelstudio.miapp.core.database.entity.AccountEntity
 import com.rrparallelstudio.miapp.core.database.entity.CategoryEntity
 import com.rrparallelstudio.miapp.core.database.entity.SubcategoryEntity
 import com.rrparallelstudio.miapp.core.database.relation.TransactionWithDetails
@@ -18,6 +20,8 @@ import com.rrparallelstudio.miapp.core.loan.LoanLinkedTransactionDeleteMode
 import com.rrparallelstudio.miapp.core.model.enums.CategoryType
 import com.rrparallelstudio.miapp.core.model.enums.SmsApprovalState
 import com.rrparallelstudio.miapp.core.model.enums.TransactionType
+import com.rrparallelstudio.miapp.core.transaction.CardRefundLedgerMath
+import com.rrparallelstudio.miapp.ui.copy.MmrAccountSmsOriginLabels
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.first
@@ -43,6 +47,7 @@ class WebManageRequestHandler
         private val categoryRepository: CategoryRepository,
         private val displaySettingsStore: AppDisplaySettingsStore,
         private val chartThemeSource: WebManageChartThemeSource,
+        private val lanSyncIdentityStore: LanSyncIdentityStore,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) {
         fun handle(
@@ -131,6 +136,8 @@ class WebManageRequestHandler
                     runIo { updateTransaction(path, body) }
                 path.matches(Regex("${WebManageHttpConstants.PATH_TRANSACTIONS}/\\d+")) && method == "DELETE" ->
                     runIo { deleteTransaction(path) }
+                path.matches(Regex("${WebManageHttpConstants.PATH_TRANSACTIONS}/\\d+/refund")) && method == "POST" ->
+                    runIo { applyTransactionRefund(path, body) }
                 path == WebManageHttpConstants.PATH_STATS_SPENDING && method == "GET" ->
                     runIo { spendingStats(query) }
                 path == WebManageHttpConstants.PATH_STATS_CHART && method == "GET" ->
@@ -599,6 +606,53 @@ class WebManageRequestHandler
             return HttpLanResponse.json(200, """{"status":"updated"}""")
         }
 
+        private suspend fun applyTransactionRefund(
+            path: String,
+            body: String,
+        ): HttpLanResponse {
+            val id = path.transactionId() ?: return HttpLanResponse.json(400, """{"error":"invalid_id"}""")
+            val existing =
+                transactionRepository.getTransactionDetailedById(id)
+                    ?: return HttpLanResponse.json(404, """{"error":"not_found"}""")
+            val txn = existing.transaction
+            if (txn.type != TransactionType.EXPENSE) {
+                return HttpLanResponse.json(400, """{"error":"expense_only"}""")
+            }
+            val json =
+                runCatching { JSONObject(body) }.getOrNull()
+                    ?: return HttpLanResponse.json(400, """{"error":"invalid_body"}""")
+            val refundAmount = json.optDouble("refundAmount", 0.0)
+            if (refundAmount <= 0.0 || !refundAmount.isFinite()) {
+                return HttpLanResponse.json(400, """{"error":"refund_amount_required"}""")
+            }
+            val math =
+                runCatching {
+                    CardRefundLedgerMath.applyRefund(
+                        currentNetAmount = txn.amount,
+                        currentOriginalAmount = txn.originalAmount,
+                        currentRefundedTotal = txn.refundedTotal,
+                        refundAmount = refundAmount,
+                    )
+                }.getOrElse {
+                    return HttpLanResponse.json(
+                        400,
+                        JSONObject().put("error", "invalid_refund").put("message", it.message).toString(),
+                    )
+                }
+            transactionRepository.updateTransaction(
+                txn.copy(
+                    amount = math.netAmount,
+                    originalAmount = math.originalAmount,
+                    refundedTotal = math.refundedTotal,
+                    updatedAt = System.currentTimeMillis(),
+                ),
+            )
+            val refreshed =
+                transactionRepository.getTransactionDetailedById(id)
+                    ?: return HttpLanResponse.json(500, """{"error":"refresh_failed"}""")
+            return HttpLanResponse.json(200, refreshed.toJson().toString())
+        }
+
         private suspend fun deleteTransaction(path: String): HttpLanResponse {
             val id = path.transactionId() ?: return HttpLanResponse.json(400, """{"error":"invalid_id"}""")
             val existing =
@@ -713,12 +767,7 @@ class WebManageRequestHandler
             val accounts = accountRepository.getActiveAccounts().first()
             val array = JSONArray()
             accounts.forEach { account ->
-                array.put(
-                    JSONObject()
-                        .put("id", account.id)
-                        .put("name", account.name)
-                        .put("type", account.type.name),
-                )
+                array.put(account.toMetaJson())
             }
             return HttpLanResponse.json(200, JSONObject().put("items", array).toString())
         }
@@ -818,8 +867,24 @@ class WebManageRequestHandler
             cal.set(Calendar.MILLISECOND, 999)
         }
 
+        private fun AccountEntity.toMetaJson(): JSONObject {
+            val originLabel = MmrAccountSmsOriginLabels.labelFor(this)
+            return JSONObject()
+                .put("id", id)
+                .put("name", name)
+                .put("type", type.name)
+                .put("smsAutoCreated", smsAutoCreated)
+                .put("smsAutoCreatedUserModified", smsAutoCreatedUserModified)
+                .apply {
+                    if (originLabel != null) {
+                        put("smsOriginLabel", originLabel)
+                    }
+                }
+        }
+
         private fun com.rrparallelstudio.miapp.core.database.relation.TransactionWithDetails.toJson(): JSONObject {
             val txn = transaction
+            val createdByLabel = formatCreatedByLabel(txn.createdByProfileId, txn.createdByDisplayName)
             return JSONObject()
                 .put("id", txn.id)
                 .put("amount", txn.amount)
@@ -836,6 +901,28 @@ class WebManageRequestHandler
                 .put("relatedAccountName", relatedAccount?.name)
                 .put("originalAmount", txn.originalAmount)
                 .put("refundedTotal", txn.refundedTotal)
+                .apply {
+                    if (createdByLabel != null) {
+                        put("createdByLabel", createdByLabel)
+                    }
+                    val gross = txn.originalAmount
+                    if (gross != null && txn.refundedTotal > 0.0) {
+                        put(
+                            "refundSummary",
+                            "Original $gross · Refunded ${txn.refundedTotal} · Net ${txn.amount}",
+                        )
+                    }
+                }
+        }
+
+        private fun formatCreatedByLabel(
+            profileId: String?,
+            snapshotName: String?,
+        ): String? {
+            if (profileId.isNullOrBlank()) return null
+            if (profileId == lanSyncIdentityStore.ownerProfileId) return null
+            val name = snapshotName?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+            return "Created by $name"
         }
 
         private fun String.approvalId(): Long? =

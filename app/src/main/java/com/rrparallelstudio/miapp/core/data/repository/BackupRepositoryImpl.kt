@@ -17,6 +17,7 @@ import com.rrparallelstudio.miapp.core.backup.model.BackupRestoreSummary
 import com.rrparallelstudio.miapp.core.backup.model.MmrBackupAssetAttachmentRecord
 import com.rrparallelstudio.miapp.core.backup.model.MmrBackupAttachmentRecord
 import com.rrparallelstudio.miapp.core.backup.model.MmrBackupPayload
+import com.rrparallelstudio.miapp.core.backup.model.MmrBackupSmsAccountOverrideRecord
 import com.rrparallelstudio.miapp.core.common.dispatcher.IoDispatcher
 import com.rrparallelstudio.miapp.core.database.MmrDatabase
 import com.rrparallelstudio.miapp.core.database.dao.BackupDao
@@ -138,7 +139,23 @@ class BackupRepositoryImpl
                     } else {
                         buildAssetAttachmentMetadataOnly()
                     },
+                smsAccountOverrides = buildSmsAccountOverrideRecords(),
             )
+
+        private suspend fun buildSmsAccountOverrideRecords(): List<MmrBackupSmsAccountOverrideRecord> {
+            val accountsById = backupDao.getAllAccounts().associateBy { it.id }
+            return backupDao.getAllSmsAccountOverrides().mapNotNull { entity ->
+                val account = accountsById[entity.accountId] ?: return@mapNotNull null
+                MmrBackupSmsAccountOverrideRecord(
+                    templateId = entity.templateId,
+                    instrument = entity.instrument,
+                    smsLastFour = entity.smsLastFour,
+                    accountSyncId = account.syncId,
+                    accountId = entity.accountId,
+                    updatedAt = entity.updatedAt,
+                )
+            }
+        }
 
         private suspend fun importPayload(
             rawPayload: MmrBackupPayload,
@@ -154,6 +171,11 @@ class BackupRepositoryImpl
             when (mode) {
                 BackupImportMode.REPLACE -> {
                     val planned = BackupImportPlanner.prepareReplace(payload)
+                    val smsOverrides =
+                        BackupImportPlanner.resolveSmsAccountOverrides(
+                            records = planned.smsAccountOverrides,
+                            accountsInPayload = planned.accounts,
+                        )
                     attachmentStore.clearAllFiles()
                     assetAttachmentStore.clearAllFiles()
                     backupDao.restoreAllUserData(
@@ -176,6 +198,7 @@ class BackupRepositoryImpl
                         trustedLanDevices = planned.trustedLanDevices,
                         transactionAttachments = planned.transactionAttachments.map { it.toEntity() },
                         assetAttachments = planned.assetAttachments.map { it.toAssetEntity() },
+                        smsAccountOverrides = smsOverrides,
                     )
                     restoreAttachments(planned.transactionAttachments, attachmentBytesBySyncId)
                     restoreAssetAttachments(planned.assetAttachments, attachmentBytesBySyncId)
@@ -185,6 +208,14 @@ class BackupRepositoryImpl
                 BackupImportMode.MERGE -> {
                     val existing = readExistingIds()
                     val planned = BackupImportPlanner.prepareMerge(payload, existing)
+                    val validAccountIds = existing.accounts + planned.accounts.map { it.id }
+                    val smsOverrides =
+                        BackupImportPlanner.resolveSmsAccountOverrides(
+                            records = planned.smsAccountOverrides,
+                            accountsInPayload = payload.accounts,
+                            extraSyncIdToAccountId = existing.accountSyncIdToId,
+                            validAccountIds = validAccountIds,
+                        )
                     backupDao.mergeUserData(
                         categories = planned.categories,
                         subcategories = planned.subcategories,
@@ -205,6 +236,7 @@ class BackupRepositoryImpl
                         trustedLanDevices = planned.trustedLanDevices,
                         transactionAttachments = planned.transactionAttachments.map { it.toEntity() },
                         assetAttachments = planned.assetAttachments.map { it.toAssetEntity() },
+                        smsAccountOverrides = smsOverrides,
                     )
                     restoreAttachments(planned.transactionAttachments, attachmentBytesBySyncId)
                     restoreAssetAttachments(planned.assetAttachments, attachmentBytesBySyncId)
@@ -405,11 +437,13 @@ class BackupRepositoryImpl
                 updatedAt = updatedAt,
             )
 
-        private suspend fun readExistingIds(): BackupImportPlanner.ExistingIds =
-            BackupImportPlanner.ExistingIds(
+        private suspend fun readExistingIds(): BackupImportPlanner.ExistingIds {
+            val accounts = backupDao.getAllAccounts()
+            return BackupImportPlanner.ExistingIds(
                 categories = backupDao.getAllCategories().map { it.id }.toSet(),
                 subcategories = backupDao.getAllSubcategories().map { it.id }.toSet(),
-                accounts = backupDao.getAllAccounts().map { it.id }.toSet(),
+                accounts = accounts.map { it.id }.toSet(),
+                accountSyncIdToId = accounts.associate { it.syncId to it.id },
                 loans = backupDao.getAllLoans().map { it.id }.toSet(),
                 loanPayments = backupDao.getAllLoanPayments().map { it.id }.toSet(),
                 transactions = backupDao.getAllTransactions().map { it.id }.toSet(),
@@ -427,6 +461,7 @@ class BackupRepositoryImpl
                 trustedLanDeviceIds = backupDao.getAllTrustedLanDevices().map { it.remoteDeviceId }.toSet(),
                 transactionAttachments = backupDao.getAllTransactionAttachments().map { it.id }.toSet(),
             )
+        }
 
         private fun summaryFromPayload(
             payload: MmrBackupPayload,

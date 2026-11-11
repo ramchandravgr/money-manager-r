@@ -72,6 +72,7 @@ class WebManageHttpServerInstrumentedTest {
                             webAppearance = "light",
                         )
                     },
+                lanSyncIdentityStore = LanSyncIdentityStore(context),
                 ioDispatcher = Dispatchers.IO,
             )
         server =

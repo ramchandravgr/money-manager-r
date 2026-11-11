@@ -1,0 +1,32 @@
+---
+description: Keep backup, LAN sync, and related wire paths in sync when user data shapes change
+alwaysApply: true
+---
+
+# Data wire parity (backup, peer sync, Web Manage)
+
+When you add or change **user data** that should survive device transfer, update **every channel that moves that data**, not just one path.
+
+## Channels
+
+| Channel | Typical touch points |
+|---------|----------------------|
+| **Room** | Entity, DAO, migration, `MmrDatabase` version |
+| **Signed backup** | `MmrBackupPayload`, `BackupJsonCodec` (+ format bump), `BackupDao` restore/merge, `BackupRepositoryImpl`, `BackupImportPlanner`, tests under `core/backup/` |
+| **Peer sync (LAN)** | `MmrLanSyncPayload`, `LanSyncJsonCodec`, `LanSyncExporter`, `LanSyncMerger`, LAN format version, `LanSyncJsonCodecTest` / merger tests |
+| **Web Manage** | Server payload handlers and UI if the entity is exposed on the LAN web API |
+| **Docs / release** | `docs/versioning.md`, `MmrReleaseNotesCatalog`, `PROJECT_MEMORY.md`; FTUE if the tour describes the feature |
+
+## When to bump wire versions
+
+- **Backup JSON** (`BackupJsonCodec.CURRENT_FORMAT_VERSION`): new required fields or semantics that vN exports must carry; keep `IMPORTABLE_FORMAT_VERSIONS` for still-readable older exports when possible.
+- **LAN** (`LanSyncJsonCodec.CURRENT_FORMAT_VERSION`): same rule; peers on mismatched versions cannot sync until upgraded.
+
+## Checklist (implicit on every data-shape change)
+
+1. Export includes the new rows/fields.
+2. Import/merge resolves foreign keys (`syncId` maps, planners, sanitizers).
+3. `clearAllUserData` / tombstones if the table is user data.
+4. Run `:app:compileDebugKotlin` and targeted backup + LAN tests.
+
+Do **not** ship Room-only storage for features that FTUE or settings already promise on backup or peer sync.

@@ -1,11 +1,13 @@
 package com.rrparallelstudio.miapp.core.data.repository
 
+import android.util.Log
 import com.rrparallelstudio.miapp.core.attachment.AssetAttachmentStore
 import com.rrparallelstudio.miapp.core.attachment.MmrAttachmentSyncId
 import com.rrparallelstudio.miapp.core.attachment.TransactionAttachmentStore
 import com.rrparallelstudio.miapp.core.backup.model.MmrAppSettingsBackup
 import com.rrparallelstudio.miapp.core.common.dispatcher.IoDispatcher
 import com.rrparallelstudio.miapp.core.data.preferences.LanSyncIdentityStore
+import com.rrparallelstudio.miapp.core.data.preferences.LanSyncLastPeerAddressStore
 import com.rrparallelstudio.miapp.core.data.preferences.LanSyncPeerMode
 import com.rrparallelstudio.miapp.core.data.preferences.LanSyncPreferencesStore
 import com.rrparallelstudio.miapp.core.data.preferences.LanSyncWifiTrustStore
@@ -23,6 +25,7 @@ import com.rrparallelstudio.miapp.core.domain.repository.WebManageRepository
 import com.rrparallelstudio.miapp.core.lansync.LanSyncAttachmentPuller
 import com.rrparallelstudio.miapp.core.lansync.LanSyncExporter
 import com.rrparallelstudio.miapp.core.lansync.LanSyncJsonCodec
+import com.rrparallelstudio.miapp.core.lansync.LanSyncManualPeerAddress
 import com.rrparallelstudio.miapp.core.lansync.LanSyncMergeOptions
 import com.rrparallelstudio.miapp.core.lansync.LanSyncMergeSummary
 import com.rrparallelstudio.miapp.core.lansync.LanSyncMerger
@@ -37,6 +40,7 @@ import com.rrparallelstudio.miapp.core.lansync.LocalLanServerCoordinator
 import com.rrparallelstudio.miapp.core.lansync.LocalLanServerMode
 import com.rrparallelstudio.miapp.core.lansync.LocalLanServerNotifier
 import com.rrparallelstudio.miapp.core.lansync.model.MmrLanSyncPayload
+import com.rrparallelstudio.miapp.core.lansync.transport.DiscoveredLanPeer
 import com.rrparallelstudio.miapp.core.lansync.transport.HttpLanResponse
 import com.rrparallelstudio.miapp.core.lansync.transport.LanSyncHttpClient
 import com.rrparallelstudio.miapp.core.lansync.transport.LanSyncHttpConstants
@@ -47,10 +51,13 @@ import dagger.Lazy
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import javax.inject.Inject
@@ -67,6 +74,7 @@ class LanSyncRepositoryImpl
         private val smsScanSettingsStore: SmsScanSettingsStore,
         private val wifiTrustStore: LanSyncWifiTrustStore,
         private val preferencesStore: LanSyncPreferencesStore,
+        private val lastPeerAddressStore: LanSyncLastPeerAddressStore,
         private val localLanServerCoordinator: LocalLanServerCoordinator,
         private val webManageRepository: Lazy<WebManageRepository>,
         private val lanServerNotifier: LocalLanServerNotifier,
@@ -82,17 +90,38 @@ class LanSyncRepositoryImpl
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : LanSyncRepository {
         private val scope = CoroutineScope(SupervisorJob() + ioDispatcher)
+        private val syncMutex = Mutex()
         private var httpServer: LanSyncHttpServer? = null
         private var activePairingPin: String? = null
         private var activePairingPinIssuedAtMillis: Long = 0L
+        private var resolvedPairDeviceId: String? = null
+        private var resolvedPairHost: String? = null
+        private var resolvedPairPort: Int = -1
 
         private val _sessionState = MutableStateFlow(LanSyncSessionState())
         override val sessionState: StateFlow<LanSyncSessionState> = _sessionState.asStateFlow()
 
+        private val onLocalNetworkChanged: () -> Unit = {
+            scope.launch { publishState() }
+        }
+
         override suspend fun refreshSessionState() {
             withContext(ioDispatcher) {
+                ensurePeerSyncInfrastructure()
                 publishState()
             }
+        }
+
+        override fun refreshPeerDiscovery() {
+            if (!identityStore.isLanSyncEnabled()) return
+            ensurePeerSyncInfrastructure()
+            val server = httpServer ?: return
+            nsdHelper.registerService(
+                deviceId = identityStore.deviceId,
+                displayName = identityStore.displayName,
+                port = server.port,
+            )
+            nsdHelper.refreshDiscovery { scope.launch { publishState() } }
         }
 
         override fun setLanSyncEnabled(enabled: Boolean) {
@@ -104,6 +133,7 @@ class LanSyncRepositoryImpl
             if (enabled) {
                 startInfrastructure()
             } else {
+                preferencesStore.autoSyncOnAppOpen = false
                 stopInfrastructure()
             }
             scope.launch { publishState() }
@@ -123,13 +153,17 @@ class LanSyncRepositoryImpl
                 inboundAuthToken = identityStore.inboundAuthToken,
             )
 
-        override suspend fun resolvePairingInput(raw: String): LanSyncPairingOffer =
+        override suspend fun resolvePairingInput(
+            raw: String,
+            manualPeerAddress: String?,
+        ): LanSyncPairingOffer =
             withContext(ioDispatcher) {
+                ensurePeerSyncInfrastructure()
                 val pin = LanSyncPairingPin.normalize(raw.trim())
                 if (!LanSyncPairingPin.isValidFormat(pin)) {
                     throw IllegalArgumentException("Enter a valid pairing code from the other device.")
                 }
-                resolveOfferFromLanPeers(pin)
+                resolveOfferFromLanPeers(pin, manualPeerAddress)
             }
 
         override suspend fun trustDeviceFromPairingOffer(
@@ -188,6 +222,7 @@ class LanSyncRepositoryImpl
         override suspend fun removeTrustedDevice(deviceId: String) {
             withContext(ioDispatcher) {
                 lanSyncDao.deleteTrustedDevice(deviceId)
+                lastPeerAddressStore.remove(deviceId)
                 publishState()
             }
         }
@@ -207,43 +242,111 @@ class LanSyncRepositoryImpl
             scope.launch { publishState() }
         }
 
-        override suspend fun syncNow(mergeOptions: LanSyncMergeOptions): LanSyncNowResult =
-            withContext(ioDispatcher) {
-                ensureReadyForSync()
-                val allTrusted = lanSyncDao.getTrustedDevices()
-                val targets = resolveSyncTargets(allTrusted)
-                ensureSyncTargetsPresent(allTrusted, targets)
-                syncWithPeers(
-                    devices = targets,
-                    oneWayLocalPayload = false,
-                    mergeOptions = mergeOptions,
-                )
+        override fun setAutoSyncOnAppOpen(enabled: Boolean) {
+            preferencesStore.autoSyncOnAppOpen = enabled
+            scope.launch { publishState() }
+        }
+
+        override suspend fun syncActiveTrustedPeersOnAppOpen(mergeOptions: LanSyncMergeOptions): LanSyncNowResult? =
+            syncMutex.withLock {
+                withContext(ioDispatcher) {
+                    if (!preferencesStore.autoSyncOnAppOpen || !identityStore.isLanSyncEnabled()) {
+                        return@withContext null
+                    }
+                    runCatching { ensureReadyForSync() }.getOrElse { return@withContext null }
+                    ensurePeerSyncInfrastructure()
+                    refreshPeerDiscovery()
+                    val allTrusted = lanSyncDao.getTrustedDevices()
+                    if (allTrusted.isEmpty()) return@withContext null
+                    val baseTargets = resolveSyncTargets(allTrusted)
+                    if (baseTargets.isEmpty()) return@withContext null
+                    val discoveredIds = nsdHelper.discoveredPeers().map { it.deviceId }.toSet()
+                    val activeTargets = baseTargets.filter { it.remoteDeviceId in discoveredIds }
+                    if (activeTargets.isEmpty()) return@withContext null
+                    runCatching {
+                        syncWithPeers(
+                            devices = activeTargets,
+                            oneWayLocalPayload = false,
+                            mergeOptions = mergeOptions,
+                        )
+                    }.getOrNull()
+                }
+            }
+
+        override suspend fun syncNow(
+            mergeOptions: LanSyncMergeOptions,
+            manualPeerAddress: String?,
+        ): LanSyncNowResult =
+            syncMutex.withLock {
+                withContext(ioDispatcher) {
+                    ensureReadyForSync()
+                    val manual = manualPeerAddress?.trim()?.ifBlank { null }
+                    if (manual == null) {
+                        refreshPeerDiscovery()
+                        delay(DISCOVERY_BEFORE_SYNC_MS)
+                    }
+                    val allTrusted = lanSyncDao.getTrustedDevices()
+                    val targets = resolveSyncTargets(allTrusted)
+                    ensureSyncTargetsPresent(allTrusted, targets)
+                    val manualForPeer = manual?.takeIf { targets.size == 1 }
+                    syncWithPeers(
+                        devices = targets,
+                        oneWayLocalPayload = false,
+                        mergeOptions = mergeOptions,
+                        manualPeerAddress = manualForPeer,
+                    )
+                }
             }
 
         override suspend fun restoreFromPeer(
             remoteDeviceId: String,
             mergeOptions: LanSyncMergeOptions,
         ): LanSyncMergeSummary =
-            withContext(ioDispatcher) {
-                ensureReadyForSync()
-                val device =
-                    lanSyncDao.getTrustedDevice(remoteDeviceId)
-                        ?: throw IllegalArgumentException("Trusted device not found.")
-                val result =
-                    syncWithPeers(
-                        devices = listOf(device),
-                        oneWayLocalPayload = true,
-                        mergeOptions = mergeOptions,
-                        successLogDetail = { peer, summary ->
-                            "Restored from ${peer.displayName} (one-way pull). " +
-                                "${summary.totalChanges} change(s) applied."
-                        },
-                    )
-                if (result.peerFailures.isNotEmpty()) {
-                    throw IllegalStateException(result.peerFailures.first())
+            syncMutex.withLock {
+                withContext(ioDispatcher) {
+                    ensureReadyForSync()
+                    val device =
+                        lanSyncDao.getTrustedDevice(remoteDeviceId)
+                            ?: throw IllegalArgumentException("Trusted device not found.")
+                    val result =
+                        syncWithPeers(
+                            devices = listOf(device),
+                            oneWayLocalPayload = true,
+                            mergeOptions = mergeOptions,
+                            successLogDetail = { peer, summary ->
+                                "Restored from ${peer.displayName} (one-way pull). " +
+                                    "${summary.totalChanges} change(s) applied."
+                            },
+                        )
+                    if (result.peerFailures.isNotEmpty()) {
+                        throw IllegalStateException(result.peerFailures.first())
+                    }
+                    result.summary
                 }
-                result.summary
             }
+
+        private fun resolvePeerForSync(
+            device: TrustedLanDeviceEntity,
+            manualPeerAddress: String? = null,
+        ): DiscoveredLanPeer? {
+            LanSyncManualPeerAddress.parse(manualPeerAddress)?.let { manual ->
+                return DiscoveredLanPeer(
+                    deviceId = device.remoteDeviceId,
+                    displayName = device.displayName,
+                    host = manual.host,
+                    port = manual.port,
+                )
+            }
+            nsdHelper.findPeer(device.remoteDeviceId)?.let { return it }
+            val stored = lastPeerAddressStore.get(device.remoteDeviceId) ?: return null
+            val endpoint = LanSyncManualPeerAddress.parse(stored) ?: return null
+            return DiscoveredLanPeer(
+                deviceId = device.remoteDeviceId,
+                displayName = device.displayName,
+                host = endpoint.host,
+                port = endpoint.port,
+            )
+        }
 
         private fun resolveSyncTargets(trusted: List<TrustedLanDeviceEntity>): List<TrustedLanDeviceEntity> {
             if (trusted.isEmpty()) return trusted
@@ -275,8 +378,8 @@ class LanSyncRepositoryImpl
             if (!identityStore.isLanSyncEnabled()) {
                 throw IllegalStateException("Turn on Peer Device Sync in settings first.")
             }
-            if (!networkUtils.isOnWifi()) {
-                throw IllegalStateException("Connect to Wi‑Fi to sync.")
+            if (!networkUtils.canUseLocalPeerSync()) {
+                throw IllegalStateException("Connect to Wi‑Fi or join a phone hotspot before syncing.")
             }
             val ssid = networkUtils.wifiInfo().ssid
             if (ssid != null && !wifiTrustStore.isTrusted(ssid)) {
@@ -288,8 +391,15 @@ class LanSyncRepositoryImpl
             devices: List<TrustedLanDeviceEntity>,
             oneWayLocalPayload: Boolean,
             mergeOptions: LanSyncMergeOptions,
+            manualPeerAddress: String? = null,
             successLogDetail: (TrustedLanDeviceEntity, LanSyncMergeSummary) -> String =
-                { _, summary -> "${summary.totalChanges} change(s) applied" },
+                { _, summary ->
+                    if (summary.totalChanges == 0) {
+                        "Already in sync"
+                    } else {
+                        "${summary.totalChanges} items updated from the other phone"
+                    }
+                },
         ): LanSyncNowResult {
             if (devices.isEmpty()) {
                 throw IllegalStateException("Add at least one trusted device.")
@@ -311,10 +421,10 @@ class LanSyncRepositoryImpl
             val failures = mutableListOf<String>()
             for (device in devices) {
                 val peer =
-                    nsdHelper.findPeer(device.remoteDeviceId)
+                    resolvePeerForSync(device, manualPeerAddress)
                         ?: run {
-                            failures += "${device.displayName} is not on this Wi‑Fi."
-                            recordSyncLog(device.displayName, false, "Device not found on network.", null)
+                            failures += "${device.displayName} is not on this network right now."
+                            recordSyncLog(device.displayName, false, "Other phone not found on the network.", null)
                             continue
                         }
                 val outboundPayload: MmrLanSyncPayload =
@@ -322,6 +432,7 @@ class LanSyncRepositoryImpl
                         exporter.buildEmptyPayload(
                             sourceDeviceId = identityStore.deviceId,
                             sourceDeviceName = identityStore.displayName,
+                            sourceListenPort = currentListenPort(),
                         )
                     } else {
                         exporter.buildPayload(
@@ -331,6 +442,7 @@ class LanSyncRepositoryImpl
                             displaySettings = null,
                             includeAttachments = preferencesStore.includeAttachments,
                             peerDeviceId = device.remoteDeviceId,
+                            sourceListenPort = currentListenPort(),
                         )
                     }
                 val localPayloadJson = LanSyncJsonCodec.encode(outboundPayload)
@@ -341,21 +453,25 @@ class LanSyncRepositoryImpl
                             port = peer.port,
                             path = LanSyncHttpConstants.PATH_SYNC,
                             deviceId = identityStore.deviceId,
-                            authToken = device.theirAuthToken,
+                            authToken = identityStore.inboundAuthToken,
                             body = localPayloadJson,
+                            network = networkUtils.wifiNetwork(),
                         )
                     }.getOrElse { error ->
-                        failures += "${device.displayName}: ${error.message ?: "connection failed"}"
-                        recordSyncLog(device.displayName, false, "Connection failed.", null)
+                        failures += "${device.displayName}: could not connect over Wi‑Fi."
+                        recordSyncLog(device.displayName, false, "Could not connect.", null)
                         continue
                     }
                 if (response.statusCode != 200) {
-                    failures += "${device.displayName} (${response.statusCode})"
+                    val detail = syncHttpFailureDetail(device.displayName, response.statusCode, response.body)
+                    failures += detail
                     recordSyncLog(device.displayName, false, "HTTP ${response.statusCode}", null)
                     continue
                 }
                 val remotePayload =
-                    runCatching { LanSyncJsonCodec.decode(response.body).withoutDeviceAppearance() }.getOrElse { error ->
+                    runCatching {
+                        LanSyncJsonCodec.decode(response.body).withoutDeviceAppearance()
+                    }.getOrElse { error ->
                         failures += "${device.displayName}: invalid sync payload"
                         recordSyncLog(
                             device.displayName,
@@ -372,11 +488,13 @@ class LanSyncRepositoryImpl
                         }
                     }
                 if (summaryResult.isFailure) {
-                    failures += "${device.displayName}: merge failed"
+                    val detail =
+                        summaryResult.exceptionOrNull()?.message ?: "Data from the other phone could not be applied."
+                    failures += "${device.displayName}: $detail"
                     recordSyncLog(
                         device.displayName,
                         false,
-                        summaryResult.exceptionOrNull()?.message ?: "Merge failed",
+                        detail,
                         null,
                     )
                     continue
@@ -387,7 +505,7 @@ class LanSyncRepositoryImpl
                             host = peer.host,
                             port = peer.port,
                             deviceId = identityStore.deviceId,
-                            authToken = device.theirAuthToken,
+                            authToken = identityStore.inboundAuthToken,
                             records = remotePayload.attachments,
                         )
                     }
@@ -398,7 +516,7 @@ class LanSyncRepositoryImpl
                             host = peer.host,
                             port = peer.port,
                             deviceId = identityStore.deviceId,
-                            authToken = device.theirAuthToken,
+                            authToken = identityStore.inboundAuthToken,
                             records = remotePayload.assetAttachments,
                         )
                     }
@@ -412,7 +530,8 @@ class LanSyncRepositoryImpl
                 }
                 total = total + summary
                 successes += device.displayName
-                val warningText = summary.warnings.takeIf { it.isNotEmpty() }?.joinToString(" ")
+                lastPeerAddressStore.put(device.remoteDeviceId, peer.host, peer.port)
+                val warningText = summary.warnings.takeIf { it.isNotEmpty() }?.joinToString("\n")
                 recordSyncLog(
                     device.displayName,
                     true,
@@ -456,7 +575,7 @@ class LanSyncRepositoryImpl
 
         private suspend fun publishState() {
             val offer = pairingOffer()
-            val port = httpServer?.port ?: LanSyncHttpConstants.DEFAULT_PORT
+            val port = httpServer?.takeIf { it.isListening() }?.port ?: LanSyncHttpConstants.DEFAULT_PORT
             val wifi = networkUtils.wifiInfo()
             _sessionState.value =
                 LanSyncSessionState(
@@ -471,7 +590,7 @@ class LanSyncRepositoryImpl
                         },
                     trustedDevices = lanSyncDao.getTrustedDevices(),
                     discoveredPeers = nsdHelper.discoveredPeers(),
-                    onWifi = networkUtils.isOnWifi(),
+                    onWifi = networkUtils.canUseLocalPeerSync(),
                     wifiSsid = wifi.ssid,
                     localSyncUrl = networkUtils.localBaseUrl(port),
                     serverPort = port,
@@ -480,9 +599,19 @@ class LanSyncRepositoryImpl
                     peerMode = preferencesStore.peerMode,
                     selectedPeerDeviceId = preferencesStore.selectedPeerDeviceId,
                     includeAttachments = preferencesStore.includeAttachments,
+                    autoSyncOnAppOpen = preferencesStore.autoSyncOnAppOpen,
                     pendingApprovalCount = transactionApprovalDao.getPendingCountOnce(),
                     pendingPairRequests = lanSyncDao.getPendingPairRequests(),
                 )
+        }
+
+        private fun ensurePeerSyncInfrastructure() {
+            if (!identityStore.isLanSyncEnabled()) return
+            val server = httpServer
+            if (server == null || !server.isListening()) {
+                stopInfrastructure()
+                startInfrastructure()
+            }
         }
 
         private fun startInfrastructure() {
@@ -595,36 +724,86 @@ class LanSyncRepositoryImpl
                 }.toMap()
         }
 
-        private suspend fun resolveOfferFromLanPeers(pin: String): LanSyncPairingOffer {
-            val peers = nsdHelper.discoveredPeers().filter { it.deviceId != identityStore.deviceId }
-            if (peers.isEmpty()) {
-                throw IllegalArgumentException(
-                    "No devices found on this network. Turn on Peer Device Sync on both phones and use the same Wi‑Fi.",
-                )
-            }
+        private suspend fun resolveOfferFromLanPeers(
+            pin: String,
+            manualPeerAddress: String?,
+        ): LanSyncPairingOffer {
             val path =
                 LanSyncHttpConstants.PATH_PAIRING_OFFER +
                     "?code=${java.net.URLEncoder.encode(pin, Charsets.UTF_8.name())}"
-            for (peer in peers) {
-                val response =
+            val targets = linkedSetOf<Pair<String, Int>>()
+            val manual = LanSyncManualPeerAddress.parse(manualPeerAddress)
+            if (manual != null) {
+                targets.add(manual.host to manual.port)
+            } else {
+                nsdHelper
+                    .discoveredPeers()
+                    .filter { it.deviceId != identityStore.deviceId }
+                    .forEach { targets.add(it.host to it.port) }
+            }
+            if (targets.isEmpty()) {
+                throw IllegalArgumentException(
+                    "No phones found on this network. Open Peer Device Sync on the other phone, " +
+                        "turn on Sync on same Wi‑Fi, and wait until it appears under On this network.",
+                )
+            }
+            var wrongCode = false
+            var unreachable = false
+            var lastReachError: String? = null
+            val wifi = networkUtils.wifiNetwork()
+            for ((host, port) in targets) {
+                val attempt =
                     runCatching {
-                        LanSyncHttpClient.get(host = peer.host, port = peer.port, path = path)
-                    }.getOrNull()
-                if (response?.statusCode == 200) {
-                    val json = runCatching { JSONObject(response.body) }.getOrNull() ?: continue
-                    val deviceId = json.optString("deviceId")
-                    val inboundAuthToken = json.optString("inboundAuthToken")
-                    if (deviceId.isBlank() || inboundAuthToken.isBlank()) continue
-                    return LanSyncPairingOffer(
-                        deviceId = deviceId,
-                        displayName = json.optString("displayName").ifBlank { "MMR device" },
-                        inboundAuthToken = inboundAuthToken,
-                    )
+                        LanSyncHttpClient.get(host = host, port = port, path = path, network = wifi)
+                    }
+                val response = attempt.getOrNull()
+                if (attempt.isFailure) {
+                    lastReachError = attempt.exceptionOrNull()?.message
+                }
+                when (response?.statusCode) {
+                    200 -> {
+                        val json = runCatching { JSONObject(response.body) }.getOrNull() ?: continue
+                        val deviceId = json.optString("deviceId")
+                        val inboundAuthToken = json.optString("inboundAuthToken")
+                        if (deviceId.isBlank() || inboundAuthToken.isBlank()) continue
+                        resolvedPairDeviceId = deviceId
+                        resolvedPairHost = host
+                        resolvedPairPort = port
+                        return LanSyncPairingOffer(
+                            deviceId = deviceId,
+                            displayName = json.optString("displayName").ifBlank { "MMR device" },
+                            inboundAuthToken = inboundAuthToken,
+                        )
+                    }
+                    404 -> wrongCode = true
+                    else -> if (response == null) unreachable = true
                 }
             }
-            throw IllegalArgumentException(
-                "Pairing code not found. Check the code and that both devices are on the same Wi‑Fi.",
-            )
+            throw when {
+                wrongCode ->
+                    IllegalArgumentException(
+                        "That code does not match the other phone. Copy the pairing code from " +
+                            "the other device's screen (not this phone's code under This device).",
+                    )
+                unreachable ->
+                    IllegalArgumentException(
+                        buildString {
+                            append(
+                                "Could not reach the other phone over Wi‑Fi. " +
+                                    "Reselect it under On this network, turn off VPN on both devices, " +
+                                    "and try again.",
+                            )
+                            val detail = lastReachError?.trim()?.take(140)
+                            if (!detail.isNullOrEmpty()) {
+                                append(" (").append(detail).append(")")
+                            }
+                        },
+                    )
+                else ->
+                    IllegalArgumentException(
+                        "Pairing code not found. Check the code and that both devices are on the same Wi‑Fi.",
+                    )
+            }
         }
 
         private fun handleAttachmentGetRequest(
@@ -737,6 +916,7 @@ class LanSyncRepositoryImpl
                 runCatching {
                     kotlinx.coroutines.runBlocking(ioDispatcher) {
                         val payload = LanSyncJsonCodec.decode(body).withoutDeviceAppearance()
+                        rememberCallerListenAddress(remoteDeviceId, headers, payload)
                         val summary = merger.merge(payload, LanSyncMergeOptions())
                         applySettings(payload)
                         val peerName =
@@ -752,7 +932,16 @@ class LanSyncRepositoryImpl
                     }
                 }
             if (mergeResult.isFailure) {
-                return HttpLanResponse.json(400, """{"error":"merge_failed"}""")
+                val failure = mergeResult.exceptionOrNull()
+                Log.e(LAN_SYNC_LOG_TAG, "Inbound merge failed", failure)
+                val detail =
+                    (failure?.message ?: failure?.javaClass?.simpleName ?: "merge failed")
+                        .replace("\"", "'")
+                        .take(180)
+                return HttpLanResponse.json(
+                    400,
+                    JSONObject().put("error", "merge_failed").put("detail", detail).toString(),
+                )
             }
             val responseBody =
                 runCatching {
@@ -771,8 +960,31 @@ class LanSyncRepositoryImpl
                     displaySettings = null,
                     includeAttachments = includeAttachments,
                     peerDeviceId = peerDeviceId,
+                    sourceListenPort = currentListenPort(),
                 )
             return LanSyncJsonCodec.encode(payload)
+        }
+
+        private fun currentListenPort(): Int? = httpServer?.port?.takeIf { it in 1..65535 }
+
+        /**
+         * Hotspot mDNS often misses the caller. Their sync body carries the listen port; the socket
+         * has their hotspot IP. Remember both so this phone can Sync now without typing the address.
+         */
+        private fun rememberCallerListenAddress(
+            remoteDeviceId: String,
+            headers: Map<String, String>,
+            payload: com.rrparallelstudio.miapp.core.lansync.model.MmrLanSyncPayload,
+        ) {
+            if (payload.sourceDeviceId != remoteDeviceId) return
+            val port = payload.sourceListenPort ?: return
+            val host =
+                headers["x-mmr-client-address"]
+                    ?.trim()
+                    ?.substringBefore('%')
+                    ?.takeIf { it.isNotEmpty() && it != "unknown" && !it.contains('/') }
+                    ?: return
+            lastPeerAddressStore.put(remoteDeviceId, host, port)
         }
 
         /** SMS scan window only. Theme, colors, and Transaction Appearance stay on this phone. */
@@ -786,7 +998,16 @@ class LanSyncRepositoryImpl
             offer: LanSyncPairingOffer,
             pairingCode: String,
         ) {
-            val peer = nsdHelper.findPeer(offer.deviceId) ?: return
+            val remembered =
+                if (resolvedPairDeviceId == offer.deviceId &&
+                    !resolvedPairHost.isNullOrBlank() &&
+                    resolvedPairPort > 0
+                ) {
+                    resolvedPairHost!! to resolvedPairPort
+                } else {
+                    null
+                }
+            val peer = remembered ?: nsdHelper.findPeer(offer.deviceId)?.let { it.host to it.port } ?: return
             val body =
                 JSONObject()
                     .apply {
@@ -796,13 +1017,31 @@ class LanSyncRepositoryImpl
                         put("pairingCode", LanSyncPairingPin.normalize(pairingCode))
                     }.toString()
             LanSyncHttpClient.post(
-                host = peer.host,
-                port = peer.port,
+                host = peer.first,
+                port = peer.second,
                 path = LanSyncHttpConstants.PATH_PAIR,
                 deviceId = identityStore.deviceId,
                 authToken = offer.inboundAuthToken,
                 body = body,
+                network = networkUtils.wifiNetwork(),
             )
+        }
+
+        private fun syncHttpFailureDetail(
+            displayName: String,
+            statusCode: Int,
+            body: String,
+        ): String {
+            if (statusCode == 401) {
+                return "$displayName: open Peer Device Sync on the other phone and approve this device, then try again."
+            }
+            val remoteDetail =
+                runCatching { JSONObject(body).optString("detail") }.getOrNull()?.trim()?.takeIf { it.isNotEmpty() }
+            return if (remoteDetail != null) {
+                "$displayName: $remoteDetail"
+            } else {
+                "$displayName ($statusCode)"
+            }
         }
 
         private operator fun LanSyncMergeSummary.plus(other: LanSyncMergeSummary): LanSyncMergeSummary =
@@ -826,9 +1065,15 @@ class LanSyncRepositoryImpl
             )
 
         init {
+            networkUtils.addLocalNetworkChangeListener(onLocalNetworkChanged)
             if (identityStore.isLanSyncEnabled()) {
                 startInfrastructure()
             }
             scope.launch { publishState() }
+        }
+
+        private companion object {
+            const val LAN_SYNC_LOG_TAG = "LanSync"
+            const val DISCOVERY_BEFORE_SYNC_MS = 1_500L
         }
     }

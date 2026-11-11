@@ -171,6 +171,54 @@ fun MmrTransactionFormCard(
     MmrGroupedFormCard(modifier = modifier, content = content)
 }
 
+/** In-card suggestion list under a text field (matches expandable picker styling). */
+@Composable
+fun MmrTransactionFormSuggestionDropdown(
+    suggestions: List<String>,
+    onSuggestionSelected: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    testTag: String? = null,
+) {
+    AnimatedVisibility(
+        visible = suggestions.isNotEmpty(),
+        enter = expandVertically(),
+        exit = shrinkVertically(),
+        modifier = modifier,
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .then(if (testTag != null) Modifier.testTag(testTag) else Modifier),
+        ) {
+            HorizontalDivider(color = MmrBrandColors.BorderMain.copy(alpha = 0.5f))
+            suggestions.forEachIndexed { index, suggestion ->
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onSuggestionSelected(suggestion) }
+                            .padding(horizontal = MmrDimens.spaceLg, vertical = MmrDimens.spaceMd),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = suggestion,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MmrBrandColors.formCardPrimaryText(),
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                if (index < suggestions.lastIndex) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = MmrDimens.spaceLg),
+                        color = MmrBrandColors.BorderMain.copy(alpha = 0.35f),
+                    )
+                }
+            }
+        }
+    }
+}
+
 /** Small caption above a card group (e.g. "Frequency"). */
 @Composable
 fun MmrTransactionFormSectionLabel(
@@ -489,6 +537,7 @@ fun MmrTransactionFormTextRow(
     trailingContent: (@Composable () -> Unit)? = null,
     groupedAmountDisplay: Boolean = false,
     amountCalculatorEnabled: Boolean = groupedAmountDisplay,
+    belowField: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
     var calculatorOpen by remember { mutableStateOf(false) }
     val amountTransformation =
@@ -498,63 +547,66 @@ fun MmrTransactionFormTextRow(
             null
         }
     MmrTransactionFormCard(modifier = modifier) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(
-                        start = if (leadingIcon != null) MmrDimens.spaceLg else MmrDimens.spaceXl,
-                        end = MmrDimens.spaceSm,
-                        top = MmrDimens.spaceLg,
-                        bottom = MmrDimens.spaceLg,
-                    ),
-            verticalAlignment = if (singleLine) Alignment.CenterVertically else Alignment.Top,
-            horizontalArrangement = Arrangement.spacedBy(MmrDimens.spaceMd),
-        ) {
-            if (leadingIcon != null) {
-                Icon(
-                    imageVector = leadingIcon,
-                    contentDescription = null,
-                    modifier = Modifier.size(MmrDimens.iconMd),
-                    tint = MmrBrandColors.TextMedium,
-                )
-            }
-            BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
                 modifier =
                     Modifier
-                        .weight(1f)
-                        .then(if (testTag != null) Modifier.testTag(testTag) else Modifier),
-                textStyle =
-                    TextStyle(
-                        fontSize = MaterialTheme.typography.bodyLarge.fontSize,
-                        color = MmrBrandColors.formCardPrimaryText(),
-                    ),
-                keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-                visualTransformation =
-                    if (groupedAmountDisplay && value.isNotEmpty() && amountTransformation != null) {
-                        amountTransformation
-                    } else {
-                        VisualTransformation.None
+                        .fillMaxWidth()
+                        .padding(
+                            start = if (leadingIcon != null) MmrDimens.spaceLg else MmrDimens.spaceXl,
+                            end = MmrDimens.spaceSm,
+                            top = MmrDimens.spaceLg,
+                            bottom = MmrDimens.spaceLg,
+                        ),
+                verticalAlignment = if (singleLine) Alignment.CenterVertically else Alignment.Top,
+                horizontalArrangement = Arrangement.spacedBy(MmrDimens.spaceMd),
+            ) {
+                if (leadingIcon != null) {
+                    Icon(
+                        imageVector = leadingIcon,
+                        contentDescription = null,
+                        modifier = Modifier.size(MmrDimens.iconMd),
+                        tint = MmrBrandColors.TextMedium,
+                    )
+                }
+                BasicTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .then(if (testTag != null) Modifier.testTag(testTag) else Modifier),
+                    textStyle =
+                        TextStyle(
+                            fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+                            color = MmrBrandColors.formCardPrimaryText(),
+                        ),
+                    keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                    visualTransformation =
+                        if (groupedAmountDisplay && value.isNotEmpty() && amountTransformation != null) {
+                            amountTransformation
+                        } else {
+                            VisualTransformation.None
+                        },
+                    singleLine = singleLine,
+                    minLines = minLines,
+                    decorationBox = { inner ->
+                        if (value.isEmpty()) {
+                            Text(
+                                text = placeholder.mmrStaticLabelCase(),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MmrBrandColors.TextMedium,
+                            )
+                        }
+                        inner()
                     },
-                singleLine = singleLine,
-                minLines = minLines,
-                decorationBox = { inner ->
-                    if (value.isEmpty()) {
-                        Text(
-                            text = placeholder.mmrStaticLabelCase(),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MmrBrandColors.TextMedium,
-                        )
-                    }
-                    inner()
-                },
-            )
-            if (amountCalculatorEnabled) {
-                MmrAmountCalculatorIconButton(onClick = { calculatorOpen = true })
+                )
+                if (amountCalculatorEnabled) {
+                    MmrAmountCalculatorIconButton(onClick = { calculatorOpen = true })
+                }
+                trailingContent?.invoke()
             }
-            trailingContent?.invoke()
+            belowField?.invoke(this)
         }
     }
     if (calculatorOpen) {

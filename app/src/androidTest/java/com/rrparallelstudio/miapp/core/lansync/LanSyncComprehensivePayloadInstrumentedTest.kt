@@ -299,6 +299,7 @@ class LanSyncComprehensivePayloadInstrumentedTest {
             transactionDao = graph.database.transactionDao(),
             backupDao = graph.database.backupDao(),
             categorizationRuleDao = graph.database.categorizationRuleDao(),
+            smsAccountOverrideDao = graph.database.smsAccountOverrideDao(),
             attachmentDao = graph.database.transactionAttachmentDao(),
             tombstoneCoordinator = tombstoneCoordinator,
             ownerProfileCoordinator = graph.ownerProfileCoordinator,

@@ -17,6 +17,7 @@ import com.rrparallelstudio.miapp.core.lansync.model.LanLoanScheduleEntryRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanNotificationRuleRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanOwnerProfileRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanRecurringRuleRecord
+import com.rrparallelstudio.miapp.core.lansync.model.LanSmsAccountOverrideRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanSubcategoryRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanSyncTombstoneRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanTransactionRecord
@@ -25,7 +26,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object LanSyncJsonCodec {
-    const val CURRENT_FORMAT_VERSION = 6
+    const val CURRENT_FORMAT_VERSION = 7
 
     fun encode(payload: MmrLanSyncPayload): String =
         JSONObject()
@@ -34,6 +35,7 @@ object LanSyncJsonCodec {
                 put("exportedAtEpochMillis", payload.exportedAtEpochMillis)
                 put("sourceDeviceId", payload.sourceDeviceId)
                 putNullableString("sourceDeviceName", payload.sourceDeviceName)
+                payload.sourceListenPort?.takeIf { it in 1..65535 }?.let { put("sourceListenPort", it) }
                 putNullableString("sourceProfileId", payload.sourceProfileId)
                 putNullableString("sourceProfileName", payload.sourceProfileName)
                 if (payload.knownProfiles.isNotEmpty()) {
@@ -52,6 +54,7 @@ object LanSyncJsonCodec {
                 put("assets", payload.assets.toJsonArray { assetToJson(it) })
                 put("assetValuations", payload.assetValuations.toJsonArray { assetValuationToJson(it) })
                 put("categorizationRules", payload.categorizationRules.toJsonArray { categorizationToJson(it) })
+                put("smsAccountOverrides", payload.smsAccountOverrides.toJsonArray { smsAccountOverrideToJson(it) })
                 put("notificationRules", payload.notificationRules.toJsonArray { notificationToJson(it) })
                 payload.appSettings?.let { put("appSettings", appSettingsToJson(it)) }
                 payload.displaySettings?.let { put("displaySettings", displaySettingsToJson(it)) }
@@ -77,6 +80,7 @@ object LanSyncJsonCodec {
             exportedAtEpochMillis = root.getLong("exportedAtEpochMillis"),
             sourceDeviceId = root.getString("sourceDeviceId"),
             sourceDeviceName = root.optNullableString("sourceDeviceName"),
+            sourceListenPort = root.optInt("sourceListenPort", 0).takeIf { it in 1..65535 },
             sourceProfileId = root.optNullableString("sourceProfileId"),
             sourceProfileName = root.optNullableString("sourceProfileName"),
             knownProfiles = root.readArray("knownProfiles").mapObjectsLenient { knownProfileFromJson(it) },
@@ -105,6 +109,11 @@ object LanSyncJsonCodec {
                     .readArray(
                         "categorizationRules",
                     ).mapObjectsLenient { categorizationFromJson(it) },
+            smsAccountOverrides =
+                root
+                    .readArray(
+                        "smsAccountOverrides",
+                    ).mapObjectsLenient { smsAccountOverrideFromJson(it) },
             notificationRules = root.readArray("notificationRules").mapObjectsLenient { notificationFromJson(it) },
             appSettings = root.optJSONObject("appSettings")?.let { appSettingsFromJson(it) },
             displaySettings = root.optJSONObject("displaySettings")?.let { displaySettingsFromJson(it) },
@@ -203,6 +212,8 @@ object LanSyncJsonCodec {
             put("isActive", record.isActive)
             put("isDefault", record.isDefault)
             putNullableString("cardLastFour", record.cardLastFour)
+            put("smsAutoCreated", record.smsAutoCreated)
+            put("smsAutoCreatedUserModified", record.smsAutoCreatedUserModified)
             put("createdAt", record.createdAt)
             put("updatedAt", record.updatedAt)
         }
@@ -218,6 +229,8 @@ object LanSyncJsonCodec {
             isActive = json.getBoolean("isActive"),
             isDefault = json.getBoolean("isDefault"),
             cardLastFour = json.optNullableString("cardLastFour"),
+            smsAutoCreated = json.optBoolean("smsAutoCreated", false),
+            smsAutoCreatedUserModified = json.optBoolean("smsAutoCreatedUserModified", false),
             createdAt = json.getLong("createdAt"),
             updatedAt = json.getLong("updatedAt"),
         )
@@ -597,6 +610,24 @@ object LanSyncJsonCodec {
             mimeType = json.getString("mimeType"),
             fileSizeBytes = json.getLong("fileSizeBytes"),
             createdAt = json.getLong("createdAt"),
+            updatedAt = json.getLong("updatedAt"),
+        )
+
+    private fun smsAccountOverrideToJson(record: LanSmsAccountOverrideRecord) =
+        JSONObject().apply {
+            put("templateId", record.templateId)
+            put("instrument", record.instrument)
+            put("smsLastFour", record.smsLastFour)
+            put("accountSyncId", record.accountSyncId)
+            put("updatedAt", record.updatedAt)
+        }
+
+    private fun smsAccountOverrideFromJson(json: JSONObject) =
+        LanSmsAccountOverrideRecord(
+            templateId = json.optString("templateId", ""),
+            instrument = json.optString("instrument", ""),
+            smsLastFour = json.getString("smsLastFour"),
+            accountSyncId = json.getString("accountSyncId"),
             updatedAt = json.getLong("updatedAt"),
         )
 

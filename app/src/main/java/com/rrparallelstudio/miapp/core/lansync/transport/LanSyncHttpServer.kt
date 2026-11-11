@@ -34,6 +34,8 @@ class LanSyncHttpServer(
     val port: Int
         get() = serverSocket?.localPort ?: LanSyncHttpConstants.DEFAULT_PORT
 
+    fun isListening(): Boolean = running.get() && serverSocket?.isClosed == false
+
     /**
      * @param preferredPort When null (default), binds to port **0** so the OS assigns an ephemeral port.
      *   Pass a fixed port for tests or debugging.

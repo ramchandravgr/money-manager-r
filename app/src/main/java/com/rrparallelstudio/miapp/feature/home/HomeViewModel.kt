@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports", "ktlint:standard:backing-property-naming")
+
 package com.rrparallelstudio.miapp.feature.home
 
 import android.content.Context
@@ -6,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.rrparallelstudio.miapp.core.common.validation.MmrValidation
 import com.rrparallelstudio.miapp.core.data.preferences.AppDisplaySettingsStore
 import com.rrparallelstudio.miapp.core.data.preferences.toHomeViewTab
+import com.rrparallelstudio.miapp.core.database.entity.CategoryEntity
 import com.rrparallelstudio.miapp.core.database.relation.TransactionWithDetails
 import com.rrparallelstudio.miapp.core.domain.repository.ApprovalRepository
 import com.rrparallelstudio.miapp.core.domain.repository.CategoryRepository
@@ -16,6 +19,7 @@ import com.rrparallelstudio.miapp.core.model.enums.TransactionType
 import com.rrparallelstudio.miapp.core.transaction.TransactionCashFlow
 import com.rrparallelstudio.miapp.core.transaction.TransactionMergeAmounts
 import com.rrparallelstudio.miapp.feature.home.model.*
+import com.rrparallelstudio.miapp.navigation.HomeLedgerScrollToTopNotifier
 import com.rrparallelstudio.miapp.navigation.HomeLedgerTabReselectNotifier
 import com.rrparallelstudio.miapp.ui.components.MmrMergeDateOption
 import com.rrparallelstudio.miapp.ui.components.MmrTransactionMergeDialogPrep
@@ -43,6 +47,7 @@ class HomeViewModel
         private val periodExcelExporter: PeriodExcelExporter,
         private val lanSyncRepository: LanSyncRepository,
         private val homeLedgerTabReselectNotifier: HomeLedgerTabReselectNotifier,
+        private val homeLedgerScrollToTopNotifier: HomeLedgerScrollToTopNotifier,
     ) : ViewModel() {
         private val zoneId = ZoneId.systemDefault()
 
@@ -73,6 +78,9 @@ class HomeViewModel
         private val _periodExportResult = MutableSharedFlow<HomePeriodExportResult>(extraBufferCapacity = 1)
         val periodExportResult = _periodExportResult.asSharedFlow()
 
+        private val _ledgerScrollToTopNonce = MutableStateFlow(0)
+        val ledgerScrollToTopNonce: StateFlow<Int> = _ledgerScrollToTopNonce.asStateFlow()
+
         private val _showExcelExportDialog = MutableStateFlow(false)
         private val _excelExportOptions = MutableStateFlow<List<HomeExcelExportOptionUi>>(emptyList())
         private val _isExcelExporting = MutableStateFlow(false)
@@ -90,6 +98,11 @@ class HomeViewModel
             viewModelScope.launch {
                 homeLedgerTabReselectNotifier.signals.collect {
                     onEvent(HomeUiEvent.OnLedgerTabReselected)
+                }
+            }
+            viewModelScope.launch {
+                homeLedgerScrollToTopNotifier.signals.collect {
+                    _ledgerScrollToTopNonce.update { it + 1 }
                 }
             }
         }
@@ -526,8 +539,7 @@ class HomeViewModel
         val uiState: StateFlow<HomeUiState> = baseHomeUiState
 
         private data class HomeCoreInputs(
-            val txAndCats:
-                Pair<List<TransactionWithDetails>, List<com.rrparallelstudio.miapp.core.database.entity.CategoryEntity>>,
+            val txAndCats: Pair<List<TransactionWithDetails>, List<CategoryEntity>>,
             val monthData: MonthAggregate,
             val allTime: Pair<Double, Double>,
             val filters: FilterSnapshot,

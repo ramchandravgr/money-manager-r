@@ -34,6 +34,7 @@ data class SearchAccountUi(
     val id: Long,
     val name: String,
     val type: com.rrparallelstudio.miapp.core.model.enums.AccountType = com.rrparallelstudio.miapp.core.model.enums.AccountType.BANK,
+    val smsOriginLabel: String? = null,
 )
 
 sealed interface TransactionSearchUiEvent {

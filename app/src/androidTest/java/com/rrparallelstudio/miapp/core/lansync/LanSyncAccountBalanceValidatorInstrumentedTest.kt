@@ -35,35 +35,44 @@ class LanSyncAccountBalanceValidatorInstrumentedTest {
     }
 
     @Test
-    fun warningsAfterMerge_flagsStoredBalanceMismatch() =
+    fun reconcileAfterMerge_setsStoredBalanceFromTransactions() =
         runBlocking {
             val accountId =
                 graph.database.accountDao().insert(
                     AccountEntity(
-                        name = "Test Cash",
+                        name = "Shared",
                         type = AccountType.CASH,
-                        openingBalance = 1_000.0,
-                        currentBalance = 1_000.0,
+                        openingBalance = 5_000.0,
+                        currentBalance = 2_000.0,
                         isDefault = true,
                     ),
                 )
             graph.database.transactionDao().insert(
                 TransactionEntity(
                     dateTime = System.currentTimeMillis(),
-                    amount = 100.0,
+                    amount = 3_000.0,
+                    type = TransactionType.EXPENSE,
+                    accountId = accountId,
+                    status = RecordStatus.APPROVED,
+                ),
+            )
+            graph.database.transactionDao().insert(
+                TransactionEntity(
+                    dateTime = System.currentTimeMillis() + 1,
+                    amount = 200.0,
                     type = TransactionType.EXPENSE,
                     accountId = accountId,
                     status = RecordStatus.APPROVED,
                 ),
             )
 
-            val warnings = validator.warningsAfterMerge()
-            assertEquals(1, warnings.size)
-            assertTrue(warnings.single().contains("Test Cash"))
+            assertTrue(validator.reconcileAfterMerge().isEmpty())
+            val stored = graph.database.accountDao().getById(accountId)!!
+            assertEquals(1_800.0, stored.currentBalance, 0.001)
         }
 
     @Test
-    fun warningsAfterMerge_emptyWhenBalanceMatchesLedger() =
+    fun reconcileAfterMerge_emptyWhenBalanceAlreadyMatches() =
         runBlocking {
             val accountId =
                 graph.database.accountDao().insert(
@@ -85,6 +94,14 @@ class LanSyncAccountBalanceValidatorInstrumentedTest {
                 ),
             )
 
-            assertTrue(validator.warningsAfterMerge().isEmpty())
+            assertTrue(validator.reconcileAfterMerge().isEmpty())
+            assertEquals(
+                400.0,
+                graph.database
+                    .accountDao()
+                    .getById(accountId)!!
+                    .currentBalance,
+                0.001,
+            )
         }
 }

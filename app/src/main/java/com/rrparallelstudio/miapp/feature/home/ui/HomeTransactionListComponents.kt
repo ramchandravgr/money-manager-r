@@ -18,7 +18,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
@@ -268,12 +270,14 @@ fun GroupedTransactionList(
     groups: List<com.rrparallelstudio.miapp.feature.home.model.TransactionGroupUi>,
     onItemClick: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    listState: LazyListState = rememberLazyListState(),
     contentBottomPadding: androidx.compose.ui.unit.Dp = MmrDimens.fabListBottomInset,
     selectionMode: Boolean = false,
     selectedIds: Set<Long> = emptySet(),
     onItemLongClick: (Long) -> Unit = onItemClick,
 ) {
     LazyColumn(
+        state = listState,
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(bottom = contentBottomPadding, top = 0.dp),
     ) {

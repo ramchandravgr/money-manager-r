@@ -29,6 +29,10 @@ data class AccountEntity(
     val isDefault: Boolean = false,
     /** Last 4 digits for card / bank matching from SMS (optional). */
     val cardLastFour: String? = null,
+    /** Created by SMS quick-approve provisioning (credit card / wallet). */
+    val smsAutoCreated: Boolean = false,
+    /** User edited name, type, balance, last4, or active flag after auto-create. */
+    val smsAutoCreatedUserModified: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis(),
 )

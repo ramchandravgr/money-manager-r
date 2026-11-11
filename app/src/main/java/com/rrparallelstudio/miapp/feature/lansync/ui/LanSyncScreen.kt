@@ -1,5 +1,7 @@
 package com.rrparallelstudio.miapp.feature.lansync.ui
 
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -7,7 +9,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rrparallelstudio.miapp.core.data.preferences.LanSyncPeerMode
@@ -16,6 +22,8 @@ import com.rrparallelstudio.miapp.feature.lansync.viewmodel.LanSyncViewModel
 import com.rrparallelstudio.miapp.security.MmrDeviceCredentialGate
 import com.rrparallelstudio.miapp.testing.MmrTestTags
 import com.rrparallelstudio.miapp.ui.components.MmrContentDialog
+import com.rrparallelstudio.miapp.ui.components.MmrDimens
+import com.rrparallelstudio.miapp.ui.components.MmrHelperText
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsBusyIndicator
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsCopyableCodeSlot
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsDestructiveRow
@@ -30,6 +38,7 @@ import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSwitchRow
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenLayout
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenScaffold
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsStatusBanners
+import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
 
 @Composable
 fun LanSyncScreen(
@@ -49,6 +58,11 @@ fun LanSyncScreen(
         }
     }
 
+    LaunchedEffect(uiState.enabled) {
+        if (!uiState.enabled) return@LaunchedEffect
+        viewModel.refreshPeerDiscovery()
+    }
+
     LaunchedEffect(uiState.sensitiveAction) {
         val action = uiState.sensitiveAction ?: return@LaunchedEffect
         val host =
@@ -61,7 +75,7 @@ fun LanSyncScreen(
                 MmrDeviceCredentialGate.authenticate(
                     activity = host,
                     title = "Trust device",
-                    subtitle = "Confirm to add a trusted sync device",
+                    subtitle = "Confirm to let this phone sync with you",
                     onSuccess = viewModel::completeTrustAfterAuth,
                     onFailure = viewModel::clearSensitiveAction,
                 )
@@ -69,7 +83,7 @@ fun LanSyncScreen(
                 MmrDeviceCredentialGate.authenticate(
                     activity = host,
                     title = "Remove trusted device",
-                    subtitle = "Confirm to revoke sync trust",
+                    subtitle = "Confirm to stop syncing with this phone",
                     onSuccess = viewModel::completeRemoveTrustedAfterAuth,
                     onFailure = viewModel::clearSensitiveAction,
                 )
@@ -77,7 +91,7 @@ fun LanSyncScreen(
                 MmrDeviceCredentialGate.authenticate(
                     activity = host,
                     title = "Approve sync device",
-                    subtitle = "Confirm to trust this device on your phone",
+                    subtitle = "Confirm to let this phone sync with you",
                     onSuccess = viewModel::completeApprovePairAfterAuth,
                     onFailure = viewModel::clearSensitiveAction,
                 )
@@ -87,7 +101,7 @@ fun LanSyncScreen(
     uiState.wifiTrustPromptSsid?.let { ssid ->
         MmrContentDialog(
             title = "Trust this Wi‑Fi?",
-            message = "Sync only runs on networks you trust. Trust \"$ssid\" for LAN sync?",
+            message = "Sync runs only on Wi‑Fi you allow. Allow \"$ssid\"?",
             confirmLabel = "Trust network",
             onConfirm = viewModel::confirmWifiTrust,
             onDismiss = viewModel::dismissWifiTrustPrompt,
@@ -110,10 +124,10 @@ fun LanSyncScreen(
             title = "Enable",
             isFirstInScreen = true,
             footer =
-                "Approved ledger data syncs between trusted devices on the same Wi‑Fi. " +
-                    "SMS and pending approvals stay on each phone. Tap Sync now when you are ready — " +
-                    "no background sync. Sync uses unencrypted HTTP — use only Wi‑Fi networks you trust " +
-                    "(not guest or public).",
+                "Copies approved transactions between phones you trust, on the same Wi‑Fi or your phone hotspot. " +
+                    "SMS still waiting for approval stays on each phone. " +
+                    "Sync on app open or tap Sync now. " +
+                    "This sync is not encrypted. Use home Wi‑Fi or your own hotspot, not guest or public Wi‑Fi.",
         ) {
             MmrIosSettingsSwitchRow(
                 label = "Sync on same Wi‑Fi",
@@ -130,13 +144,27 @@ fun LanSyncScreen(
 
         if (!uiState.onWifi) {
             MmrIosSettingsInlineErrorSection(
-                message = "Connect to Wi‑Fi before syncing.",
+                message = "Connect to Wi‑Fi or join a phone hotspot before syncing.",
                 isFirstInScreen = false,
             )
         } else {
             MmrIosSettingsSection(
                 title = "Network",
-                footer = uiState.localSyncUrl?.let { "This phone: $it" },
+                footer =
+                    buildString {
+                        uiState.localSyncUrl?.let { append("This phone: $it. ") }
+                        append(
+                            "Each phone has its own address. That is normal. " +
+                                "On this network shows phones found automatically. " +
+                                "Both phones need Sync on same Wi‑Fi turned on.",
+                        )
+                        if (uiState.enabled && uiState.discoveredPeers.isEmpty()) {
+                            append(
+                                " If the other phone is missing, copy its This phone line into " +
+                                    "Other phone address below. Turn off VPN on both phones.",
+                            )
+                        }
+                    },
             ) {
                 uiState.wifiSsid?.let { ssid ->
                     MmrIosSettingsSectionBodyText(text = "Network: $ssid")
@@ -144,15 +172,22 @@ fun LanSyncScreen(
             }
         }
 
-        MmrIosSettingsSection(
-            title = "This device",
-            footer = "This name is shown on the other phone as Created by when you sync.",
-        ) {
+        MmrIosSettingsSection(title = "This device") {
             MmrIosSettingsInlineTextRow(
                 label = "Your name",
                 value = uiState.displayName,
                 onValueChange = viewModel::setDisplayName,
                 placeholder = "Name",
+            )
+            MmrHelperText(
+                text = "The other phone shows this name as Created by after a sync.",
+                modifier =
+                    Modifier
+                        .padding(
+                            horizontal = MmrDimens.iosSettingsRowHorizontalPadding,
+                            vertical = 6.dp,
+                        ),
+                color = MmrBrandColors.listAreaCaptionText(),
             )
             MmrIosSettingsCopyableCodeSlot(
                 fieldLabel = "Pairing code",
@@ -161,14 +196,16 @@ fun LanSyncScreen(
                 valueTestTag = MmrTestTags.lanSyncPairingOfferValue,
             )
             MmrIosSettingsSectionBodyText(
-                text = "Share this code only with someone you trust. It expires after 15 minutes.",
+                text =
+                    "Read this code to the other phone. It changes after 15 minutes. " +
+                        "Do not share it with anyone else.",
             )
         }
 
         if (uiState.pendingPairLabels.isNotEmpty()) {
             MmrIosSettingsSection(
                 title = "Pending pair requests",
-                footer = "Another device asked to sync with you. Approve only if you started pairing.",
+                footer = "Another phone asked to sync. Tap Approve only if you were pairing with that phone.",
             ) {
                 uiState.pendingPairLabels.forEachIndexed { index, label ->
                     val deviceId = uiState.pendingPairDeviceIds.getOrNull(index)
@@ -193,19 +230,80 @@ fun LanSyncScreen(
             }
         }
 
-        MmrIosSettingsSection(title = "Trust a device") {
+        if (uiState.discoveredPeers.isNotEmpty()) {
+            MmrIosSettingsSection(
+                title = "On this network",
+                footer =
+                    "Tap the other phone, then enter its pairing code below. " +
+                        "Skip if that phone is already trusted.",
+            ) {
+                uiState.discoveredPeers.forEachIndexed { index, peer ->
+                    val isSelected = uiState.selectedPairingPeerAddress == peer.address
+                    MmrIosSettingsNavRow(
+                        label = peer.displayName,
+                        labelSubtitle = peer.address,
+                        value = if (isSelected) "Selected" else "",
+                        onClick = {
+                            if (!uiState.enabled || uiState.isBusy) return@MmrIosSettingsNavRow
+                            if (isSelected) {
+                                viewModel.clearSelectedPairingPeer()
+                            } else {
+                                viewModel.selectDiscoveredPeerForPairing(peer.address)
+                            }
+                        },
+                        testTag = "${MmrTestTags.lanSyncDiscoveredPeerPrefix}${peer.deviceId}",
+                        showDividerBelow = index < uiState.discoveredPeers.lastIndex,
+                    )
+                }
+            }
+        }
+
+        MmrIosSettingsSection(
+            title = "Trust a device",
+            footer =
+                "Enter the 7-character code from the other phone. Do not enter the code shown on this phone.",
+        ) {
+            if (uiState.discoveredPeers.isEmpty()) {
+                MmrIosSettingsInlineTextRow(
+                    label = "Other phone address",
+                    value = uiState.pairingManualPeerInput,
+                    onValueChange = viewModel::onPairingManualPeerInputChanged,
+                    placeholder = "192.168.43.2:54321",
+                    singleLine = true,
+                )
+                MmrIosSettingsSectionBodyText(
+                    text =
+                        "On the other phone, copy the This phone line (numbers, colon, and port). " +
+                            "Paste it here only if that phone is not listed above. " +
+                            "If it is already under Trusted devices, you do not need to pair again. " +
+                            "Tap Sync now. After that sync works, the other phone can sync back " +
+                            "without typing your address, until you turn sync off and on.",
+                )
+            }
             MmrIosSettingsInlineTextRow(
                 label = "Pairing code",
                 value = uiState.pairingInput,
                 onValueChange = viewModel::onPairingInputChanged,
-                placeholder = "Code from other device",
+                placeholder = "Pairing Code From Other Device",
                 singleLine = true,
+                keyboardOptions =
+                    KeyboardOptions(
+                        capitalization = KeyboardCapitalization.Characters,
+                        keyboardType = KeyboardType.Ascii,
+                    ),
                 testTag = MmrTestTags.lanSyncPairingInput,
             )
             MmrIosSettingsSecondaryActionSlot(
                 text = "Add trusted device",
                 onClick = viewModel::requestTrustDevice,
-                enabled = uiState.enabled && uiState.pairingInput.isNotBlank() && !uiState.isBusy,
+                enabled =
+                    uiState.enabled &&
+                        uiState.pairingInput.isNotBlank() &&
+                        !uiState.isBusy &&
+                        (
+                            uiState.discoveredPeers.isEmpty() ||
+                                uiState.selectedPairingPeerAddress != null
+                        ),
                 showDividerBelow = false,
                 testTag = MmrTestTags.lanSyncTrustAdd,
             )
@@ -214,7 +312,7 @@ fun LanSyncScreen(
         if (uiState.trustedDeviceLabels.isNotEmpty()) {
             MmrIosSettingsSection(
                 title = "Trusted devices",
-                footer = "Remove revokes sync trust for that device.",
+                footer = "Remove stops that phone from syncing with this one.",
             ) {
                 uiState.trustedDeviceLabels.forEachIndexed { index, label ->
                     MmrIosSettingsDestructiveRow(
@@ -226,23 +324,31 @@ fun LanSyncScreen(
             }
         }
 
-        if (uiState.discoveredLabels.isNotEmpty()) {
-            MmrIosSettingsSection(title = "On this network") {
-                uiState.discoveredLabels.forEach { label ->
-                    MmrIosSettingsSectionBodyText(text = label)
-                }
-            }
-        }
-
         MmrIosSettingsSection(
             title = "Sync options",
-            footer =
-                if (uiState.pendingApprovalCount > 0) {
-                    "Pending SMS approvals are not synced (${uiState.pendingApprovalCount} waiting)."
-                } else {
-                    "Include attachments to sync receipt photos (may be slower on Wi‑Fi)."
-                },
+            footer = "Include attachments copies receipt photos. Sync can take longer.",
         ) {
+            MmrIosSettingsSwitchRow(
+                label = "Auto sync on app open",
+                checked = uiState.autoSyncOnAppOpen,
+                onCheckedChange = viewModel::setAutoSyncOnAppOpen,
+                enabled = uiState.enabled,
+                switchTestTag = MmrTestTags.lanSyncAutoSyncOnOpenSwitch,
+                showDividerBelow = false,
+            )
+            MmrIosSettingsSectionBodyText(
+                text =
+                    if (uiState.enabled) {
+                        "Syncs when you open the app, if a trusted phone is on this Wi‑Fi. " +
+                            "On a new Wi‑Fi name, tap Sync now once and allow that network. " +
+                            "Turning off Sync on same Wi‑Fi also turns this off. " +
+                            "Turn it on again after you turn sync back on."
+                    } else {
+                        "Turn on Sync on same Wi‑Fi above first. " +
+                            "Turning sync off also turns this off. " +
+                            "Turn it on again after you turn sync back on."
+                    },
+            )
             MmrIosSettingsSwitchRow(
                 label = "Sync one device only",
                 checked = uiState.peerMode == LanSyncPeerMode.SINGLE_DEVICE,
@@ -251,6 +357,9 @@ fun LanSyncScreen(
                         if (enabled) LanSyncPeerMode.SINGLE_DEVICE else LanSyncPeerMode.ALL_TRUSTED_ON_LAN,
                     )
                 },
+            )
+            MmrIosSettingsSectionBodyText(
+                text = "When this is on, Sync now talks only to the phone you select below.",
             )
             if (uiState.peerMode == LanSyncPeerMode.SINGLE_DEVICE && uiState.trustedDeviceLabels.isNotEmpty()) {
                 uiState.trustedDeviceLabels.forEachIndexed { index, label ->
@@ -273,12 +382,14 @@ fun LanSyncScreen(
         if (!uiState.hasLocalLedgerData && uiState.trustedDeviceLabels.isNotEmpty()) {
             MmrIosSettingsSection(
                 title = "Restore on this phone",
-                footer = "One-way pull from a trusted device when this phone has no ledger yet.",
+                footer =
+                    "This phone has no transactions yet. " +
+                        "This copies everything from the other phone onto this one.",
             ) {
                 uiState.trustedDeviceLabels.forEachIndexed { index, label ->
                     val restoreEnabled = uiState.enabled && uiState.onWifi && !uiState.isBusy
                     MmrIosSettingsSecondaryActionSlot(
-                        text = "Replace empty ledger from $label",
+                        text = "Copy all data from $label",
                         onClick = { viewModel.restoreFromTrusted(index, navigateHomeOnSuccess = true) },
                         enabled = restoreEnabled,
                         showDividerBelow = index < uiState.trustedDeviceLabels.lastIndex,
@@ -295,14 +406,21 @@ fun LanSyncScreen(
                 text = uiState.syncNowButtonText,
                 onClick = viewModel::syncNow,
                 enabled = uiState.syncNowEnabled,
-                showDividerBelow = false,
+                showDividerBelow = uiState.pendingApprovalCount <= 0,
                 testTag = MmrTestTags.lanSyncSyncNow,
             )
+            if (uiState.pendingApprovalCount > 0) {
+                MmrIosSettingsSectionBodyText(
+                    text =
+                        "SMS still waiting for approval stays on this phone " +
+                            "(${uiState.pendingApprovalCount} waiting). It is not copied.",
+                )
+            }
         }
 
         MmrIosSettingsSection(
             title = "Sync history",
-            footer = "Shows what the other phone replaced on this phone. Theme and colors stay on each device.",
+            footer = "Shows what changed on this phone. Theme and colors stay on this phone.",
         ) {
             MmrIosSettingsNavRow(
                 label = "Last 30 syncs",
@@ -326,7 +444,7 @@ fun LanSyncScreen(
                 title = "Advanced",
                 footer =
                     if (uiState.hasLocalLedgerData && uiState.trustedDeviceIds.isNotEmpty()) {
-                        "One-way pull replaces local ledger from a peer. Use Sync now for two-way merge."
+                        "This replaces everything on this phone with that phone's data. Sync now merges both phones instead."
                     } else {
                         null
                     },
@@ -334,8 +452,8 @@ fun LanSyncScreen(
                 if (uiState.hasLocalLedgerData && uiState.trustedDeviceIds.isNotEmpty()) {
                     uiState.trustedDeviceLabels.forEachIndexed { index, label ->
                         MmrIosSettingsNavRow(
-                            label = "Replace ledger from $label",
-                            value = "One-way pull",
+                            label = "Replace this phone from $label",
+                            value = "Replaces yours",
                             onClick = { viewModel.restoreFromTrusted(index) },
                             showDividerBelow = index < uiState.trustedDeviceLabels.lastIndex,
                         )

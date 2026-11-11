@@ -1,13 +1,9 @@
 package com.rrparallelstudio.miapp.feature.transaction.ui
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -18,7 +14,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.unit.dp
 import com.rrparallelstudio.miapp.core.model.enums.RecurrenceInterval
 import com.rrparallelstudio.miapp.testing.MmrTestTags
 import com.rrparallelstudio.miapp.ui.components.MmrTransactionFormAttachIconButton
@@ -27,6 +22,7 @@ import com.rrparallelstudio.miapp.ui.components.MmrTransactionFormChoiceChips
 import com.rrparallelstudio.miapp.ui.components.MmrTransactionFormIcons
 import com.rrparallelstudio.miapp.ui.components.MmrTransactionFormPickerRow
 import com.rrparallelstudio.miapp.ui.components.MmrTransactionFormPickerRowLabeled
+import com.rrparallelstudio.miapp.ui.components.MmrTransactionFormSuggestionDropdown
 import com.rrparallelstudio.miapp.ui.components.MmrTransactionFormTextRow
 import com.rrparallelstudio.miapp.ui.theme.mmrDatePickerColors
 import com.rrparallelstudio.miapp.ui.theme.mmrDatePickerDialogActionContentColor
@@ -190,49 +186,34 @@ fun TransactionNoteField(
     onAttachPhotoClick: (() -> Unit)? = null,
     canAttachMore: Boolean = true,
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        MmrTransactionFormTextRow(
-            value = note,
-            onValueChange = onNoteChange,
-            placeholder = "Note",
-            leadingIcon = MmrTransactionFormIcons.note,
-            testTag = MmrTestTags.transactionNote,
-            singleLine = false,
-            minLines = 2,
-            trailingContent =
-                if (onAttachPhotoClick != null) {
-                    {
-                        MmrTransactionFormAttachIconButton(
-                            onClick = onAttachPhotoClick,
-                            enabled = canAttachMore,
-                        )
-                    }
-                } else {
-                    null
-                },
-        )
-        if (suggestions.isNotEmpty()) {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp),
-            ) {
-                suggestions.forEach { suggestion ->
-                    TextButton(
-                        onClick = { onNoteChange(suggestion) },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            text = suggestion,
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
+    MmrTransactionFormTextRow(
+        value = note,
+        onValueChange = onNoteChange,
+        placeholder = "Note",
+        modifier = modifier,
+        leadingIcon = MmrTransactionFormIcons.note,
+        testTag = MmrTestTags.transactionNote,
+        singleLine = false,
+        minLines = 2,
+        trailingContent =
+            if (onAttachPhotoClick != null) {
+                {
+                    MmrTransactionFormAttachIconButton(
+                        onClick = onAttachPhotoClick,
+                        enabled = canAttachMore,
+                    )
                 }
-            }
-        }
-    }
+            } else {
+                null
+            },
+        belowField = {
+            MmrTransactionFormSuggestionDropdown(
+                suggestions = suggestions,
+                onSuggestionSelected = onNoteChange,
+                testTag = MmrTestTags.transactionNoteSuggestions,
+            )
+        },
+    )
 }
 
 private val recurrenceIntervalOptions =

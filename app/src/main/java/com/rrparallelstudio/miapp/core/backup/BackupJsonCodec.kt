@@ -4,6 +4,7 @@ import com.rrparallelstudio.miapp.core.backup.model.MmrAppSettingsBackup
 import com.rrparallelstudio.miapp.core.backup.model.MmrBackupAssetAttachmentRecord
 import com.rrparallelstudio.miapp.core.backup.model.MmrBackupAttachmentRecord
 import com.rrparallelstudio.miapp.core.backup.model.MmrBackupPayload
+import com.rrparallelstudio.miapp.core.backup.model.MmrBackupSmsAccountOverrideRecord
 import com.rrparallelstudio.miapp.core.backup.model.MmrDisplaySettingsBackup
 import com.rrparallelstudio.miapp.core.backup.model.MmrKnownProfileBackup
 import com.rrparallelstudio.miapp.core.backup.model.MmrOwnerProfileBackup
@@ -49,8 +50,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object BackupJsonCodec {
-    const val CURRENT_FORMAT_VERSION = 4
-    const val SUPPORTED_FORMAT_VERSION = 4
+    const val CURRENT_FORMAT_VERSION = 5
+
+    /** New exports use this version; [IMPORTABLE_FORMAT_VERSIONS] lists archives this app can read. */
+    const val SUPPORTED_FORMAT_VERSION = 5
+    val IMPORTABLE_FORMAT_VERSIONS: Set<Int> = setOf(4, 5)
     const val EXPECTED_APP_ID = "com.rrparallelstudio.miapp"
 
     fun encode(payload: MmrBackupPayload): String =
@@ -108,6 +112,12 @@ object BackupJsonCodec {
                         payload.assetAttachments.toJsonArray { backupAssetAttachmentToJson(it) },
                     )
                 }
+                if (payload.smsAccountOverrides.isNotEmpty()) {
+                    put(
+                        "smsAccountOverrides",
+                        payload.smsAccountOverrides.toJsonArray { smsAccountOverrideToJson(it) },
+                    )
+                }
             }.toString(2)
 
     fun decode(json: String): MmrBackupPayload {
@@ -122,7 +132,7 @@ object BackupJsonCodec {
                 throw IllegalArgumentException("Backup file is not valid JSON.", e)
             }
         val formatVersion = root.optInt("formatVersion", -1)
-        if (formatVersion != SUPPORTED_FORMAT_VERSION) {
+        if (formatVersion !in IMPORTABLE_FORMAT_VERSIONS) {
             throw IllegalArgumentException("Unsupported backup format version: $formatVersion")
         }
         val appId = root.optString("appId", "")
@@ -172,8 +182,36 @@ object BackupJsonCodec {
                 root.readArray("transactionAttachments").mapObjects { backupAttachmentFromJson(it) },
             assetAttachments =
                 root.readArray("assetAttachments").mapObjects { backupAssetAttachmentFromJson(it) },
+            smsAccountOverrides =
+                if (formatVersion >= 5) {
+                    root.readArray("smsAccountOverrides").mapObjects { smsAccountOverrideFromJson(it) }
+                } else {
+                    emptyList()
+                },
         )
     }
+
+    private fun smsAccountOverrideToJson(record: MmrBackupSmsAccountOverrideRecord) =
+        JSONObject().apply {
+            put("templateId", record.templateId)
+            put("instrument", record.instrument)
+            put("smsLastFour", record.smsLastFour)
+            put("accountSyncId", record.accountSyncId)
+            if (record.accountId > 0L) {
+                put("accountId", record.accountId)
+            }
+            put("updatedAt", record.updatedAt)
+        }
+
+    private fun smsAccountOverrideFromJson(json: JSONObject) =
+        MmrBackupSmsAccountOverrideRecord(
+            templateId = json.optString("templateId", ""),
+            instrument = json.optString("instrument", ""),
+            smsLastFour = json.getString("smsLastFour"),
+            accountSyncId = json.optString("accountSyncId", ""),
+            accountId = json.optLong("accountId", 0L),
+            updatedAt = json.optLong("updatedAt", 0L),
+        )
 
     private fun tombstoneToJson(entity: SyncTombstoneEntity) =
         JSONObject().apply {
@@ -661,6 +699,8 @@ object BackupJsonCodec {
             put("isActive", entity.isActive)
             put("isDefault", entity.isDefault)
             putNullableString("cardLastFour", entity.cardLastFour)
+            put("smsAutoCreated", entity.smsAutoCreated)
+            put("smsAutoCreatedUserModified", entity.smsAutoCreatedUserModified)
             put("createdAt", entity.createdAt)
             put("updatedAt", entity.updatedAt)
         }
@@ -677,6 +717,8 @@ object BackupJsonCodec {
             isActive = json.getBoolean("isActive"),
             isDefault = json.getBoolean("isDefault"),
             cardLastFour = json.optNullableString("cardLastFour"),
+            smsAutoCreated = json.optBoolean("smsAutoCreated", false),
+            smsAutoCreatedUserModified = json.optBoolean("smsAutoCreatedUserModified", false),
             createdAt = json.getLong("createdAt"),
             updatedAt = json.getLong("updatedAt"),
         )

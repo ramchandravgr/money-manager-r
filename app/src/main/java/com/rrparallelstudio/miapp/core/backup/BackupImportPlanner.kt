@@ -1,8 +1,11 @@
 package com.rrparallelstudio.miapp.core.backup
 
 import com.rrparallelstudio.miapp.core.backup.model.MmrBackupPayload
+import com.rrparallelstudio.miapp.core.backup.model.MmrBackupSmsAccountOverrideRecord
+import com.rrparallelstudio.miapp.core.database.entity.AccountEntity
 import com.rrparallelstudio.miapp.core.database.entity.LoanPaymentEntity
 import com.rrparallelstudio.miapp.core.database.entity.LoanScheduleEntryEntity
+import com.rrparallelstudio.miapp.core.database.entity.SmsAccountOverrideEntity
 
 /**
  * Prepares backup payloads for replace/merge import: link sanitization and merge-only row selection.
@@ -28,7 +31,35 @@ object BackupImportPlanner {
         val categorizationRules: Set<Long> = emptySet(),
         val trustedLanDeviceIds: Set<String> = emptySet(),
         val transactionAttachments: Set<Long> = emptySet(),
+        val accountSyncIdToId: Map<String, Long> = emptyMap(),
     )
+
+    fun resolveSmsAccountOverrides(
+        records: List<MmrBackupSmsAccountOverrideRecord>,
+        accountsInPayload: List<AccountEntity>,
+        extraSyncIdToAccountId: Map<String, Long> = emptyMap(),
+        validAccountIds: Set<Long>? = null,
+    ): List<SmsAccountOverrideEntity> {
+        val syncIdToId = accountsInPayload.associate { it.syncId to it.id }.toMutableMap()
+        syncIdToId.putAll(extraSyncIdToAccountId)
+        val idToAccount = accountsInPayload.associateBy { it.id }
+        return records.mapNotNull { record ->
+            val accountId =
+                when {
+                    record.accountSyncId.isNotBlank() -> syncIdToId[record.accountSyncId]
+                    record.accountId > 0L -> idToAccount[record.accountId]?.id
+                    else -> null
+                } ?: return@mapNotNull null
+            if (validAccountIds != null && accountId !in validAccountIds) return@mapNotNull null
+            SmsAccountOverrideEntity(
+                templateId = record.templateId,
+                instrument = record.instrument,
+                smsLastFour = record.smsLastFour,
+                accountId = accountId,
+                updatedAt = record.updatedAt,
+            )
+        }
+    }
 
     fun sanitizeLoanLinks(
         payments: List<LoanPaymentEntity>,
@@ -306,5 +337,5 @@ object BackupImportPlanner {
             payload.transactions.size + payload.loanPayments.size + payload.recurringRules.size +
             payload.budgets.size + payload.assets.size + payload.assetValuations.size +
             payload.assetAttachments.size + payload.notificationRules.size + payload.smsMessageRecords.size +
-            payload.transactionApprovals.size
+            payload.transactionApprovals.size + payload.smsAccountOverrides.size
 }

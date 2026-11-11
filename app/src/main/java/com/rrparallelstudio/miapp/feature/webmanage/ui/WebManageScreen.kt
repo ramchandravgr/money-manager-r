@@ -46,7 +46,7 @@ fun WebManageScreen(
             title = "About",
             isFirstInScreen = true,
             footer =
-                "Open the URL on a laptop on the same Wi‑Fi. Password changes apply without restarting the server.",
+                "Open the URL on a laptop on the same Wi‑Fi or phone hotspot. Password changes apply without restarting the server.",
         ) {
             MmrIosSettingsSectionBodyText(
                 text =
@@ -81,7 +81,7 @@ fun WebManageScreen(
             title = "Server",
             footer =
                 if (uiState.enabled) {
-                    "Turning Web Manage on disables Peer Device Sync. Anyone on the same LAN could reach this server; keep HTTP traffic on trusted Wi‑Fi only."
+                    "Turning Web Manage on disables Peer Device Sync. Anyone on the same LAN could reach this server; keep HTTP traffic on trusted Wi‑Fi or your own hotspot only."
                 } else {
                     "Local HTTP server for browser access on your LAN. HTTPS with a local certificate is planned for a future release."
                 },
@@ -95,7 +95,7 @@ fun WebManageScreen(
             )
             if (!uiState.onWifi) {
                 MmrIosSettingsSectionBodyText(
-                    text = "Connect to Wi‑Fi to use Web Manage from another device.",
+                    text = "Connect to Wi‑Fi or join a phone hotspot to use Web Manage from another device.",
                 )
             }
             when {
@@ -103,7 +103,7 @@ fun WebManageScreen(
                     if (!uiState.onWifi) {
                         MmrIosSettingsSectionBodyText(
                             text =
-                                "Server is running on this phone; connect Wi‑Fi so a laptop on the same network can reach it.",
+                                "Server is running on this phone; connect Wi‑Fi or join a hotspot so a laptop on the same network can reach it.",
                         )
                     }
                     MmrIosSettingsMonospaceFieldSlot(
@@ -137,7 +137,8 @@ fun WebManageScreen(
             MmrIosSettingsSection(
                 title = "Connection help",
                 footer =
-                    "Use main Wi‑Fi (not guest). Turn off VPN on phone and laptop. " +
+                    "Use home Wi‑Fi or your phone’s hotspot (not guest or public Wi‑Fi). " +
+                        "Turn off VPN on phone and laptop. " +
                         "Disable AP isolation on the router if the laptop cannot connect.",
             ) {
                 uiState.loopbackUrl?.let { loopback ->
@@ -149,8 +150,9 @@ fun WebManageScreen(
                 if (uiState.lanIpv4?.endsWith(".1") == true) {
                     MmrIosSettingsSectionBodyText(
                         text =
-                            "This address often belongs to the router, not your phone. " +
-                                "Check Wi‑Fi settings for your phone’s IP if the laptop cannot connect.",
+                            "On home Wi‑Fi this is often the router, not your phone. " +
+                                "If this phone is sharing a hotspot, .1 can be correct for the phone. " +
+                                "Check Wi‑Fi or hotspot details if the laptop cannot connect.",
                     )
                 }
                 if (uiState.pendingApprovalCount > 0) {

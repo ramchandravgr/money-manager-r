@@ -45,9 +45,22 @@ fun LanSyncHistoryScreen(
         sessions.forEach { session ->
             MmrIosSettingsSection(
                 title = session.peerName,
-                footer = session.counts,
+                footer =
+                    buildString {
+                        append(session.counts)
+                        session.footerNote?.let { note ->
+                            append("\n\n")
+                            append(note)
+                        }
+                    },
             ) {
-                MmrIosSettingsSectionBodyText(text = session.whenLabel + if (session.success) "" else " · Failed")
+                MmrIosSettingsSectionBodyText(
+                    text =
+                        buildString {
+                            append(session.whenLabel)
+                            if (!session.success) append(" · Did not complete")
+                        },
+                )
                 session.overrides.forEach { line ->
                     OverrideCard(line)
                 }

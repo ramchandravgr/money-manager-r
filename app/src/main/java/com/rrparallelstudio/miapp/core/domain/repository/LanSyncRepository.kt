@@ -27,6 +27,7 @@ data class LanSyncSessionState(
     val peerMode: LanSyncPeerMode = LanSyncPeerMode.ALL_TRUSTED_ON_LAN,
     val selectedPeerDeviceId: String? = null,
     val includeAttachments: Boolean = false,
+    val autoSyncOnAppOpen: Boolean = false,
     val pendingApprovalCount: Int = 0,
     val pendingPairRequests: List<PendingLanPairRequestEntity> = emptyList(),
 )
@@ -43,14 +44,23 @@ interface LanSyncRepository {
 
     suspend fun refreshSessionState()
 
+    /** Re-advertise and re-browse on LAN (e.g. when the sync settings screen is open). */
+    fun refreshPeerDiscovery()
+
     fun setLanSyncEnabled(enabled: Boolean)
 
     fun setDisplayName(name: String)
 
     fun pairingOffer(): LanSyncPairingOffer
 
-    /** Resolves a short pairing PIN via discovered LAN peers (`GET /mmr/v1/pairing-offer`). */
-    suspend fun resolvePairingInput(raw: String): LanSyncPairingOffer
+    /**
+     * Resolves a short pairing PIN via `GET /mmr/v1/pairing-offer`.
+     * [manualPeerAddress] optional `host:port` or `http://host:port` when mDNS discovery fails.
+     */
+    suspend fun resolvePairingInput(
+        raw: String,
+        manualPeerAddress: String? = null,
+    ): LanSyncPairingOffer
 
     suspend fun trustDeviceFromPairingOffer(
         offer: LanSyncPairingOffer,
@@ -74,7 +84,21 @@ interface LanSyncRepository {
 
     fun setIncludeAttachments(enabled: Boolean)
 
-    suspend fun syncNow(mergeOptions: LanSyncMergeOptions = LanSyncMergeOptions()): LanSyncNowResult
+    fun setAutoSyncOnAppOpen(enabled: Boolean)
+
+    /**
+     * Syncs trusted peers that are currently discovered on LAN (respects single-device mode).
+     * No-op when auto sync is off, sync is unavailable, or no active peers. Used on app foreground.
+     */
+    suspend fun syncActiveTrustedPeersOnAppOpen(
+        mergeOptions: LanSyncMergeOptions = LanSyncMergeOptions(),
+    ): LanSyncNowResult?
+
+    suspend fun syncNow(
+        mergeOptions: LanSyncMergeOptions = LanSyncMergeOptions(),
+        /** `host:port` from the other phone when discovery did not list it. */
+        manualPeerAddress: String? = null,
+    ): LanSyncNowResult
 
     suspend fun restoreFromPeer(
         remoteDeviceId: String,

@@ -8,6 +8,7 @@ import com.rrparallelstudio.miapp.core.domain.repository.AccountRepository
 import com.rrparallelstudio.miapp.feature.account.model.AccountItemUi
 import com.rrparallelstudio.miapp.feature.account.model.AccountListUiEvent
 import com.rrparallelstudio.miapp.feature.account.model.AccountListUiState
+import com.rrparallelstudio.miapp.ui.copy.MmrAccountSmsOriginLabels
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -44,6 +45,7 @@ class AccountListViewModel
                             cardLastFour = entity.cardLastFour,
                             isActive = entity.isActive,
                             isPrimary = entity.isDefault,
+                            smsOriginLabel = MmrAccountSmsOriginLabels.labelFor(entity),
                         )
                     }
                 },

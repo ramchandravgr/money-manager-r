@@ -1,8 +1,12 @@
+@file:Suppress("ktlint:standard:no-wildcard-imports")
+
 package com.rrparallelstudio.miapp.feature.home
 
 import android.widget.Toast
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.CallMerge
@@ -64,6 +68,16 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val ledgerListState = rememberLazyListState()
+    val ledgerTotalListState = rememberLazyListState()
+    val ledgerScrollToTopNonce by viewModel.ledgerScrollToTopNonce.collectAsState()
+
+    LaunchedEffect(ledgerScrollToTopNonce) {
+        if (ledgerScrollToTopNonce > 0) {
+            ledgerListState.animateScrollToItem(0)
+            ledgerTotalListState.animateScrollToItem(0)
+        }
+    }
 
     MmrSelectionModeBackHandler(
         enabled = uiState.isSelectionMode,
@@ -340,6 +354,7 @@ fun HomeScreen(
                                 selectionListTab = selectionListTab,
                                 onNavigateToTransactionDetail = onNavigateToTransactionDetail,
                                 onEvent = viewModel::onEvent,
+                                ledgerListState = ledgerListState,
                             )
                         }
 
@@ -417,6 +432,7 @@ fun HomeScreen(
                                                     viewModel.onEvent(HomeUiEvent.OnExportPeriodClick)
                                                 },
                                                 modifier = Modifier.fillMaxSize(),
+                                                listState = ledgerTotalListState,
                                             )
                                         } else {
                                             GroupedTransactionList(
@@ -425,6 +441,7 @@ fun HomeScreen(
                                                 selectedIds = selectedIds,
                                                 onItemClick = onRowClick,
                                                 onItemLongClick = onRowLongClick,
+                                                listState = ledgerTotalListState,
                                             )
                                         }
                                     }
@@ -435,6 +452,7 @@ fun HomeScreen(
                                             selectedIds = selectedIds,
                                             onItemClick = onRowClick,
                                             onItemLongClick = onRowLongClick,
+                                            listState = ledgerListState,
                                         )
                                 }
                             }
@@ -500,6 +518,7 @@ private fun HomeDailyMrecPane(
     selectionListTab: Boolean,
     onNavigateToTransactionDetail: (Long) -> Unit,
     onEvent: (HomeUiEvent) -> Unit,
+    ledgerListState: LazyListState,
 ) {
     MmrAdaptiveWidthBox(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -518,6 +537,7 @@ private fun HomeDailyMrecPane(
                     groups = uiState.groupedTransactions,
                     selectionMode = selectionMode,
                     selectedIds = selectedIds,
+                    listState = ledgerListState,
                     onItemClick = { id ->
                         if (!HomeCarryOverInjector.isCarryOverRow(id)) {
                             if (selectionMode) {

@@ -436,11 +436,35 @@ interface CategoryDao {
     )
     suspend fun findActiveByName(name: String): CategoryEntity?
 
+    @Query(
+        """
+        SELECT * FROM categories
+        WHERE lower(name) = lower(:name) AND type = :type
+        LIMIT 1
+        """,
+    )
+    suspend fun findByNameAndType(
+        name: String,
+        type: CategoryType,
+    ): CategoryEntity?
+
     @Query("SELECT * FROM subcategories WHERE id = :id LIMIT 1")
     suspend fun getSubcategoryById(id: Long): SubcategoryEntity?
 
     @Query("SELECT * FROM subcategories WHERE syncId = :syncId LIMIT 1")
     suspend fun getSubcategoryBySyncId(syncId: String): SubcategoryEntity?
+
+    @Query(
+        """
+        SELECT * FROM subcategories
+        WHERE categoryId = :categoryId AND lower(name) = lower(:name)
+        LIMIT 1
+        """,
+    )
+    suspend fun findSubcategoryByName(
+        categoryId: Long,
+        name: String,
+    ): SubcategoryEntity?
 
     @Query("SELECT * FROM categories WHERE isActive = 1 ORDER BY orderIndex, name")
     fun getActiveCategories(): Flow<List<CategoryEntity>>

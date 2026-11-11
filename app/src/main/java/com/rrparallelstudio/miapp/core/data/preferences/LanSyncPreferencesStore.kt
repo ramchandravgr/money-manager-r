@@ -46,6 +46,13 @@ class LanSyncPreferencesStore
                 prefs.edit().putBoolean(KEY_INCLUDE_ATTACHMENTS, value).apply()
             }
 
+        /** When true, sync trusted peers that are visible on LAN when the app opens (foreground). */
+        var autoSyncOnAppOpen: Boolean
+            get() = prefs.getBoolean(KEY_AUTO_SYNC_ON_APP_OPEN, false)
+            set(value) {
+                prefs.edit().putBoolean(KEY_AUTO_SYNC_ON_APP_OPEN, value).apply()
+            }
+
         fun duplicatePolicy(entityKey: String): LanSyncDuplicateEntityPolicy =
             when (prefs.getString(policyKey(entityKey), LanSyncDuplicateEntityPolicy.ASK.name)) {
                 LanSyncDuplicateEntityPolicy.MERGE_BY_NAME.name -> LanSyncDuplicateEntityPolicy.MERGE_BY_NAME
@@ -91,5 +98,6 @@ class LanSyncPreferencesStore
             const val KEY_PEER_MODE = "peer_mode"
             const val KEY_SELECTED_PEER = "selected_peer_device_id"
             const val KEY_INCLUDE_ATTACHMENTS = "include_attachments"
+            const val KEY_AUTO_SYNC_ON_APP_OPEN = "auto_sync_on_app_open"
         }
     }

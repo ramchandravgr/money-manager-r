@@ -14,18 +14,32 @@ class LanSyncAccountBalanceValidator
     constructor(
         private val database: MmrDatabase,
     ) {
-        suspend fun warningsAfterMerge(): List<String> {
+        /**
+         * After merge, set each account's stored balance to opening + approved transactions
+         * on this phone (same math as Accounts). Does not add the two phones' stored
+         * balances together.
+         */
+        suspend fun reconcileAfterMerge(): List<String> {
             val accountDao = database.accountDao()
             val transactions = database.transactionDao().getAllApprovedTransactions()
-            val warnings = mutableListOf<String>()
+            val now = System.currentTimeMillis()
+            val leftover = mutableListOf<String>()
             for (account in accountDao.getAccountsOnce()) {
                 val expected = recomputeBalance(account.openingBalance, account.id, transactions)
-                if (abs(account.currentBalance - expected) > BALANCE_EPSILON) {
-                    warnings +=
-                        "${account.name}: stored balance differs from transactions on this device."
+                if (abs(account.currentBalance - expected) <= BALANCE_EPSILON) continue
+                accountDao.update(
+                    account.copy(
+                        currentBalance = expected,
+                        updatedAt = now,
+                    ),
+                )
+                val after = accountDao.getById(account.id)
+                if (after == null || abs(after.currentBalance - expected) > BALANCE_EPSILON) {
+                    leftover +=
+                        "${account.name} — saved balance does not match your transaction list."
                 }
             }
-            return warnings
+            return leftover
         }
 
         private fun recomputeBalance(

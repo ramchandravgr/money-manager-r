@@ -167,6 +167,16 @@
                 <span class="filter-label">Note</span>
                 <input type="text" id="txn-detail-note" class="filter-control" />
               </label>
+              <p id="txn-detail-created-by" class="meta txn-detail-meta hidden"></p>
+              <p id="txn-detail-refund-info" class="meta txn-detail-meta hidden"></p>
+              <div id="txn-detail-refund-apply" class="txn-refund-apply hidden">
+                <label class="filter-field">
+                  <span class="filter-label">Apply card refund</span>
+                  <input type="number" step="0.01" min="0.01" id="txn-detail-refund-amount" class="filter-control" placeholder="Amount to refund" />
+                </label>
+                <button type="button" id="txn-detail-refund-btn" class="secondary filter-action-btn">Apply refund</button>
+                <p class="meta">Lowers this expense. Cannot exceed the remaining amount.</p>
+              </div>
               <div class="dialog-actions txn-detail-actions">
                 <button type="button" id="txn-detail-delete" class="danger toolbar-btn">Delete</button>
                 <button type="submit" id="txn-detail-save" class="toolbar-btn">Save</button>
@@ -240,6 +250,8 @@
         <div class="inline-add"><button type="button" class="secondary" id="txn-add-sub">+ Subcategory</button></div>
       </div>
       <label>Note <input type="text" id="txn-note" /></label>
+      <p id="txn-created-by" class="meta hidden"></p>
+      <p id="txn-refund-info" class="meta hidden"></p>
       <div class="dialog-actions">
         <button type="button" id="txn-delete" class="danger">Delete</button>
         <button type="button" id="txn-cancel" class="secondary">Cancel</button>

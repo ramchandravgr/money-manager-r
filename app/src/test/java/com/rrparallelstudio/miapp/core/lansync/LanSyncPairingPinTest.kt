@@ -14,6 +14,12 @@ class LanSyncPairingPinTest {
 
     @Test
     fun normalize_stripsSpacesAndHyphens() {
-        assertEquals("ABCDEFGHJKMN", LanSyncPairingPin.normalize("abcd-efgh jkmn"))
+        assertEquals("ABCDEFG", LanSyncPairingPin.normalize("abc-defg"))
+    }
+
+    @Test
+    fun sanitizeEntry_uppercasesAndDropsInvalidChars() {
+        assertEquals("ABC23", LanSyncPairingPin.sanitizeEntry("abc2i3"))
+        assertEquals("ABCDEFG", LanSyncPairingPin.sanitizeEntry("abcdefgH"))
     }
 }

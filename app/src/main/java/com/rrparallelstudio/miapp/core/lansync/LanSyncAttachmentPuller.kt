@@ -23,6 +23,7 @@ class LanSyncAttachmentPuller
         private val assetAttachmentDao: AssetAttachmentDao,
         private val assetAttachmentRepository: AssetAttachmentRepository,
         private val assetStore: AssetAttachmentStore,
+        private val networkUtils: LanSyncNetworkUtils,
     ) {
         suspend fun pullMissing(
             host: String,
@@ -48,6 +49,7 @@ class LanSyncAttachmentPuller
                             path = path,
                             deviceId = deviceId,
                             authToken = authToken,
+                            network = networkUtils.wifiNetwork(),
                         )
                     }.getOrNull() ?: continue
                 if (response.statusCode != 200) continue
@@ -88,6 +90,7 @@ class LanSyncAttachmentPuller
                             path = path,
                             deviceId = deviceId,
                             authToken = authToken,
+                            network = networkUtils.wifiNetwork(),
                         )
                     }.getOrNull() ?: continue
                 if (response.statusCode != 200) continue

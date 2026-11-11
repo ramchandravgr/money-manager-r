@@ -29,6 +29,7 @@ import com.rrparallelstudio.miapp.core.model.enums.CategoryType
 import com.rrparallelstudio.miapp.core.model.enums.RecordStatus
 import com.rrparallelstudio.miapp.core.model.enums.TransactionType
 import com.rrparallelstudio.miapp.core.owner.withLocalCreatedBy
+import com.rrparallelstudio.miapp.core.parser.account.SmsAccountOverrideStore
 import com.rrparallelstudio.miapp.core.transaction.TransactionCashFlow
 import com.rrparallelstudio.miapp.core.transaction.TransactionMergeCoordinator
 import kotlinx.coroutines.flow.Flow
@@ -51,6 +52,7 @@ class TransactionRepositoryImpl
         private val widgetRefreshTrigger: HomeScreenWidgetRefreshTrigger,
         private val budgetRepository: BudgetRepository,
         private val ownerProfileCoordinator: com.rrparallelstudio.miapp.core.owner.MmrOwnerProfileCoordinator,
+        private val smsAccountOverrideStore: SmsAccountOverrideStore,
     ) : TransactionRepository {
         private fun refreshWidgets() {
             widgetRefreshTrigger.requestRefresh()
@@ -113,7 +115,11 @@ class TransactionRepositoryImpl
             RepositoryGuards.requireValidTransactionEntity(transaction)
             accountDao.getById(transaction.accountId)
                 ?: throw IllegalArgumentException("Account not found.")
+            val previous = transactionDao.getById(transaction.id)
             transactionDao.update(transaction)
+            if (previous != null) {
+                smsAccountOverrideStore.rememberFromEditedSmsTransaction(previous, transaction.accountId)
+            }
             loanTransactionCoordinator.syncPaymentFromTransaction(transaction)
             maybeEvaluateBudgetAlerts(transaction)
             refreshWidgets()
@@ -473,6 +479,17 @@ class AccountRepositoryImpl
                     com.rrparallelstudio.miapp.core.lansync.SyncEntityType.ACCOUNT,
                 )
             }
+            val now = System.currentTimeMillis()
+            val userTouchedAutoCreated =
+                existing.smsAutoCreated &&
+                    !existing.smsAutoCreatedUserModified &&
+                    (
+                        trimmed != existing.name.trim() ||
+                            type != existing.type ||
+                            kotlin.math.abs(openingBalance - existing.openingBalance) > 0.01 ||
+                            last4 != existing.cardLastFour ||
+                            isActive != existing.isActive
+                    )
             accountDao.update(
                 existing.copy(
                     name = trimmed,
@@ -480,7 +497,9 @@ class AccountRepositoryImpl
                     openingBalance = openingBalance,
                     cardLastFour = last4,
                     isActive = isActive,
-                    updatedAt = System.currentTimeMillis(),
+                    smsAutoCreatedUserModified =
+                        existing.smsAutoCreatedUserModified || userTouchedAutoCreated,
+                    updatedAt = now,
                 ),
             )
         }

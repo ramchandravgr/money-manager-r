@@ -18,6 +18,7 @@ import com.rrparallelstudio.miapp.core.database.entity.LoanPaymentEntity
 import com.rrparallelstudio.miapp.core.database.entity.LoanScheduleEntryEntity
 import com.rrparallelstudio.miapp.core.database.entity.NotificationRuleEntity
 import com.rrparallelstudio.miapp.core.database.entity.RecurringRuleEntity
+import com.rrparallelstudio.miapp.core.database.entity.SmsAccountOverrideEntity
 import com.rrparallelstudio.miapp.core.database.entity.SmsMessageRecordEntity
 import com.rrparallelstudio.miapp.core.database.entity.SubcategoryEntity
 import com.rrparallelstudio.miapp.core.database.entity.TransactionApprovalEntity
@@ -90,6 +91,9 @@ interface BackupDao {
     @Query("SELECT * FROM transaction_attachments")
     suspend fun getAllTransactionAttachments(): List<TransactionAttachmentEntity>
 
+    @Query("SELECT * FROM sms_account_overrides")
+    suspend fun getAllSmsAccountOverrides(): List<SmsAccountOverrideEntity>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCategories(categories: List<CategoryEntity>)
 
@@ -146,6 +150,9 @@ interface BackupDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransactionAttachments(attachments: List<TransactionAttachmentEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSmsAccountOverrides(overrides: List<SmsAccountOverrideEntity>)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertCategoriesIgnore(categories: List<CategoryEntity>)
@@ -204,6 +211,9 @@ interface BackupDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertTransactionAttachmentsIgnore(attachments: List<TransactionAttachmentEntity>)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSmsAccountOverridesMerge(overrides: List<SmsAccountOverrideEntity>)
+
     @Transaction
     suspend fun mergeUserData(
         categories: List<CategoryEntity>,
@@ -225,6 +235,7 @@ interface BackupDao {
         trustedLanDevices: List<TrustedLanDeviceEntity> = emptyList(),
         transactionAttachments: List<TransactionAttachmentEntity> = emptyList(),
         assetAttachments: List<AssetAttachmentEntity> = emptyList(),
+        smsAccountOverrides: List<SmsAccountOverrideEntity> = emptyList(),
     ) {
         if (categories.isNotEmpty()) insertCategoriesIgnore(categories)
         if (subcategories.isNotEmpty()) insertSubcategoriesIgnore(subcategories)
@@ -245,10 +256,12 @@ interface BackupDao {
         if (trustedLanDevices.isNotEmpty()) insertTrustedLanDevicesIgnore(trustedLanDevices)
         if (transactionAttachments.isNotEmpty()) insertTransactionAttachmentsIgnore(transactionAttachments)
         if (assetAttachments.isNotEmpty()) insertAssetAttachmentsIgnore(assetAttachments)
+        if (smsAccountOverrides.isNotEmpty()) insertSmsAccountOverridesMerge(smsAccountOverrides)
     }
 
     @Transaction
     suspend fun clearAllUserData() {
+        deleteAllSmsAccountOverrides()
         deleteAllAssetAttachments()
         deleteAllAssetValuations()
         deleteAllAssets()
@@ -291,6 +304,7 @@ interface BackupDao {
         trustedLanDevices: List<TrustedLanDeviceEntity> = emptyList(),
         transactionAttachments: List<TransactionAttachmentEntity> = emptyList(),
         assetAttachments: List<AssetAttachmentEntity> = emptyList(),
+        smsAccountOverrides: List<SmsAccountOverrideEntity> = emptyList(),
     ) {
         clearAllUserData()
         if (categories.isNotEmpty()) insertCategories(categories)
@@ -312,7 +326,11 @@ interface BackupDao {
         if (trustedLanDevices.isNotEmpty()) insertTrustedLanDevices(trustedLanDevices)
         if (transactionAttachments.isNotEmpty()) insertTransactionAttachments(transactionAttachments)
         if (assetAttachments.isNotEmpty()) insertAssetAttachments(assetAttachments)
+        if (smsAccountOverrides.isNotEmpty()) insertSmsAccountOverrides(smsAccountOverrides)
     }
+
+    @Query("DELETE FROM sms_account_overrides")
+    suspend fun deleteAllSmsAccountOverrides()
 
     @Query("DELETE FROM asset_attachments")
     suspend fun deleteAllAssetAttachments()

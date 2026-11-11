@@ -18,6 +18,7 @@ import com.rrparallelstudio.miapp.core.database.entity.LoanPaymentEntity
 import com.rrparallelstudio.miapp.core.database.entity.LoanScheduleEntryEntity
 import com.rrparallelstudio.miapp.core.database.entity.NotificationRuleEntity
 import com.rrparallelstudio.miapp.core.database.entity.RecurringRuleEntity
+import com.rrparallelstudio.miapp.core.database.entity.SmsAccountOverrideEntity
 import com.rrparallelstudio.miapp.core.database.entity.SubcategoryEntity
 import com.rrparallelstudio.miapp.core.database.entity.TransactionAttachmentEntity
 import com.rrparallelstudio.miapp.core.database.entity.TransactionEntity
@@ -35,6 +36,7 @@ import com.rrparallelstudio.miapp.core.lansync.model.LanLoanRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanLoanScheduleEntryRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanNotificationRuleRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanRecurringRuleRecord
+import com.rrparallelstudio.miapp.core.lansync.model.LanSmsAccountOverrideRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanSubcategoryRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanTransactionRecord
 import com.rrparallelstudio.miapp.core.lansync.model.MmrLanSyncPayload
@@ -101,6 +103,7 @@ class LanSyncMerger
             val assetDao = database.assetDao()
             val assetValuationDao = database.assetValuationDao()
             val assetAttachmentDao = database.assetAttachmentDao()
+            val smsAccountOverrideDao = database.smsAccountOverrideDao()
 
             var categoriesInserted = 0
             var categoriesUpdated = 0
@@ -121,12 +124,15 @@ class LanSyncMerger
                 for (record in payload.categories) {
                     val existing = categoryDao.getCategoryBySyncId(record.syncId)
                     if (existing == null) {
-                        val nameMatch = categoryDao.findActiveByName(record.name)
-                        if (
-                            nameMatch != null &&
-                            options.duplicateCategoryPolicy == LanSyncDuplicateEntityPolicy.MERGE_BY_NAME
-                        ) {
-                            if (nameMatch.name != record.name || nameMatch.isActive != record.isActive) {
+                        val incomingType = LanSyncEnumParsers.categoryType(record.type)
+                        val nameMatch =
+                            if (options.duplicateCategoryPolicy == LanSyncDuplicateEntityPolicy.MERGE_BY_NAME) {
+                                categoryDao.findByNameAndType(record.name, incomingType)
+                            } else {
+                                null
+                            }
+                        if (nameMatch != null) {
+                            if (nameMatch.isActive != record.isActive) {
                                 journal.replaced(
                                     kind = "Category",
                                     title = record.name,
@@ -182,6 +188,19 @@ class LanSyncMerger
                     if (tombstoneMerger.isDeletedForUpsert(record.syncId, 0)) continue
                     val existing = categoryDao.getSubcategoryBySyncId(record.syncId)
                     if (existing == null) {
+                        val nameMatch = categoryDao.findSubcategoryByName(categoryId, record.name)
+                        if (nameMatch != null) {
+                            categoryDao.updateSubcategory(
+                                record.toEntity(categoryId).copy(id = nameMatch.id),
+                            )
+                            subcategorySyncToLocal[record.syncId] = nameMatch.id
+                            subcategoriesUpdated++
+                            journal.unchanged()
+                            if (record.isActive) {
+                                tombstoneMerger.clearTombstone(record.syncId)
+                            }
+                            continue
+                        }
                         val id =
                             categoryDao.insertSubcategory(
                                 record.toEntity(categoryId),
@@ -477,6 +496,25 @@ class LanSyncMerger
                     }
                 }
 
+                for (record in payload.smsAccountOverrides) {
+                    val accountId =
+                        accountSyncToLocal[record.accountSyncId]
+                            ?: accountDao.getBySyncId(record.accountSyncId)?.id
+                            ?: continue
+                    val existing = smsAccountOverrideDao.findByTemplate(record.templateId, record.smsLastFour)
+                    if (existing == null) {
+                        smsAccountOverrideDao.insert(record.toEntity(accountId))
+                    } else if (record.updatedAt > existing.updatedAt) {
+                        smsAccountOverrideDao.update(
+                            existing.copy(
+                                instrument = record.instrument,
+                                accountId = accountId,
+                                updatedAt = record.updatedAt,
+                            ),
+                        )
+                    }
+                }
+
                 for (record in payload.budgets) {
                     if (tombstoneMerger.isDeletedForUpsert(record.syncId, record.updatedAt)) continue
                     val categoryId =
@@ -590,15 +628,27 @@ class LanSyncMerger
                 }
             }
 
-            val balanceWarnings = balanceValidator.warningsAfterMerge()
+            val balanceWarnings = balanceValidator.reconcileAfterMerge()
             val tombWarnings =
                 buildList {
                     if (tombstoneStats.applied > 0) {
-                        add("Applied ${tombstoneStats.applied} deletion(s) from peer.")
+                        val n = tombstoneStats.applied
+                        add(
+                            if (n == 1) {
+                                "1 item removed here because the other phone deleted it."
+                            } else {
+                                "$n items removed here because the other phone deleted them."
+                            },
+                        )
                     }
                     if (tombstoneStats.keptAfterLocalEdit > 0) {
+                        val n = tombstoneStats.keptAfterLocalEdit
                         add(
-                            "${tombstoneStats.keptAfterLocalEdit} item(s) kept because you edited after peer deleted.",
+                            if (n == 1) {
+                                "1 item kept here because you changed it after the other phone deleted it."
+                            } else {
+                                "$n items kept here because you changed them after the other phone deleted them."
+                            },
                         )
                     }
                 }
@@ -660,6 +710,8 @@ class LanSyncMerger
                 isActive = isActive,
                 isDefault = isDefault,
                 cardLastFour = cardLastFour,
+                smsAutoCreated = smsAutoCreated,
+                smsAutoCreatedUserModified = smsAutoCreatedUserModified,
                 createdAt = createdAt,
                 updatedAt = updatedAt,
             )
@@ -808,6 +860,15 @@ class LanSyncMerger
                 createdByDisplayName = createdBy.displayName,
             )
         }
+
+        private fun LanSmsAccountOverrideRecord.toEntity(accountId: Long) =
+            SmsAccountOverrideEntity(
+                templateId = templateId,
+                instrument = instrument,
+                smsLastFour = smsLastFour,
+                accountId = accountId,
+                updatedAt = updatedAt,
+            )
 
         private fun LanCategorizationRuleRecord.toEntity(existingId: Long = 0L) =
             CategorizationRuleEntity(

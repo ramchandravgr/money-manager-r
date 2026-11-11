@@ -1,7 +1,7 @@
 package com.rrparallelstudio.miapp.core.lansync
 
+import com.rrparallelstudio.miapp.core.data.preferences.AppDisplaySettingsSnapshot
 import com.rrparallelstudio.miapp.core.lansync.model.MmrLanSyncPayload
-import com.rrparallelstudio.miapp.core.model.settings.AppDisplaySettingsSnapshot
 import com.rrparallelstudio.miapp.core.model.settings.MmrAppColorTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -27,7 +27,7 @@ class LanSyncOverrideTest {
     fun withoutDeviceAppearance_dropsThemeSnapshot() {
         val payload =
             MmrLanSyncPayload(
-                formatVersion = 6,
+                formatVersion = LanSyncJsonCodec.CURRENT_FORMAT_VERSION,
                 exportedAtEpochMillis = 1L,
                 sourceDeviceId = "a",
                 sourceDeviceName = "Phone",

@@ -6,6 +6,7 @@ import com.rrparallelstudio.miapp.core.data.preferences.LanSyncPeerMode
 import com.rrparallelstudio.miapp.core.domain.repository.LanSyncRepository
 import com.rrparallelstudio.miapp.core.lansync.LanSyncMergeOptions
 import com.rrparallelstudio.miapp.core.lansync.LanSyncOverrideJson
+import com.rrparallelstudio.miapp.core.lansync.LanSyncPairingPin
 import com.rrparallelstudio.miapp.core.lansync.LanSyncWifiNotTrustedException
 import com.rrparallelstudio.miapp.feature.lansync.LanSyncStatusMessages
 import com.rrparallelstudio.miapp.ui.state.MmrUiMessages
@@ -32,14 +33,22 @@ enum class LanSyncSensitiveAction {
     APPROVE_PAIR_REQUEST,
 }
 
+data class LanSyncDiscoveredPeerRow(
+    val deviceId: String,
+    val displayName: String,
+    val address: String,
+)
+
 data class LanSyncUiState(
     val enabled: Boolean = false,
     val displayName: String = "",
     val pairingOfferText: String = "",
     val pairingInput: String = "",
+    val pairingManualPeerInput: String = "",
     val trustedDeviceLabels: List<String> = emptyList(),
     val trustedDeviceIds: List<String> = emptyList(),
-    val discoveredLabels: List<String> = emptyList(),
+    val discoveredPeers: List<LanSyncDiscoveredPeerRow> = emptyList(),
+    val selectedPairingPeerAddress: String? = null,
     val onWifi: Boolean = false,
     val wifiSsid: String? = null,
     val localSyncUrl: String? = null,
@@ -48,6 +57,7 @@ data class LanSyncUiState(
     val peerMode: LanSyncPeerMode = LanSyncPeerMode.ALL_TRUSTED_ON_LAN,
     val selectedPeerDeviceId: String? = null,
     val includeAttachments: Boolean = false,
+    val autoSyncOnAppOpen: Boolean = false,
     val pendingApprovalCount: Int = 0,
     val isBusy: Boolean = false,
     val statusMessage: String? = null,
@@ -70,6 +80,8 @@ class LanSyncViewModel
         private val lanSyncRepository: LanSyncRepository,
     ) : ViewModel() {
         private val pairingInput = MutableStateFlow("")
+        private val pairingManualPeerInput = MutableStateFlow("")
+        private val selectedPairingPeerAddress = MutableStateFlow<String?>(null)
         private val isBusy = MutableStateFlow(false)
         private val statusMessage = MutableStateFlow<String?>(null)
         private val errorMessage = MutableStateFlow<String?>(null)
@@ -85,12 +97,20 @@ class LanSyncViewModel
         val uiState: StateFlow<LanSyncUiState> =
             combine(
                 combine(
-                    lanSyncRepository.sessionState,
-                    pairingInput,
-                    isBusy,
-                    statusMessage,
-                    errorMessage,
-                ) { session, input, busy, status, error ->
+                    combine(
+                        lanSyncRepository.sessionState,
+                        pairingInput,
+                        pairingManualPeerInput,
+                        selectedPairingPeerAddress,
+                    ) { session, input, manualPeer, selectedPeerAddress ->
+                        Quad(session, input, manualPeer, selectedPeerAddress)
+                    },
+                    combine(isBusy, statusMessage, errorMessage) { busy, status, error ->
+                        Triple(busy, status, error)
+                    },
+                ) { sessionQuad, busyTriple ->
+                    val (session, input, manualPeer, selectedPeerAddress) = sessionQuad
+                    val (busy, status, error) = busyTriple
                     val singleDeviceMode = session.peerMode == LanSyncPeerMode.SINGLE_DEVICE
                     val selectedPeer =
                         session.trustedDevices.find { it.remoteDeviceId == session.selectedPeerDeviceId }
@@ -112,7 +132,7 @@ class LanSyncViewModel
                         }
                     val syncNowDisabledHint =
                         if (missingSingleDeviceSelection) {
-                            "Select a trusted device above to sync with one phone only."
+                            "Choose one trusted phone above. Sync now will use only that phone."
                         } else {
                             null
                         }
@@ -121,9 +141,20 @@ class LanSyncViewModel
                         displayName = session.displayName,
                         pairingOfferText = session.pairingOfferText,
                         pairingInput = input,
+                        pairingManualPeerInput = manualPeer,
                         trustedDeviceLabels = session.trustedDevices.map { it.displayName },
                         trustedDeviceIds = session.trustedDevices.map { it.remoteDeviceId },
-                        discoveredLabels = session.discoveredPeers.map { "${it.displayName} · ${it.host}" },
+                        discoveredPeers =
+                            session.discoveredPeers
+                                .filter { it.deviceId != session.deviceId }
+                                .map {
+                                    LanSyncDiscoveredPeerRow(
+                                        deviceId = it.deviceId,
+                                        displayName = it.displayName,
+                                        address = "${it.host}:${it.port}",
+                                    )
+                                },
+                        selectedPairingPeerAddress = selectedPeerAddress,
                         onWifi = session.onWifi,
                         wifiSsid = session.wifiSsid,
                         localSyncUrl = session.localSyncUrl,
@@ -139,6 +170,7 @@ class LanSyncViewModel
                         peerMode = session.peerMode,
                         selectedPeerDeviceId = session.selectedPeerDeviceId,
                         includeAttachments = session.includeAttachments,
+                        autoSyncOnAppOpen = session.autoSyncOnAppOpen,
                         pendingApprovalCount = session.pendingApprovalCount,
                         isBusy = busy,
                         statusMessage = status,
@@ -166,6 +198,11 @@ class LanSyncViewModel
             viewModelScope.launch { lanSyncRepository.refreshSessionState() }
         }
 
+        fun refreshPeerDiscovery() {
+            lanSyncRepository.refreshPeerDiscovery()
+            viewModelScope.launch { lanSyncRepository.refreshSessionState() }
+        }
+
         fun setEnabled(enabled: Boolean) {
             lanSyncRepository.setLanSyncEnabled(enabled)
             if (enabled) {
@@ -190,9 +227,40 @@ class LanSyncViewModel
             lanSyncRepository.setIncludeAttachments(enabled)
         }
 
-        fun onPairingInputChanged(value: String) {
-            pairingInput.value = value
+        fun setAutoSyncOnAppOpen(enabled: Boolean) {
+            lanSyncRepository.setAutoSyncOnAppOpen(enabled)
         }
+
+        fun onPairingInputChanged(value: String) {
+            pairingInput.value = LanSyncPairingPin.sanitizeEntry(value)
+        }
+
+        fun onPairingManualPeerInputChanged(value: String) {
+            pairingManualPeerInput.value = value
+            val trimmed = value.trim()
+            val matchesDiscovery =
+                lanSyncRepository.sessionState.value.discoveredPeers.any {
+                    "${it.host}:${it.port}" == trimmed
+                }
+            selectedPairingPeerAddress.value = if (matchesDiscovery && trimmed.isNotEmpty()) trimmed else null
+        }
+
+        fun selectDiscoveredPeerForPairing(address: String) {
+            pairingManualPeerInput.value = address
+            selectedPairingPeerAddress.value = address
+        }
+
+        fun clearSelectedPairingPeer() {
+            pairingManualPeerInput.value = ""
+            selectedPairingPeerAddress.value = null
+        }
+
+        private data class Quad<A, B, C, D>(
+            val first: A,
+            val second: B,
+            val third: C,
+            val fourth: D,
+        )
 
         fun requestTrustDevice() {
             if (pairingInput.value.trim().isEmpty()) return
@@ -280,11 +348,22 @@ class LanSyncViewModel
                     val pairingCodeForPeer =
                         com.rrparallelstudio.miapp.core.lansync.LanSyncPairingPin
                             .normalize(raw)
-                    val offer = lanSyncRepository.resolvePairingInput(raw)
+                    val manual =
+                        selectedPairingPeerAddress.value?.trim()?.ifBlank { null }
+                            ?: pairingManualPeerInput.value.trim().ifBlank { null }
+                    val offer = lanSyncRepository.resolvePairingInput(raw, manual)
+                    val alreadyTrusted =
+                        lanSyncRepository.sessionState.value.trustedDevices.any {
+                            it.remoteDeviceId == offer.deviceId
+                        }
                     lanSyncRepository.trustDeviceFromPairingOffer(offer, pairingCodeForPeer)
                     pairingInput.value = ""
                     statusMessage.value =
-                        "This device trusts the other phone. Approve their request on the other device if prompted."
+                        if (alreadyTrusted) {
+                            "This phone is already trusted. Tap Sync now. You do not need to approve anything on the other phone."
+                        } else {
+                            "This phone now trusts the other one. If the other phone asks, tap Approve there."
+                        }
                     lanSyncRepository.refreshSessionState()
                 } catch (e: Exception) {
                     errorMessage.value = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_ACTION)
@@ -295,7 +374,8 @@ class LanSyncViewModel
         }
 
         fun syncNow() {
-            runSync { lanSyncRepository.syncNow(mergeOptions) }
+            val manual = pairingManualPeerInput.value.trim().ifBlank { null }
+            runSync { lanSyncRepository.syncNow(mergeOptions, manual) }
         }
 
         fun restoreFromTrusted(
@@ -336,9 +416,12 @@ class LanSyncViewModel
             entry: com.rrparallelstudio.miapp.core.database.entity.LanSyncLogEntryEntity?,
         ): String {
             if (entry == null) return "None yet"
-            if (!entry.success) return "Last sync failed"
             val replaced = LanSyncOverrideJson.decode(entry.overridesJson).size
-            return if (replaced == 0) "Up to date" else "$replaced replaced"
+            return LanSyncStatusMessages.formatHistorySubtitle(
+                success = entry.success,
+                replacedCount = replaced,
+                warningsText = entry.warningsText,
+            )
         }
 
         fun confirmWifiTrust() {

@@ -1,4 +1,7 @@
 /local.properties
+*.jks
+*.keystore
+!/docs/**/*.jks
 /app/google-services.json
 *.iml
 .gradle

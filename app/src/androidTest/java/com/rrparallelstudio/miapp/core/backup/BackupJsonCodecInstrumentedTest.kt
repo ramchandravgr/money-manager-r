@@ -221,4 +221,75 @@ class BackupJsonCodecInstrumentedTest {
             assertTrue(e.message!!.contains("Money Inbox"))
         }
     }
+
+    @Test
+    fun encodeDecode_roundTrip_preservesSmsAccountOverrides() {
+        val syncId = "acc-sync-override"
+        val payload =
+            MmrBackupPayload(
+                formatVersion = BackupJsonCodec.CURRENT_FORMAT_VERSION,
+                appId = BackupJsonCodec.EXPECTED_APP_ID,
+                exportedAtEpochMillis = 1_700_000_000_000L,
+                databaseVersion = 29,
+                categories = emptyList(),
+                subcategories = emptyList(),
+                accounts =
+                    listOf(
+                        AccountEntity(
+                            id = 2L,
+                            name = "HDFC",
+                            type = AccountType.CREDIT,
+                            syncId = syncId,
+                        ),
+                    ),
+                loans = emptyList(),
+                transactions = emptyList(),
+                loanPayments = emptyList(),
+                recurringRules = emptyList(),
+                notificationRules = emptyList(),
+                smsMessageRecords = emptyList(),
+                transactionApprovals = emptyList(),
+                smsAccountOverrides =
+                    listOf(
+                        com.rrparallelstudio.miapp.core.backup.model.MmrBackupSmsAccountOverrideRecord(
+                            templateId = "hdfc_cc",
+                            instrument = "HDFC",
+                            smsLastFour = "3903",
+                            accountSyncId = syncId,
+                            accountId = 2L,
+                            updatedAt = 1_700_000_000_100L,
+                        ),
+                    ),
+            )
+
+        val decoded = BackupJsonCodec.decode(BackupJsonCodec.encode(payload))
+        assertEquals(1, decoded.smsAccountOverrides.size)
+        assertEquals("3903", decoded.smsAccountOverrides.single().smsLastFour)
+        assertEquals(syncId, decoded.smsAccountOverrides.single().accountSyncId)
+    }
+
+    @Test
+    fun decode_formatVersion4_hasEmptySmsAccountOverrides() {
+        val json =
+            """
+            {
+              "formatVersion": 4,
+              "appId": "${BackupJsonCodec.EXPECTED_APP_ID}",
+              "exportedAtEpochMillis": 0,
+              "databaseVersion": 4,
+              "categories": [],
+              "subcategories": [],
+              "accounts": [],
+              "loans": [],
+              "transactions": [],
+              "loanPayments": [],
+              "recurringRules": [],
+              "notificationRules": [],
+              "smsMessageRecords": [],
+              "transactionApprovals": []
+            }
+            """.trimIndent()
+        val decoded = BackupJsonCodec.decode(json)
+        assertTrue(decoded.smsAccountOverrides.isEmpty())
+    }
 }

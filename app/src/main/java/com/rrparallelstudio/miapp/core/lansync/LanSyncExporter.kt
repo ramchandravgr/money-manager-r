@@ -5,6 +5,7 @@ import com.rrparallelstudio.miapp.core.common.sync.MmrSyncId
 import com.rrparallelstudio.miapp.core.data.preferences.AppDisplaySettingsSnapshot
 import com.rrparallelstudio.miapp.core.database.dao.BackupDao
 import com.rrparallelstudio.miapp.core.database.dao.CategorizationRuleDao
+import com.rrparallelstudio.miapp.core.database.dao.SmsAccountOverrideDao
 import com.rrparallelstudio.miapp.core.database.dao.TransactionAttachmentDao
 import com.rrparallelstudio.miapp.core.database.dao.TransactionDao
 import com.rrparallelstudio.miapp.core.database.entity.AccountEntity
@@ -19,6 +20,7 @@ import com.rrparallelstudio.miapp.core.database.entity.LoanPaymentEntity
 import com.rrparallelstudio.miapp.core.database.entity.LoanScheduleEntryEntity
 import com.rrparallelstudio.miapp.core.database.entity.NotificationRuleEntity
 import com.rrparallelstudio.miapp.core.database.entity.RecurringRuleEntity
+import com.rrparallelstudio.miapp.core.database.entity.SmsAccountOverrideEntity
 import com.rrparallelstudio.miapp.core.database.entity.SubcategoryEntity
 import com.rrparallelstudio.miapp.core.database.entity.TransactionEntity
 import com.rrparallelstudio.miapp.core.lansync.model.LanAccountRecord
@@ -35,6 +37,7 @@ import com.rrparallelstudio.miapp.core.lansync.model.LanLoanRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanLoanScheduleEntryRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanNotificationRuleRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanRecurringRuleRecord
+import com.rrparallelstudio.miapp.core.lansync.model.LanSmsAccountOverrideRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanSubcategoryRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanSyncTombstoneRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanTransactionRecord
@@ -50,6 +53,7 @@ class LanSyncExporter
         private val transactionDao: TransactionDao,
         private val backupDao: BackupDao,
         private val categorizationRuleDao: CategorizationRuleDao,
+        private val smsAccountOverrideDao: SmsAccountOverrideDao,
         private val attachmentDao: TransactionAttachmentDao,
         private val tombstoneCoordinator: LanSyncTombstoneCoordinator,
         private val ownerProfileCoordinator: MmrOwnerProfileCoordinator,
@@ -61,6 +65,7 @@ class LanSyncExporter
             displaySettings: AppDisplaySettingsSnapshot?,
             includeAttachments: Boolean = false,
             peerDeviceId: String? = null,
+            sourceListenPort: Int? = null,
         ): MmrLanSyncPayload {
             val categories = backupDao.getAllCategories().map { it.withSyncId() }
             val categorySyncMap = categories.associate { it.id to it.syncId }
@@ -88,6 +93,7 @@ class LanSyncExporter
                 exportedAtEpochMillis = System.currentTimeMillis(),
                 sourceDeviceId = sourceDeviceId,
                 sourceDeviceName = sourceDeviceName,
+                sourceListenPort = sourceListenPort?.takeIf { it in 1..65535 },
                 sourceProfileId = ownerProfileCoordinator.localProfileId,
                 sourceProfileName = sourceDeviceName,
                 knownProfiles = knownProfiles,
@@ -121,6 +127,11 @@ class LanSyncExporter
                         valuation.toLanRecord(assetSyncId)
                     },
                 categorizationRules = categorizationRuleDao.getAll().map { it.withSyncId().toLanRecord() },
+                smsAccountOverrides =
+                    smsAccountOverrideDao.getAll().mapNotNull { override ->
+                        val accountSyncId = accountSyncMap[override.accountId] ?: return@mapNotNull null
+                        override.toLanRecord(accountSyncId)
+                    },
                 notificationRules =
                     backupDao.getAllNotificationRules().map {
                         it.withSyncId().toLanRecord(loanSyncMap, recurringSyncMap, assetSyncMap)
@@ -186,6 +197,7 @@ class LanSyncExporter
         suspend fun buildEmptyPayload(
             sourceDeviceId: String,
             sourceDeviceName: String,
+            sourceListenPort: Int? = null,
         ): MmrLanSyncPayload {
             ownerProfileCoordinator.registerLocalProfile()
             return MmrLanSyncPayload(
@@ -193,6 +205,7 @@ class LanSyncExporter
                 exportedAtEpochMillis = System.currentTimeMillis(),
                 sourceDeviceId = sourceDeviceId,
                 sourceDeviceName = sourceDeviceName,
+                sourceListenPort = sourceListenPort?.takeIf { it in 1..65535 },
                 sourceProfileId = ownerProfileCoordinator.localProfileId,
                 sourceProfileName = sourceDeviceName,
                 knownProfiles = ownerProfileCoordinator.knownProfilesForExport(),
@@ -256,6 +269,8 @@ class LanSyncExporter
                 isActive = isActive,
                 isDefault = isDefault,
                 cardLastFour = cardLastFour,
+                smsAutoCreated = smsAutoCreated,
+                smsAutoCreatedUserModified = smsAutoCreatedUserModified,
                 createdAt = createdAt,
                 updatedAt = updatedAt,
             )
@@ -413,6 +428,15 @@ class LanSyncExporter
             createdByProfileId = createdByProfileId,
             createdByDisplayName = createdByDisplayName,
         )
+
+        private fun SmsAccountOverrideEntity.toLanRecord(accountSyncId: String) =
+            LanSmsAccountOverrideRecord(
+                templateId = templateId,
+                instrument = instrument,
+                smsLastFour = smsLastFour,
+                accountSyncId = accountSyncId,
+                updatedAt = updatedAt,
+            )
 
         private fun CategorizationRuleEntity.toLanRecord() =
             LanCategorizationRuleRecord(

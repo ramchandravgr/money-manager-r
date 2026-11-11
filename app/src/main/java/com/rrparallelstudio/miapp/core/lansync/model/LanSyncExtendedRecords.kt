@@ -76,6 +76,14 @@ data class LanBudgetRecord(
     val createdByDisplayName: String? = null,
 )
 
+data class LanSmsAccountOverrideRecord(
+    val templateId: String,
+    val instrument: String,
+    val smsLastFour: String,
+    val accountSyncId: String,
+    val updatedAt: Long,
+)
+
 data class LanCategorizationRuleRecord(
     val syncId: String,
     val priority: Int,

@@ -39,6 +39,7 @@ import com.rrparallelstudio.miapp.feature.transaction.model.SubcategoryUi
 import com.rrparallelstudio.miapp.feature.transaction.model.TransactionReceiptUi
 import com.rrparallelstudio.miapp.feature.transaction.model.resolveInitialTransactionAccountId
 import com.rrparallelstudio.miapp.feature.transaction.model.toAccountUi
+import com.rrparallelstudio.miapp.navigation.HomeLedgerScrollToTopNotifier
 import com.rrparallelstudio.miapp.ui.state.MmrUiMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -69,6 +70,7 @@ class AddEditTransactionViewModel
         private val accountRepository: AccountRepository,
         private val loanRepository: LoanRepository,
         private val displaySettingsStore: AppDisplaySettingsStore,
+        private val homeLedgerScrollToTopNotifier: HomeLedgerScrollToTopNotifier,
         savedStateHandle: SavedStateHandle,
     ) : ViewModel() {
         private fun mapLoans(
@@ -1003,6 +1005,7 @@ class AddEditTransactionViewModel
                                 ),
                             )
                         persistPendingReceipts(newId, state.receipts)
+                        homeLedgerScrollToTopNotifier.notifyScrollToTop()
                     }
                     pendingDeletedAttachmentIds.clear()
                     _uiState.update { it.copy(isSaved = true) }

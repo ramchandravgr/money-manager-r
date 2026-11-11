@@ -97,7 +97,12 @@ fun MmrStatusBanner(
                     .fillMaxWidth()
                     .padding(12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+            verticalAlignment =
+                if (message.contains('\n')) {
+                    Alignment.Top
+                } else {
+                    Alignment.CenterVertically
+                },
         ) {
             Text(
                 text = message,

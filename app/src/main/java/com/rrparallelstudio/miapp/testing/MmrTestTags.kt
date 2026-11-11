@@ -109,6 +109,7 @@ object MmrTestTags {
 
     const val transactionAmount = "transaction.field.amount"
     const val transactionNote = "transaction.field.note"
+    const val transactionNoteSuggestions = "transaction.field.note.suggestions"
 
     const val transactionTypeExpense = "transaction.type.expense"
     const val transactionTypeIncome = "transaction.type.income"
@@ -137,11 +138,13 @@ object MmrTestTags {
     const val webManagePasswordSave = "web_manage.password.save"
     const val webManageEnabledSwitch = "web_manage.switch.enabled"
     const val lanSyncEnabledSwitch = "lan_sync.switch.enabled"
+    const val lanSyncAutoSyncOnOpenSwitch = "lan_sync.switch.auto_sync_on_open"
     const val lanSyncPairingOfferValue = "lan_sync.pairing_offer.value"
     const val lanSyncPairingInput = "lan_sync.pairing.input"
     const val lanSyncTrustAdd = "lan_sync.action.trust_add"
     const val lanSyncSyncNow = "lan_sync.action.sync_now"
     const val lanSyncApprovePairPrefix = "lan_sync.approve."
+    const val lanSyncDiscoveredPeerPrefix = "lan_sync.discovered_peer."
 
     const val loanFabAdd = "loan.fab.add"
     const val loanFieldName = "loan.field.name"

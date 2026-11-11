@@ -11,6 +11,7 @@ import com.rrparallelstudio.miapp.core.lansync.SyncEntityType
 import com.rrparallelstudio.miapp.core.lansync.model.LanAccountRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanBudgetRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanCategoryRecord
+import com.rrparallelstudio.miapp.core.lansync.model.LanSmsAccountOverrideRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanSyncTombstoneRecord
 import com.rrparallelstudio.miapp.core.lansync.model.LanTransactionRecord
 import com.rrparallelstudio.miapp.core.lansync.model.MmrLanSyncPayload
@@ -331,5 +332,56 @@ class LanSyncMergerInstrumentedTest {
                     .getAllApprovedTransactions()
                     .size,
             )
+        }
+
+    @Test
+    fun merge_appliesSmsAccountOverrideForSyncedAccount() =
+        runBlocking {
+            val accountSyncId = "acct-cc-3903"
+            val payload =
+                MmrLanSyncPayload(
+                    formatVersion = LanSyncJsonCodec.CURRENT_FORMAT_VERSION,
+                    exportedAtEpochMillis = 1L,
+                    sourceDeviceId = "peer",
+                    categories = emptyList(),
+                    subcategories = emptyList(),
+                    accounts =
+                        listOf(
+                            LanAccountRecord(
+                                syncId = accountSyncId,
+                                name = "Savings",
+                                type = "DEBIT",
+                                openingBalance = 0.0,
+                                currentBalance = 0.0,
+                                currencyCode = "INR",
+                                isActive = true,
+                                isDefault = true,
+                                cardLastFour = null,
+                                createdAt = 1L,
+                                updatedAt = 1L,
+                            ),
+                        ),
+                    loans = emptyList(),
+                    transactions = emptyList(),
+                    smsAccountOverrides =
+                        listOf(
+                            LanSmsAccountOverrideRecord(
+                                templateId = "hdfc_cc_spent",
+                                instrument = "CREDIT_CARD",
+                                smsLastFour = "3903",
+                                accountSyncId = accountSyncId,
+                                updatedAt = 50L,
+                            ),
+                        ),
+                )
+            merger.merge(payload)
+            val accountId =
+                graph.database
+                    .accountDao()
+                    .getBySyncId(accountSyncId)!!
+                    .id
+            val row =
+                graph.database.smsAccountOverrideDao().findByTemplate("hdfc_cc_spent", "3903")
+            assertEquals(accountId, row?.accountId)
         }
 }

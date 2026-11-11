@@ -17,6 +17,8 @@ class FakeLanSyncRepository : LanSyncRepository {
 
     override suspend fun refreshSessionState() = Unit
 
+    override fun refreshPeerDiscovery() = Unit
+
     override fun setLanSyncEnabled(enabled: Boolean) = Unit
 
     override fun setDisplayName(name: String) = Unit
@@ -24,7 +26,10 @@ class FakeLanSyncRepository : LanSyncRepository {
     override fun pairingOffer(): LanSyncPairingOffer =
         LanSyncPairingOffer(deviceId = "test", displayName = "Test", inboundAuthToken = "token")
 
-    override suspend fun resolvePairingInput(raw: String): LanSyncPairingOffer = pairingOffer()
+    override suspend fun resolvePairingInput(
+        raw: String,
+        manualPeerAddress: String?,
+    ): LanSyncPairingOffer = pairingOffer()
 
     override suspend fun trustDeviceFromPairingOffer(
         offer: LanSyncPairingOffer,
@@ -47,8 +52,14 @@ class FakeLanSyncRepository : LanSyncRepository {
 
     override fun setIncludeAttachments(enabled: Boolean) = Unit
 
-    override suspend fun syncNow(mergeOptions: LanSyncMergeOptions): LanSyncNowResult =
-        LanSyncNowResult(summary = emptyMergeSummary(), peerFailures = emptyList())
+    override fun setAutoSyncOnAppOpen(enabled: Boolean) = Unit
+
+    override suspend fun syncActiveTrustedPeersOnAppOpen(mergeOptions: LanSyncMergeOptions): LanSyncNowResult? = null
+
+    override suspend fun syncNow(
+        mergeOptions: LanSyncMergeOptions,
+        manualPeerAddress: String?,
+    ): LanSyncNowResult = LanSyncNowResult(summary = emptyMergeSummary(), peerFailures = emptyList())
 
     override suspend fun restoreFromPeer(
         remoteDeviceId: String,

@@ -1,0 +1,38 @@
+---
+description: Title case for developer-authored UI labels, placeholders, and short control copy (MMR)
+globs: app/src/main/java/**/*.kt
+alwaysApply: true
+---
+
+# UI copy — title casing
+
+Canonical rule for Money Inbox static UI text. Replaces the former `ui-static-copy-title-case.mdc` (merged here).
+
+## Title Case (labels and short controls)
+
+Developer-authored **labels** use **Title Casing**: capitalize the first letter of each word. Word separators include spaces, `/`, `·`, and `-`.
+
+Examples:
+
+- `New budget` → `New Budget`
+- `Lender / bank name` → `Lender / Bank Name`
+- `Alert when exceeded` → `Alert When Exceeded`
+- Placeholder `Pairing code from other device` → `Pairing Code From Other Device`
+
+Applies to: menus, section titles, buttons, settings rows, form placeholders, picker hints, empty-state titles, and release-note bullets when shown in UI.
+
+**Do not** Title Case **user-entered** data (account names, notes, merchants) or **dynamic numbers/dates**. Use `MmrTopAppBar.applyStaticLabelCaseToTitle = false` when the bar title is user content.
+
+Fixed phrases in code (e.g. `MmrAccountSmsOriginLabels`) should already be Title Cased in source — do not run `mmrStaticLabelCase()` on them again at render time.
+
+## Implementation
+
+- `String.mmrStaticLabelCase()` in `com.rrparallelstudio.miapp.ui.copy.MmrStaticUiCopy`.
+- Shared chrome (`MmrFormSectionLabel`, `MmrIosSettings*` rows, form pickers, dialog titles, primary buttons) applies it at render time where appropriate.
+- New raw `Text("…")` control labels in features should use those components or call `mmrStaticLabelCase()` explicitly.
+
+## Sentence case (prose)
+
+**Messages** stay normal sentence case: dialog body, multi-sentence errors, section **footers**, and helper paragraphs (e.g. “This name is shown on the other phone as Created by when you sync.”). Only use Title Case there when the string is clearly a **short label**, not explanatory prose.
+
+When a feature is introduced in FTUE, keep tour copy aligned with these rules.
