@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -68,6 +67,7 @@ fun CategoryPickerSheetHeader(
 fun CategoryPickerParentRow(
     name: String,
     colorHex: String,
+    iconName: String,
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -108,13 +108,7 @@ fun CategoryPickerParentRow(
                         .background(accent),
             )
         }
-        Box(
-            modifier =
-                Modifier
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(accent),
-        )
+        CategoryIconGlyph(iconName = iconName, colorHex = colorHex, sizeDp = 22.dp)
         Text(
             text = name,
             style = MaterialTheme.typography.bodyMedium,
@@ -132,6 +126,7 @@ fun CategoryPickerParentRow(
 fun CategoryPickerSubRow(
     name: String,
     colorHex: String,
+    iconName: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
@@ -151,13 +146,7 @@ fun CategoryPickerSubRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(MmrDimens.spaceSm),
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .size(8.dp)
-                    .clip(CircleShape)
-                    .background(parseColorHex(colorHex)),
-        )
+        CategoryIconGlyph(iconName = iconName, colorHex = colorHex, sizeDp = 20.dp)
         Text(
             text = name,
             style = MaterialTheme.typography.bodyMedium,

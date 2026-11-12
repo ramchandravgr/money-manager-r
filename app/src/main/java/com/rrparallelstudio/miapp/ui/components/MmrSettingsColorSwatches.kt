@@ -19,8 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
+import com.rrparallelstudio.miapp.ui.theme.mmrSettingsInsetRowPrimaryStyle
 
 /** Small circles for theme / amount previews in settings pickers. */
 @Composable
@@ -67,9 +67,10 @@ fun MmrSettingsChoiceLabelWithSwatches(
                 Modifier
                     .weight(1f, fill = true)
                     .padding(end = 10.dp),
-            color = MmrBrandColors.settingsSheetListRowText(),
-            fontSize = 16.sp,
-            fontWeight = labelFontWeight,
+            style =
+                mmrSettingsInsetRowPrimaryStyle(MmrBrandColors.settingsSheetListRowText()).copy(
+                    fontWeight = labelFontWeight,
+                ),
             maxLines = MMR_IOS_SETTINGS_LABEL_MAX_LINES,
             overflow = TextOverflow.Ellipsis,
             softWrap = true,

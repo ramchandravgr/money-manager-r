@@ -13,12 +13,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rrparallelstudio.miapp.core.lansync.LanSyncOverrideLine
 import com.rrparallelstudio.miapp.feature.lansync.viewmodel.LanSyncHistoryViewModel
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSection
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSectionBodyText
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroup
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupNote
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenLayout
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenScaffold
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
@@ -31,19 +30,20 @@ fun LanSyncHistoryScreen(
 ) {
     val sessions by viewModel.sessions.collectAsState()
     MmrSettingsScreenScaffold(
-        title = "Sync history",
+        title = "Sync History",
         onNavigateBack = onNavigateBack,
         layout = MmrSettingsScreenLayout.InsetGrouped,
     ) {
         if (sessions.isEmpty()) {
-            MmrIosSettingsSection(title = null) {
-                MmrIosSettingsSectionBodyText(
-                    text = "Nothing has synced yet. After Sync now, replacements from the other phone show up here.",
+            MmrSettingsGroup(title = "Recent", isFirstInScreen = true) {
+                MmrSettingsGroupNote(
+                    text = "Nothing has synced yet. After Sync Now, replacements from the other phone show up here.",
+                    showDividerBelow = false,
                 )
             }
         }
         sessions.forEach { session ->
-            MmrIosSettingsSection(
+            MmrSettingsGroup(
                 title = session.peerName,
                 footer =
                     buildString {
@@ -54,7 +54,7 @@ fun LanSyncHistoryScreen(
                         }
                     },
             ) {
-                MmrIosSettingsSectionBodyText(
+                MmrSettingsGroupNote(
                     text =
                         buildString {
                             append(session.whenLabel)
@@ -75,35 +75,38 @@ private fun OverrideCard(line: LanSyncOverrideLine) {
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 6.dp)
+                .padding(horizontal = 14.dp, vertical = 6.dp)
                 .border(1.dp, MmrBrandColors.Header.copy(alpha = 0.35f), RoundedCornerShape(12.dp))
                 .background(MmrBrandColors.Header.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
                 .padding(12.dp),
     ) {
         Text(
             text = "REPLACED YOUR ${line.kind.uppercase(Locale.getDefault())}",
-            color = MmrBrandColors.Header,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.Bold,
+            style =
+                com.rrparallelstudio.miapp.ui.theme
+                    .mmrLanSyncHistoryKickerStyle(MmrBrandColors.Header),
         )
         Text(
             text = line.title,
-            color = MmrBrandColors.TextStrong,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
+            style =
+                com.rrparallelstudio.miapp.ui.theme.mmrSettingsInsetRowPrimaryStyle(MmrBrandColors.TextStrong).copy(
+                    fontWeight = FontWeight.SemiBold,
+                ),
             modifier = Modifier.padding(top = 4.dp),
         )
         Text(
             text = "On this phone: ${line.yours}",
-            color = MmrBrandColors.TextMedium,
-            fontSize = 13.sp,
+            style =
+                com.rrparallelstudio.miapp.ui.theme
+                    .mmrSettingsRowSecondaryStyle(MmrBrandColors.TextMedium),
             modifier = Modifier.padding(top = 8.dp),
         )
         Text(
             text = "From the other phone: ${line.theirs}",
-            color = MmrBrandColors.TextStrong,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
+            style =
+                com.rrparallelstudio.miapp.ui.theme.mmrSettingsRowSecondaryStyle(MmrBrandColors.TextStrong).copy(
+                    fontWeight = FontWeight.SemiBold,
+                ),
             modifier = Modifier.padding(top = 2.dp),
         )
     }

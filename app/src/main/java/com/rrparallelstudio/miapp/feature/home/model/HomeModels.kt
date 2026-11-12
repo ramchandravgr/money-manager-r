@@ -36,9 +36,9 @@ data class HomeUiState(
     val showMonthPicker: Boolean = false,
     val selectedYear: Int = 0,
     val selectedMonth: Int = 0,
-    val selectedCategoryFilter: String? = null,
+    val selectedCategoryFilters: Set<Long> = emptySet(),
     val selectedTypeFilter: HomeTypeFilter = HomeTypeFilter.ALL,
-    val categories: List<String> = emptyList(),
+    val categoryFilterRows: List<HomeCategoryFilterRow> = emptyList(),
     val summary: HomeSummaryUi = HomeSummaryUi(),
     val groupedTransactions: List<TransactionGroupUi> = emptyList(),
     val calendarCells: List<CalendarDayUi> = emptyList(),
@@ -184,9 +184,11 @@ data class HomeExcelExportOptionUi(
 )
 
 sealed interface HomeUiEvent {
-    data class OnCategoryFilterSelected(
-        val category: String?,
+    data class OnCategoryFilterToggled(
+        val categoryId: Long,
     ) : HomeUiEvent
+
+    data object OnCategoryFiltersCleared : HomeUiEvent
 
     data class OnTypeFilterSelected(
         val filter: HomeTypeFilter,

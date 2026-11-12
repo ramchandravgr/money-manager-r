@@ -34,8 +34,12 @@ import com.rrparallelstudio.miapp.feature.recurring.ui.RecurringDetailScreen
 import com.rrparallelstudio.miapp.feature.scheduled.model.ScheduledSection
 import com.rrparallelstudio.miapp.feature.scheduled.ui.ScheduledScreen
 import com.rrparallelstudio.miapp.feature.search.ui.TransactionSearchScreen
-import com.rrparallelstudio.miapp.feature.settings.ui.ConfigurationScreen
+import com.rrparallelstudio.miapp.feature.settings.ui.AppearanceSettingsScreen
+import com.rrparallelstudio.miapp.feature.settings.ui.HomeMenuSettingsScreen
+import com.rrparallelstudio.miapp.feature.settings.ui.SecuritySettingsScreen
+import com.rrparallelstudio.miapp.feature.settings.ui.SettingsChoiceScreen
 import com.rrparallelstudio.miapp.feature.settings.ui.SettingsScreen
+import com.rrparallelstudio.miapp.feature.settings.ui.SmsBackupSetupGuideScreen
 import com.rrparallelstudio.miapp.feature.settings.ui.SmsTemplateOverlayScreen
 import com.rrparallelstudio.miapp.feature.settings.ui.TransactionScanSettingsScreen
 import com.rrparallelstudio.miapp.feature.settings.viewmodel.SettingsViewModel
@@ -143,8 +147,14 @@ fun MmrNavGraph(
             SettingsScreen(
                 onNavigateBack = { navController.popBackStack() },
                 showBackNavigation = false,
-                onNavigateToConfiguration = {
-                    navController.navigate(Screen.Configuration.route)
+                onNavigateToHomeMenu = {
+                    navController.navigate(Screen.HomeMenuSettings.route)
+                },
+                onNavigateToAppearance = {
+                    navController.navigate(Screen.AppearanceSettings.route)
+                },
+                onNavigateToSecurity = {
+                    navController.navigate(Screen.SecuritySettings.route)
                 },
                 onNavigateToBackup = {
                     navController.navigate(Screen.Backup.route)
@@ -163,9 +173,6 @@ fun MmrNavGraph(
                 },
                 onNavigateToTransactionScan = {
                     navController.navigate(Screen.TransactionScan.route)
-                },
-                onNavigateToSmsTemplateOverlay = {
-                    navController.navigate(Screen.SmsTemplateOverlay.route)
                 },
                 onReplayIntroduction = {
                     settingsViewModel.replayIntroduction()
@@ -186,6 +193,26 @@ fun MmrNavGraph(
                 onNavigateToSmsTemplateOverlay = {
                     navController.navigate(Screen.SmsTemplateOverlay.route)
                 },
+                onNavigateToSetupGuide = {
+                    navController.navigate(Screen.SmsBackupSetupGuide.route)
+                },
+            )
+        }
+
+        composable(Screen.SmsBackupSetupGuide.route) {
+            SmsBackupSetupGuideScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
+        composable(
+            route = Screen.SettingsChoice.route,
+            arguments =
+                listOf(
+                    navArgument(Screen.SettingsChoice.ARG_PICKER) { type = NavType.StringType },
+                ),
+        ) { entry ->
+            SettingsChoiceScreen(
+                pickerName = entry.arguments?.getString(Screen.SettingsChoice.ARG_PICKER).orEmpty(),
+                onNavigateBack = { navController.popBackStack() },
             )
         }
 
@@ -193,8 +220,35 @@ fun MmrNavGraph(
             SmsTemplateOverlayScreen(onNavigateBack = { navController.popBackStack() })
         }
 
+        composable(Screen.HomeMenuSettings.route) {
+            HomeMenuSettingsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onOpenPicker = { picker ->
+                    navController.navigate(Screen.SettingsChoice.createRoute(picker.name))
+                },
+            )
+        }
+
+        composable(Screen.AppearanceSettings.route) {
+            AppearanceSettingsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onOpenPicker = { picker ->
+                    navController.navigate(Screen.SettingsChoice.createRoute(picker.name))
+                },
+            )
+        }
+
+        composable(Screen.SecuritySettings.route) {
+            SecuritySettingsScreen(onNavigateBack = { navController.popBackStack() })
+        }
+
         composable(Screen.Configuration.route) {
-            ConfigurationScreen(onNavigateBack = { navController.popBackStack() })
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                navController.navigate(Screen.Settings.route) {
+                    popUpTo(Screen.Configuration.route) { inclusive = true }
+                    launchSingleTop = true
+                }
+            }
         }
 
         composable(Screen.Accounts.route) {

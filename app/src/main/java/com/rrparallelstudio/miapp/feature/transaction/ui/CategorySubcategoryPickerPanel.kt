@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -37,6 +38,8 @@ import com.rrparallelstudio.miapp.feature.transaction.model.AddEditTransactionUi
 import com.rrparallelstudio.miapp.feature.transaction.model.CategoryUi
 import com.rrparallelstudio.miapp.ui.components.MmrDimens
 import com.rrparallelstudio.miapp.ui.components.MmrFormCompactSearchField
+import com.rrparallelstudio.miapp.ui.components.mmrFillDownToFormBottom
+import com.rrparallelstudio.miapp.ui.components.rememberMmrConsumeOverscrollConnection
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
 
 @Composable
@@ -45,6 +48,7 @@ fun CategorySubcategoryPickerPanel(
     onEvent: (AddEditTransactionUiEvent) -> Unit,
     modifier: Modifier = Modifier,
     maxPanelHeight: Dp = 300.dp,
+    fillRemainingViewport: Boolean = false,
     onPickerFinished: () -> Unit = {},
     showDismissAction: Boolean = false,
     onDismiss: () -> Unit = {},
@@ -58,6 +62,7 @@ fun CategorySubcategoryPickerPanel(
         callbacks = transactionCategoryPickerCallbacks(onEvent),
         modifier = modifier,
         maxPanelHeight = maxPanelHeight,
+        fillRemainingViewport = fillRemainingViewport,
         onPickerFinished = onPickerFinished,
         showDismissAction = showDismissAction,
         onDismiss = onDismiss,
@@ -70,6 +75,7 @@ fun CategorySubcategoryPickerPanel(
     callbacks: CategoryPickerPanelCallbacks,
     modifier: Modifier = Modifier,
     maxPanelHeight: Dp = 300.dp,
+    fillRemainingViewport: Boolean = false,
     onPickerFinished: () -> Unit = {},
     showDismissAction: Boolean = false,
     onDismiss: () -> Unit = {},
@@ -145,6 +151,7 @@ fun CategorySubcategoryPickerPanel(
         onPickerFinished()
     }
 
+    val consumeOverscroll = rememberMmrConsumeOverscrollConnection()
     Column(modifier = modifier.fillMaxWidth()) {
         if (showDismissAction) {
             Row(
@@ -198,117 +205,152 @@ fun CategorySubcategoryPickerPanel(
                 textAlign = TextAlign.Center,
             )
         } else {
-            Row(
-                modifier =
+            val listAreaModifier =
+                if (fillRemainingViewport) {
                     Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 200.dp, max = maxPanelHeight),
-            ) {
-                LazyColumn(
-                    modifier =
-                        Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                ) {
-                    items(filteredCategories, key = { it.id }) { category ->
-                        CategoryPickerParentRow(
-                            name = category.name,
-                            colorHex = category.colorHex,
-                            selected = category.id == highlightedId,
-                            onClick = { onParentRowClick(category.id) },
-                            onLongClick = { callbacks.onEditCategory?.invoke(category.id) },
-                        )
-                    }
-                    callbacks.onAddCategory?.let { onAdd ->
-                        item {
-                            CategoryPickerInlineAdd(
-                                label = "Add category",
-                                onClick = onAdd,
-                            )
-                        }
-                    }
+                        .weight(1f, fill = true)
+                        .fillMaxHeight()
+                } else {
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 200.dp, max = maxPanelHeight)
                 }
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxHeight()
-                            .width(1.dp)
-                            .background(MmrBrandColors.BorderMain.copy(alpha = 0.5f)),
-                )
-                LazyColumn(
-                    modifier =
-                        Modifier
-                            .weight(1f)
-                            .fillMaxHeight(),
-                ) {
-                    if (highlightedCategory == null) {
-                        item {
-                            Text(
-                                text = "Select a category",
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(MmrDimens.space2xl),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MmrBrandColors.TextLight,
-                                textAlign = TextAlign.Center,
+            val listsColumnModifier =
+                if (fillRemainingViewport) {
+                    Modifier
+                        .fillMaxWidth()
+                        .mmrFillDownToFormBottom(
+                            minHeight = 240.dp,
+                            endInset = MmrDimens.spaceSm + 8.dp,
+                        )
+                } else {
+                    Modifier.fillMaxWidth()
+                }
+            Column(modifier = listsColumnModifier) {
+                Row(modifier = listAreaModifier) {
+                    LazyColumn(
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .then(
+                                    if (fillRemainingViewport) {
+                                        Modifier.nestedScroll(consumeOverscroll)
+                                    } else {
+                                        Modifier
+                                    },
+                                ),
+                    ) {
+                        items(filteredCategories, key = { it.id }) { category ->
+                            CategoryPickerParentRow(
+                                name = category.name,
+                                colorHex = category.colorHex,
+                                iconName = category.iconName,
+                                selected = category.id == highlightedId,
+                                onClick = { onParentRowClick(category.id) },
+                                onLongClick = { callbacks.onEditCategory?.invoke(category.id) },
                             )
                         }
+                        callbacks.onAddCategory?.let { onAdd ->
+                            item {
+                                CategoryPickerInlineAdd(
+                                    label = "Add category",
+                                    onClick = onAdd,
+                                )
+                            }
+                        }
                     }
-                    when {
-                        highlightedCategory == null -> Unit
-                        subcategories.isEmpty() -> {
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxHeight()
+                                .width(1.dp)
+                                .background(MmrBrandColors.BorderMain.copy(alpha = 0.5f)),
+                    )
+                    LazyColumn(
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .then(
+                                    if (fillRemainingViewport) {
+                                        Modifier.nestedScroll(consumeOverscroll)
+                                    } else {
+                                        Modifier
+                                    },
+                                ),
+                    ) {
+                        if (highlightedCategory == null) {
                             item {
                                 Text(
-                                    text = "No subcategories — \"${highlightedCategory.name}\" will be used.",
+                                    text = "Select a category",
                                     modifier =
                                         Modifier
                                             .fillMaxWidth()
-                                            .padding(
-                                                horizontal = MmrDimens.spaceLg,
-                                                vertical = MmrDimens.spaceMd,
-                                            ),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MmrBrandColors.TextMedium,
+                                            .padding(MmrDimens.space2xl),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MmrBrandColors.TextLight,
+                                    textAlign = TextAlign.Center,
                                 )
                             }
-                            callbacks.onAddSubcategory?.let { onAdd ->
+                        }
+                        when {
+                            highlightedCategory == null -> Unit
+                            subcategories.isEmpty() -> {
                                 item {
-                                    CategoryPickerInlineAdd(
-                                        label = "Add subcategory",
-                                        onClick = onAdd,
+                                    Text(
+                                        text = "No subcategories — \"${highlightedCategory.name}\" will be used.",
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(
+                                                    horizontal = MmrDimens.spaceLg,
+                                                    vertical = MmrDimens.spaceMd,
+                                                ),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MmrBrandColors.TextMedium,
+                                    )
+                                }
+                                callbacks.onAddSubcategory?.let { onAdd ->
+                                    item {
+                                        CategoryPickerInlineAdd(
+                                            label = "Add subcategory",
+                                            onClick = onAdd,
+                                        )
+                                    }
+                                }
+                            }
+                            visibleSubs.isEmpty() && normalizedQuery.isNotEmpty() -> {
+                                item {
+                                    Text(
+                                        text = "No subcategories match \"$normalizedQuery\".",
+                                        modifier =
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .padding(MmrDimens.spaceLg),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MmrBrandColors.TextMedium,
                                     )
                                 }
                             }
-                        }
-                        visibleSubs.isEmpty() && normalizedQuery.isNotEmpty() -> {
-                            item {
-                                Text(
-                                    text = "No subcategories match \"$normalizedQuery\".",
-                                    modifier =
-                                        Modifier
-                                            .fillMaxWidth()
-                                            .padding(MmrDimens.spaceLg),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MmrBrandColors.TextMedium,
-                                )
-                            }
-                        }
-                        else -> {
-                            items(visibleSubs, key = { it.id }) { sub ->
-                                CategoryPickerSubRow(
-                                    name = sub.name,
-                                    colorHex = highlightedCategory.colorHex,
-                                    onClick = { onSubcategoryPicked(sub.id) },
-                                    onLongClick = { callbacks.onEditSubcategory?.invoke(sub.id) },
-                                )
-                            }
-                            callbacks.onAddSubcategory?.let { onAdd ->
-                                item {
-                                    CategoryPickerInlineAdd(
-                                        label = "Add subcategory",
-                                        onClick = onAdd,
+                            else -> {
+                                items(visibleSubs, key = { it.id }) { sub ->
+                                    CategoryPickerSubRow(
+                                        name = sub.name,
+                                        colorHex = highlightedCategory.colorHex,
+                                        iconName = sub.iconName,
+                                        onClick = { onSubcategoryPicked(sub.id) },
+                                        onLongClick = { callbacks.onEditSubcategory?.invoke(sub.id) },
                                     )
+                                }
+                                callbacks.onAddSubcategory?.let { onAdd ->
+                                    item {
+                                        CategoryPickerInlineAdd(
+                                            label = "Add subcategory",
+                                            onClick = onAdd,
+                                        )
+                                    }
                                 }
                             }
                         }

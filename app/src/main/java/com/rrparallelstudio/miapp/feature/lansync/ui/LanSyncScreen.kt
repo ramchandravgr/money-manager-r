@@ -1,14 +1,14 @@
 package com.rrparallelstudio.miapp.feature.lansync.ui
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -22,23 +22,20 @@ import com.rrparallelstudio.miapp.feature.lansync.viewmodel.LanSyncViewModel
 import com.rrparallelstudio.miapp.security.MmrDeviceCredentialGate
 import com.rrparallelstudio.miapp.testing.MmrTestTags
 import com.rrparallelstudio.miapp.ui.components.MmrContentDialog
-import com.rrparallelstudio.miapp.ui.components.MmrDimens
-import com.rrparallelstudio.miapp.ui.components.MmrHelperText
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsBusyIndicator
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsCopyableCodeSlot
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsDestructiveRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsInlineErrorSection
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsInlineTextRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsNavRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsPrimaryActionSlot
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSecondaryActionSlot
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSection
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSectionBodyText
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSwitchRow
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroup
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupAction
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupCode
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupLabelRow
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupNavRow
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupNote
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupSwitchRow
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupTextField
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupValueRow
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupWarn
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenLayout
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenScaffold
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsStatusBanners
-import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
 
 @Composable
 fun LanSyncScreen(
@@ -48,7 +45,6 @@ fun LanSyncScreen(
     viewModel: LanSyncViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var showAdvanced by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val activity = context as? FragmentActivity
 
@@ -108,6 +104,17 @@ fun LanSyncScreen(
         )
     }
 
+    val address = lanHostPort(uiState.localSyncUrl)
+    val canTrust =
+        uiState.enabled &&
+            uiState.pairingInput.isNotBlank() &&
+            !uiState.isBusy &&
+            (
+                uiState.selectedPairingPeerAddress != null ||
+                    uiState.pairingManualPeerInput.isNotBlank() ||
+                    uiState.discoveredPeers.isEmpty()
+            )
+
     MmrSettingsScreenScaffold(
         title = "Peer Device Sync",
         onNavigateBack = onNavigateBack,
@@ -120,17 +127,21 @@ fun LanSyncScreen(
             onDismissError = viewModel::dismissMessages,
         )
 
-        MmrIosSettingsSection(
+        MmrSettingsGroupWarn(
+            text =
+                "This connection is not locked. Use your home Wi‑Fi or your own hotspot, " +
+                    "not a public or guest network.",
+            modifier = Modifier.padding(top = 4.dp),
+        )
+
+        MmrSettingsGroup(
             title = "Enable",
-            isFirstInScreen = true,
             footer =
-                "Copies approved transactions between phones you trust, on the same Wi‑Fi or your phone hotspot. " +
-                    "SMS still waiting for approval stays on each phone. " +
-                    "Sync on app open or tap Sync now. " +
-                    "This sync is not encrypted. Use home Wi‑Fi or your own hotspot, not guest or public Wi‑Fi.",
+                "Copies transactions you have already approved. " +
+                    "Messages still waiting in Approval Center stay on the phone that received them.",
         ) {
-            MmrIosSettingsSwitchRow(
-                label = "Sync on same Wi‑Fi",
+            MmrSettingsGroupSwitchRow(
+                label = "Sync On Same Wi‑Fi",
                 checked = uiState.enabled,
                 onCheckedChange = viewModel::setEnabled,
                 switchTestTag = MmrTestTags.lanSyncEnabledSwitch,
@@ -143,108 +154,68 @@ fun LanSyncScreen(
         }
 
         if (!uiState.onWifi) {
-            MmrIosSettingsInlineErrorSection(
-                message = "Connect to Wi‑Fi or join a phone hotspot before syncing.",
-                isFirstInScreen = false,
+            MmrSettingsGroupWarn(
+                text = "Connect to Wi‑Fi or join a phone hotspot before syncing.",
+                modifier = Modifier.padding(top = 14.dp),
             )
-        } else {
-            MmrIosSettingsSection(
-                title = "Network",
-                footer =
-                    buildString {
-                        uiState.localSyncUrl?.let { append("This phone: $it. ") }
-                        append(
-                            "Each phone has its own address. That is normal. " +
-                                "On this network shows phones found automatically. " +
-                                "Both phones need Sync on same Wi‑Fi turned on.",
-                        )
-                        if (uiState.enabled && uiState.discoveredPeers.isEmpty()) {
-                            append(
-                                " If the other phone is missing, copy its This phone line into " +
-                                    "Other phone address below. Turn off VPN on both phones.",
-                            )
-                        }
-                    },
-            ) {
-                uiState.wifiSsid?.let { ssid ->
-                    MmrIosSettingsSectionBodyText(text = "Network: $ssid")
-                }
-            }
         }
 
-        MmrIosSettingsSection(title = "This device") {
-            MmrIosSettingsInlineTextRow(
-                label = "Your name",
+        MmrSettingsGroup(title = "This Phone") {
+            MmrSettingsGroupValueRow(
+                label = "Network",
+                value = uiState.wifiSsid?.takeIf { it.isNotBlank() } ?: "—",
+            )
+            MmrSettingsGroupTextField(
+                label = "Your Name",
                 value = uiState.displayName,
                 onValueChange = viewModel::setDisplayName,
                 placeholder = "Name",
             )
-            MmrHelperText(
-                text = "The other phone shows this name as Created by after a sync.",
-                modifier =
-                    Modifier
-                        .padding(
-                            horizontal = MmrDimens.iosSettingsRowHorizontalPadding,
-                            vertical = 6.dp,
-                        ),
-                color = MmrBrandColors.listAreaCaptionText(),
+            MmrSettingsGroupValueRow(
+                label = "Address",
+                value = address,
+                onClick =
+                    if (address == "—") {
+                        null
+                    } else {
+                        { copyPlain(context, "Address", address) }
+                    },
             )
-            MmrIosSettingsCopyableCodeSlot(
-                fieldLabel = "Pairing code",
-                value = uiState.pairingOfferText,
-                showDividerBelow = false,
-                valueTestTag = MmrTestTags.lanSyncPairingOfferValue,
+            MmrSettingsGroupCode(
+                code = uiState.pairingOfferText,
+                onClick =
+                    uiState.pairingOfferText.takeIf { it.isNotBlank() }?.let { pin ->
+                        { copyPlain(context, "Pairing code", pin) }
+                    },
+                testTag = MmrTestTags.lanSyncPairingOfferValue,
             )
-            MmrIosSettingsSectionBodyText(
+            MmrSettingsGroupNote(
                 text =
                     "Read this code to the other phone. It changes after 15 minutes. " +
-                        "Do not share it with anyone else.",
+                        "They will see your name on transactions you add.",
+                showDividerBelow = false,
             )
         }
 
-        if (uiState.pendingPairLabels.isNotEmpty()) {
-            MmrIosSettingsSection(
-                title = "Pending pair requests",
-                footer = "Another phone asked to sync. Tap Approve only if you were pairing with that phone.",
-            ) {
-                uiState.pendingPairLabels.forEachIndexed { index, label ->
-                    val deviceId = uiState.pendingPairDeviceIds.getOrNull(index)
-                    MmrIosSettingsSectionBodyText(text = label)
-                    MmrIosSettingsPrimaryActionSlot(
-                        text = "Approve $label",
-                        onClick = {
-                            if (deviceId != null) viewModel.requestApprovePairRequest(deviceId)
-                        },
-                        enabled = uiState.enabled && !uiState.isBusy && deviceId != null,
-                        testTag = deviceId?.let { "${MmrTestTags.lanSyncApprovePairPrefix}$it" },
-                    )
-                    MmrIosSettingsSecondaryActionSlot(
-                        text = "Decline",
-                        onClick = {
-                            if (deviceId != null) viewModel.rejectPairRequest(deviceId)
-                        },
-                        enabled = uiState.enabled && !uiState.isBusy && deviceId != null,
-                        showDividerBelow = index < uiState.pendingPairLabels.lastIndex,
-                    )
-                }
-            }
-        }
-
-        if (uiState.discoveredPeers.isNotEmpty()) {
-            MmrIosSettingsSection(
-                title = "On this network",
-                footer =
-                    "Tap the other phone, then enter its pairing code below. " +
-                        "Skip if that phone is already trusted.",
-            ) {
+        MmrSettingsGroup(
+            title = "On This Network",
+            footer =
+                "Tap their phone, then type the code shown on their screen. " +
+                    "Skip this if you already trust that phone.",
+        ) {
+            if (uiState.discoveredPeers.isEmpty()) {
+                MmrSettingsGroupNote(
+                    text = "No other phones found yet.",
+                    showDividerBelow = false,
+                )
+            } else {
                 uiState.discoveredPeers.forEachIndexed { index, peer ->
                     val isSelected = uiState.selectedPairingPeerAddress == peer.address
-                    MmrIosSettingsNavRow(
+                    MmrSettingsGroupNavRow(
                         label = peer.displayName,
-                        labelSubtitle = peer.address,
                         value = if (isSelected) "Selected" else "",
                         onClick = {
-                            if (!uiState.enabled || uiState.isBusy) return@MmrIosSettingsNavRow
+                            if (!uiState.enabled || uiState.isBusy) return@MmrSettingsGroupNavRow
                             if (isSelected) {
                                 viewModel.clearSelectedPairingPeer()
                             } else {
@@ -258,34 +229,23 @@ fun LanSyncScreen(
             }
         }
 
-        MmrIosSettingsSection(
-            title = "Trust a device",
+        MmrSettingsGroup(
+            title = "Trust A Device",
             footer =
-                "Enter the 7-character code from the other phone. Do not enter the code shown on this phone.",
+                "Type the code from their screen, not the code on this phone. " +
+                    "Type an address only if their phone is not in the list above.",
         ) {
-            if (uiState.discoveredPeers.isEmpty()) {
-                MmrIosSettingsInlineTextRow(
-                    label = "Other phone address",
-                    value = uiState.pairingManualPeerInput,
-                    onValueChange = viewModel::onPairingManualPeerInputChanged,
-                    placeholder = "192.168.43.2:54321",
-                    singleLine = true,
-                )
-                MmrIosSettingsSectionBodyText(
-                    text =
-                        "On the other phone, copy the This phone line (numbers, colon, and port). " +
-                            "Paste it here only if that phone is not listed above. " +
-                            "If it is already under Trusted devices, you do not need to pair again. " +
-                            "Tap Sync now. After that sync works, the other phone can sync back " +
-                            "without typing your address, until you turn sync off and on.",
-                )
-            }
-            MmrIosSettingsInlineTextRow(
-                label = "Pairing code",
+            MmrSettingsGroupTextField(
+                label = "Other Phone Address",
+                value = uiState.pairingManualPeerInput,
+                onValueChange = viewModel::onPairingManualPeerInputChanged,
+                placeholder = "192.168.43.2:54321",
+            )
+            MmrSettingsGroupTextField(
+                label = "Pairing Code",
                 value = uiState.pairingInput,
                 onValueChange = viewModel::onPairingInputChanged,
-                placeholder = "Pairing Code From Other Device",
-                singleLine = true,
+                placeholder = "Code On Their Phone",
                 keyboardOptions =
                     KeyboardOptions(
                         capitalization = KeyboardCapitalization.Characters,
@@ -293,64 +253,95 @@ fun LanSyncScreen(
                     ),
                 testTag = MmrTestTags.lanSyncPairingInput,
             )
-            MmrIosSettingsSecondaryActionSlot(
-                text = "Add trusted device",
+            MmrSettingsGroupAction(
+                text = "Add Trusted Device",
                 onClick = viewModel::requestTrustDevice,
-                enabled =
-                    uiState.enabled &&
-                        uiState.pairingInput.isNotBlank() &&
-                        !uiState.isBusy &&
-                        (
-                            uiState.discoveredPeers.isEmpty() ||
-                                uiState.selectedPairingPeerAddress != null
-                        ),
+                enabled = canTrust,
                 showDividerBelow = false,
                 testTag = MmrTestTags.lanSyncTrustAdd,
             )
         }
 
-        if (uiState.trustedDeviceLabels.isNotEmpty()) {
-            MmrIosSettingsSection(
-                title = "Trusted devices",
-                footer = "Remove stops that phone from syncing with this one.",
-            ) {
+        if (uiState.pendingPairLabels.isNotEmpty()) {
+            MmrSettingsGroup(title = "Waiting For You") {
+                uiState.pendingPairLabels.forEachIndexed { index, label ->
+                    val deviceId = uiState.pendingPairDeviceIds.getOrNull(index)
+                    val last = index == uiState.pendingPairLabels.lastIndex
+                    MmrSettingsGroupLabelRow(label = "$label Asked To Sync")
+                    MmrSettingsGroupAction(
+                        text = "Approve",
+                        onClick = {
+                            if (deviceId != null) viewModel.requestApprovePairRequest(deviceId)
+                        },
+                        enabled = uiState.enabled && !uiState.isBusy && deviceId != null,
+                        testTag = deviceId?.let { "${MmrTestTags.lanSyncApprovePairPrefix}$it" },
+                    )
+                    MmrSettingsGroupAction(
+                        text = "Decline",
+                        onClick = {
+                            if (deviceId != null) viewModel.rejectPairRequest(deviceId)
+                        },
+                        danger = true,
+                        enabled = uiState.enabled && !uiState.isBusy && deviceId != null,
+                        showDividerBelow = !last,
+                    )
+                }
+            }
+        }
+
+        MmrSettingsGroup(title = "Trusted Devices") {
+            if (uiState.trustedDeviceLabels.isEmpty()) {
+                MmrSettingsGroupNote(
+                    text = "No trusted phones yet.",
+                    showDividerBelow = false,
+                )
+            } else {
                 uiState.trustedDeviceLabels.forEachIndexed { index, label ->
-                    MmrIosSettingsDestructiveRow(
-                        label = "Remove $label",
+                    MmrSettingsGroupAction(
+                        text = "Remove $label",
                         onClick = { viewModel.requestRemoveTrusted(index) },
+                        danger = true,
+                        enabled = !uiState.isBusy,
                         showDividerBelow = index < uiState.trustedDeviceLabels.lastIndex,
                     )
                 }
             }
         }
 
-        MmrIosSettingsSection(
-            title = "Sync options",
-            footer = "Include attachments copies receipt photos. Sync can take longer.",
+        if (!uiState.hasLocalLedgerData && uiState.trustedDeviceLabels.isNotEmpty()) {
+            MmrSettingsGroup(
+                title = "This Phone Has No Transactions",
+                footer =
+                    "Use this only when this phone has no transactions yet. " +
+                        "It copies their data here. It does not combine both phones.",
+            ) {
+                uiState.trustedDeviceLabels.forEachIndexed { index, label ->
+                    MmrSettingsGroupAction(
+                        text = "Copy All Data From $label",
+                        onClick = { viewModel.restoreFromTrusted(index, navigateHomeOnSuccess = true) },
+                        enabled = uiState.enabled && uiState.onWifi && !uiState.isBusy,
+                        showDividerBelow = index < uiState.trustedDeviceLabels.lastIndex,
+                    )
+                }
+            }
+        }
+
+        MmrSettingsGroup(
+            title = "Sync Options",
+            footer =
+                "With auto sync on, opening the app syncs when a trusted phone is on this Wi‑Fi. " +
+                    "On a new Wi‑Fi name, tap Sync Now once so that network is allowed. " +
+                    "Receipt photos are included only when Include Attachments is on.",
         ) {
-            MmrIosSettingsSwitchRow(
-                label = "Auto sync on app open",
+            MmrSettingsGroupSwitchRow(
+                label = "Auto Sync On App Open",
                 checked = uiState.autoSyncOnAppOpen,
                 onCheckedChange = viewModel::setAutoSyncOnAppOpen,
                 enabled = uiState.enabled,
                 switchTestTag = MmrTestTags.lanSyncAutoSyncOnOpenSwitch,
-                showDividerBelow = false,
             )
-            MmrIosSettingsSectionBodyText(
-                text =
-                    if (uiState.enabled) {
-                        "Syncs when you open the app, if a trusted phone is on this Wi‑Fi. " +
-                            "On a new Wi‑Fi name, tap Sync now once and allow that network. " +
-                            "Turning off Sync on same Wi‑Fi also turns this off. " +
-                            "Turn it on again after you turn sync back on."
-                    } else {
-                        "Turn on Sync on same Wi‑Fi above first. " +
-                            "Turning sync off also turns this off. " +
-                            "Turn it on again after you turn sync back on."
-                    },
-            )
-            MmrIosSettingsSwitchRow(
-                label = "Sync one device only",
+            MmrSettingsGroupSwitchRow(
+                label = "Sync One Device Only",
                 checked = uiState.peerMode == LanSyncPeerMode.SINGLE_DEVICE,
                 onCheckedChange = { enabled ->
                     viewModel.setPeerMode(
@@ -358,114 +349,97 @@ fun LanSyncScreen(
                     )
                 },
             )
-            MmrIosSettingsSectionBodyText(
-                text = "When this is on, Sync now talks only to the phone you select below.",
-            )
             if (uiState.peerMode == LanSyncPeerMode.SINGLE_DEVICE && uiState.trustedDeviceLabels.isNotEmpty()) {
                 uiState.trustedDeviceLabels.forEachIndexed { index, label ->
                     val id = uiState.trustedDeviceIds.getOrNull(index)
-                    MmrIosSettingsNavRow(
+                    MmrSettingsGroupNavRow(
                         label = label,
-                        value = if (id == uiState.selectedPeerDeviceId) "Selected" else "Select",
+                        value = if (id == uiState.selectedPeerDeviceId) "Selected" else "",
                         onClick = { if (id != null) viewModel.setSelectedPeer(id) },
                     )
                 }
             }
-            MmrIosSettingsSwitchRow(
-                label = "Include attachments",
+            MmrSettingsGroupSwitchRow(
+                label = "Include Attachments",
                 checked = uiState.includeAttachments,
                 onCheckedChange = viewModel::setIncludeAttachments,
                 showDividerBelow = false,
             )
         }
 
-        if (!uiState.hasLocalLedgerData && uiState.trustedDeviceLabels.isNotEmpty()) {
-            MmrIosSettingsSection(
-                title = "Restore on this phone",
-                footer =
-                    "This phone has no transactions yet. " +
-                        "This copies everything from the other phone onto this one.",
-            ) {
-                uiState.trustedDeviceLabels.forEachIndexed { index, label ->
-                    val restoreEnabled = uiState.enabled && uiState.onWifi && !uiState.isBusy
-                    MmrIosSettingsSecondaryActionSlot(
-                        text = "Copy all data from $label",
-                        onClick = { viewModel.restoreFromTrusted(index, navigateHomeOnSuccess = true) },
-                        enabled = restoreEnabled,
-                        showDividerBelow = index < uiState.trustedDeviceLabels.lastIndex,
-                    )
-                }
-            }
-        }
-
-        MmrIosSettingsSection(
-            title = "Sync now",
+        MmrSettingsGroup(
+            title = "Sync Now",
             footer = uiState.syncNowDisabledHint,
         ) {
-            MmrIosSettingsPrimaryActionSlot(
+            MmrSettingsGroupAction(
                 text = uiState.syncNowButtonText,
                 onClick = viewModel::syncNow,
                 enabled = uiState.syncNowEnabled,
-                showDividerBelow = uiState.pendingApprovalCount <= 0,
+                showDividerBelow = uiState.pendingApprovalCount > 0,
                 testTag = MmrTestTags.lanSyncSyncNow,
             )
             if (uiState.pendingApprovalCount > 0) {
-                MmrIosSettingsSectionBodyText(
+                MmrSettingsGroupNote(
                     text =
-                        "SMS still waiting for approval stays on this phone " +
-                            "(${uiState.pendingApprovalCount} waiting). It is not copied.",
+                        "${uiState.pendingApprovalCount} bank messages are still waiting for you to accept them. " +
+                            "They are not sent to the other phone.",
+                    showDividerBelow = false,
                 )
             }
         }
 
-        MmrIosSettingsSection(
-            title = "Sync history",
-            footer = "Shows what changed on this phone. Theme and colors stay on this phone.",
+        MmrSettingsGroup(
+            title = "Sync History",
+            footer = "Shows what changed on this phone. Colors and theme stay on this phone.",
         ) {
-            MmrIosSettingsNavRow(
-                label = "Last 30 syncs",
+            MmrSettingsGroupNavRow(
+                label = "Last 30 Syncs",
                 value = uiState.historyValue,
                 onClick = onNavigateToHistory,
                 showDividerBelow = false,
             )
         }
 
-        MmrIosSettingsSection(title = null) {
-            MmrIosSettingsNavRow(
-                label = "Advanced",
-                value = if (showAdvanced) "Hide" else "Show",
-                onClick = { showAdvanced = !showAdvanced },
+        val showReplace = uiState.hasLocalLedgerData && uiState.trustedDeviceIds.isNotEmpty()
+        MmrSettingsGroup(
+            title = "Advanced",
+            footer =
+                if (showReplace) {
+                    "Replace deletes everything on this phone and copies the other phone. " +
+                        "Sync Now combines both phones instead."
+                } else {
+                    null
+                },
+        ) {
+            if (showReplace) {
+                uiState.trustedDeviceLabels.forEachIndexed { index, label ->
+                    MmrSettingsGroupNavRow(
+                        label = "Replace This Phone From $label",
+                        value = "Deletes Yours",
+                        onClick = { viewModel.restoreFromTrusted(index) },
+                    )
+                }
+            }
+            MmrSettingsGroupNavRow(
+                label = "Clear Sync History",
+                value = "Clear",
+                onClick = viewModel::clearSyncLog,
                 showDividerBelow = false,
             )
         }
-
-        if (showAdvanced) {
-            MmrIosSettingsSection(
-                title = "Advanced",
-                footer =
-                    if (uiState.hasLocalLedgerData && uiState.trustedDeviceIds.isNotEmpty()) {
-                        "This replaces everything on this phone with that phone's data. Sync now merges both phones instead."
-                    } else {
-                        null
-                    },
-            ) {
-                if (uiState.hasLocalLedgerData && uiState.trustedDeviceIds.isNotEmpty()) {
-                    uiState.trustedDeviceLabels.forEachIndexed { index, label ->
-                        MmrIosSettingsNavRow(
-                            label = "Replace this phone from $label",
-                            value = "Replaces yours",
-                            onClick = { viewModel.restoreFromTrusted(index) },
-                            showDividerBelow = index < uiState.trustedDeviceLabels.lastIndex,
-                        )
-                    }
-                }
-                MmrIosSettingsNavRow(
-                    label = "Clear sync history",
-                    value = "Clear",
-                    onClick = viewModel::clearSyncLog,
-                    showDividerBelow = false,
-                )
-            }
-        }
     }
+}
+
+private fun lanHostPort(url: String?): String {
+    if (url.isNullOrBlank()) return "—"
+    return url.removePrefix("https://").removePrefix("http://").trimEnd('/')
+}
+
+private fun copyPlain(
+    context: Context,
+    label: String,
+    value: String,
+) {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    clipboard.setPrimaryClip(ClipData.newPlainText(label, value))
 }

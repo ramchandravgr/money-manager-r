@@ -6,9 +6,9 @@ import android.net.NetworkCapabilities
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.rrparallelstudio.miapp.core.backup.LocalBackupFolderSaver
 import com.rrparallelstudio.miapp.core.data.preferences.GoogleDriveBackupPreferencesStore
 import com.rrparallelstudio.miapp.core.domain.repository.GoogleDriveBackupRepository
-import com.rrparallelstudio.miapp.core.drive.GoogleDriveAutoBackupPolicy
 import com.rrparallelstudio.miapp.core.drive.GoogleDriveBackupContracts
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -22,23 +22,11 @@ class GoogleDriveBackupWorker
         private val authGateway: GoogleDriveAuthGateway,
         private val driveBackupRepository: GoogleDriveBackupRepository,
         private val preferencesStore: GoogleDriveBackupPreferencesStore,
+        private val folderSaver: LocalBackupFolderSaver,
         private val notifier: GoogleDriveBackupNotifier,
     ) : CoroutineWorker(context, params) {
         override suspend fun doWork(): Result {
             if (!authGateway.isConfigured() || !preferencesStore.isLinked()) {
-                return Result.success()
-            }
-            val schedule = preferencesStore.getAutoSchedule()
-            if (schedule ==
-                com.rrparallelstudio.miapp.core.drive.GoogleDriveAutoSchedule.OFF
-            ) {
-                return Result.success()
-            }
-            if (!GoogleDriveAutoBackupPolicy.isBackupDue(
-                    schedule,
-                    preferencesStore.getLastSuccessfulBackupMillis(),
-                )
-            ) {
                 return Result.success()
             }
             if (preferencesStore.isWifiOnly() && !isOnWifi(applicationContext)) {
@@ -49,7 +37,10 @@ class GoogleDriveBackupWorker
                 return recordFailure(Result.retry())
             }
             return try {
-                driveBackupRepository.uploadBackup(token)
+                val archive =
+                    folderSaver.readLatestBackupBytes()
+                        ?: throw IllegalStateException("No local backup file to upload.")
+                driveBackupRepository.uploadBackupWithArchive(token, archive)
                 preferencesStore.setConsecutiveFailureCount(0)
                 Result.success()
             } catch (e: Exception) {

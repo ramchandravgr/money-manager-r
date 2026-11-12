@@ -132,9 +132,11 @@ class MmrInstrumentedRepositoryGraph(
 
     val categoryRepository: CategoryRepositoryImpl =
         CategoryRepositoryImpl(
+            database = database,
             categoryDao = database.categoryDao(),
             transactionDao = database.transactionDao(),
             recurringRuleDao = database.recurringRuleDao(),
+            categorizationRuleDao = database.categorizationRuleDao(),
             tombstoneRecorder = tombstoneRecorder,
         )
 

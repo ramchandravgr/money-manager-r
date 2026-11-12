@@ -1,5 +1,6 @@
 package com.rrparallelstudio.miapp.feature.category.ui
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -8,17 +9,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rrparallelstudio.miapp.feature.category.model.AddEditSubcategoryUiEvent
 import com.rrparallelstudio.miapp.feature.category.viewmodel.AddEditSubcategoryViewModel
 import com.rrparallelstudio.miapp.ui.components.MmrConfirmDialog
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsDestructiveActionSection
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsEntityFormGate
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsInlineErrorSection
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsInlineTextRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsReadOnlyValueRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSection
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroup
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupDestructiveSection
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupError
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupInset
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupTextField
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupValueRow
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsSaveTopBar
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenLayout
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenScaffold
@@ -40,7 +44,8 @@ fun AddEditSubcategoryScreen(
     if (showDeleteConfirm && uiState.isEditMode) {
         MmrConfirmDialog(
             title = "Remove subcategory?",
-            message = "\"${uiState.name}\" under \"${uiState.parentCategoryName}\" will be removed from pickers.",
+            message =
+                "\"${uiState.name}\" will be removed from pickers. Transactions and scheduled rules that used it stay on \"${uiState.parentCategoryName}\" with no subcategory.",
             confirmLabel = "Remove",
             onConfirm = {
                 viewModel.onEvent(AddEditSubcategoryUiEvent.OnDeleteClick)
@@ -68,31 +73,41 @@ fun AddEditSubcategoryScreen(
             loadErrorMessage = uiState.loadErrorMessage,
         ) {
             uiState.errorMessage?.let { message ->
-                MmrIosSettingsInlineErrorSection(message = message, isFirstInScreen = true)
+                MmrSettingsGroupError(message = message, modifier = Modifier.padding(top = 4.dp))
             }
 
-            MmrIosSettingsSection(
-                title = "Parent",
+            MmrSettingsGroup(
+                title = "Category",
                 isFirstInScreen = uiState.errorMessage == null,
             ) {
-                MmrIosSettingsReadOnlyValueRow(
+                MmrSettingsGroupValueRow(
                     label = uiState.parentCategoryName,
+                    value = "",
                     showDividerBelow = false,
                 )
             }
 
-            MmrIosSettingsSection(
+            MmrSettingsGroup(
                 title = "Details",
-                footer = "Order among siblings under the same parent.",
+                footer = "A smaller number appears first under this category. The icon uses the category color.",
             ) {
-                MmrIosSettingsInlineTextRow(
+                MmrSettingsGroupTextField(
                     label = "Name",
                     value = uiState.name,
                     onValueChange = { viewModel.onEvent(AddEditSubcategoryUiEvent.OnNameChanged(it)) },
                     placeholder = "Required",
                 )
-                MmrIosSettingsInlineTextRow(
-                    label = "Sort order",
+                MmrSettingsGroupInset(showDividerBelow = true) {
+                    CategoryIconPicker(
+                        selectedIconName = uiState.iconName,
+                        accentHex = uiState.parentColorHex,
+                        onIconSelected = {
+                            viewModel.onEvent(AddEditSubcategoryUiEvent.OnIconSelected(it))
+                        },
+                    )
+                }
+                MmrSettingsGroupTextField(
+                    label = "Sort Order",
                     value = uiState.sortOrder,
                     onValueChange = { viewModel.onEvent(AddEditSubcategoryUiEvent.OnSortOrderChanged(it)) },
                     placeholder = "0",
@@ -102,8 +117,8 @@ fun AddEditSubcategoryScreen(
             }
 
             if (uiState.isEditMode) {
-                MmrIosSettingsDestructiveActionSection(
-                    label = "Remove subcategory",
+                MmrSettingsGroupDestructiveSection(
+                    label = "Remove Subcategory",
                     onClick = { showDeleteConfirm = true },
                 )
             }

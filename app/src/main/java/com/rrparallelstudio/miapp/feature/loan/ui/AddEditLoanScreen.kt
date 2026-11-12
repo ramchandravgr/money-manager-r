@@ -17,6 +17,7 @@ import com.rrparallelstudio.miapp.feature.loan.model.AddEditLoanUiEvent
 import com.rrparallelstudio.miapp.feature.loan.viewmodel.AddEditLoanViewModel
 import com.rrparallelstudio.miapp.ui.components.MmrAppBarSaveIcon
 import com.rrparallelstudio.miapp.ui.components.MmrImeAwareScrollColumn
+import com.rrparallelstudio.miapp.ui.components.MmrNestedScaffoldInsets
 import com.rrparallelstudio.miapp.ui.components.MmrPrimaryActionButton
 import com.rrparallelstudio.miapp.ui.components.MmrTopAppBar
 import com.rrparallelstudio.miapp.ui.components.MmrTransactionFormScreenBackground
@@ -38,6 +39,7 @@ fun AddEditLoanScreen(
     }
 
     Scaffold(
+        contentWindowInsets = MmrNestedScaffoldInsets,
         topBar = {
             MmrTopAppBar(
                 title = if (isEdit) "Edit loan" else "New loan",

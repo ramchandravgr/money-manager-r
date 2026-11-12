@@ -59,6 +59,7 @@ data class LanSubcategoryRecord(
     val syncId: String,
     val categorySyncId: String,
     val name: String,
+    val iconName: String,
     val isActive: Boolean,
     val orderIndex: Int,
 )

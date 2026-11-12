@@ -26,7 +26,6 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rrparallelstudio.miapp.feature.home.model.HomeTotalAccountsSummaryUi
 import com.rrparallelstudio.miapp.feature.home.model.TransactionGroupUi
 import com.rrparallelstudio.miapp.testing.MmrTestTags
@@ -133,11 +132,10 @@ private fun TotalAccountsSectionHeader(periodRangeLabel: String) {
             Text(
                 text = "Accounts",
                 style =
-                    MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
+                    com.rrparallelstudio.miapp.ui.theme.mmrTitleMediumFixedStyle(
+                        MmrBrandColors.TextStrong,
+                        FontWeight.Bold,
                     ),
-                color = MmrBrandColors.TextStrong,
             )
         }
         Text(

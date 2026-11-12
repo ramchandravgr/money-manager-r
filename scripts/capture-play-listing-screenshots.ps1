@@ -110,7 +110,7 @@ Screenshot "10_scheduled"
 Nav-Route "settings"
 Screenshot "11_settings"
 try {
-    Tap-Text "Transaction Appearance"
+    Tap-Text "Home & Menu"
     Invoke-Adb "shell", "input", "swipe", "540", "2000", "540", "600", "500" | Out-Null
     Start-Sleep -Seconds 1
     Tap-Text "App Color Theme"

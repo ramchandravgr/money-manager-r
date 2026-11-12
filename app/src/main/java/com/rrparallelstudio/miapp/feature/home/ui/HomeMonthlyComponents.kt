@@ -23,11 +23,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rrparallelstudio.miapp.feature.home.model.MonthlyPeriodUi
 import com.rrparallelstudio.miapp.feature.home.model.WeeklyPeriodUi
 import com.rrparallelstudio.miapp.ui.components.MmrDimens
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
+import com.rrparallelstudio.miapp.ui.theme.mmrHomeMonthlyAmountStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrHomeMonthlyBadgeStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrHomeMonthlyCaptionStyle
 import java.time.LocalDate
 import java.time.YearMonth
 
@@ -139,7 +141,7 @@ private fun WeeklyPeriodRow(
     ) {
         Text(
             text = week.rangeLabel,
-            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+            style = mmrHomeMonthlyCaptionStyle(MaterialTheme.colorScheme.onSurface),
             modifier = Modifier.weight(1f),
             color = MaterialTheme.colorScheme.onSurface,
         )
@@ -164,24 +166,21 @@ private fun PeriodAmountColumn(
     ) {
         Text(
             text = formatRupeeAmount(income),
-            style =
-                MaterialTheme.typography.labelSmall.copy(
-                    fontSize = if (compact) 11.sp else 12.sp,
-                ),
+            style = mmrHomeMonthlyAmountStyle(MmrBrandColors.MonthlyIncome, compact),
             color = MmrBrandColors.MonthlyIncome,
         )
         Text(
             text = formatRupeeAmount(expense),
             style =
-                MaterialTheme.typography.labelSmall.copy(
-                    fontSize = if (compact) 11.sp else 12.sp,
-                ),
+                mmrHomeMonthlyAmountStyle(
+                    MmrBrandColors.MonthlyExpense,
+                    compact,
+                ).copy(fontWeight = FontWeight.Medium),
             color = MmrBrandColors.MonthlyExpense,
-            fontWeight = FontWeight.Medium,
         )
         Text(
             text = formatSignedRupee(net),
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+            style = mmrHomeMonthlyBadgeStyle(MmrBrandColors.TextLight),
             color = MmrBrandColors.TextLight,
         )
     }

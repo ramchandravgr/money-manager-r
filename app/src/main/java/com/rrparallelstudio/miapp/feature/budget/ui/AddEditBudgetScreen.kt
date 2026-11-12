@@ -30,9 +30,10 @@ import com.rrparallelstudio.miapp.feature.transaction.ui.TransactionAmountField
 import com.rrparallelstudio.miapp.feature.transaction.ui.TransactionFormPickerField
 import com.rrparallelstudio.miapp.ui.components.MmrAppBarSaveIcon
 import com.rrparallelstudio.miapp.ui.components.MmrImeAwareScrollColumn
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsDestructiveActionSection
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSection
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSwitchRow
+import com.rrparallelstudio.miapp.ui.components.MmrNestedScaffoldInsets
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroup
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupDestructiveSection
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupSwitchRow
 import com.rrparallelstudio.miapp.ui.components.MmrTopAppBar
 import com.rrparallelstudio.miapp.ui.components.MmrTransactionFormIcons
 import com.rrparallelstudio.miapp.ui.components.MmrTransactionFormScreenBackground
@@ -83,6 +84,7 @@ fun AddEditBudgetScreen(
     }
 
     Scaffold(
+        contentWindowInsets = MmrNestedScaffoldInsets,
         topBar = {
             MmrTopAppBar(
                 title = if (isEdit) "Edit budget" else "New budget",
@@ -169,12 +171,12 @@ fun AddEditBudgetScreen(
                     )
                 }
 
-                MmrIosSettingsSection(
+                MmrSettingsGroup(
                     title = "Notifications",
                     footer = "One alert per budget period when spending crosses the limit after you add a transaction.",
                 ) {
-                    MmrIosSettingsSwitchRow(
-                        label = "Alert when exceeded",
+                    MmrSettingsGroupSwitchRow(
+                        label = "Alert When Exceeded",
                         checked = uiState.alertOnExceeded,
                         onCheckedChange = { viewModel.onEvent(AddEditBudgetUiEvent.OnAlertToggled(it)) },
                         showDividerBelow = false,
@@ -182,8 +184,8 @@ fun AddEditBudgetScreen(
                 }
 
                 if (isEdit) {
-                    MmrIosSettingsDestructiveActionSection(
-                        label = "Remove budget",
+                    MmrSettingsGroupDestructiveSection(
+                        label = "Remove Budget",
                         onClick = { viewModel.onEvent(AddEditBudgetUiEvent.OnDeleteClick) },
                     )
                 }

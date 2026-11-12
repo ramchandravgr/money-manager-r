@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rrparallelstudio.miapp.feature.category.model.CategoryColorPresets
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
 
@@ -29,8 +28,9 @@ fun CategoryColorPicker(
 ) {
     Text(
         text = "Color",
-        fontSize = 14.sp,
-        color = MmrBrandColors.TextMedium,
+        style =
+            com.rrparallelstudio.miapp.ui.theme
+                .mmrSettingsRowPrimaryStyle(MmrBrandColors.TextMedium),
         modifier = modifier,
     )
     FlowRow(

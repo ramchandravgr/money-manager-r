@@ -7,7 +7,7 @@ data class AddEditCategoryUiState(
     val isEditMode: Boolean = false,
     val categoryId: Long = 0L,
     val name: String = "",
-    val colorHex: String = CategoryColorPresets.defaultHex,
+    val colorHex: String = CategoryColorPresets.DEFAULT_HEX,
     val type: CategoryType = CategoryType.EXPENSE,
     val iconName: String = "category_default",
     val sortOrder: String = "0",
@@ -29,6 +29,10 @@ sealed interface AddEditCategoryUiEvent {
         val colorHex: String,
     ) : AddEditCategoryUiEvent
 
+    data class OnIconSelected(
+        val iconName: String,
+    ) : AddEditCategoryUiEvent
+
     data class OnTypeSelected(
         val type: CategoryType,
     ) : AddEditCategoryUiEvent
@@ -43,7 +47,7 @@ sealed interface AddEditCategoryUiEvent {
 }
 
 object CategoryColorPresets {
-    const val defaultHex = "#3B82F6"
+    const val DEFAULT_HEX = "#3B82F6"
 
     val presets: List<String> =
         listOf(

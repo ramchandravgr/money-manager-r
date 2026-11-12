@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Search — Date Range Dialog (Design 12)</title>
+  <style>
+    :root {
+      --ink: #1c1917;
+      --muted: #78716c;
+      --brand: #a32654;
+      --card: #fff;
+      --line: #e7e5e4;
+      --footer: #f5f5f4;
+      --chip: #f5f5f4;
+      --chip-on: #f3e6ea;
+      --m3-surface: #fafaf9;
+    }
+    body { margin: 0; font-family: system-ui, sans-serif; color: var(--ink); background: #fff; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 20px 48px; }
+    h1 { font-size: 20px; margin: 0 0 6px; }
+    .lead { font-size: 14px; color: var(--muted); line-height: 1.5; margin: 0 0 24px; max-width: 72ch; }
+    h2 { font-size: 15px; margin: 32px 0 12px; }
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    @media (max-width: 800px) { .compare { grid-template-columns: 1fr; } }
+    .col h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 10px; }
+    .col.current h3::after { content: " (AlertDialog today)"; text-transform: none; letter-spacing: 0; font-weight: 500; }
+    .col.proposed h3::after { content: " (MmrContentDialog)"; text-transform: none; letter-spacing: 0; font-weight: 500; }
+    .stage {
+      min-height: 480px; padding: 32px 12px;
+      background: linear-gradient(165deg, #f8e8ee 0%, #f3dce4 50%, #edd0db 100%);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .dlg { width: min(360px, 100%); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 28px rgba(0,0,0,.16); }
+    .dlg-body { background: var(--card); padding: 18px 18px 14px; font-size: 13px; }
+    .dlg-title { margin: 0 0 12px; font-size: 16px; font-weight: 700; }
+    .sect { font-size: 12px; font-weight: 650; margin: 0 0 8px; }
+    .chips { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+    .chip {
+      border: 1px solid var(--line); background: var(--chip); border-radius: 8px;
+      padding: 10px 6px; text-align: center; font-weight: 600; font-size: 12px;
+    }
+    .chip.on { background: var(--chip-on); border-color: var(--brand); color: var(--brand); }
+    .rule { border: 0; border-top: 1px solid var(--line); margin: 10px 0; }
+    .lbl { font-weight: 600; font-size: 12px; margin-bottom: 4px; }
+    .triplet { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+    .dd {
+      border: 1px solid var(--line); border-radius: 6px; padding: 8px 4px; text-align: center;
+      font-size: 12px; background: #fafaf9;
+    }
+    .preview { text-align: center; font-weight: 600; color: var(--brand); margin: 8px 0 2px; font-size: 13px; }
+    .hint { text-align: center; font-size: 11px; color: var(--muted); margin: 0; }
+    .m3-actions {
+      background: var(--m3-surface);
+      padding: 8px 12px 12px;
+      display: flex; justify-content: flex-end; gap: 8px;
+    }
+    .m3-actions button {
+      border: 0; background: transparent; font: inherit; font-size: 14px; font-weight: 600;
+      padding: 8px 12px; cursor: default;
+    }
+    .m3-actions .apply { color: var(--brand); }
+    .m3-actions .cancel { color: var(--muted); }
+    .callout {
+      margin-top: 10px; font-size: 12px; color: var(--muted); line-height: 1.45;
+      padding: 10px 12px; background: #fafaf9; border-radius: 8px; border: 1px solid var(--line);
+    }
+    .d12-footer {
+      background: var(--footer);
+      padding: 12px 14px 14px;
+      border-top: 1px solid var(--line);
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .btn-p {
+      width: 100%; border: 0; border-radius: 10px; padding: 13px;
+      font: inherit; font-size: 14px; font-weight: 650; color: #fff; background: var(--brand);
+    }
+    .btn-t {
+      width: 100%; border: 0; background: transparent; padding: 8px;
+      font: inherit; font-size: 14px; font-weight: 600; color: var(--muted);
+    }
+    .paths { display: grid; gap: 12px; }
+    .path {
+      border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px;
+      background: #fafaf9;
+    }
+    .path strong { display: block; font-size: 14px; margin-bottom: 6px; }
+    .path ol { margin: 0; padding-left: 1.2rem; font-size: 13px; line-height: 1.55; color: var(--ink); }
+    .diff { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+    .diff th, .diff td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+    .diff th { background: #f5f5f4; font-weight: 650; }
+    code { font-size: 12px; background: #f5f5f4; padding: 2px 6px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Search — Date Range Dialog (Design 12)</h1>
+    <p class="lead">
+      Canonical mock for <code>SearchDateRangeDialog.kt</code>. Same quick picks, From/To dropdowns, and preview in both columns —
+      only the <strong>chrome</strong> changes when we migrate from Material <code>AlertDialog</code> to <code>MmrContentDialog</code>.
+    </p>
+
+    <div class="compare">
+      <div class="col current">
+        <h3>Current</h3>
+        <div class="stage">
+          <div class="dlg">
+            <div class="dlg-body">
+              <p class="dlg-title">Date range</p>
+              <p class="sect">Quick select</p>
+              <div class="chips">
+                <div class="chip">Last week</div>
+                <div class="chip on">Last 30 days</div>
+                <div class="chip">Last month</div>
+                <div class="chip">Last year</div>
+                <div class="chip">Current FY</div>
+                <div class="chip">Last FY</div>
+              </div>
+              <hr class="rule" />
+              <p class="lbl">From</p>
+              <div class="triplet">
+                <div class="dd">2026</div><div class="dd">Jan</div><div class="dd">14</div>
+              </div>
+              <p class="lbl">To</p>
+              <div class="triplet">
+                <div class="dd">2026</div><div class="dd">Mar</div><div class="dd">12</div>
+              </div>
+              <p class="preview">14 Jan 2026 — 12 Mar 2026</p>
+              <p class="hint">FY = 1 Apr – 31 Mar</p>
+            </div>
+            <div class="m3-actions">
+              <button type="button" class="cancel">Cancel</button>
+              <button type="button" class="apply">Apply</button>
+            </div>
+          </div>
+        </div>
+        <div class="callout">
+          Material3 <code>AlertDialog</code>: title slot, scrollable <code>text</code> body,
+          <strong>right-aligned text</strong> Cancel / Apply. Uses <code>modalChromeSurface()</code> and manual width cap (~400dp).
+        </div>
+      </div>
+
+      <div class="col proposed">
+        <h3>Proposed</h3>
+        <div class="stage">
+          <div class="dlg">
+            <div class="dlg-body">
+              <p class="dlg-title">Date Range</p>
+              <p class="sect">Quick Select</p>
+              <div class="chips">
+                <div class="chip">Last Week</div>
+                <div class="chip on">Last 30 Days</div>
+                <div class="chip">Last Month</div>
+                <div class="chip">Last Year</div>
+                <div class="chip">Current FY</div>
+                <div class="chip">Last FY</div>
+              </div>
+              <hr class="rule" />
+              <p class="lbl">From</p>
+              <div class="triplet">
+                <div class="dd">2026</div><div class="dd">Jan</div><div class="dd">14</div>
+              </div>
+              <p class="lbl">To</p>
+              <div class="triplet">
+                <div class="dd">2026</div><div class="dd">Mar</div><div class="dd">12</div>
+              </div>
+              <p class="preview">14 Jan 2026 — 12 Mar 2026</p>
+              <p class="hint">FY = 1 Apr – 31 Mar</p>
+            </div>
+            <footer class="d12-footer">
+              <button type="button" class="btn-p">Apply</button>
+              <button type="button" class="btn-t">Cancel</button>
+            </footer>
+          </div>
+        </div>
+        <div class="callout">
+          <code>MmrContentDialog</code> + <code>MmrDialogHeader</code>: white scroll body,
+          divider, <strong>gray footer band</strong> with full-width primary Apply and text Cancel —
+          same pattern as Export Saved, merge confirm, account delete, etc.
+        </div>
+      </div>
+    </div>
+
+    <h2>What stays the same</h2>
+    <table class="diff">
+      <tr><th>Area</th><th>Current &amp; proposed</th></tr>
+      <tr><td>Quick picks</td><td>Last week/month/year, 30 days, current &amp; last FY</td></tr>
+      <tr><td>Manual range</td><td>Year / month / day dropdowns for From and To</td></tr>
+      <tr><td>Preview</td><td>Normalized range line + FY footnote</td></tr>
+      <tr><td>Behavior</td><td>Quick pick clears when dropdowns change; Apply normalizes start/end</td></tr>
+    </table>
+
+    <h2>What changes (chrome only)</h2>
+    <table class="diff">
+      <tr><th></th><th>Current</th><th>Proposed</th></tr>
+      <tr><td>Shell</td><td><code>AlertDialog</code></td><td><code>MmrDialogShell</code></td></tr>
+      <tr><td>Title casing</td><td>“Date range” in title slot</td><td>“Date Range” via <code>mmrStaticLabelCase()</code></td></tr>
+      <tr><td>Actions</td><td>Small text buttons, end-aligned</td><td>Full-width brand primary + dismiss text</td></tr>
+      <tr><td>Dark / expressive</td><td>Extra branches on title, labels, Cancel</td><td>Dialog tokens in kit (less one-off color logic)</td></tr>
+    </table>
+
+    <h2>Where you will see this dialog</h2>
+    <p class="lead" style="margin-bottom: 16px;">Only <strong>two screens</strong> host it; it is not used on Stats, Settings, or Trends.</p>
+    <div class="paths">
+      <div class="path">
+        <strong>1 — Transaction Search</strong>
+        <ol>
+          <li><strong>Home</strong> → top bar <strong>Search</strong> (magnifier).</li>
+          <li><strong>Path A:</strong> Top-right <strong>Week / Month / Year / Custom</strong> chip → choose <strong>Custom</strong> → dialog opens.</li>
+          <li><strong>Path B:</strong> Expand filters → tap <strong>Period</strong> row → dialog opens.</li>
+        </ol>
+      </div>
+      <div class="path">
+        <strong>2 — Home Total view Excel export</strong>
+        <ol>
+          <li><strong>Home</strong> → view mode <strong>Total</strong> (ledger dropdown).</li>
+          <li>Tap <strong>Export</strong> on the total accounts summary.</li>
+          <li>In <strong>Money Inbox - Excel</strong> period list, choose <strong>Custom Period…</strong>.</li>
+          <li>Same date-range dialog; after Apply, export runs (then Share As Excel / XML if successful).</li>
+        </ol>
+      </div>
+    </div>
+
+    <h2>Related (not this dialog)</h2>
+    <p class="lead">
+      <strong>Stats</strong> category bulk delete uses <code>MmrConfirmDialog</code> (simple confirm, no dates).
+      Calendar pickers elsewhere use <code>DatePickerDialog</code> (transactions, loans, manual SMS).
+      <strong>HomeExcelExportPeriodDialog</strong> (Weekly, Last month, …) is separate; only <strong>Custom Period…</strong> opens <code>SearchDateRangeDialog</code>.
+    </p>
+  </div>
+</body>
+</html>

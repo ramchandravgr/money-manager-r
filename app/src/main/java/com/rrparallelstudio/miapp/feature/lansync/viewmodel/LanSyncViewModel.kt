@@ -126,13 +126,13 @@ class LanSyncViewModel
                             !missingSingleDeviceSelection
                     val syncNowButtonText =
                         if (singleDeviceMode && selectedPeer != null) {
-                            "Sync with: ${selectedPeer.displayName}"
+                            "Sync With ${selectedPeer.displayName}"
                         } else {
-                            "Sync now"
+                            "Sync Now"
                         }
                     val syncNowDisabledHint =
                         if (missingSingleDeviceSelection) {
-                            "Choose one trusted phone above. Sync now will use only that phone."
+                            "Choose one trusted phone above. Sync Now will use only that phone."
                         } else {
                             null
                         }

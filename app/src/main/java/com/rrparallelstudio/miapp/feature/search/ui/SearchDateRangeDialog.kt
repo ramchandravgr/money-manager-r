@@ -9,15 +9,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -27,13 +22,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import com.rrparallelstudio.miapp.feature.home.HomePeriodUtils
 import com.rrparallelstudio.miapp.feature.search.SearchPeriodPresets
+import com.rrparallelstudio.miapp.ui.components.MmrContentDialog
+import com.rrparallelstudio.miapp.ui.components.MmrDialogFieldLabel
 import com.rrparallelstudio.miapp.ui.components.MmrDimens
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
 import com.rrparallelstudio.miapp.ui.theme.MmrChipPaints
@@ -70,143 +65,80 @@ fun SearchDateRangeDialog(
         selectedQuick = quick
     }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-        modifier =
-            Modifier
-                .widthIn(max = 400.dp)
-                .padding(horizontal = MmrDimens.spaceLg),
-        containerColor = MmrBrandColors.modalChromeSurface(),
-        titleContentColor = if (MmrBrandColors.canvasIsDark()) MmrBrandColors.onCanvas() else MmrBrandColors.Reversal,
-        textContentColor = if (MmrBrandColors.canvasIsDark()) MmrBrandColors.onCanvas() else MmrBrandColors.TextStrong,
-        title = {
-            Text(
-                "Date range",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = if (MmrBrandColors.canvasIsDark()) MmrBrandColors.onCanvas() else Color.Unspecified,
-            )
+    MmrContentDialog(
+        title = "Date Range",
+        onDismiss = onDismiss,
+        confirmLabel = "Apply",
+        onConfirm = {
+            val normalized = SearchPeriodPresets.normalizeRange(startDate, endDate)
+            onConfirm(normalized.start, normalized.end)
         },
-        text = {
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(MmrDimens.spaceMd),
-            ) {
-                Text(
-                    text = "Quick select",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Medium,
-                    color =
-                        if (MmrBrandColors.canvasIsDark()) {
-                            MmrBrandColors.onCanvas()
-                        } else {
-                            MmrBrandColors.TextStrong
-                        },
-                )
-                val quickPicks = SearchPeriodPresets.QuickPick.entries
-                Column(verticalArrangement = Arrangement.spacedBy(MmrDimens.spaceSm)) {
-                    quickPicks.chunked(2).forEach { rowPicks ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(MmrDimens.spaceSm),
-                        ) {
-                            rowPicks.forEach { pick ->
-                                SearchQuickPickOption(
-                                    label = pick.label,
-                                    selected = selectedQuick == pick,
-                                    onClick = {
-                                        applyRange(SearchPeriodPresets.rangeFor(pick, today), pick)
-                                    },
-                                    modifier = Modifier.weight(1f),
-                                )
-                            }
-                            if (rowPicks.size == 1) {
-                                Spacer(modifier = Modifier.weight(1f))
-                            }
-                        }
+        dismissLabel = "Cancel",
+        scrollBody = true,
+    ) {
+        MmrDialogFieldLabel(text = "Quick Select")
+        val quickPicks = SearchPeriodPresets.QuickPick.entries
+        Column(verticalArrangement = Arrangement.spacedBy(MmrDimens.spaceSm)) {
+            quickPicks.chunked(2).forEach { rowPicks ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(MmrDimens.spaceSm),
+                ) {
+                    rowPicks.forEach { pick ->
+                        SearchQuickPickOption(
+                            label = pick.label,
+                            selected = selectedQuick == pick,
+                            onClick = {
+                                applyRange(SearchPeriodPresets.rangeFor(pick, today), pick)
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    if (rowPicks.size == 1) {
+                        Spacer(modifier = Modifier.weight(1f))
                     }
                 }
-
-                HorizontalDivider(
-                    color =
-                        if (MmrBrandColors.canvasIsDark()) {
-                            MmrBrandColors.onCanvasMuted().copy(alpha = 0.25f)
-                        } else {
-                            MmrBrandColors.BorderMain
-                        },
-                    thickness = 0.5.dp,
-                )
-
-                CompactDateSelector(
-                    label = "From",
-                    date = startDate,
-                    onDateChange = {
-                        startDate = it
-                        selectedQuick = null
-                    },
-                )
-                CompactDateSelector(
-                    label = "To",
-                    date = endDate,
-                    onDateChange = {
-                        endDate = it
-                        selectedQuick = null
-                    },
-                )
-
-                val preview = SearchPeriodPresets.normalizeRange(startDate, endDate)
-                Text(
-                    text = "${HomePeriodUtils.formatShortDate(
-                        preview.start,
-                    )} — ${HomePeriodUtils.formatShortDate(preview.end)}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MmrBrandColors.Active,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                )
-                Text(
-                    text = "FY = 1 Apr – 31 Mar",
-                    style = MaterialTheme.typography.labelSmall,
-                    color =
-                        if (MmrBrandColors.canvasIsDark()) {
-                            MmrBrandColors.onCanvasMuted()
-                        } else {
-                            MmrBrandColors.TextMedium
-                        },
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                )
             }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    val normalized = SearchPeriodPresets.normalizeRange(startDate, endDate)
-                    onConfirm(normalized.start, normalized.end)
-                },
-            ) {
-                Text("Apply", color = MmrBrandColors.Active)
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(
-                    "Cancel",
-                    color =
-                        if (MmrBrandColors.canvasIsDark()) {
-                            MmrBrandColors.onCanvasMuted()
-                        } else {
-                            MmrBrandColors.TextMedium
-                        },
-                )
-            }
-        },
-    )
+        }
+
+        HorizontalDivider(color = MmrBrandColors.BorderMain, thickness = 0.5.dp)
+
+        CompactDateSelector(
+            label = "From",
+            date = startDate,
+            onDateChange = {
+                startDate = it
+                selectedQuick = null
+            },
+        )
+        CompactDateSelector(
+            label = "To",
+            date = endDate,
+            onDateChange = {
+                endDate = it
+                selectedQuick = null
+            },
+        )
+
+        val preview = SearchPeriodPresets.normalizeRange(startDate, endDate)
+        Text(
+            text = "${HomePeriodUtils.formatShortDate(
+                preview.start,
+            )} — ${HomePeriodUtils.formatShortDate(preview.end)}",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MmrBrandColors.Active,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = "FY = 1 Apr – 31 Mar",
+            style = MaterialTheme.typography.labelSmall,
+            color = MmrBrandColors.dialogMessageText(),
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+        )
+    }
 }
 
 @Composable
@@ -258,17 +190,7 @@ private fun CompactDateSelector(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(MmrDimens.spaceXs)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Medium,
-            color =
-                if (MmrBrandColors.canvasIsDark()) {
-                    MmrBrandColors.onCanvas()
-                } else {
-                    MmrBrandColors.TextStrong
-                },
-        )
+        MmrDialogFieldLabel(text = label)
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(MmrDimens.spaceSm),

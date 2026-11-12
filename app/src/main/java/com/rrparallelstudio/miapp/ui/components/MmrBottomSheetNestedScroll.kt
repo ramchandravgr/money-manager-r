@@ -14,7 +14,27 @@ import androidx.compose.ui.unit.Velocity
  *
  * Apply on the scrollable modifier chain **before** `verticalScroll` / `LazyColumn`.
  * Only consumes upward overscroll/fling so swipe-down-to-dismiss still works.
+ *
+ * Eats leftover scroll/fling so an inline picker list cannot move the parent form
+ * once the list is at its first or last row (that motion shows as a blank panel).
  */
+@Composable
+fun rememberMmrConsumeOverscrollConnection(): NestedScrollConnection =
+    remember {
+        object : NestedScrollConnection {
+            override fun onPostScroll(
+                consumed: Offset,
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset = available
+
+            override suspend fun onPostFling(
+                consumed: Velocity,
+                available: Velocity,
+            ): Velocity = available
+        }
+    }
+
 @Composable
 fun rememberMmrBottomSheetNestedScrollConnection(): NestedScrollConnection =
     remember {

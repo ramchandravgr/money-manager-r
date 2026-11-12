@@ -17,6 +17,7 @@ data class SubcategoryItemUi(
     val id: Long,
     val categoryId: Long,
     val name: String,
+    val iconName: String,
     val sortOrder: Int,
 )
 

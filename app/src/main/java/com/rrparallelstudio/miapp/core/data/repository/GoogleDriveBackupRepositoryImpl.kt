@@ -22,12 +22,18 @@ class GoogleDriveBackupRepositoryImpl
     ) : GoogleDriveBackupRepository {
         override suspend fun uploadBackup(accessToken: String) =
             withContext(ioDispatcher) {
-                val archive = backupRepository.exportBackupArchive()
-                val folderId = coordinator.ensureBackupsFolderId(accessToken)
-                coordinator.uploadWithRotation(accessToken, folderId, archive)
-                preferencesStore.setLastSuccessfulBackupMillis(System.currentTimeMillis())
-                preferencesStore.setConsecutiveFailureCount(0)
+                uploadBackupWithArchive(accessToken, backupRepository.exportBackupArchive())
             }
+
+        override suspend fun uploadBackupWithArchive(
+            accessToken: String,
+            archiveBytes: ByteArray,
+        ) = withContext(ioDispatcher) {
+            val folderId = coordinator.ensureBackupsFolderId(accessToken)
+            coordinator.uploadWithRotation(accessToken, folderId, archiveBytes)
+            preferencesStore.setLastSuccessfulBackupMillis(System.currentTimeMillis())
+            preferencesStore.setConsecutiveFailureCount(0)
+        }
 
         override suspend fun listRemoteBackups(accessToken: String): List<GoogleDriveFileRef> =
             withContext(ioDispatcher) {

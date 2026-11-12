@@ -17,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rrparallelstudio.miapp.core.data.repository.TransactionAttachmentRepositoryImpl
@@ -31,6 +32,7 @@ import com.rrparallelstudio.miapp.ui.components.MmrAppBarSaveIcon
 import com.rrparallelstudio.miapp.ui.components.MmrContentDialog
 import com.rrparallelstudio.miapp.ui.components.MmrDialogOptionButton
 import com.rrparallelstudio.miapp.ui.components.MmrImeAwareScrollColumn
+import com.rrparallelstudio.miapp.ui.components.MmrNestedScaffoldInsets
 import com.rrparallelstudio.miapp.ui.components.MmrTopAppBar
 import com.rrparallelstudio.miapp.ui.components.MmrTransactionFormIcons
 import com.rrparallelstudio.miapp.ui.components.MmrTransactionFormScreenBackground
@@ -50,6 +52,7 @@ fun AddEditTransactionRoute(
             viewModel.onEvent(AddEditTransactionUiEvent.OnReceiptPicked(uriString))
         }
     var expandedField by remember { mutableStateOf(TransactionFormExpandedField.None) }
+    val focusManager = LocalFocusManager.current
     var viewingReceiptPath by remember { mutableStateOf<String?>(null) }
 
     val requestNavigateBack = {
@@ -138,6 +141,7 @@ fun AddEditTransactionRoute(
     }
 
     Scaffold(
+        contentWindowInsets = MmrNestedScaffoldInsets,
         topBar = {
             MmrTopAppBar(
                 title =
@@ -186,6 +190,9 @@ fun AddEditTransactionRoute(
                     MmrImeAwareScrollColumn(
                         horizontalPadding = 16.dp,
                         verticalArrangement = Arrangement.spacedBy(12.dp),
+                        extraBottomPadding =
+                            if (expandedField == TransactionFormExpandedField.None) 24.dp else 0.dp,
+                        scrollEnabled = expandedField == TransactionFormExpandedField.None,
                     ) {
                         MmrTransactionTypeSegment(
                             selected = state.selectedType,
@@ -231,6 +238,7 @@ fun AddEditTransactionRoute(
                             expanded = expandedField == TransactionFormExpandedField.Category,
                             onExpandedChange = { open ->
                                 if (open) {
+                                    focusManager.clearFocus()
                                     viewModel.onEvent(AddEditTransactionUiEvent.OnCategoryRowClick)
                                     expandedField = TransactionFormExpandedField.Category
                                 } else {
@@ -281,6 +289,7 @@ fun AddEditTransactionRoute(
                                 expanded = expandedField == TransactionFormExpandedField.TransferFrom,
                                 onExpandedChange = { open ->
                                     if (open) {
+                                        focusManager.clearFocus()
                                         viewModel.onEvent(AddEditTransactionUiEvent.OnFromAccountRowClick)
                                         expandedField = TransactionFormExpandedField.TransferFrom
                                     } else {
@@ -303,6 +312,7 @@ fun AddEditTransactionRoute(
                                 expanded = expandedField == TransactionFormExpandedField.TransferTo,
                                 onExpandedChange = { open ->
                                     if (open) {
+                                        focusManager.clearFocus()
                                         viewModel.onEvent(AddEditTransactionUiEvent.OnToAccountRowClick)
                                         expandedField = TransactionFormExpandedField.TransferTo
                                     } else {
@@ -332,6 +342,7 @@ fun AddEditTransactionRoute(
                                 expanded = expandedField == TransactionFormExpandedField.Account,
                                 onExpandedChange = { open ->
                                     if (open) {
+                                        focusManager.clearFocus()
                                         viewModel.onEvent(AddEditTransactionUiEvent.OnAccountRowClick)
                                         expandedField = TransactionFormExpandedField.Account
                                     } else {

@@ -11,6 +11,5 @@ class GoogleDriveAutoBackupTrigger
     ) {
         fun onAppForeground() {
             workScheduler.syncPeriodicAutoBackupSchedule()
-            workScheduler.enqueueAutoBackupIfDue()
         }
     }

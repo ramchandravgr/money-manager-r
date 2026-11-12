@@ -38,6 +38,8 @@ sealed class SmsTemplateOverlayUiEvent {
     data object OnDismissReset : SmsTemplateOverlayUiEvent()
 
     data object OnDismissMessage : SmsTemplateOverlayUiEvent()
+
+    data object OnPromptCopied : SmsTemplateOverlayUiEvent()
 }
 
 @HiltViewModel
@@ -67,6 +69,15 @@ class SmsTemplateOverlayViewModel
                     _uiState.update { it.copy(showResetConfirm = false) }
                 SmsTemplateOverlayUiEvent.OnDismissMessage ->
                     _uiState.update { it.copy(message = null, messageIsError = true) }
+                SmsTemplateOverlayUiEvent.OnPromptCopied ->
+                    _uiState.update {
+                        it.copy(
+                            message =
+                                "Prompt copied. Paste it into any AI with your SMS export, " +
+                                    "save the JSON after ---JSON---, then import that file here.",
+                            messageIsError = false,
+                        )
+                    }
             }
         }
 

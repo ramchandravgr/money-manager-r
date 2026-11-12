@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "MoneyInbox"
 include(":app")
+include(":detekt-rules")

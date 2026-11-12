@@ -31,6 +31,7 @@ data class SubcategoryEntity(
             .newId(),
     val categoryId: Long,
     val name: String,
+    val iconName: String = "category_default",
     val isActive: Boolean = true,
     val orderIndex: Int = 0,
 )

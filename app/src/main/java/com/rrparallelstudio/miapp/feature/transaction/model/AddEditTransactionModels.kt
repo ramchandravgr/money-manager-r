@@ -1,6 +1,7 @@
 package com.rrparallelstudio.miapp.feature.transaction.model
 
 import com.rrparallelstudio.miapp.core.loan.LoanLinkedTransactionDeleteMode
+import com.rrparallelstudio.miapp.core.model.enums.AccountType
 import com.rrparallelstudio.miapp.core.model.enums.TransactionType
 
 enum class AccountPickerTarget {
@@ -77,17 +78,20 @@ data class CategoryUi(
     val colorHex: String,
     val iconName: String = "category_default",
     val subcategories: List<SubcategoryUi> = emptyList(),
+    val type: com.rrparallelstudio.miapp.core.model.enums.CategoryType =
+        com.rrparallelstudio.miapp.core.model.enums.CategoryType.EXPENSE,
 )
 
 data class SubcategoryUi(
     val id: Long,
     val name: String,
+    val iconName: String = "category_default",
 )
 
 data class AccountUi(
     val id: Long,
     val name: String,
-    val type: com.rrparallelstudio.miapp.core.model.enums.AccountType = com.rrparallelstudio.miapp.core.model.enums.AccountType.BANK,
+    val type: AccountType = AccountType.BANK,
     val typeLabel: String = "Bank",
     val smsOriginLabel: String? = null,
 )

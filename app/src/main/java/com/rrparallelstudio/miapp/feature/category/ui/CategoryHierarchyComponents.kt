@@ -18,9 +18,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.rrparallelstudio.miapp.feature.category.model.SubcategoryItemUi
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsNavRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSection
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsValueRow
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroup
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupNavRow
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupValueRow
 
 @Composable
 fun ParentCategoryHeader(
@@ -65,20 +65,20 @@ fun SubcategoryListSection(
     onEditSubcategory: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    MmrIosSettingsSection(
+    MmrSettingsGroup(
         modifier = modifier,
         title = "Subcategories",
-        footer = "Tap a subcategory to edit. Remove it from the edit screen.",
+        footer = "Tap one to rename it or change its icon. You can remove it on the next screen.",
     ) {
         if (subcategories.isEmpty()) {
-            MmrIosSettingsValueRow(
+            MmrSettingsGroupValueRow(
                 label = "No subcategories yet",
                 value = "",
                 showDividerBelow = true,
             )
         } else {
             subcategories.forEachIndexed { index, sub ->
-                MmrIosSettingsNavRow(
+                MmrSettingsGroupNavRow(
                     label = sub.name,
                     value = "Order ${sub.sortOrder}",
                     onClick = { onEditSubcategory(sub.id) },
@@ -86,8 +86,8 @@ fun SubcategoryListSection(
                 )
             }
         }
-        MmrIosSettingsNavRow(
-            label = "Add subcategory",
+        MmrSettingsGroupNavRow(
+            label = "Add Subcategory",
             onClick = onAddSubcategory,
             showDividerBelow = false,
         )

@@ -54,4 +54,13 @@ object MmrMigrations {
                 )
             }
         }
+
+    val MIGRATION_29_30 =
+        object : Migration(29, 30) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE subcategories ADD COLUMN iconName TEXT NOT NULL DEFAULT 'category_default'",
+                )
+            }
+        }
 }

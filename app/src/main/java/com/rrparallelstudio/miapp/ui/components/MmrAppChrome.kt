@@ -67,14 +67,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rrparallelstudio.miapp.R
 import com.rrparallelstudio.miapp.core.model.settings.MmrAmountColorScheme
 import com.rrparallelstudio.miapp.testing.MmrTestTags
@@ -82,7 +80,24 @@ import com.rrparallelstudio.miapp.ui.adaptive.currentMmrWidthSizeClass
 import com.rrparallelstudio.miapp.ui.adaptive.isCompactWidth
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
 import com.rrparallelstudio.miapp.ui.theme.MmrChipPaints
+import com.rrparallelstudio.miapp.ui.theme.mmrConfigSectionTitleStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrHeaderBadgeLabelStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrLedgerTabLabelStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrPeriodChipLabelStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrScreenIntroBulletStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrScreenIntroTitleStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrSearchNoteQueryStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrSettingsCompactSectionHeaderStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrSettingsGroupFooterStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrSettingsRowPrimaryStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrSettingsRowSecondaryStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrTitleMediumFixedStyle
 import kotlin.math.roundToInt
+import com.rrparallelstudio.miapp.ui.theme.mmrFilterChipTextStyle as mmrFilterChipTextStyleTheme
+import com.rrparallelstudio.miapp.ui.theme.mmrLedgerAmountTextStyle as mmrLedgerAmountTextStyleTheme
+import com.rrparallelstudio.miapp.ui.theme.mmrLedgerDayNumberTextStyle as mmrLedgerDayNumberTextStyleTheme
+import com.rrparallelstudio.miapp.ui.theme.mmrLedgerListTextStyle as mmrLedgerListTextStyleTheme
+import com.rrparallelstudio.miapp.ui.theme.mmrSearchFilterFieldTextStyle as mmrSearchFilterFieldTextStyleTheme
 
 @Composable
 fun MmrHomeTopBar(
@@ -154,9 +169,7 @@ fun MmrHomeTopBar(
                 }
                 Text(
                     text = monthTitle,
-                    color = MmrBrandColors.HeaderIcon,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    style = mmrTitleMediumFixedStyle(MmrBrandColors.HeaderIcon, FontWeight.SemiBold),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier =
@@ -267,10 +280,7 @@ private fun MmrHeaderCountBadge(
     ) {
         Text(
             text = label,
-            color = Color.White,
-            fontSize = if (compact) 8.sp else 9.sp,
-            lineHeight = if (compact) 9.sp else 10.sp,
-            fontWeight = FontWeight.Bold,
+            style = mmrHeaderBadgeLabelStyle(Color.White, compact).copy(fontWeight = FontWeight.Bold),
             maxLines = 1,
             modifier = Modifier.padding(horizontal = if (compact) 4.dp else 3.dp, vertical = 1.dp),
         )
@@ -357,9 +367,7 @@ fun MmrHeaderBar(
                                 .then(
                                     if (onTitleClick != null) Modifier.clickable(onClick = onTitleClick) else Modifier,
                                 ).padding(horizontal = 2.dp),
-                        color = MmrBrandColors.HeaderIcon,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Normal,
+                        style = mmrTitleMediumFixedStyle(MmrBrandColors.HeaderIcon),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -450,9 +458,7 @@ private fun MmrHeaderBarCenteredPeriodRow(
                             .then(
                                 if (onTitleClick != null) Modifier.clickable(onClick = onTitleClick) else Modifier,
                             ),
-                    color = MmrBrandColors.HeaderIcon,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.Normal,
+                    style = mmrTitleMediumFixedStyle(MmrBrandColors.HeaderIcon),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -592,9 +598,7 @@ fun MmrTabRow(
                         }
                     Text(
                         text = label,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = labelColor,
+                        style = mmrLedgerTabLabelStyle(labelColor),
                         modifier = Modifier.padding(vertical = MmrDimens.homeTabLabelVerticalPadding),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -687,9 +691,7 @@ fun MmrLedgerViewModeDropdown(
                     ) {
                         Text(
                             text = selectedLabel,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MmrBrandColors.onCanvas(),
+                            style = mmrLedgerTabLabelStyle(MmrBrandColors.onCanvas(), FontWeight.SemiBold),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -811,9 +813,10 @@ fun MmrStatsTabRow(
                     ) {
                         Text(
                             text = label,
-                            fontSize = 13.sp,
-                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                            color = if (selected) MmrBrandColors.TextStrong else MmrBrandColors.TextMedium,
+                            style =
+                                mmrSettingsRowSecondaryStyle(
+                                    if (selected) MmrBrandColors.TextStrong else MmrBrandColors.TextMedium,
+                                ).copy(fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.padding(horizontal = 8.dp),
@@ -1049,40 +1052,17 @@ private fun MmrSummaryCell(
 
 /** Shared with home transaction rows (category + note) so list text matches filter chips. */
 @Composable
-fun mmrFilterChipTextStyle(): TextStyle =
-    MaterialTheme.typography.bodySmall.copy(
-        fontSize = 11.sp,
-        lineHeight = 13.sp,
-        fontWeight = FontWeight.Normal,
-    )
+fun mmrFilterChipTextStyle(): TextStyle = mmrFilterChipTextStyleTheme()
 
-/** Home ledger list: Roboto/system sans, single normal weight (MM-like flat list). */
+/** Home ledger list — same [MmrFontFamily] as app typography; compact sizes for list density. */
 @Composable
-fun mmrLedgerListTextStyle(): TextStyle =
-    TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontSize = 11.sp,
-        lineHeight = 13.sp,
-        fontWeight = FontWeight.Normal,
-    )
+fun mmrLedgerListTextStyle(): TextStyle = mmrLedgerListTextStyleTheme()
 
 @Composable
-fun mmrLedgerAmountTextStyle(): TextStyle =
-    TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontSize = 12.sp,
-        lineHeight = 14.sp,
-        fontWeight = FontWeight.Normal,
-    )
+fun mmrLedgerAmountTextStyle(): TextStyle = mmrLedgerAmountTextStyleTheme()
 
 @Composable
-fun mmrLedgerDayNumberTextStyle(): TextStyle =
-    TextStyle(
-        fontFamily = FontFamily.SansSerif,
-        fontSize = 19.sp,
-        lineHeight = 22.sp,
-        fontWeight = FontWeight.Normal,
-    )
+fun mmrLedgerDayNumberTextStyle(): TextStyle = mmrLedgerDayNumberTextStyleTheme()
 
 @Composable
 fun MmrFilterChip(
@@ -1090,6 +1070,7 @@ fun MmrFilterChip(
     selected: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    showDropdownCaret: Boolean = false,
 ) {
     val paint = MmrChipPaints.accentFilled(selected)
     val background = paint.fill
@@ -1106,13 +1087,26 @@ fun MmrFilterChip(
                 .padding(horizontal = 8.dp),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = label,
-            style = mmrFilterChipTextStyle(),
-            color = textColor,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = label,
+                style = mmrFilterChipTextStyle(),
+                color = textColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (showDropdownCaret) {
+                Icon(
+                    imageVector = Icons.Filled.ArrowDropDown,
+                    contentDescription = null,
+                    tint = textColor,
+                    modifier = Modifier.size(16.dp),
+                )
+            }
+        }
     }
 }
 
@@ -1133,7 +1127,7 @@ fun MmrPeriodChip(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(text = label, color = MmrBrandColors.HeaderIcon, fontSize = 14.sp)
+            Text(text = label, style = mmrPeriodChipLabelStyle(MmrBrandColors.HeaderIcon))
             Icon(
                 Icons.Filled.ArrowDropDown,
                 contentDescription = null,
@@ -1164,6 +1158,7 @@ fun MmrSearchField(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(Icons.Filled.Search, null, tint = MmrBrandColors.Reversal, modifier = Modifier.size(18.dp))
+        val noteQueryStyle = mmrSearchNoteQueryStyle(MmrBrandColors.Reversal)
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
@@ -1172,16 +1167,15 @@ fun MmrSearchField(
                     .testTag(MmrTestTags.searchNoteQuery)
                     .weight(1f)
                     .padding(horizontal = 8.dp),
-            textStyle =
-                MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 15.sp,
-                    color = MmrBrandColors.Reversal,
-                ),
+            textStyle = noteQueryStyle,
             singleLine = true,
             cursorBrush = SolidColor(MmrBrandColors.Active),
             decorationBox = { inner ->
                 if (value.isEmpty()) {
-                    Text(placeholder, color = MmrBrandColors.TextLight, fontSize = 15.sp)
+                    Text(
+                        placeholder,
+                        style = noteQueryStyle.copy(color = MmrBrandColors.TextLight),
+                    )
                 }
                 inner()
             },
@@ -1194,6 +1188,10 @@ fun MmrSearchField(
     }
 }
 
+/** Shared label/value typography for Search filter rows (Period, Account, Category, Amount). */
+@Composable
+fun mmrSearchFilterFieldTextStyle(color: Color): TextStyle = mmrSearchFilterFieldTextStyleTheme(color)
+
 @Composable
 fun MmrSearchFilterRow(
     label: String,
@@ -1203,6 +1201,8 @@ fun MmrSearchFilterRow(
     modifier: Modifier = Modifier,
 ) {
     val valueInset = MmrDimens.spaceLg + MmrDimens.searchFilterLabelWidth
+    val labelStyle = mmrSearchFilterFieldTextStyle(MmrBrandColors.onCanvasMuted())
+    val valueStyle = mmrSearchFilterFieldTextStyle(MmrBrandColors.onCanvas())
     Row(
         modifier =
             modifier
@@ -1216,8 +1216,7 @@ fun MmrSearchFilterRow(
         Text(
             text = label,
             modifier = Modifier.width(MmrDimens.searchFilterLabelWidth),
-            fontSize = 14.sp,
-            color = MmrBrandColors.onCanvasMuted(),
+            style = labelStyle,
             textAlign = TextAlign.Start,
             maxLines = 1,
         )
@@ -1227,8 +1226,7 @@ fun MmrSearchFilterRow(
                 Modifier
                     .weight(1f)
                     .padding(end = if (onClear != null) 0.dp else MmrDimens.spaceXs),
-            fontSize = 14.sp,
-            color = MmrBrandColors.onCanvas(),
+            style = valueStyle,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -1269,10 +1267,7 @@ fun MmrConfigSectionHeader(
             Text(
                 text = title,
                 modifier = Modifier.fillMaxWidth(),
-                color = MmrBrandColors.TextStrong,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                lineHeight = 20.sp,
+                style = mmrConfigSectionTitleStyle(MmrBrandColors.TextStrong),
             )
             subtitle?.let {
                 MmrHelperText(
@@ -1300,11 +1295,7 @@ fun MmrHelperText(
     Text(
         text = text,
         modifier = modifier,
-        color = color,
-        fontSize = 13.sp,
-        lineHeight = 18.sp,
-        fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
-        fontWeight = FontWeight.Normal,
+        style = mmrSettingsGroupFooterStyle(color),
     )
 }
 
@@ -1322,10 +1313,9 @@ fun MmrScreenIntroPanel(
         ) {
             Text(
                 text = title,
-                color = MmrBrandColors.listAreaBodyText(),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                lineHeight = 18.sp,
+                style =
+                    mmrScreenIntroBulletStyle(MmrBrandColors.listAreaBodyText())
+                        .copy(fontWeight = FontWeight.SemiBold),
             )
             bullets.forEach { line ->
                 MmrHelperText(text = line, color = MmrBrandColors.listAreaCaptionText())
@@ -1351,10 +1341,7 @@ fun MmrScreenIntroPanel(
             Text(
                 text = title,
                 modifier = Modifier.fillMaxWidth(),
-                color = MmrBrandColors.TextStrong,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                lineHeight = 20.sp,
+                style = mmrScreenIntroTitleStyle(MmrBrandColors.TextStrong),
             )
             bullets.forEach { line ->
                 Row(
@@ -1363,9 +1350,7 @@ fun MmrScreenIntroPanel(
                 ) {
                     Text(
                         text = "•",
-                        color = MmrBrandColors.TextMedium,
-                        fontSize = 13.sp,
-                        lineHeight = 18.sp,
+                        style = mmrSettingsRowSecondaryStyle(MmrBrandColors.TextMedium),
                     )
                     MmrHelperText(text = line, modifier = Modifier.weight(1f))
                 }
@@ -1400,11 +1385,7 @@ fun MmrSettingsSectionTitle(
             Text(
                 text = title.uppercase(),
                 modifier = Modifier.fillMaxWidth(),
-                color = MmrBrandColors.listAreaCaptionText(),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Medium,
-                letterSpacing = 0.4.sp,
-                lineHeight = 16.sp,
+                style = mmrSettingsCompactSectionHeaderStyle(MmrBrandColors.listAreaCaptionText()),
             )
             subtitle?.let {
                 MmrHelperText(
@@ -1443,8 +1424,7 @@ fun MmrLightSwitchRow(
         Text(
             text = label,
             modifier = Modifier.weight(1f),
-            color = MmrBrandColors.Reversal,
-            fontSize = 14.sp,
+            style = mmrSettingsRowPrimaryStyle(MmrBrandColors.Reversal),
         )
         Switch(
             checked = checked,
@@ -1494,8 +1474,7 @@ fun MmrLightNavRow(
         ) {
             Text(
                 text = label,
-                color = MmrBrandColors.Reversal,
-                fontSize = 14.sp,
+                style = mmrSettingsRowPrimaryStyle(MmrBrandColors.Reversal),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1509,8 +1488,7 @@ fun MmrLightNavRow(
         if (value.isNotEmpty()) {
             Text(
                 text = value,
-                color = MmrBrandColors.Active,
-                fontSize = 14.sp,
+                style = mmrSettingsRowPrimaryStyle(MmrBrandColors.Active),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1538,13 +1516,11 @@ fun MmrConfigValueRow(
         Text(
             text = label,
             modifier = Modifier.weight(1f),
-            color = MmrBrandColors.ConfigLabel,
-            fontSize = 14.sp,
+            style = mmrSettingsRowPrimaryStyle(MmrBrandColors.ConfigLabel),
         )
         Text(
             text = value,
-            color = MmrBrandColors.ConfigValue,
-            fontSize = 14.sp,
+            style = mmrSettingsRowPrimaryStyle(MmrBrandColors.ConfigValue),
             maxLines = 2,
             textAlign = TextAlign.End,
             modifier = Modifier.padding(start = 12.dp),
@@ -1570,8 +1546,7 @@ fun MmrConfigSwitchRow(
         Text(
             text = label,
             modifier = Modifier.weight(1f),
-            color = MmrBrandColors.ConfigLabel,
-            fontSize = 14.sp,
+            style = mmrSettingsRowPrimaryStyle(MmrBrandColors.ConfigLabel),
         )
         Switch(
             checked = checked,

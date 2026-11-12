@@ -2,6 +2,9 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>ArgumentListWrapping:HomeMonthlyComponents.kt$(MmrBrandColors.MonthlyExpense, compact)</ID>
+    <ID>ArgumentListWrapping:HomeMonthlyComponents.kt$(fontWeight = FontWeight.Medium)</ID>
+    <ID>ArgumentListWrapping:MonefyBackupCrypto.kt$MonefyBackupCrypto$(plain.size &gt;= SQLITE_HEADER.size &amp;&amp; plain.copyOfRange(0, SQLITE_HEADER.size).contentEquals(SQLITE_HEADER))</ID>
     <ID>ComplexCondition:AccountPickerSheet.kt$(!showAccountSections || sections.isEmpty()) &amp;&amp; !showLoanSection &amp;&amp; !showAllOption</ID>
     <ID>ComplexCondition:AddEditBudgetViewModel.kt$AddEditBudgetViewModel$start == null || end == null || !MmrValidation.isValidEpochMillis(start) || !MmrValidation.isValidEpochMillis(end) || end &lt; start</ID>
     <ID>ComplexCondition:AddEditRecurringRuleViewModel.kt$AddEditRecurringRuleViewModel$state.name.isBlank() || amount == null || state.accountId == null || !hasValidStart</ID>
@@ -26,11 +29,14 @@
     <ID>CompositionLocalAllowlist:MmrSettingsVisualStyle.kt$LocalMmrSettingsVisualStyle</ID>
     <ID>CompositionLocalAllowlist:MmrThemeLocals.kt$LocalMmrAmountColorScheme</ID>
     <ID>CompositionLocalAllowlist:MmrThemeLocals.kt$LocalMmrThemeAppearance</ID>
+    <ID>CompositionLocalAllowlist:MmrWindowInsets.kt$LocalMmrFormContentBottomY</ID>
+    <ID>CompositionLocalAllowlist:MmrWindowInsets.kt$LocalMmrFormExtraBottomPadding</ID>
+    <ID>CompositionLocalAllowlist:MmrWindowInsets.kt$LocalMmrFormImeOverlap</ID>
     <ID>CompositionLocalAllowlist:MmrWindowSize.kt$LocalMmrWindowSizeClass</ID>
     <ID>ContentSlotReused:MmrInputDialog.kt$content</ID>
     <ID>ContentSlotReused:MmrIosSettingsList.kt$content</ID>
     <ID>ContentSlotReused:MmrMainNavigationScaffold.kt$content</ID>
-    <ID>CyclomaticComplexMethod:AccountPickerSheet.kt$@Composable fun AccountPickerPanel( accounts: List&lt;AccountUi&gt;, loans: List&lt;LoanPickerUi&gt;, mode: AccountPickerMode, selectedAccountId: Long?, selectedLoanId: Long?, excludedAccountId: Long?, showAllOption: Boolean, allOptionSelected: Boolean, onAllSelected: (() -&gt; Unit)?, onAccountSelected: (Long) -&gt; Unit, onLoanSelected: ((Long) -&gt; Unit)?, modifier: Modifier = Modifier, /** * When true, the panel sits on a **light** surface (e.g. white [MmrTransactionFormCard]) while the global canvas * may still be “dark” for Ocean/Midnight. Row titles and search must use dark palette colors, not [onCanvas]. */ onLightSurface: Boolean = false, listMaxHeight: Dp = 280.dp, )</ID>
+    <ID>CyclomaticComplexMethod:AccountPickerSheet.kt$@Composable fun AccountPickerPanel( accounts: List&lt;AccountUi&gt;, loans: List&lt;LoanPickerUi&gt;, mode: AccountPickerMode, selectedAccountId: Long?, selectedLoanId: Long?, excludedAccountId: Long?, showAllOption: Boolean, allOptionSelected: Boolean, onAllSelected: (() -&gt; Unit)?, onAccountSelected: (Long) -&gt; Unit, onLoanSelected: ((Long) -&gt; Unit)?, modifier: Modifier = Modifier, /** * When true, the panel sits on a **light** surface (e.g. white [MmrTransactionFormCard]) while the global canvas * may still be “dark” for Ocean/Midnight. Row titles and search must use dark palette colors, not [onCanvas]. */ onLightSurface: Boolean = false, listMaxHeight: Dp = 280.dp, fillRemainingViewport: Boolean = false, )</ID>
     <ID>CyclomaticComplexMethod:AccountPickerSheet.kt$@Composable private fun AccountPickerRow( title: String, selected: Boolean, onClick: () -&gt; Unit, account: AccountUi?, isLoan: Boolean, onLightSurface: Boolean, )</ID>
     <ID>CyclomaticComplexMethod:AddEditAccountScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun AddEditAccountScreen( onNavigateBack: () -&gt; Unit, viewModel: AddEditAccountViewModel = hiltViewModel(), )</ID>
     <ID>CyclomaticComplexMethod:AddEditAssetViewModel.kt$AddEditAssetViewModel$fun onEvent(event: AddEditAssetUiEvent)</ID>
@@ -57,14 +63,16 @@
     <ID>CyclomaticComplexMethod:BackupDao.kt$BackupDao$@Transaction suspend fun mergeUserData( categories: List&lt;CategoryEntity&gt;, subcategories: List&lt;SubcategoryEntity&gt;, accounts: List&lt;AccountEntity&gt;, loans: List&lt;LoanEntity&gt;, loanInterestRevisions: List&lt;LoanInterestRevisionEntity&gt;, loanScheduleEntries: List&lt;LoanScheduleEntryEntity&gt;, transactions: List&lt;TransactionEntity&gt;, loanPayments: List&lt;LoanPaymentEntity&gt;, recurringRules: List&lt;RecurringRuleEntity&gt;, budgets: List&lt;BudgetEntity&gt; = emptyList(), assets: List&lt;AssetEntity&gt; = emptyList(), assetValuations: List&lt;AssetValuationEntity&gt; = emptyList(), notificationRules: List&lt;NotificationRuleEntity&gt;, smsMessageRecords: List&lt;SmsMessageRecordEntity&gt;, transactionApprovals: List&lt;TransactionApprovalEntity&gt;, categorizationRules: List&lt;CategorizationRuleEntity&gt; = emptyList(), trustedLanDevices: List&lt;TrustedLanDeviceEntity&gt; = emptyList(), transactionAttachments: List&lt;TransactionAttachmentEntity&gt; = emptyList(), assetAttachments: List&lt;AssetAttachmentEntity&gt; = emptyList(), smsAccountOverrides: List&lt;SmsAccountOverrideEntity&gt; = emptyList(), )</ID>
     <ID>CyclomaticComplexMethod:BackupDao.kt$BackupDao$@Transaction suspend fun restoreAllUserData( categories: List&lt;CategoryEntity&gt;, subcategories: List&lt;SubcategoryEntity&gt;, accounts: List&lt;AccountEntity&gt;, loans: List&lt;LoanEntity&gt;, loanInterestRevisions: List&lt;LoanInterestRevisionEntity&gt;, loanScheduleEntries: List&lt;LoanScheduleEntryEntity&gt;, transactions: List&lt;TransactionEntity&gt;, loanPayments: List&lt;LoanPaymentEntity&gt;, recurringRules: List&lt;RecurringRuleEntity&gt;, budgets: List&lt;BudgetEntity&gt; = emptyList(), assets: List&lt;AssetEntity&gt; = emptyList(), assetValuations: List&lt;AssetValuationEntity&gt; = emptyList(), notificationRules: List&lt;NotificationRuleEntity&gt;, smsMessageRecords: List&lt;SmsMessageRecordEntity&gt;, transactionApprovals: List&lt;TransactionApprovalEntity&gt;, categorizationRules: List&lt;CategorizationRuleEntity&gt; = emptyList(), trustedLanDevices: List&lt;TrustedLanDeviceEntity&gt; = emptyList(), transactionAttachments: List&lt;TransactionAttachmentEntity&gt; = emptyList(), assetAttachments: List&lt;AssetAttachmentEntity&gt; = emptyList(), smsAccountOverrides: List&lt;SmsAccountOverrideEntity&gt; = emptyList(), )</ID>
     <ID>CyclomaticComplexMethod:BackupImportPlanner.kt$BackupImportPlanner$fun prepareMerge( payload: MmrBackupPayload, existing: ExistingIds, ): MmrBackupPayload</ID>
-    <ID>CyclomaticComplexMethod:BackupScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun BackupScreen( onNavigateBack: () -&gt; Unit, onNavigateToGoogleDrive: () -&gt; Unit = {}, viewModel: BackupViewModel = hiltViewModel(), testImportUri: Uri? = null, )</ID>
+    <ID>CyclomaticComplexMethod:BackupScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun BackupScreen( onNavigateBack: () -&gt; Unit, onNavigateToGoogleDrive: () -&gt; Unit = {}, viewModel: BackupViewModel = hiltViewModel(), testImportUri: Uri? = null, testImportDisplayName: String? = null, )</ID>
     <ID>CyclomaticComplexMethod:BackupSignedZipCodec.kt$BackupSignedZipCodec$fun decode(bytes: ByteArray): ParsedArchive</ID>
     <ID>CyclomaticComplexMethod:BackupViewModel.kt$BackupViewModel$fun onEvent(event: BackupUiEvent)</ID>
     <ID>CyclomaticComplexMethod:BudgetRepositoryImpl.kt$BudgetRepositoryImpl$override suspend fun evaluateAlertsForTransaction( categoryId: Long?, subcategoryId: Long?, transactionMillis: Long, )</ID>
     <ID>CyclomaticComplexMethod:CategoryListScreen.kt$@Composable fun CategoryListScreen( onNavigateBack: () -&gt; Unit, onNavigateToAddCategory: () -&gt; Unit, onNavigateToEditCategory: (Long) -&gt; Unit, viewModel: CategoryViewModel = hiltViewModel(), )</ID>
-    <ID>CyclomaticComplexMethod:CategorySubcategoryPickerPanel.kt$@Composable fun CategorySubcategoryPickerPanel( panelState: CategoryPickerPanelState, callbacks: CategoryPickerPanelCallbacks, modifier: Modifier = Modifier, maxPanelHeight: Dp = 300.dp, onPickerFinished: () -&gt; Unit = {}, showDismissAction: Boolean = false, onDismiss: () -&gt; Unit = {}, )</ID>
-    <ID>CyclomaticComplexMethod:ConfigurationScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable private fun ConfigPickerSheet( picker: ConfigPicker, settings: AppDisplaySettingsSnapshot, previewAppearance: MmrThemeAppearance, sheetState: SheetState, onDismiss: () -&gt; Unit, onSelectStartScreen: (MmrStartScreenTab) -&gt; Unit, onSelectMonthDay: (Int) -&gt; Unit, onSelectWeekDay: (MmrWeekStartDay) -&gt; Unit, onSelectColors: (MmrAmountColorScheme) -&gt; Unit, onSelectTime: (MmrTimeDisplay) -&gt; Unit, onSelectAppTheme: (MmrAppColorTheme) -&gt; Unit, onSelectThemeMode: (MmrThemeMode) -&gt; Unit, )</ID>
+    <ID>CyclomaticComplexMethod:CategorySubcategoryPickerPanel.kt$@Composable fun CategorySubcategoryPickerPanel( panelState: CategoryPickerPanelState, callbacks: CategoryPickerPanelCallbacks, modifier: Modifier = Modifier, maxPanelHeight: Dp = 300.dp, fillRemainingViewport: Boolean = false, onPickerFinished: () -&gt; Unit = {}, showDismissAction: Boolean = false, onDismiss: () -&gt; Unit = {}, )</ID>
+    <ID>CyclomaticComplexMethod:ConfigurationPickerSupport.kt$@Composable fun SettingsChoiceScreen( pickerName: String, onNavigateBack: () -&gt; Unit, viewModel: ConfigurationViewModel = hiltViewModel(), )</ID>
+    <ID>CyclomaticComplexMethod:ConfigurationPickerSupport.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable private fun ConfigurationPickerSheet( picker: ConfigurationPicker, settings: AppDisplaySettingsSnapshot, previewAppearance: MmrThemeAppearance, sheetState: SheetState, onDismiss: () -&gt; Unit, onSelectStartScreen: (MmrStartScreenTab) -&gt; Unit, onSelectMonthDay: (Int) -&gt; Unit, onSelectWeekDay: (MmrWeekStartDay) -&gt; Unit, onSelectColors: (MmrAmountColorScheme) -&gt; Unit, onSelectTime: (MmrTimeDisplay) -&gt; Unit, onSelectAppTheme: (MmrAppColorTheme) -&gt; Unit, onSelectThemeMode: (MmrThemeMode) -&gt; Unit, )</ID>
     <ID>CyclomaticComplexMethod:FtueBulletIcons.kt$@Composable fun ftueBulletIconVisual(icon: FtueBulletIcon): FtueBulletIconVisual</ID>
+    <ID>CyclomaticComplexMethod:HomeCategoryFilterDropdown.kt$@Composable fun HomeCategoryFilterDropdown( rows: List&lt;HomeCategoryFilterRow&gt;, selected: Set&lt;Long&gt;, onToggleCategory: (Long) -&gt; Unit, onClearCategories: () -&gt; Unit, modifier: Modifier = Modifier, emptyCategoriesMessage: String = "No categories yet.", )</ID>
     <ID>CyclomaticComplexMethod:HomeScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HomeScreen( onNavigateToAddTransaction: (prefillDateMillis: Long?) -&gt; Unit, onNavigateToTransactionDetail: (Long) -&gt; Unit, onNavigateToApprovals: () -&gt; Unit, onNavigateToSearch: () -&gt; Unit, viewModel: HomeViewModel = hiltViewModel(), )</ID>
     <ID>CyclomaticComplexMethod:HomeViewModel.kt$HomeViewModel$fun onEvent(event: HomeUiEvent)</ID>
     <ID>CyclomaticComplexMethod:LanSyncMerger.kt$LanSyncMerger$suspend fun merge( payload: MmrLanSyncPayload, options: LanSyncMergeOptions = LanSyncMergeOptions(), ): LanSyncMergeSummary</ID>
@@ -80,6 +88,7 @@
     <ID>CyclomaticComplexMethod:MerchantAndCategoryRules.kt$MerchantRule$fun inferCategoryHint( text: String, merchant: String?, ): String?</ID>
     <ID>CyclomaticComplexMethod:MezoLedgerParserComparisonTest.kt$MezoLedgerParserComparisonTest$@Test fun mezoLedgerRows_mostParseAsMmrTransaction()</ID>
     <ID>CyclomaticComplexMethod:MmrAmountCalculatorSheet.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun MmrAmountCalculatorSheet( initialAmountFieldValue: String, onDismiss: () -&gt; Unit, onApply: (String) -&gt; Unit, sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), )</ID>
+    <ID>CyclomaticComplexMethod:MmrCategoryIconCatalog.kt$MmrCategoryIconCatalog$fun resolve(iconName: String): ImageVector</ID>
     <ID>CyclomaticComplexMethod:MmrDetailScreenScaffold.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun MmrDetailScreenScaffold( title: String, onNavigateBack: () -&gt; Unit, modifier: Modifier = Modifier, useCompactHeaderTitle: Boolean = false, topBarActions: @Composable androidx.compose.foundation.layout.RowScope.() -&gt; Unit = {}, footerPrimaryLabel: String? = null, onFooterPrimary: (() -&gt; Unit)? = null, footerPrimaryEnabled: Boolean = true, footerPrimaryTestTag: String? = null, footerSecondaryLabel: String? = null, onFooterSecondary: (() -&gt; Unit)? = null, footerSecondaryEnabled: Boolean = true, footerSecondaryTestTag: String? = null, footerTextLabel: String? = null, onFooterText: (() -&gt; Unit)? = null, footerTextEnabled: Boolean = true, footerTextIsDestructive: Boolean = false, footerTextTestTag: String? = null, isLoading: Boolean = false, isBlocking: Boolean = false, errorMessage: String? = null, onRetry: (() -&gt; Unit)? = null, content: LazyListScope.() -&gt; Unit, )</ID>
     <ID>CyclomaticComplexMethod:MmrExpressiveScreenArt.kt$MmrExpressiveScreenArt$private fun DrawScope.drawRoseGoldMoneyLayer( p: MmrBrandPalette, w: Float, h: Float, isLight: Boolean, )</ID>
     <ID>CyclomaticComplexMethod:MmrFooterCtaBar.kt$@Composable fun MmrFooterCtaBar( modifier: Modifier = Modifier, bandBackground: Color = MmrBrandColors.expressiveFooterBandBackground(), primaryLabel: String? = null, onPrimary: (() -&gt; Unit)? = null, primaryEnabled: Boolean = true, primaryIsDestructive: Boolean = false, primaryTestTag: String? = null, secondaryLabel: String? = null, onSecondary: (() -&gt; Unit)? = null, secondaryEnabled: Boolean = true, secondaryTestTag: String? = null, textLabel: String? = null, onText: (() -&gt; Unit)? = null, textEnabled: Boolean = true, textIsDestructive: Boolean = false, textTestTag: String? = null, )</ID>
@@ -116,6 +125,7 @@
     <ID>ImplicitDefaultLocale:WebManageChartThemeSourceImpl.kt$WebManageChartThemeSourceImpl$String.format("#%06X", rgb)</ID>
     <ID>Indentation:AccountListViewModel.kt$AccountListViewModel$ </ID>
     <ID>Indentation:AccountPickerSheet.kt$ </ID>
+    <ID>Indentation:AddEditAccountScreen.kt$ </ID>
     <ID>Indentation:AddEditAccountViewModel.kt$AddEditAccountViewModel$ </ID>
     <ID>Indentation:AddEditAssetScreen.kt$ </ID>
     <ID>Indentation:AddEditAssetViewModel.kt$AddEditAssetViewModel$ </ID>
@@ -127,6 +137,7 @@
     <ID>Indentation:AddEditLoanViewModel.kt$AddEditLoanViewModel$ </ID>
     <ID>Indentation:AddEditRecurringRuleScreen.kt$ </ID>
     <ID>Indentation:AddEditRecurringRuleViewModel.kt$AddEditRecurringRuleViewModel$ </ID>
+    <ID>Indentation:AddEditSubcategoryScreen.kt$ </ID>
     <ID>Indentation:AddEditSubcategoryViewModel.kt$AddEditSubcategoryViewModel$ </ID>
     <ID>Indentation:AddEditTransactionScreen.kt$ </ID>
     <ID>Indentation:AddEditTransactionViewModel.kt$AddEditTransactionViewModel$ </ID>
@@ -136,6 +147,7 @@
     <ID>Indentation:AppSecuritySettingsStore.kt$AppSecuritySettingsStore$ </ID>
     <ID>Indentation:AppSecuritySettingsStore.kt$AppSecuritySettingsStore.Companion$ </ID>
     <ID>Indentation:AppSettingsBackupCoordinator.kt$AppSettingsBackupCoordinator$ </ID>
+    <ID>Indentation:AppearanceSettingsScreen.kt$ </ID>
     <ID>Indentation:ApplyCardRefundDialog.kt$ </ID>
     <ID>Indentation:ApprovalCenterScreen.kt$ </ID>
     <ID>Indentation:ApprovalCenterViewModel.kt$ApprovalCenterViewModel$ </ID>
@@ -178,11 +190,13 @@
     <ID>Indentation:CategorizationRuleEngine.kt$CategorizationRuleEngine$ </ID>
     <ID>Indentation:CategoryColorPicker.kt$ </ID>
     <ID>Indentation:CategoryHierarchyComponents.kt$ </ID>
+    <ID>Indentation:CategoryIconPicker.kt$ </ID>
+    <ID>Indentation:CategoryListScreen.kt$ </ID>
     <ID>Indentation:CategoryPickerComponents.kt$ </ID>
     <ID>Indentation:CategorySubcategoryPickerPanel.kt$ </ID>
     <ID>Indentation:CategoryViewModel.kt$CategoryViewModel$ </ID>
     <ID>Indentation:CategoryViewModel.kt$CategoryViewModel.SelectionSnapshot$ </ID>
-    <ID>Indentation:ConfigurationScreen.kt$ </ID>
+    <ID>Indentation:ConfigurationPickerSupport.kt$ </ID>
     <ID>Indentation:ConfigurationViewModel.kt$ConfigurationViewModel$ </ID>
     <ID>Indentation:DuplicateDetector.kt$DuplicateDetector$ </ID>
     <ID>Indentation:EmiAutoPostCoordinator.kt$EmiAutoPostCoordinator$ </ID>
@@ -206,9 +220,11 @@
     <ID>Indentation:GoogleDriveWebClientIdProvider.kt$GoogleDriveWebClientIdProvider$ </ID>
     <ID>Indentation:HomeCalendarComponents.kt$ </ID>
     <ID>Indentation:HomeCarryOverInjectorTest.kt$HomeCarryOverInjectorTest$ </ID>
+    <ID>Indentation:HomeCategoryFilterDropdown.kt$ </ID>
     <ID>Indentation:HomeExcelExportPeriodDialog.kt$ </ID>
     <ID>Indentation:HomeLedgerScrollToTopNotifier.kt$HomeLedgerScrollToTopNotifier$ </ID>
     <ID>Indentation:HomeLedgerTabReselectNotifier.kt$HomeLedgerTabReselectNotifier$ </ID>
+    <ID>Indentation:HomeMenuSettingsScreen.kt$ </ID>
     <ID>Indentation:HomeMonthPickerDialog.kt$ </ID>
     <ID>Indentation:HomeMonthlyComponents.kt$ </ID>
     <ID>Indentation:HomeScreen.kt$ </ID>
@@ -281,8 +297,6 @@
     <ID>Indentation:LoanRepositoryImpl.kt$LoanRepositoryImpl$ </ID>
     <ID>Indentation:LoanTopUpDialog.kt$ </ID>
     <ID>Indentation:LoanTransactionCoordinator.kt$LoanTransactionCoordinator$ </ID>
-    <ID>Indentation:LocalAutoBackupExporter.kt$LocalAutoBackupExporter$ </ID>
-    <ID>Indentation:LocalAutoBackupExporter.kt$LocalAutoBackupExporter.Result$ </ID>
     <ID>Indentation:LocalAutoBackupPreferencesStore.kt$LocalAutoBackupPreferencesStore$ </ID>
     <ID>Indentation:LocalAutoBackupPreferencesStore.kt$LocalAutoBackupPreferencesStore.Companion$ </ID>
     <ID>Indentation:LocalAutoBackupRetention.kt$LocalAutoBackupRetention$ </ID>
@@ -290,6 +304,9 @@
     <ID>Indentation:LocalAutoBackupWorkScheduler.kt$LocalAutoBackupWorkScheduler$ </ID>
     <ID>Indentation:LocalAutoBackupWorker.kt$LocalAutoBackupWorker$ </ID>
     <ID>Indentation:LocalBackupDownloadsSaver.kt$LocalBackupDownloadsSaver$ </ID>
+    <ID>Indentation:LocalBackupFolderSaver.kt$LocalBackupFolderSaver$ </ID>
+    <ID>Indentation:LocalBackupFolderStore.kt$LocalBackupFolderStore$ </ID>
+    <ID>Indentation:LocalBackupFolderStore.kt$LocalBackupFolderStore.Companion$ </ID>
     <ID>Indentation:LocalLanServerCoordinator.kt$LocalLanServerCoordinator$ </ID>
     <ID>Indentation:LocalLanServerNotifierImpl.kt$LocalLanServerNotifierImpl$ </ID>
     <ID>Indentation:LocalSmsScannerService.kt$LocalSmsScannerService$ </ID>
@@ -345,6 +362,7 @@
     <ID>Indentation:MmrRemoteConfigDailyFetchStore.kt$MmrRemoteConfigDailyFetchStore.Companion$ </ID>
     <ID>Indentation:MmrScrollableBottomBar.kt$ </ID>
     <ID>Indentation:MmrSettingsColorSwatches.kt$ </ID>
+    <ID>Indentation:MmrSettingsGroup.kt$ </ID>
     <ID>Indentation:MmrSettingsRangeSlider.kt$ </ID>
     <ID>Indentation:MmrSettingsScreenTemplate.kt$ </ID>
     <ID>Indentation:MmrSnapWheelColumn.kt$ </ID>
@@ -405,6 +423,8 @@
     <ID>Indentation:SearchDateRangeDialog.kt$ </ID>
     <ID>Indentation:SearchFilterInlinePickers.kt$ </ID>
     <ID>Indentation:SearchFilterRows.kt$ </ID>
+    <ID>Indentation:SearchSelectionDialogs.kt$ </ID>
+    <ID>Indentation:SecuritySettingsScreen.kt$ </ID>
     <ID>Indentation:SettingsScreen.kt$ </ID>
     <ID>Indentation:SettingsViewModel.kt$SettingsViewModel$ </ID>
     <ID>Indentation:SmsAccountOverrideStore.kt$SmsAccountOverrideStore$ </ID>
@@ -477,6 +497,8 @@
     <ID>Indentation:TransactionSearchViewModel.kt$TransactionSearchViewModel.ShellMetaPrimary$ </ID>
     <ID>Indentation:TransactionSearchViewModel.kt$TransactionSearchViewModel.ShellMetaSecondary$ </ID>
     <ID>Indentation:Type.kt$ </ID>
+    <ID>Indentation:UnifiedBackupRunner.kt$UnifiedBackupRunner$ </ID>
+    <ID>Indentation:UnifiedBackupRunner.kt$UnifiedBackupRunner.Result$ </ID>
     <ID>Indentation:WebManageChartJsonBuilderTest.kt$WebManageChartJsonBuilderTest$ </ID>
     <ID>Indentation:WebManageChartThemeSourceImpl.kt$WebManageChartThemeSourceImpl$ </ID>
     <ID>Indentation:WebManagePreferencesStore.kt$WebManagePreferencesStore$ </ID>
@@ -501,6 +523,7 @@
     <ID>LambdaParameterInRestartableEffect:AddEditTransactionScreen.kt$onNavigateBack</ID>
     <ID>LambdaParameterInRestartableEffect:ApprovalCenterScreen.kt$onNavigateToEditPending</ID>
     <ID>LambdaParameterInRestartableEffect:AssetDetailScreen.kt$onNavigateBack</ID>
+    <ID>LambdaParameterInRestartableEffect:ConfigurationPickerSupport.kt$onNavigateBack</ID>
     <ID>LambdaParameterInRestartableEffect:HomeScreen.kt$onNavigateToTransactionDetail</ID>
     <ID>LambdaParameterInRestartableEffect:LanSyncScreen.kt$onNavigateHomeAfterRestore</ID>
     <ID>LambdaParameterInRestartableEffect:LoanDetailScreen.kt$onNavigateBack</ID>
@@ -519,7 +542,7 @@
     <ID>LargeClass:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl : LanSyncRepository</ID>
     <ID>LargeClass:MmrExpressiveScreenArt.kt$MmrExpressiveScreenArt</ID>
     <ID>LargeClass:WebManageRequestHandler.kt$WebManageRequestHandler</ID>
-    <ID>LongMethod:AccountPickerSheet.kt$@Composable fun AccountPickerPanel( accounts: List&lt;AccountUi&gt;, loans: List&lt;LoanPickerUi&gt;, mode: AccountPickerMode, selectedAccountId: Long?, selectedLoanId: Long?, excludedAccountId: Long?, showAllOption: Boolean, allOptionSelected: Boolean, onAllSelected: (() -&gt; Unit)?, onAccountSelected: (Long) -&gt; Unit, onLoanSelected: ((Long) -&gt; Unit)?, modifier: Modifier = Modifier, /** * When true, the panel sits on a **light** surface (e.g. white [MmrTransactionFormCard]) while the global canvas * may still be “dark” for Ocean/Midnight. Row titles and search must use dark palette colors, not [onCanvas]. */ onLightSurface: Boolean = false, listMaxHeight: Dp = 280.dp, )</ID>
+    <ID>LongMethod:AccountPickerSheet.kt$@Composable fun AccountPickerPanel( accounts: List&lt;AccountUi&gt;, loans: List&lt;LoanPickerUi&gt;, mode: AccountPickerMode, selectedAccountId: Long?, selectedLoanId: Long?, excludedAccountId: Long?, showAllOption: Boolean, allOptionSelected: Boolean, onAllSelected: (() -&gt; Unit)?, onAccountSelected: (Long) -&gt; Unit, onLoanSelected: ((Long) -&gt; Unit)?, modifier: Modifier = Modifier, /** * When true, the panel sits on a **light** surface (e.g. white [MmrTransactionFormCard]) while the global canvas * may still be “dark” for Ocean/Midnight. Row titles and search must use dark palette colors, not [onCanvas]. */ onLightSurface: Boolean = false, listMaxHeight: Dp = 280.dp, fillRemainingViewport: Boolean = false, )</ID>
     <ID>LongMethod:AccountPickerSheet.kt$@Composable private fun AccountPickerRow( title: String, selected: Boolean, onClick: () -&gt; Unit, account: AccountUi?, isLoan: Boolean, onLightSurface: Boolean, )</ID>
     <ID>LongMethod:AddEditAccountScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun AddEditAccountScreen( onNavigateBack: () -&gt; Unit, viewModel: AddEditAccountViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:AddEditAssetViewModel.kt$AddEditAssetViewModel$fun onEvent(event: AddEditAssetUiEvent)</ID>
@@ -530,6 +553,7 @@
     <ID>LongMethod:AddEditLoanViewModel.kt$AddEditLoanViewModel$private fun saveLoan()</ID>
     <ID>LongMethod:AddEditRecurringRuleScreen.kt$@Composable private fun RecurringRuleFormFields( uiState: AddEditRecurringRuleUiState, expandedField: RecurringFormExpandedField, onExpandedFieldChange: (RecurringFormExpandedField) -&gt; Unit, onEvent: (AddEditRecurringRuleUiEvent) -&gt; Unit, )</ID>
     <ID>LongMethod:AddEditRecurringRuleViewModel.kt$AddEditRecurringRuleViewModel$fun onEvent(event: AddEditRecurringRuleUiEvent)</ID>
+    <ID>LongMethod:AddEditSubcategoryScreen.kt$@Composable fun AddEditSubcategoryScreen( onNavigateBack: () -&gt; Unit, viewModel: AddEditSubcategoryViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:AddEditTransactionScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun AddEditTransactionRoute( onNavigateBack: () -&gt; Unit, viewModel: AddEditTransactionViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:AddEditTransactionViewModel.kt$AddEditTransactionViewModel$fun onEvent(event: AddEditTransactionUiEvent)</ID>
     <ID>LongMethod:AddEditTransactionViewModel.kt$AddEditTransactionViewModel$private fun loadInitialData()</ID>
@@ -546,15 +570,16 @@
     <ID>LongMethod:AssetListScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun AssetListScreen( onNavigateToAssetDetail: (Long) -&gt; Unit, onNavigateToAddAsset: () -&gt; Unit, showBackNavigation: Boolean = false, onNavigateBack: () -&gt; Unit = {}, viewModel: AssetListViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:BackupImportPlanner.kt$BackupImportPlanner$fun prepareMerge( payload: MmrBackupPayload, existing: ExistingIds, ): MmrBackupPayload</ID>
     <ID>LongMethod:BackupRepositoryImpl.kt$BackupRepositoryImpl$private suspend fun importPayload( rawPayload: MmrBackupPayload, mode: BackupImportMode, attachmentBytesBySyncId: Map&lt;String, ByteArray&gt;?, ): BackupRestoreSummary</ID>
-    <ID>LongMethod:BackupScreen.kt$@Composable private fun BackupContent( summary: BackupRestoreSummary?, isEmpty: Boolean, isBusy: Boolean, statusMessage: String?, errorMessage: String?, onDismissMessage: () -&gt; Unit, onExport: () -&gt; Unit, onImport: () -&gt; Unit, onNavigateToGoogleDrive: () -&gt; Unit, onExportSpreadsheetTemplate: () -&gt; Unit, onImportSpreadsheet: () -&gt; Unit, localAutoSchedule: GoogleDriveAutoSchedule, lastLocalBackupLabel: String?, onSetLocalAutoSchedule: (GoogleDriveAutoSchedule) -&gt; Unit, onLocalBackupNow: () -&gt; Unit, )</ID>
-    <ID>LongMethod:BackupScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun BackupScreen( onNavigateBack: () -&gt; Unit, onNavigateToGoogleDrive: () -&gt; Unit = {}, viewModel: BackupViewModel = hiltViewModel(), testImportUri: Uri? = null, )</ID>
+    <ID>LongMethod:BackupScreen.kt$@Composable private fun BackupContent( summary: BackupRestoreSummary?, isEmpty: Boolean, isBusy: Boolean, statusMessage: String?, errorMessage: String?, onDismissMessage: () -&gt; Unit, onImport: () -&gt; Unit, onNavigateToGoogleDrive: () -&gt; Unit, onExportSpreadsheetTemplate: () -&gt; Unit, onImportSpreadsheet: () -&gt; Unit, autoBackupSchedule: GoogleDriveAutoSchedule, lastBackupLabel: String?, backupFolderLabel: String?, driveLinked: Boolean, driveWifiOnly: Boolean, onSetAutoBackupSchedule: (GoogleDriveAutoSchedule) -&gt; Unit, onBackupNow: () -&gt; Unit, onChangeBackupFolder: () -&gt; Unit, onSetDriveWifiOnly: (Boolean) -&gt; Unit, )</ID>
+    <ID>LongMethod:BackupScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun BackupScreen( onNavigateBack: () -&gt; Unit, onNavigateToGoogleDrive: () -&gt; Unit = {}, viewModel: BackupViewModel = hiltViewModel(), testImportUri: Uri? = null, testImportDisplayName: String? = null, )</ID>
     <ID>LongMethod:BackupSignedZipCodec.kt$BackupSignedZipCodec$fun decode(bytes: ByteArray): ParsedArchive</ID>
+    <ID>LongMethod:BackupViewModel.kt$BackupViewModel$fun onEvent(event: BackupUiEvent)</ID>
     <ID>LongMethod:CategoryListScreen.kt$@Composable fun CategoryListScreen( onNavigateBack: () -&gt; Unit, onNavigateToAddCategory: () -&gt; Unit, onNavigateToEditCategory: (Long) -&gt; Unit, viewModel: CategoryViewModel = hiltViewModel(), )</ID>
-    <ID>LongMethod:CategorySubcategoryPickerPanel.kt$@Composable fun CategorySubcategoryPickerPanel( panelState: CategoryPickerPanelState, callbacks: CategoryPickerPanelCallbacks, modifier: Modifier = Modifier, maxPanelHeight: Dp = 300.dp, onPickerFinished: () -&gt; Unit = {}, showDismissAction: Boolean = false, onDismiss: () -&gt; Unit = {}, )</ID>
-    <ID>LongMethod:ConfigurationScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun ConfigurationScreen( onNavigateBack: () -&gt; Unit, viewModel: ConfigurationViewModel = hiltViewModel(), )</ID>
-    <ID>LongMethod:ConfigurationScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable private fun ConfigPickerSheet( picker: ConfigPicker, settings: AppDisplaySettingsSnapshot, previewAppearance: MmrThemeAppearance, sheetState: SheetState, onDismiss: () -&gt; Unit, onSelectStartScreen: (MmrStartScreenTab) -&gt; Unit, onSelectMonthDay: (Int) -&gt; Unit, onSelectWeekDay: (MmrWeekStartDay) -&gt; Unit, onSelectColors: (MmrAmountColorScheme) -&gt; Unit, onSelectTime: (MmrTimeDisplay) -&gt; Unit, onSelectAppTheme: (MmrAppColorTheme) -&gt; Unit, onSelectThemeMode: (MmrThemeMode) -&gt; Unit, )</ID>
+    <ID>LongMethod:CategorySubcategoryPickerPanel.kt$@Composable fun CategorySubcategoryPickerPanel( panelState: CategoryPickerPanelState, callbacks: CategoryPickerPanelCallbacks, modifier: Modifier = Modifier, maxPanelHeight: Dp = 300.dp, fillRemainingViewport: Boolean = false, onPickerFinished: () -&gt; Unit = {}, showDismissAction: Boolean = false, onDismiss: () -&gt; Unit = {}, )</ID>
+    <ID>LongMethod:ConfigurationPickerSupport.kt$@Composable private fun ConfigurationPickerChoices( picker: ConfigurationPicker, settings: AppDisplaySettingsSnapshot, previewAppearance: MmrThemeAppearance, onSelectStartScreen: (MmrStartScreenTab) -&gt; Unit, onSelectMonthDay: (Int) -&gt; Unit, onSelectWeekDay: (MmrWeekStartDay) -&gt; Unit, onSelectColors: (MmrAmountColorScheme) -&gt; Unit, onSelectTime: (MmrTimeDisplay) -&gt; Unit, onSelectAppTheme: (MmrAppColorTheme) -&gt; Unit, onSelectThemeMode: (MmrThemeMode) -&gt; Unit, )</ID>
     <ID>LongMethod:GoogleDriveBackupScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun GoogleDriveBackupScreen( onNavigateBack: () -&gt; Unit, viewModel: GoogleDriveBackupViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:HomeCalendarComponents.kt$@Composable fun HomeCalendarTabContent( cells: List&lt;CalendarDayUi&gt;, weekStart: DayOfWeek, selectedDate: LocalDate?, selectedDayGroup: TransactionGroupUi?, onDateSelected: (LocalDate) -&gt; Unit, onPreviousDay: () -&gt; Unit, onNextDay: () -&gt; Unit, onAddForDay: () -&gt; Unit, onTransactionClick: (Long) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
+    <ID>LongMethod:HomeCategoryFilterDropdown.kt$@Composable fun HomeCategoryFilterDropdown( rows: List&lt;HomeCategoryFilterRow&gt;, selected: Set&lt;Long&gt;, onToggleCategory: (Long) -&gt; Unit, onClearCategories: () -&gt; Unit, modifier: Modifier = Modifier, emptyCategoriesMessage: String = "No categories yet.", )</ID>
     <ID>LongMethod:HomeMonthPickerDialog.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HomeMonthPickerDialog( visible: Boolean, selectedYear: Int, selectedMonth: Int, onDismiss: () -&gt; Unit, onPeriodSelected: (year: Int, month: Int) -&gt; Unit, onThisMonth: () -&gt; Unit, )</ID>
     <ID>LongMethod:HomeScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun HomeScreen( onNavigateToAddTransaction: (prefillDateMillis: Long?) -&gt; Unit, onNavigateToTransactionDetail: (Long) -&gt; Unit, onNavigateToApprovals: () -&gt; Unit, onNavigateToSearch: () -&gt; Unit, viewModel: HomeViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:HomeViewModel.kt$HomeViewModel$fun onEvent(event: HomeUiEvent)</ID>
@@ -593,20 +618,22 @@
     <ID>LongMethod:RecurringListScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun RecurringListScreen( onNavigateBack: () -&gt; Unit, onNavigateToDetail: (Long) -&gt; Unit, onNavigateToAddRule: () -&gt; Unit, showBackNavigation: Boolean = true, embeddedInScheduledHub: Boolean = false, viewModel: RecurringListViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:SearchDateRangeDialog.kt$@Composable fun SearchDateRangeDialog( initialStart: LocalDate?, initialEnd: LocalDate?, onConfirm: (LocalDate, LocalDate) -&gt; Unit, onDismiss: () -&gt; Unit, )</ID>
     <ID>LongMethod:SearchFilterInlinePickers.kt$@Composable internal fun MmrSearchFilterExpandableRow( label: String, value: String, expanded: Boolean, onExpandedChange: (Boolean) -&gt; Unit, onClear: (() -&gt; Unit)?, modifier: Modifier = Modifier, expandedContent: @Composable ColumnScope.() -&gt; Unit, )</ID>
-    <ID>LongMethod:SettingsScreen.kt$@Composable fun SettingsScreen( onNavigateBack: () -&gt; Unit, onNavigateToConfiguration: () -&gt; Unit, onNavigateToBackup: () -&gt; Unit, onNavigateToLanSync: () -&gt; Unit, onNavigateToWebManage: () -&gt; Unit, onNavigateToCategories: () -&gt; Unit, onNavigateToAccounts: () -&gt; Unit, onNavigateToTransactionScan: () -&gt; Unit = {}, onNavigateToSmsTemplateOverlay: () -&gt; Unit = {}, onReplayIntroduction: () -&gt; Unit = {}, showBackNavigation: Boolean = true, )</ID>
+    <ID>LongMethod:SmsBackupRestoreSetupGuideSheet.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun SmsBackupRestoreSetupGuideSheet( sheetState: SheetState, onDismiss: () -&gt; Unit, onChooseBackupFolder: (() -&gt; Unit)?, modifier: Modifier = Modifier, )</ID>
     <ID>LongMethod:SmsBackupXmlImportCoordinator.kt$SmsBackupXmlImportCoordinator$suspend fun importLatest(updateUserMessage: Boolean): ImportResult</ID>
     <ID>LongMethod:SmsParserEngine.kt$SmsParserEngine$fun parseResult(sms: RawSmsMessage): SmsParseResult</ID>
+    <ID>LongMethod:SmsTemplateOverlayScreen.kt$@Composable fun SmsTemplateOverlayScreen( onNavigateBack: () -&gt; Unit, viewModel: SmsTemplateOverlayViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:StatsCategoryDetailScreen.kt$@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class) @Composable fun StatsCategoryDetailScreen( onNavigateBack: () -&gt; Unit, onNavigateToTransaction: (Long) -&gt; Unit, onSwitchCategory: (Long) -&gt; Unit = {}, viewModel: StatsCategoryDetailViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:StatsCategoryDetailViewModel.kt$StatsCategoryDetailViewModel$fun onEvent(event: StatsCategoryDetailUiEvent)</ID>
+    <ID>LongMethod:StatsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable private fun StatsTopBar( uiState: StatsUiState, showBackNavigation: Boolean, onNavigateBack: () -&gt; Unit, onPrevious: () -&gt; Unit, onNext: () -&gt; Unit, onModeSelected: (StatsPeriodMode) -&gt; Unit, onPeriodStartClick: () -&gt; Unit, onPeriodEndClick: () -&gt; Unit, onTitleClick: (() -&gt; Unit)?, )</ID>
     <ID>LongMethod:StatsScreen.kt$@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class) @Composable fun StatsScreen( onNavigateBack: () -&gt; Unit, showBackNavigation: Boolean = true, onNavigateToCategoryDetail: (StatsCategoryDrillDown) -&gt; Unit = {}, viewModel: StatsViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:TransactionDetailScreen.kt$@Composable fun TransactionDetailScreen( onNavigateBack: () -&gt; Unit, onNavigateToEdit: (Long) -&gt; Unit, onNavigateToDuplicate: (sourceTransactionId: Long, dateMillis: Long) -&gt; Unit, viewModel: TransactionDetailViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:TransactionMergeCoordinator.kt$TransactionMergeCoordinator$suspend fun mergeTransactions( transactionIds: List&lt;Long&gt;, mergedName: String, mergedDateTime: Long? = null, ): Long</ID>
     <ID>LongMethod:TransactionReceiptViewerDialog.kt$@Composable private fun ZoomableReceiptImage(bitmap: androidx.compose.ui.graphics.ImageBitmap)</ID>
-    <ID>LongMethod:TransactionScanSettingsScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun TransactionScanSettingsScreen( onNavigateBack: () -&gt; Unit, onNavigateToSmsTemplateOverlay: () -&gt; Unit = {}, viewModel: TransactionScanSettingsViewModel = hiltViewModel(), )</ID>
+    <ID>LongMethod:TransactionScanSettingsScreen.kt$@Composable fun TransactionScanSettingsScreen( onNavigateBack: () -&gt; Unit, onNavigateToSmsTemplateOverlay: () -&gt; Unit = {}, onNavigateToSetupGuide: () -&gt; Unit = {}, viewModel: TransactionScanSettingsViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:TransactionSearchScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun TransactionSearchScreen( onNavigateBack: () -&gt; Unit, onNavigateToEditTransaction: (Long) -&gt; Unit, viewModel: TransactionSearchViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:TransactionSearchViewModel.kt$TransactionSearchViewModel$fun onEvent(event: TransactionSearchUiEvent)</ID>
     <ID>LongMethod:WebManageScreen.kt$@Composable fun WebManageScreen( onNavigateBack: () -&gt; Unit, viewModel: WebManageViewModel = hiltViewModel(), )</ID>
-    <ID>LongParameterList:AccountPickerSheet.kt$( accounts: List&lt;AccountUi&gt;, loans: List&lt;LoanPickerUi&gt;, mode: AccountPickerMode, selectedAccountId: Long?, selectedLoanId: Long?, excludedAccountId: Long?, showAllOption: Boolean, allOptionSelected: Boolean, onAllSelected: (() -&gt; Unit)?, onAccountSelected: (Long) -&gt; Unit, onLoanSelected: ((Long) -&gt; Unit)?, modifier: Modifier = Modifier, /** * When true, the panel sits on a **light** surface (e.g. white [MmrTransactionFormCard]) while the global canvas * may still be “dark” for Ocean/Midnight. Row titles and search must use dark palette colors, not [onCanvas]. */ onLightSurface: Boolean = false, listMaxHeight: Dp = 280.dp, )</ID>
+    <ID>LongParameterList:AccountPickerSheet.kt$( accounts: List&lt;AccountUi&gt;, loans: List&lt;LoanPickerUi&gt;, mode: AccountPickerMode, selectedAccountId: Long?, selectedLoanId: Long?, excludedAccountId: Long?, showAllOption: Boolean, allOptionSelected: Boolean, onAllSelected: (() -&gt; Unit)?, onAccountSelected: (Long) -&gt; Unit, onLoanSelected: ((Long) -&gt; Unit)?, modifier: Modifier = Modifier, /** * When true, the panel sits on a **light** surface (e.g. white [MmrTransactionFormCard]) while the global canvas * may still be “dark” for Ocean/Midnight. Row titles and search must use dark palette colors, not [onCanvas]. */ onLightSurface: Boolean = false, listMaxHeight: Dp = 280.dp, fillRemainingViewport: Boolean = false, )</ID>
     <ID>LongParameterList:AccountPickerSheet.kt$( title: String, accounts: List&lt;AccountUi&gt;, loans: List&lt;LoanPickerUi&gt;, mode: AccountPickerMode, selectedAccountId: Long?, selectedLoanId: Long?, excludedAccountId: Long?, showAllOption: Boolean, allOptionSelected: Boolean, onAllSelected: (() -&gt; Unit)?, onAccountSelected: (Long) -&gt; Unit, onLoanSelected: ((Long) -&gt; Unit)?, onDismiss: () -&gt; Unit, subtitle: String? = null, )</ID>
     <ID>LongParameterList:AccountPickerSheet.kt$( title: String, accounts: List&lt;AccountUi&gt;, selectedAccountId: Long?, onAccountSelected: (Long) -&gt; Unit, sheetState: SheetState, onDismiss: () -&gt; Unit, modifier: Modifier = Modifier, subtitle: String? = null, mode: AccountPickerMode = AccountPickerMode.AccountsGrouped, loans: List&lt;LoanPickerUi&gt; = emptyList(), selectedLoanId: Long? = null, onLoanSelected: ((Long) -&gt; Unit)? = null, excludedAccountId: Long? = null, showAllOption: Boolean = false, onAllSelected: (() -&gt; Unit)? = null, allOptionSelected: Boolean = false, )</ID>
     <ID>LongParameterList:AddEditTransactionViewModel.kt$AddEditTransactionViewModel$( @ApplicationContext private val context: Context, private val transactionRepository: TransactionRepository, private val attachmentRepository: TransactionAttachmentRepository, private val approvalRepository: ApprovalRepository, private val categoryRepository: CategoryRepository, private val accountRepository: AccountRepository, private val loanRepository: LoanRepository, private val displaySettingsStore: AppDisplaySettingsStore, private val homeLedgerScrollToTopNotifier: HomeLedgerScrollToTopNotifier, savedStateHandle: SavedStateHandle, )</ID>
@@ -615,9 +642,11 @@
     <ID>LongParameterList:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$( private val transactionApprovalDao: TransactionApprovalDao, private val approvalLedgerDao: ApprovalLedgerDao, private val accountDao: AccountDao, private val categoryDao: CategoryDao, private val transactionDao: TransactionDao, private val smsAccountResolver: SmsAccountResolver, private val smsAccountOverrideStore: SmsAccountOverrideStore, private val smsParserEngine: SmsParserEngine, private val loanTransactionCoordinator: LoanTransactionCoordinator, private val categorizationRuleEngine: CategorizationRuleEngine, private val widgetRefreshTrigger: HomeScreenWidgetRefreshTrigger, private val ownerProfileCoordinator: MmrOwnerProfileCoordinator, )</ID>
     <ID>LongParameterList:BackupDao.kt$BackupDao$( categories: List&lt;CategoryEntity&gt;, subcategories: List&lt;SubcategoryEntity&gt;, accounts: List&lt;AccountEntity&gt;, loans: List&lt;LoanEntity&gt;, loanInterestRevisions: List&lt;LoanInterestRevisionEntity&gt;, loanScheduleEntries: List&lt;LoanScheduleEntryEntity&gt;, transactions: List&lt;TransactionEntity&gt;, loanPayments: List&lt;LoanPaymentEntity&gt;, recurringRules: List&lt;RecurringRuleEntity&gt;, budgets: List&lt;BudgetEntity&gt; = emptyList(), assets: List&lt;AssetEntity&gt; = emptyList(), assetValuations: List&lt;AssetValuationEntity&gt; = emptyList(), notificationRules: List&lt;NotificationRuleEntity&gt;, smsMessageRecords: List&lt;SmsMessageRecordEntity&gt;, transactionApprovals: List&lt;TransactionApprovalEntity&gt;, categorizationRules: List&lt;CategorizationRuleEntity&gt; = emptyList(), trustedLanDevices: List&lt;TrustedLanDeviceEntity&gt; = emptyList(), transactionAttachments: List&lt;TransactionAttachmentEntity&gt; = emptyList(), assetAttachments: List&lt;AssetAttachmentEntity&gt; = emptyList(), smsAccountOverrides: List&lt;SmsAccountOverrideEntity&gt; = emptyList(), )</ID>
     <ID>LongParameterList:BackupRepositoryImpl.kt$BackupRepositoryImpl$( @ApplicationContext private val context: Context, private val backupDao: BackupDao, private val lanSyncDao: LanSyncDao, private val syncTombstoneDao: SyncTombstoneDao, private val tombstoneMerger: LanSyncTombstoneMerger, private val appSettingsBackupCoordinator: AppSettingsBackupCoordinator, private val attachmentStore: TransactionAttachmentStore, private val assetAttachmentStore: AssetAttachmentStore, private val moneyManagerMmbakLedgerImporter: MoneyManagerMmbakLedgerImporter, private val monefyLedgerImporter: MonefyLedgerImporter, private val ledgerSpreadsheetImporter: PeriodLedgerSpreadsheetImporter, @IoDispatcher private val ioDispatcher: CoroutineDispatcher, )</ID>
-    <ID>LongParameterList:BackupScreen.kt$( summary: BackupRestoreSummary?, isEmpty: Boolean, isBusy: Boolean, statusMessage: String?, errorMessage: String?, onDismissMessage: () -&gt; Unit, onExport: () -&gt; Unit, onImport: () -&gt; Unit, onNavigateToGoogleDrive: () -&gt; Unit, onExportSpreadsheetTemplate: () -&gt; Unit, onImportSpreadsheet: () -&gt; Unit, localAutoSchedule: GoogleDriveAutoSchedule, lastLocalBackupLabel: String?, onSetLocalAutoSchedule: (GoogleDriveAutoSchedule) -&gt; Unit, onLocalBackupNow: () -&gt; Unit, )</ID>
-    <ID>LongParameterList:BackupViewModel.kt$BackupViewModel$( statusMessage: String? = null, errorMessage: String? = null, summary: com.rrparallelstudio.miapp.core.backup.model.BackupRestoreSummary? = null, isEmpty: Boolean? = null, pendingImportLabel: String? = _uiState.value.pendingImportLabel, pendingImportIsMoneyManager: Boolean = _uiState.value.pendingImportIsMoneyManager, pendingImportIsMonefy: Boolean = _uiState.value.pendingImportIsMonefy, pendingSpreadsheetLabel: String? = _uiState.value.pendingSpreadsheetLabel, lastLocalBackupLabel: String? = _uiState.value.lastLocalBackupLabel, )</ID>
-    <ID>LongParameterList:ConfigurationScreen.kt$( picker: ConfigPicker, settings: AppDisplaySettingsSnapshot, previewAppearance: MmrThemeAppearance, sheetState: SheetState, onDismiss: () -&gt; Unit, onSelectStartScreen: (MmrStartScreenTab) -&gt; Unit, onSelectMonthDay: (Int) -&gt; Unit, onSelectWeekDay: (MmrWeekStartDay) -&gt; Unit, onSelectColors: (MmrAmountColorScheme) -&gt; Unit, onSelectTime: (MmrTimeDisplay) -&gt; Unit, onSelectAppTheme: (MmrAppColorTheme) -&gt; Unit, onSelectThemeMode: (MmrThemeMode) -&gt; Unit, )</ID>
+    <ID>LongParameterList:BackupScreen.kt$( summary: BackupRestoreSummary?, isEmpty: Boolean, isBusy: Boolean, statusMessage: String?, errorMessage: String?, onDismissMessage: () -&gt; Unit, onImport: () -&gt; Unit, onNavigateToGoogleDrive: () -&gt; Unit, onExportSpreadsheetTemplate: () -&gt; Unit, onImportSpreadsheet: () -&gt; Unit, autoBackupSchedule: GoogleDriveAutoSchedule, lastBackupLabel: String?, backupFolderLabel: String?, driveLinked: Boolean, driveWifiOnly: Boolean, onSetAutoBackupSchedule: (GoogleDriveAutoSchedule) -&gt; Unit, onBackupNow: () -&gt; Unit, onChangeBackupFolder: () -&gt; Unit, onSetDriveWifiOnly: (Boolean) -&gt; Unit, )</ID>
+    <ID>LongParameterList:BackupViewModel.kt$BackupViewModel$( private val backupRepository: BackupRepository, private val periodExcelExporter: PeriodExcelExporter, private val displaySettingsStore: AppDisplaySettingsStore, private val localAutoBackupPreferencesStore: LocalAutoBackupPreferencesStore, private val driveBackupPreferencesStore: GoogleDriveBackupPreferencesStore, private val localBackupFolderStore: LocalBackupFolderStore, private val localAutoBackupWorkScheduler: LocalAutoBackupWorkScheduler, private val driveBackupWorkScheduler: GoogleDriveBackupWorkScheduler, private val unifiedBackupRunner: UnifiedBackupRunner, @ApplicationContext private val context: Context, )</ID>
+    <ID>LongParameterList:BackupViewModel.kt$BackupViewModel$( statusMessage: String? = null, errorMessage: String? = null, summary: com.rrparallelstudio.miapp.core.backup.model.BackupRestoreSummary? = null, isEmpty: Boolean? = null, pendingImportLabel: String? = _uiState.value.pendingImportLabel, pendingImportIsMoneyManager: Boolean = _uiState.value.pendingImportIsMoneyManager, pendingImportIsMonefy: Boolean = _uiState.value.pendingImportIsMonefy, pendingSpreadsheetLabel: String? = _uiState.value.pendingSpreadsheetLabel, lastBackupLabel: String? = _uiState.value.lastBackupLabel, )</ID>
+    <ID>LongParameterList:ConfigurationPickerSupport.kt$( picker: ConfigurationPicker, settings: AppDisplaySettingsSnapshot, previewAppearance: MmrThemeAppearance, onSelectStartScreen: (MmrStartScreenTab) -&gt; Unit, onSelectMonthDay: (Int) -&gt; Unit, onSelectWeekDay: (MmrWeekStartDay) -&gt; Unit, onSelectColors: (MmrAmountColorScheme) -&gt; Unit, onSelectTime: (MmrTimeDisplay) -&gt; Unit, onSelectAppTheme: (MmrAppColorTheme) -&gt; Unit, onSelectThemeMode: (MmrThemeMode) -&gt; Unit, )</ID>
+    <ID>LongParameterList:ConfigurationPickerSupport.kt$( picker: ConfigurationPicker, settings: AppDisplaySettingsSnapshot, previewAppearance: MmrThemeAppearance, sheetState: SheetState, onDismiss: () -&gt; Unit, onSelectStartScreen: (MmrStartScreenTab) -&gt; Unit, onSelectMonthDay: (Int) -&gt; Unit, onSelectWeekDay: (MmrWeekStartDay) -&gt; Unit, onSelectColors: (MmrAmountColorScheme) -&gt; Unit, onSelectTime: (MmrTimeDisplay) -&gt; Unit, onSelectAppTheme: (MmrAppColorTheme) -&gt; Unit, onSelectThemeMode: (MmrThemeMode) -&gt; Unit, )</ID>
     <ID>LongParameterList:HomeCalendarComponents.kt$( cells: List&lt;CalendarDayUi&gt;, weekStart: DayOfWeek, selectedDate: LocalDate?, selectedDayGroup: TransactionGroupUi?, onDateSelected: (LocalDate) -&gt; Unit, onPreviousDay: () -&gt; Unit, onNextDay: () -&gt; Unit, onAddForDay: () -&gt; Unit, onTransactionClick: (Long) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
     <ID>LongParameterList:HomeTotalTabContent.kt$( summary: HomeTotalAccountsSummaryUi, groups: List&lt;TransactionGroupUi&gt;, selectionMode: Boolean, selectedIds: Set&lt;Long&gt;, onItemClick: (Long) -&gt; Unit, onItemLongClick: (Long) -&gt; Unit, onExportClick: () -&gt; Unit, modifier: Modifier = Modifier, listState: LazyListState = rememberLazyListState(), )</ID>
     <ID>LongParameterList:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$( private val identityStore: LanSyncIdentityStore, private val lanSyncDao: LanSyncDao, private val exporter: LanSyncExporter, private val merger: LanSyncMerger, private val smsScanSettingsStore: SmsScanSettingsStore, private val wifiTrustStore: LanSyncWifiTrustStore, private val preferencesStore: LanSyncPreferencesStore, private val lastPeerAddressStore: LanSyncLastPeerAddressStore, private val localLanServerCoordinator: LocalLanServerCoordinator, private val webManageRepository: Lazy&lt;WebManageRepository&gt;, private val lanServerNotifier: LocalLanServerNotifier, private val transactionDao: TransactionDao, private val transactionApprovalDao: TransactionApprovalDao, private val networkUtils: LanSyncNetworkUtils, private val nsdHelper: LanSyncNsdHelper, private val attachmentPuller: LanSyncAttachmentPuller, private val attachmentStore: TransactionAttachmentStore, private val assetAttachmentStore: AssetAttachmentStore, private val tombstoneCoordinator: LanSyncTombstoneCoordinator, private val ownerProfileCoordinator: com.rrparallelstudio.miapp.core.owner.MmrOwnerProfileCoordinator, @IoDispatcher private val ioDispatcher: CoroutineDispatcher, )</ID>
@@ -652,6 +681,8 @@
     <ID>LongParameterList:MmrIosSettingsPickers.kt$( title: String, onDismiss: () -&gt; Unit, sheetState: SheetState, options: List&lt;T&gt;, selectedOption: T, onOptionSelected: (T) -&gt; Unit, optionLabel: (T) -&gt; String, message: String? = null, optionEquals: (T, T) -&gt; Boolean = { a, b -&gt; a == b }, )</ID>
     <ID>LongParameterList:MmrLedgerPickerSheetShell.kt$( title: String, onDismiss: () -&gt; Unit, modifier: Modifier = Modifier, subtitle: String? = null, dismissLabel: String = "Done", secondaryActionLabel: String? = null, onSecondaryAction: (() -&gt; Unit)? = null, searchQuery: String? = null, onSearchQueryChange: ((String) -&gt; Unit)? = null, searchPlaceholder: String = "Search", chipRow: @Composable (() -&gt; Unit)? = null, content: @Composable ColumnScope.() -&gt; Unit, )</ID>
     <ID>LongParameterList:MmrPeriodSwipeBox.kt$( dragOffset: () -&gt; Float, setDragOffset: (Float) -&gt; Unit, setNavDirection: (Int) -&gt; Unit, setSuppressContentSlide: (Boolean) -&gt; Unit, setGestureLocked: (Boolean) -&gt; Unit, width: Float, threshold: Float, onPrevious: () -&gt; Unit, onNext: () -&gt; Unit, )</ID>
+    <ID>LongParameterList:MmrSettingsGroup.kt$( caption: String, value: Float, onValueChange: (Float) -&gt; Unit, valueRange: ClosedFloatingPointRange&lt;Float&gt;, steps: Int, minLabel: String, maxLabel: String, modifier: Modifier = Modifier, showDividerBelow: Boolean = true, sliderTestTag: String? = null, )</ID>
+    <ID>LongParameterList:MmrSettingsGroup.kt$( label: String, value: String, onValueChange: (String) -&gt; Unit, modifier: Modifier = Modifier, placeholder: String = "", enabled: Boolean = true, showDividerBelow: Boolean = true, keyboardOptions: KeyboardOptions = KeyboardOptions.Default, testTag: String? = null, visualTransformation: VisualTransformation = VisualTransformation.None, )</ID>
     <ID>LongParameterList:MmrSettingsRangeSlider.kt$( caption: String, value: Float, onValueChange: (Float) -&gt; Unit, valueRange: ClosedFloatingPointRange&lt;Float&gt;, steps: Int, minLabel: String, maxLabel: String, modifier: Modifier = Modifier, startIcon: ImageVector = Icons.Outlined.Inbox, endIcon: ImageVector = Icons.Outlined.Smartphone, sliderTestTag: String? = null, )</ID>
     <ID>LongParameterList:MmrSettingsScreenTemplate.kt$( title: String, onNavigateBack: () -&gt; Unit, modifier: Modifier = Modifier, layout: MmrSettingsScreenLayout = MmrSettingsScreenLayout.Form, useBrandTopBar: Boolean = false, showBackNavigation: Boolean = true, topBarTrailing: @Composable (() -&gt; Unit)? = null, visualStyle: MmrSettingsVisualStyle? = null, fieldGrouping: MmrSettingsFieldGrouping = MmrSettingsFieldGrouping.Separated, content: @Composable ColumnScope.() -&gt; Unit, )</ID>
     <ID>LongParameterList:MmrSettingsScreenTemplate.kt$( title: String, onNavigateBack: () -&gt; Unit, modifier: Modifier = Modifier, showBackNavigation: Boolean = true, topBarTrailing: @Composable (() -&gt; Unit)? = null, floatingActionButton: @Composable () -&gt; Unit = {}, snackbarHostState: SnackbarHostState? = null, visualStyle: MmrSettingsVisualStyle = MmrSettingsVisualStyle.Compact, fieldGrouping: MmrSettingsFieldGrouping = MmrSettingsFieldGrouping.Separated, insetGrouped: Boolean = true, reserveFabBottomPadding: Boolean = false, content: @Composable (PaddingValues) -&gt; Unit, )</ID>
@@ -659,11 +690,11 @@
     <ID>LongParameterList:MmrSettingsScreenTemplate.kt$( title: String, onNavigateBack: () -&gt; Unit, modifier: Modifier, showBackNavigation: Boolean, topBarTrailing: @Composable (() -&gt; Unit)?, floatingActionButton: @Composable () -&gt; Unit, snackbarHostState: SnackbarHostState?, insetGrouped: Boolean, reserveFabBottomPadding: Boolean, content: @Composable (PaddingValues) -&gt; Unit, )</ID>
     <ID>LongParameterList:MmrThemePresets.kt$MmrThemePresets$( header: Color, headerSelection: Color, headerBrandTile: Color, tabText: Color, accent: Color, listBackground: Color, navBackground: Color, calendarExpense: Color, monthlyIncome: Color, monthlyExpense: Color, weekHighlight: Color, dialogHeader: Color, dialogAccent: Color, chartLine: Color, amounts: AmountPalette, )</ID>
     <ID>LongParameterList:MmrTopAppBar.kt$( title: String, subtitle: String? = null, modifier: Modifier = Modifier, showBackNavigation: Boolean = false, onNavigateBack: (() -&gt; Unit)? = null, /** When set with back navigation, shows a text action (e.g. "Cancel") instead of the back icon. */ navigationLabel: String? = null, /** Indigo header that extends under the status bar (matches Transactions / Home). */ useBrandHeaderStyle: Boolean = false, /** Lighter header title (15sp, normal weight). Default true when [useBrandHeaderStyle]. */ useCompactHeaderTitle: Boolean? = null, /** When false, [title] is shown verbatim (user-entered names, etc.). */ applyStaticLabelCaseToTitle: Boolean = true, actions: @Composable RowScope.() -&gt; Unit = {}, )</ID>
-    <ID>LongParameterList:MmrTransactionFormChrome.kt$( label: String, value: String, emptyHint: String, icon: ImageVector, expanded: Boolean, onExpandedChange: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, enabled: Boolean = true, expandedContent: @Composable ColumnScope.() -&gt; Unit, )</ID>
+    <ID>LongParameterList:MmrTransactionFormChrome.kt$( label: String, value: String, emptyHint: String, icon: ImageVector, expanded: Boolean, onExpandedChange: (Boolean) -&gt; Unit, modifier: Modifier = Modifier, enabled: Boolean = true, /** False for tall inline lists ([fillRemainingViewport]) — avoids fighting [mmrFillDownToFormBottom]. */ animateExpansion: Boolean = true, expandedContent: @Composable ColumnScope.() -&gt; Unit, )</ID>
     <ID>LongParameterList:MmrTransactionFormChrome.kt$( value: String, onValueChange: (String) -&gt; Unit, placeholder: String, modifier: Modifier = Modifier, leadingIcon: ImageVector? = null, testTag: String? = null, keyboardType: KeyboardType = KeyboardType.Text, singleLine: Boolean = true, minLines: Int = 1, trailingContent: (@Composable () -&gt; Unit)? = null, groupedAmountDisplay: Boolean = false, amountCalculatorEnabled: Boolean = groupedAmountDisplay, belowField: (@Composable ColumnScope.() -&gt; Unit)? = null, )</ID>
     <ID>LongParameterList:MmrTransactionMergeDialog.kt$( title: String, message: String, name: String, onNameChange: (String) -&gt; Unit, nameLabel: String, namePlaceholder: String, dateOptions: List&lt;MmrMergeDateOption&gt;, selectedDateTimeMillis: Long?, onDateSelected: (Long) -&gt; Unit, onDismiss: () -&gt; Unit, onConfirm: () -&gt; Unit, errorMessage: String? = null, confirmLabel: String = "Merge", confirmEnabled: Boolean = name.trim().isNotEmpty(), confirmTestTag: String? = null, )</ID>
     <ID>LongParameterList:MmrWidgetResponsive.kt$MmrWidgetTextScale.Companion$( factor: Float, header: Float, icon: Float, body: Float, amount: Float, subtitle: Float, meta: Float, chip: Float, textAction: Float, contentPadding: Float, gapSmall: Float, gapMedium: Float, chipVerticalPadding: Float, progressBarHeight: Float, budgetsProgressBar: Boolean = false, )</ID>
-    <ID>LongParameterList:SettingsScreen.kt$( onNavigateBack: () -&gt; Unit, onNavigateToConfiguration: () -&gt; Unit, onNavigateToBackup: () -&gt; Unit, onNavigateToLanSync: () -&gt; Unit, onNavigateToWebManage: () -&gt; Unit, onNavigateToCategories: () -&gt; Unit, onNavigateToAccounts: () -&gt; Unit, onNavigateToTransactionScan: () -&gt; Unit = {}, onNavigateToSmsTemplateOverlay: () -&gt; Unit = {}, onReplayIntroduction: () -&gt; Unit = {}, showBackNavigation: Boolean = true, )</ID>
+    <ID>LongParameterList:SettingsScreen.kt$( onNavigateBack: () -&gt; Unit, onNavigateToHomeMenu: () -&gt; Unit, onNavigateToAppearance: () -&gt; Unit, onNavigateToSecurity: () -&gt; Unit, onNavigateToBackup: () -&gt; Unit, onNavigateToLanSync: () -&gt; Unit, onNavigateToWebManage: () -&gt; Unit, onNavigateToCategories: () -&gt; Unit, onNavigateToAccounts: () -&gt; Unit, onNavigateToTransactionScan: () -&gt; Unit, onReplayIntroduction: () -&gt; Unit, showBackNavigation: Boolean = true, )</ID>
     <ID>LongParameterList:SmsParserEngine.kt$SmsParserEngine$( sms: RawSmsMessage, normalized: String, amount: Double, type: com.rrparallelstudio.miapp.core.model.enums.TransactionType, merchant: String?, accountDigits: String?, referenceNumber: String?, balance: Double?, templateId: String?, paymentChannel: com.rrparallelstudio.miapp.core.parser.model.SmsPaymentChannel?, instrument: com.rrparallelstudio.miapp.core.parser.model.SmsInstrument?, templateMatched: Boolean, categoryHintOverride: String? = null, confidenceCap: Int? = null, approvalKind: SmsApprovalKind = SmsApprovalKind.TRANSACTION, )</ID>
     <ID>LongParameterList:StatsScreen.kt$( uiState: StatsUiState, showBackNavigation: Boolean, onNavigateBack: () -&gt; Unit, onPrevious: () -&gt; Unit, onNext: () -&gt; Unit, onModeSelected: (StatsPeriodMode) -&gt; Unit, onPeriodStartClick: () -&gt; Unit, onPeriodEndClick: () -&gt; Unit, onTitleClick: (() -&gt; Unit)?, )</ID>
     <ID>LongParameterList:TransactionFormInlinePickers.kt$( label: String, displayValue: String, emptyHint: String, icon: androidx.compose.ui.graphics.vector.ImageVector, accounts: List&lt;com.rrparallelstudio.miapp.feature.transaction.model.AccountUi&gt;, selectedAccountId: Long?, mode: AccountPickerMode, expanded: Boolean, onExpandedChange: (Boolean) -&gt; Unit, onAccountSelected: (Long) -&gt; Unit, modifier: Modifier = Modifier, enabled: Boolean = true, loans: List&lt;LoanPickerUi&gt; = emptyList(), selectedLoanId: Long? = null, onLoanSelected: ((Long) -&gt; Unit)? = null, excludedAccountId: Long? = null, )</ID>
@@ -691,6 +722,7 @@
     <ID>LoopWithTooManyJumpStatements:SmsTemplateMatcher.kt$SmsTemplateMatcher$for</ID>
     <ID>MatchingDeclarationName:ApprovalWidgetLaunch.kt$ApprovalWidgetLaunchAction</ID>
     <ID>MatchingDeclarationName:BudgetFormInlinePickers.kt$BudgetFormExpandedField</ID>
+    <ID>MatchingDeclarationName:ConfigurationPickerSupport.kt$ConfigurationPicker</ID>
     <ID>MatchingDeclarationName:FtueBulletIcons.kt$FtueBulletIconVisual</ID>
     <ID>MatchingDeclarationName:LanSyncTombstoneRecords.kt$LanSyncTombstoneRecord</ID>
     <ID>MatchingDeclarationName:MerchantAndCategoryRules.kt$MerchantRule</ID>
@@ -706,6 +738,7 @@
     <ID>MatchingDeclarationName:SearchFilterInlinePickers.kt$SearchFilterExpandedField</ID>
     <ID>MatchingDeclarationName:TransactionFormInlinePickers.kt$TransactionFormExpandedField</ID>
     <ID>MaxLineLength:AddEditAssetViewModel.kt$AddEditAssetViewModel$purchasePaymentMode = if (asset.isInherited) AssetPurchasePaymentMode.PAID_IN_FULL else paymentMode</ID>
+    <ID>MaxLineLength:AddEditSubcategoryScreen.kt$"\"${uiState.name}\" will be removed from pickers. Transactions and scheduled rules that used it stay on \"${uiState.parentCategoryName}\" with no subcategory."</ID>
     <ID>MaxLineLength:AddEditTransactionModels.kt$AccountUi$val type: com.rrparallelstudio.miapp.core.model.enums.AccountType = com.rrparallelstudio.miapp.core.model.enums.AccountType.BANK</ID>
     <ID>MaxLineLength:AmountAndBalanceRules.kt$BalanceRule$"(?:avl(?:\\.?)?\\s*bal(?:ance)?|available\\s*bal(?:ance)?|bal(?:ance)?\\s*(?:is|:)?)\\s*(?:inr|rs\\.?|₹)?\\s*([0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)"</ID>
     <ID>MaxLineLength:ApprovalLinkTransactionDialog.kt$text = "Search applies to ${prompt.monthTitle} only. Change month above to search another period."</ID>
@@ -715,17 +748,15 @@
     <ID>MaxLineLength:BudgetEntity.kt$BudgetEntity$/** Dedupes alert per resolved period (see [com.rrparallelstudio.miapp.core.budget.BudgetPeriodResolver.periodKey]). */</ID>
     <ID>MaxLineLength:CategoryPickerPanelContracts.kt$com.rrparallelstudio.miapp.feature.recurring.model.AddEditRecurringRuleUiEvent.OnPickerConfirmParentOnly</ID>
     <ID>MaxLineLength:CategoryPickerPanelContracts.kt$com.rrparallelstudio.miapp.feature.transaction.model.AddEditTransactionUiEvent.OnPickerConfirmParentOnly</ID>
-    <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"An ongoing notification may show while sync stays on; themes stay separate on each phone."</ID>
-    <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"Backup &amp; Restore — export or import a signed .mibxbac file, schedule automatic backups to Downloads, or merge a Money Manager or Monefy backup."</ID>
+    <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"Google Drive backup — link your account; the same local file uploads (Wi‑Fi only optional)."</ID>
     <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"If you change the account, later SMS with the same pattern use that account (included in backup and Peer Device Sync)."</ID>
     <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"Ledger spreadsheet — export periods from Home as Excel or XML; import via template on Backup &amp; Restore."</ID>
-    <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"On a hotspot, pick On this network or enter the other phone's address on Sync now if discovery fails."</ID>
-    <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"Pairing — the host shows a code; the other phone enters it and you tap Approve on the host. "</ID>
-    <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"Refresh — import new bank SMS from your backup folder (set under Settings → Transaction scan)."</ID>
-    <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"Settings → Peer Device Sync — turn on to merge with another phone on the same Wi‑Fi or phone hotspot. "</ID>
+    <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"Refresh — import new bank SMS from your backup folder (set under Settings → Transaction Scan)."</ID>
     <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"Tap the center menu for Daily, Weekly, Monthly, or Summary. Tap Ledger again while already on Transactions to jump back to Daily and this month."</ID>
+    <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"Transaction Scan — SMS backup folder, how far back to read, and optional custom SMS templates."</ID>
+    <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"one schedule covers local files and Google Drive when linked. Import merges Money Manager or Monefy backups."</ID>
+    <ID>MaxLineLength:HomeMonthlyComponents.kt$style = mmrHomeMonthlyAmountStyle(MmrBrandColors.MonthlyExpense, compact).copy(fontWeight = FontWeight.Medium)</ID>
     <ID>MaxLineLength:HomePeriodUtils.kt$MmrLedgerYearBounds$/** Month/year wheel in [com.rrparallelstudio.miapp.feature.home.ui.HomeMonthPickerDialog] (Home, Trends, category detail). */</ID>
-    <ID>MaxLineLength:LanSyncScreen.kt$"This replaces everything on this phone with that phone's data. Sync now merges both phones instead."</ID>
     <ID>MaxLineLength:LanSyncViewModel.kt$LanSyncViewModel$"This phone is already trusted. Tap Sync now. You do not need to approve anything on the other phone."</ID>
     <ID>MaxLineLength:LoanDaos.kt$LoanDao$"UPDATE loans SET outstandingAmount = :newOutstanding, status = :newStatus, updatedAt = :now WHERE id = :loanId"</ID>
     <ID>MaxLineLength:LoanDetailScreen.kt$text = "Accruing since $from on current outstanding (actual/365). Payments clear interest first, then principal."</ID>
@@ -744,6 +775,7 @@
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Accounts created from SMS quick approve show Auto Created in Settings → Accounts, account edit, and account pickers; after you edit them, Auto Created - Modified."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Ad placement scaffolding (Daily banner/MREC, Stats native): debug-only labeled placeholders; release shows no slot until AdMob loads."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"AdMob (banner, MREC, native) with placement rules; Firebase Remote Config ads_enabled (default off) and Crashlytics when google-services.json is present."</ID>
+    <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Add transaction: category and account pickers fill the form area without a blank band when the keyboard is open."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Automatic local backup: daily, weekly, or monthly .mibxbac files in Downloads (six kept); same schedule options as Google Drive."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Backup &amp; Restore: download a ledger import template and merge spreadsheet imports (.xlsx / .xml)."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Backup (format v5): SMS account corrections are included in export and restore; v4 backup files still import (without override rows)."</ID>
@@ -754,6 +786,8 @@
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Home Excel export: weekly and custom period ranges; saved file dialog can share .xlsx or .xml by email."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Home ledger view modes use a centered dropdown (Daily, Weekly, Monthly, Summary) instead of four tabs."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Home period summary uses icon labels (↓ income, ↑ expense, calendar carry-over, Σ total); carry-over column and list row appear only when non-zero."</ID>
+    <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Home: category filter dropdown is capped at half the screen, rounded, with Clear at the top; category list matches All, Expense, or Income."</ID>
+    <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Home: on All, Expenses and Income sections list categories separately (including Uncategorised for each)."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"If you correct the account on an SMS approval or later edit, the next similar SMS uses that account instead of creating the same credit card again."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Import a Monefy backup from Backup &amp; Restore: accounts, categories, income, expense, and transfers merge in; importing the same file again skips rows already added."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Introduction tour: solid readable panels, real summary/nav icons, more screens (tabs, settings, backup). Settings → Replay introduction."</ID>
@@ -773,18 +807,21 @@
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Period summary total receipt icon shows item lines again (cut-out detail, stays visible on dark UI)."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Play application ID is now com.rrparallelstudio.miapp (Kotlin packages under com.rrparallelstudio.miapp.*)."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Rose Gold is the default app color theme; its expressive background shows soft banknote stacks, coins, and guilloché-style curves."</ID>
+    <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"SMS templates: copy a prompt, build a JSON file from your SMS export with any AI, then import that file."</ID>
+    <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Settings: Home &amp; Menu, Appearance, and Security replace the old Transaction Appearance screen."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Web Manage: account pickers show Auto Created labels; transactions show Created by after peer sync; view refunds and apply card refunds on expenses."</ID>
     <ID>MaxLineLength:MmrWidgetResponsive.kt$MmrWidgetSizes$/** Launcher grid sizes: (70 × cells − 30) dp per [Android widget sizing](https://developer.android.com/develop/ui/views/appwidgets/layouts). */</ID>
     <ID>MaxLineLength:MmrWindowInsets.kt$*</ID>
+    <ID>MaxLineLength:MonefyBackupCrypto.kt$MonefyBackupCrypto$require</ID>
     <ID>MaxLineLength:RecurringListScreen.kt$"No active recurring rules.\nTurn a rule on with the switch, or tap Paused to see paused rules."</ID>
     <ID>MaxLineLength:RecurringListScreen.kt$"No paused recurring rules.\nTurn a rule off with the switch to pause auto-posting."</ID>
     <ID>MaxLineLength:RecurringRuleDaos.kt$NotificationRuleDao$"SELECT * FROM notification_rules WHERE enabled = 1 AND scheduleTime &lt;= :now AND isFired = 0 ORDER BY scheduleTime ASC"</ID>
     <ID>MaxLineLength:RecurringRuleDaos.kt$RecurringRuleDao$"UPDATE recurring_rules SET nextRunDate = :nextRunDate, lastGeneratedDate = :lastGenDate, updatedAt = :now WHERE id = :ruleId"</ID>
     <ID>MaxLineLength:RecurringRuleRepositoryImpl.kt$RecurringRuleRepositoryImpl$override</ID>
+    <ID>MaxLineLength:RepositoryImpls.kt$CategoryRepositoryImpl$if</ID>
+    <ID>MaxLineLength:RepositoryImpls.kt$CategoryRepositoryImpl$private suspend</ID>
     <ID>MaxLineLength:Screen.kt$Screen.TransactionSearch$"transaction_search?$ARG_CATEGORY_ID=$categoryId&amp;$ARG_START_MILLIS=$startMillis&amp;$ARG_END_MILLIS=$endMillis&amp;$ARG_TRANSACTION_TYPE=$transactionType&amp;$ARG_SUBCATEGORY_ID=$subcategoryId"</ID>
     <ID>MaxLineLength:Screen.kt$Screen.TransactionSearch$"transaction_search?${ARG_CATEGORY_ID}={${ARG_CATEGORY_ID}}&amp;${ARG_START_MILLIS}={${ARG_START_MILLIS}}&amp;${ARG_END_MILLIS}={${ARG_END_MILLIS}}&amp;${ARG_TRANSACTION_TYPE}={${ARG_TRANSACTION_TYPE}}&amp;${ARG_SUBCATEGORY_ID}={${ARG_SUBCATEGORY_ID}}"</ID>
-    <ID>MaxLineLength:SettingsScreen.kt$footer = "Back up locally or sync with another phone on the same Wi‑Fi. Web Manage works from a PC browser."</ID>
-    <ID>MaxLineLength:SmsBackupRestoreGuideCatalog.kt$SmsBackupRestoreGuideCatalog$/** Shown on Transaction scan settings (matches [com.rrparallelstudio.miapp.R.string.transaction_scan_sms_data_declaration]). */</ID>
     <ID>MaxLineLength:SmsParserDecisionsTest.kt$SmsParserDecisionsTest$body = "Dear investor, your SIP purchase of Rs.5000 in folio 123 in fund abc has been processed for nav of Rs.100"</ID>
     <ID>MaxLineLength:SmsParserPhase1Test.kt$SmsParserPhase1Test$"A transaction of INR 1,700.00 on your YES BANK Credit Card ending 7663 on 21-10-2026 at GROK XAI is declined because International Ecom/ online transactions are disabled on your card."</ID>
     <ID>MaxLineLength:SmsParserPhase1Test.kt$SmsParserPhase1Test$"Dear Sir/Madam, The NACH for Rs. 112500 will be presented on 05/10/2026 towards the housing loan installment."</ID>
@@ -815,18 +852,17 @@
     <ID>MaxLineLength:SmsTemplateRegistryMatchTest.kt$SmsTemplateRegistryMatchTest$val body = "Rs. 250 spent from Pluxee meal card wallet, card no.xx9999 on 01-01-2026 12:00:00 at zepto . Avl bal Rs.1000."</ID>
     <ID>MaxLineLength:StatsCategoryDetailViewModel.kt$StatsCategoryDetailViewModel$/** Updates as soon as the anchor changes; do not use [uiState].periodStartMillis for swipe (DB-backed state lags). */</ID>
     <ID>MaxLineLength:TransactionSearchModels.kt$SearchAccountUi$val type: com.rrparallelstudio.miapp.core.model.enums.AccountType = com.rrparallelstudio.miapp.core.model.enums.AccountType.BANK</ID>
-    <ID>MaxLineLength:WebManageScreen.kt$"Local HTTP server for browser access on your LAN. HTTPS with a local certificate is planned for a future release."</ID>
-    <ID>MaxLineLength:WebManageScreen.kt$"Open the URL on a laptop on the same Wi‑Fi or phone hotspot. Password changes apply without restarting the server."</ID>
+    <ID>MaxLineLength:WebManageScreen.kt$"If a laptop still cannot connect, the router may be blocking phones and computers from seeing each other."</ID>
     <ID>MaxLineLength:WebManageScreen.kt$"Server is running on this phone; connect Wi‑Fi or join a hotspot so a laptop on the same network can reach it."</ID>
-    <ID>MaxLineLength:WebManageScreen.kt$"Turning Web Manage on disables Peer Device Sync. Anyone on the same LAN could reach this server; keep HTTP traffic on trusted Wi‑Fi or your own hotspot only."</ID>
     <ID>MaximumLineLength:AddEditAssetViewModel.kt$AddEditAssetViewModel$ </ID>
+    <ID>MaximumLineLength:AddEditSubcategoryScreen.kt$ </ID>
     <ID>MaximumLineLength:AddEditTransactionModels.kt$AccountUi$ </ID>
     <ID>MaximumLineLength:AmountAndBalanceRules.kt$BalanceRule$ </ID>
     <ID>MaximumLineLength:ApprovalLinkTransactionDialog.kt$ </ID>
     <ID>MaximumLineLength:BackupScreen.kt$ </ID>
     <ID>MaximumLineLength:CategoryPickerPanelContracts.kt$ </ID>
     <ID>MaximumLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$ </ID>
-    <ID>MaximumLineLength:LanSyncScreen.kt$ </ID>
+    <ID>MaximumLineLength:HomeMonthlyComponents.kt$ </ID>
     <ID>MaximumLineLength:LanSyncViewModel.kt$LanSyncViewModel$ </ID>
     <ID>MaximumLineLength:LoanDaos.kt$LoanDao$ </ID>
     <ID>MaximumLineLength:LoanDetailScreen.kt$ </ID>
@@ -835,12 +871,13 @@
     <ID>MaximumLineLength:MmrLedgerPickerSheetShell.kt$ </ID>
     <ID>MaximumLineLength:MmrMigrations.kt$MmrMigrations.&lt;no name provided&gt;$ </ID>
     <ID>MaximumLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$ </ID>
+    <ID>MaximumLineLength:MonefyBackupCrypto.kt$MonefyBackupCrypto$ </ID>
     <ID>MaximumLineLength:RecurringListScreen.kt$ </ID>
     <ID>MaximumLineLength:RecurringRuleDaos.kt$NotificationRuleDao$ </ID>
     <ID>MaximumLineLength:RecurringRuleDaos.kt$RecurringRuleDao$ </ID>
     <ID>MaximumLineLength:RecurringRuleRepositoryImpl.kt$RecurringRuleRepositoryImpl$ </ID>
+    <ID>MaximumLineLength:RepositoryImpls.kt$CategoryRepositoryImpl$ </ID>
     <ID>MaximumLineLength:Screen.kt$Screen.TransactionSearch$ </ID>
-    <ID>MaximumLineLength:SettingsScreen.kt$ </ID>
     <ID>MaximumLineLength:SmsParserDecisionsTest.kt$SmsParserDecisionsTest$ </ID>
     <ID>MaximumLineLength:SmsParserPhase1Test.kt$SmsParserPhase1Test$ </ID>
     <ID>MaximumLineLength:SmsParserPhase2Test.kt$SmsParserPhase2Test$ </ID>
@@ -851,13 +888,16 @@
     <ID>MayBeConst:MmrDimens.kt$MmrDimens$val labelColumnWeight = 0.4f</ID>
     <ID>MayBeConst:MmrDimens.kt$MmrDimens$val valueColumnWeight = 0.6f</ID>
     <ID>MayBeConst:MmrWidgetResponsive.kt$internal val BUDGET_WIDGET_MIN_ROW_DP: Float = BUDGET_ROW_LABEL_MIN_DP + BUDGET_ROW_PROGRESS_GAP_DP + BUDGET_ROW_PROGRESS_BAR_DP</ID>
-    <ID>MayBeConst:SmsBackupRestoreGuideCatalog.kt$SmsBackupRestoreGuideCatalog$val footnote: String = "You can change how far back we look under Look back on this screen. Clear the folder anytime to stop imports."</ID>
+    <ID>MayBeConst:SmsBackupRestoreGuideCatalog.kt$SmsBackupRestoreGuideCatalog$val footnote: String = "Look Back sets how many months of those messages are offered. " + "Forget Folder stops reading the folder. It does not delete the files."</ID>
     <ID>ModifierMissing:AccountListScreen.kt$AccountListScreen</ID>
     <ID>ModifierMissing:AccountPickerSheet.kt$AccountPickerSheetContent</ID>
+    <ID>ModifierMissing:AddEditAccountScreen.kt$AddEditAccountScreen</ID>
     <ID>ModifierMissing:AddEditAssetScreen.kt$AddEditAssetScreen</ID>
     <ID>ModifierMissing:AddEditBudgetScreen.kt$AddEditBudgetScreen</ID>
+    <ID>ModifierMissing:AddEditCategoryScreen.kt$AddEditCategoryScreen</ID>
     <ID>ModifierMissing:AddEditLoanScreen.kt$AddEditLoanScreen</ID>
     <ID>ModifierMissing:AddEditRecurringRuleScreen.kt$AddEditRecurringRuleScreen</ID>
+    <ID>ModifierMissing:AddEditSubcategoryScreen.kt$AddEditSubcategoryScreen</ID>
     <ID>ModifierMissing:AddEditTransactionScreen.kt$AddEditTransactionRoute</ID>
     <ID>ModifierMissing:ApprovalCenterScreen.kt$ApprovalCandidateCard</ID>
     <ID>ModifierMissing:ApprovalCenterScreen.kt$ApprovalCenterScreen</ID>
@@ -901,19 +941,23 @@
     <ID>ModifierMissing:RecurringDetailScreen.kt$RecurringDetailScreen</ID>
     <ID>ModifierMissing:RecurringListScreen.kt$RecurringListScreen</ID>
     <ID>ModifierMissing:ScheduledScreen.kt$ScheduledScreen</ID>
+    <ID>ModifierMissing:SearchDateRangeDialog.kt$SearchDateRangeDialog</ID>
     <ID>ModifierMissing:SearchFilterRows.kt$SearchAmountFilterRow</ID>
     <ID>ModifierMissing:SearchFilterRows.kt$SearchFilterPickerRow</ID>
     <ID>ModifierMissing:SearchFilterRows.kt$SearchFilterRow</ID>
+    <ID>ModifierMissing:SearchSelectionDialogs.kt$SearchAccountFilterDialog</ID>
     <ID>ModifierMissing:StatsCategoryDetailScreen.kt$StatsCategoryDetailScreen</ID>
     <ID>ModifierMissing:StatsScreen.kt$StatsScreen</ID>
     <ID>ModifierMissing:Theme.kt$MoneyInboxTheme</ID>
     <ID>ModifierMissing:TransactionDetailScreen.kt$TransactionDetailScreen</ID>
     <ID>ModifierMissing:TransactionSearchScreen.kt$TransactionSearchScreen</ID>
+    <ID>ModifierMissing:WebManageScreen.kt$WebManageScreen</ID>
     <ID>ModifierWithoutDefault:MmrIosSettingsForm.kt$modifier</ID>
     <ID>ModifierWithoutDefault:MmrSettingsScreenTemplate.kt$modifier</ID>
     <ID>MultipleEmitters:AccountPickerSheet.kt$AccountPickerRow</ID>
     <ID>MultipleEmitters:AddEditRecurringRuleScreen.kt$RecurringRuleFormFields</ID>
     <ID>MultipleEmitters:CategoryColorPicker.kt$CategoryColorPicker</ID>
+    <ID>MultipleEmitters:CategoryIconPicker.kt$CategoryIconPicker</ID>
     <ID>MultipleEmitters:HomeCalendarComponents.kt$CalendarDayNavigationBar</ID>
     <ID>MultipleEmitters:MmrAppChrome.kt$MmrSearchFilterRow</ID>
     <ID>MultipleEmitters:RecurringFormInlinePickers.kt$RecurringPickerRow</ID>
@@ -929,10 +973,33 @@
     <ID>NestedBlockDepth:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$fun readCategoryNames(database: SQLiteDatabase): Map&lt;Long, CategoryRef&gt;</ID>
     <ID>NestedBlockDepth:PeriodExcelSheetReader.kt$PeriodExcelSheetReader$fun readRows( data: ByteArray, zoneId: ZoneId, ): List&lt;SpreadsheetLedgerRow&gt;</ID>
     <ID>NestedBlockDepth:SmsBackupXmlImportCoordinator.kt$SmsBackupXmlImportCoordinator$private fun parseBackupFileUnchecked( fileUri: Uri, sinceTimestamp: Long, watermarkMillis: Long, ): SmsInboxScanSummary</ID>
+    <ID>NoUnusedImports:AddEditBudgetScreen.kt$com.rrparallelstudio.miapp.feature.budget.ui.AddEditBudgetScreen.kt</ID>
+    <ID>NoUnusedImports:ApprovalCenterScreen.kt$com.rrparallelstudio.miapp.feature.approval.ui.ApprovalCenterScreen.kt</ID>
     <ID>NoUnusedImports:AssetAttachmentStore.kt$com.rrparallelstudio.miapp.core.attachment.AssetAttachmentStore.kt</ID>
+    <ID>NoUnusedImports:CategoryColorPicker.kt$com.rrparallelstudio.miapp.feature.category.ui.CategoryColorPicker.kt</ID>
+    <ID>NoUnusedImports:CategoryIconPicker.kt$com.rrparallelstudio.miapp.feature.category.ui.CategoryIconPicker.kt</ID>
+    <ID>NoUnusedImports:CategoryPickerComponents.kt$com.rrparallelstudio.miapp.feature.category.ui.CategoryPickerComponents.kt</ID>
+    <ID>NoUnusedImports:ConfigurationPickerSupport.kt$com.rrparallelstudio.miapp.feature.settings.ui.ConfigurationPickerSupport.kt</ID>
     <ID>NoUnusedImports:EmiAutoPostCoordinator.kt$com.rrparallelstudio.miapp.core.loan.EmiAutoPostCoordinator.kt</ID>
+    <ID>NoUnusedImports:HomeCalendarComponents.kt$com.rrparallelstudio.miapp.feature.home.ui.HomeCalendarComponents.kt</ID>
+    <ID>NoUnusedImports:HomeCategoryFilterDropdown.kt$com.rrparallelstudio.miapp.feature.home.ui.HomeCategoryFilterDropdown.kt</ID>
+    <ID>NoUnusedImports:HomeMonthlyComponents.kt$com.rrparallelstudio.miapp.feature.home.ui.HomeMonthlyComponents.kt</ID>
     <ID>NoUnusedImports:HomeScreen.kt$com.rrparallelstudio.miapp.feature.home.HomeScreen.kt</ID>
     <ID>NoUnusedImports:HomeScreenComponents.kt$com.rrparallelstudio.miapp.feature.home.ui.HomeScreenComponents.kt</ID>
+    <ID>NoUnusedImports:HomeTotalTabContent.kt$com.rrparallelstudio.miapp.feature.home.ui.HomeTotalTabContent.kt</ID>
+    <ID>NoUnusedImports:HomeTransactionListComponents.kt$com.rrparallelstudio.miapp.feature.home.ui.HomeTransactionListComponents.kt</ID>
+    <ID>NoUnusedImports:LanSyncHistoryScreen.kt$com.rrparallelstudio.miapp.feature.lansync.ui.LanSyncHistoryScreen.kt</ID>
+    <ID>NoUnusedImports:LocalBackupFolderSaver.kt$com.rrparallelstudio.miapp.core.backup.LocalBackupFolderSaver.kt</ID>
+    <ID>NoUnusedImports:MmrAppChrome.kt$com.rrparallelstudio.miapp.ui.components.MmrAppChrome.kt</ID>
+    <ID>NoUnusedImports:MmrIosSettingsForm.kt$com.rrparallelstudio.miapp.ui.components.MmrIosSettingsForm.kt</ID>
+    <ID>NoUnusedImports:MmrIosSettingsList.kt$com.rrparallelstudio.miapp.ui.components.MmrIosSettingsList.kt</ID>
+    <ID>NoUnusedImports:MmrSettingsGroup.kt$com.rrparallelstudio.miapp.ui.components.MmrSettingsGroup.kt</ID>
+    <ID>NoUnusedImports:MmrTransactionFormChrome.kt$com.rrparallelstudio.miapp.ui.components.MmrTransactionFormChrome.kt</ID>
+    <ID>NoUnusedImports:StatsCategoryDetailScreen.kt$com.rrparallelstudio.miapp.feature.stats.ui.StatsCategoryDetailScreen.kt</ID>
+    <ID>NoUnusedImports:StatsCategoryDetailUi.kt$com.rrparallelstudio.miapp.feature.stats.ui.StatsCategoryDetailUi.kt</ID>
+    <ID>NoUnusedImports:StatsCylinderInspect.kt$com.rrparallelstudio.miapp.feature.stats.ui.StatsCylinderInspect.kt</ID>
+    <ID>NoUnusedImports:StatsScreen.kt$com.rrparallelstudio.miapp.feature.stats.ui.StatsScreen.kt</ID>
+    <ID>NoUnusedImports:StatsUiComponents.kt$com.rrparallelstudio.miapp.feature.stats.ui.StatsUiComponents.kt</ID>
     <ID>NoUnusedImports:TransactionAttachmentStore.kt$com.rrparallelstudio.miapp.core.attachment.TransactionAttachmentStore.kt</ID>
     <ID>NoUnusedImports:TransactionMergeCoordinator.kt$com.rrparallelstudio.miapp.core.transaction.TransactionMergeCoordinator.kt</ID>
     <ID>NoWildcardImports:BackupScreen.kt$import androidx.compose.foundation.layout.*</ID>
@@ -985,6 +1052,7 @@
     <ID>ParameterNaming:AccountPickerSheet.kt$onLoanSelected</ID>
     <ID>ParameterNaming:AssetFormFields.kt$onSelected</ID>
     <ID>ParameterNaming:CategoryColorPicker.kt$onColorSelected</ID>
+    <ID>ParameterNaming:CategoryIconPicker.kt$onIconSelected</ID>
     <ID>ParameterNaming:CategorySubcategoryPickerPanel.kt$onPickerFinished</ID>
     <ID>ParameterNaming:HomeCalendarComponents.kt$onDateSelected</ID>
     <ID>ParameterNaming:HomeExcelExportPeriodDialog.kt$onOptionSelected</ID>
@@ -1119,8 +1187,9 @@
     <ID>ReturnCount:LoanSchedulePlanner.kt$LoanSchedulePlanner$fun applyPartPaymentAdjustment( loan: LoanEntity, adjustment: LoanPartPaymentAdjustment?, ): LoanEntity</ID>
     <ID>ReturnCount:LoanSchedulePlanner.kt$LoanSchedulePlanner$fun applyTopUpAdjustment( loan: LoanEntity, adjustment: LoanTopUpAdjustment, ): LoanEntity</ID>
     <ID>ReturnCount:LoanSchedulePlanner.kt$LoanSchedulePlanner$suspend fun regenerateFixedEmiSchedule( loan: LoanEntity, loanScheduleDao: LoanScheduleDao, scheduleAnchorMillis: Long = System.currentTimeMillis(), firstPeriodPrincipalStep: PrincipalStepAccrual? = null, )</ID>
-    <ID>ReturnCount:LocalAutoBackupExporter.kt$LocalAutoBackupExporter$suspend fun exportScheduledBackup(): Result?</ID>
     <ID>ReturnCount:LocalAutoBackupPreferencesStore.kt$LocalAutoBackupPreferencesStore$fun shouldEnqueueAutoBackupToday(): Boolean</ID>
+    <ID>ReturnCount:LocalAutoBackupWorker.kt$LocalAutoBackupWorker$override suspend fun doWork(): Result</ID>
+    <ID>ReturnCount:LocalBackupFolderSaver.kt$LocalBackupFolderSaver$fun readLatestBackupBytes(): ByteArray?</ID>
     <ID>ReturnCount:MezoLedgerParserComparisonTest.kt$MezoLedgerParserComparisonTest$private fun loadLedgerRows(): List&lt;Map&lt;String, String&gt;&gt;</ID>
     <ID>ReturnCount:MmrAdPlacementPolicy.kt$MmrAdPlacementPolicy$fun homeDailyBanner(context: HomeAdPlacementContext): MmrAdPlacement?</ID>
     <ID>ReturnCount:MmrAdPlacementPolicy.kt$MmrAdPlacementPolicy$fun homeDailyMrec(context: HomeAdPlacementContext): MmrAdPlacement?</ID>
@@ -1162,11 +1231,10 @@
     <ID>ReturnCount:PeriodExcelSheetReader.kt$PeriodExcelSheetReader$private fun parseDateRow( row: Row, zoneId: ZoneId, ): Long?</ID>
     <ID>ReturnCount:PeriodExcelSheetReader.kt$PeriodExcelSheetReader$private fun parseFixedRow( row: Row, zoneId: ZoneId, ): SpreadsheetLedgerRow?</ID>
     <ID>ReturnCount:PeriodExcelWriter.kt$PeriodExcelWriter$private fun noteWithTransferSuffix(item: TransactionWithDetails): String</ID>
-    <ID>ReturnCount:PeriodExcelWriter.kt$PeriodExcelWriter$private fun paymentLabel( instrument: String?, channel: String?, ): String</ID>
     <ID>ReturnCount:PeriodLedgerSpreadsheetImporter.kt$PeriodLedgerSpreadsheetImporter.AccountCache$suspend fun resolve(name: String): Long?</ID>
     <ID>ReturnCount:PeriodLedgerSpreadsheetImporter.kt$PeriodLedgerSpreadsheetImporter.CategoryCache$suspend fun ensure( name: String, txnType: TransactionType, ): Boolean</ID>
     <ID>ReturnCount:PeriodLedgerSpreadsheetImporter.kt$PeriodLedgerSpreadsheetImporter.CategoryCache$suspend fun idFor( name: String, txnType: TransactionType, ): Long?</ID>
-    <ID>ReturnCount:PeriodXmlWriter.kt$PeriodXmlWriter$private fun paymentLabel( instrument: String?, channel: String?, ): String</ID>
+    <ID>ReturnCount:PeriodXmlWriter.kt$PeriodXmlWriter$private fun noteWithTransferSuffix(item: TransactionWithDetails): String</ID>
     <ID>ReturnCount:ProcessIncomingSmsWorker.kt$ProcessIncomingSmsWorker$override suspend fun doWork(): Result</ID>
     <ID>ReturnCount:RecurringAutoPostCoordinator.kt$RecurringAutoPostCoordinator$private suspend fun resolveTransferTargets(rule: RecurringRuleEntity): Pair&lt;Long?, Long?&gt;</ID>
     <ID>ReturnCount:RepositoryImpls.kt$CategoryRepositoryImpl$override suspend fun resolveCategoryWithChildren(categoryId: Long): CategoryWithChildren?</ID>
@@ -1198,6 +1266,8 @@
     <ID>ReturnCount:TransactionReceiptSection.kt$@Composable fun TransactionReceiptSection( receipts: List&lt;TransactionReceiptUi&gt;, onAddClick: () -&gt; Unit, onRemoveSaved: (Long) -&gt; Unit, onRemovePending: (filePath: String) -&gt; Unit, modifier: Modifier = Modifier, canAddMore: Boolean = true, readOnly: Boolean = false, sectionLabel: String = "Receipt photos", onReceiptClick: (filePath: String) -&gt; Unit = {}, )</ID>
     <ID>ReturnCount:TransactionSearchViewModel.kt$TransactionSearchViewModel$fun onEvent(event: TransactionSearchUiEvent)</ID>
     <ID>ReturnCount:TypeAndSenderRules.kt$TransactionTypeRule$fun inferType(normalizedBody: String): TransactionType?</ID>
+    <ID>ReturnCount:UnifiedBackupRunner.kt$UnifiedBackupRunner$private fun isOnWifi(context: Context): Boolean</ID>
+    <ID>ReturnCount:UnifiedBackupRunner.kt$UnifiedBackupRunner$suspend fun exportScheduledBackup(): Result?</ID>
     <ID>ReturnCount:UpiDisplayNameTable.kt$UpiDisplayNameTable$fun resolve(raw: String): String</ID>
     <ID>ReturnCount:WebManageChartJsonBuilder.kt$WebManageChartJsonBuilder$private fun buildBreakdowns( spendings: List&lt;CategorySpending&gt;, tabTotal: Double, ): List&lt;PieSlice&gt;</ID>
     <ID>ReturnCount:WebManageLoginRateLimiter.kt$WebManageLoginRateLimiter$fun isLoginAllowed(clientKey: String): Boolean</ID>
@@ -1226,6 +1296,7 @@
     <ID>ThrowsCount:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$private fun ensureSyncTargetsPresent( allTrusted: List&lt;TrustedLanDeviceEntity&gt;, targets: List&lt;TrustedLanDeviceEntity&gt;, )</ID>
     <ID>ThrowsCount:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$private suspend fun ensureReadyForSync()</ID>
     <ID>ThrowsCount:LocalBackupDownloadsSaver.kt$LocalBackupDownloadsSaver$@RequiresApi(Build.VERSION_CODES.Q) private fun saveViaMediaStore( archiveBytes: ByteArray, displayName: String, ): String</ID>
+    <ID>ThrowsCount:LocalBackupFolderSaver.kt$LocalBackupFolderSaver$fun saveToConfiguredFolder( archiveBytes: ByteArray, displayName: String, ): String</ID>
     <ID>ThrowsCount:PeriodExcelDownloadsSaver.kt$PeriodExcelDownloadsSaver$@RequiresApi(Build.VERSION_CODES.Q) private fun saveViaMediaStore( source: File, displayName: String, ): String</ID>
     <ID>TooGenericExceptionCaught:AccountListViewModel.kt$AccountListViewModel$e: Exception</ID>
     <ID>TooGenericExceptionCaught:AddEditAccountViewModel.kt$AddEditAccountViewModel$e: Exception</ID>
@@ -1290,6 +1361,8 @@
     <ID>TooManyFunctions:MmrDatabase.kt$MmrDatabase : RoomDatabase</ID>
     <ID>TooManyFunctions:MmrExpressiveScreenArt.kt$MmrExpressiveScreenArt</ID>
     <ID>TooManyFunctions:MmrIosSettingsForm.kt$com.rrparallelstudio.miapp.ui.components.MmrIosSettingsForm.kt</ID>
+    <ID>TooManyFunctions:MmrSettingsGroup.kt$com.rrparallelstudio.miapp.ui.components.MmrSettingsGroup.kt</ID>
+    <ID>TooManyFunctions:MmrStaticTextStyles.kt$com.rrparallelstudio.miapp.ui.theme.MmrStaticTextStyles.kt</ID>
     <ID>TooManyFunctions:MmrThemePresets.kt$MmrThemePresets</ID>
     <ID>TooManyFunctions:RecurringRuleDaos.kt$NotificationRuleDao</ID>
     <ID>TooManyFunctions:RecurringRuleDaos.kt$RecurringRuleDao</ID>
@@ -1319,13 +1392,13 @@
     <ID>UseCheckOrError:AssetAttachmentRepositoryImpl.kt$AssetAttachmentRepositoryImpl$throw IllegalStateException("At most $MAX_ATTACHMENTS_PER_ASSET photos per asset.")</ID>
     <ID>UseCheckOrError:BackupViewModel.kt$BackupViewModel$throw IllegalStateException("Unable to read backup file.")</ID>
     <ID>UseCheckOrError:BackupViewModel.kt$BackupViewModel$throw IllegalStateException("Unable to read spreadsheet.")</ID>
-    <ID>UseCheckOrError:BackupViewModel.kt$BackupViewModel$throw IllegalStateException("Unable to write backup file.")</ID>
     <ID>UseCheckOrError:GoogleDriveAuthGateway.kt$GoogleDriveAuthGateway$throw IllegalStateException("Could not read your Google account email. Try again.")</ID>
     <ID>UseCheckOrError:GoogleDriveAuthGateway.kt$GoogleDriveAuthGateway$throw IllegalStateException("Google Drive authorization needs user interaction.")</ID>
     <ID>UseCheckOrError:GoogleDriveAuthGateway.kt$GoogleDriveAuthGateway$throw IllegalStateException("Google Drive authorization was not completed.")</ID>
     <ID>UseCheckOrError:GoogleDriveAuthGateway.kt$GoogleDriveAuthGateway$throw IllegalStateException("Google Drive backup is not available.")</ID>
     <ID>UseCheckOrError:GoogleDriveAuthGateway.kt$GoogleDriveAuthGateway$throw IllegalStateException("Google did not return a Drive access token.")</ID>
     <ID>UseCheckOrError:GoogleDriveBackupViewModel.kt$GoogleDriveBackupViewModel$throw IllegalStateException("Connect Google Drive again.")</ID>
+    <ID>UseCheckOrError:GoogleDriveBackupWorker.kt$GoogleDriveBackupWorker$throw IllegalStateException("No local backup file to upload.")</ID>
     <ID>UseCheckOrError:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$throw IllegalStateException("Add at least one trusted device.")</ID>
     <ID>UseCheckOrError:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$throw IllegalStateException("Connect to Wi‑Fi or join a phone hotspot before syncing.")</ID>
     <ID>UseCheckOrError:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$throw IllegalStateException("Select a device under Sync one device only.")</ID>
@@ -1341,11 +1414,17 @@
     <ID>UseCheckOrError:LocalBackupDownloadsSaver.kt$LocalBackupDownloadsSaver$throw IllegalStateException("Could not create Downloads entry.")</ID>
     <ID>UseCheckOrError:LocalBackupDownloadsSaver.kt$LocalBackupDownloadsSaver$throw IllegalStateException("Could not open Downloads output stream.")</ID>
     <ID>UseCheckOrError:LocalBackupDownloadsSaver.kt$LocalBackupDownloadsSaver$throw IllegalStateException("Downloads folder is not available.")</ID>
+    <ID>UseCheckOrError:LocalBackupFolderSaver.kt$LocalBackupFolderSaver$throw IllegalStateException("Backup folder is no longer available.")</ID>
+    <ID>UseCheckOrError:LocalBackupFolderSaver.kt$LocalBackupFolderSaver$throw IllegalStateException("Choose a backup folder first.")</ID>
+    <ID>UseCheckOrError:LocalBackupFolderSaver.kt$LocalBackupFolderSaver$throw IllegalStateException("Could not create backup file in the selected folder.")</ID>
+    <ID>UseCheckOrError:LocalBackupFolderSaver.kt$LocalBackupFolderSaver$throw IllegalStateException("Could not write backup file.")</ID>
     <ID>UseCheckOrError:PeriodExcelDownloadsSaver.kt$PeriodExcelDownloadsSaver$throw IllegalStateException("Could not create Downloads entry.")</ID>
     <ID>UseCheckOrError:PeriodExcelDownloadsSaver.kt$PeriodExcelDownloadsSaver$throw IllegalStateException("Could not open Downloads output stream.")</ID>
     <ID>UseCheckOrError:PeriodExcelDownloadsSaver.kt$PeriodExcelDownloadsSaver$throw IllegalStateException("Downloads folder is not available.")</ID>
     <ID>UseCheckOrError:RepositoryImpls.kt$AccountRepositoryImpl$throw IllegalStateException( "This account is the loan ledger for a loan. Close or reconfigure the loan first.", )</ID>
     <ID>UseCheckOrError:TransactionAttachmentRepositoryImpl.kt$TransactionAttachmentRepositoryImpl$throw IllegalStateException("At most $MAX_ATTACHMENTS_PER_TRANSACTION receipts per transaction.")</ID>
+    <ID>UseCheckOrError:UnifiedBackupRunner.kt$UnifiedBackupRunner$throw IllegalStateException("Choose a backup folder first.")</ID>
+    <ID>UseCheckOrError:UnifiedBackupRunner.kt$UnifiedBackupRunner$throw IllegalStateException("Connect Google Drive again.")</ID>
     <ID>UseRequire:AddEditTransactionViewModel.kt$AddEditTransactionViewModel$throw IllegalArgumentException("Default categories cannot be renamed here.")</ID>
     <ID>UseRequire:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$throw IllegalArgumentException("Pending entry not found.")</ID>
     <ID>UseRequire:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$throw IllegalArgumentException("Refunds can only apply to expense purchases.")</ID>
@@ -1426,6 +1505,7 @@
     <ID>WildcardImport:TransactionApprovalEntity.kt$import androidx.room.*</ID>
     <ID>WildcardImport:TransactionFormRow.kt$import androidx.compose.foundation.layout.*</ID>
     <ID>WildcardImport:TransactionSearchViewModel.kt$import kotlinx.coroutines.flow.*</ID>
+    <ID>Wrapping:LanSyncScreen.kt${ copyPlain(context, "Pairing code", pin) }</ID>
     <ID>Wrapping:LoanDetailScreen.kt${ onNavigateToEditTransaction(txnId) }</ID>
     <ID>Wrapping:TransactionFormInlinePickers.kt${ loanId -&gt; handler(loanId) onExpandedChange(false) }</ID>
   </CurrentIssues>

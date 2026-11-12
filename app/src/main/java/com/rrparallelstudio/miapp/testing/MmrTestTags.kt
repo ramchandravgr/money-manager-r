@@ -28,6 +28,15 @@ object MmrTestTags {
     fun homeViewTab(tab: HomeViewTab): String = "home.tab.${tab.name.lowercase()}"
 
     const val homeFabAdd = "home.fab.add"
+    const val homeTypeFilterAll = "home.filter.type.all"
+    const val homeTypeFilterExpense = "home.filter.type.expense"
+    const val homeTypeFilterIncome = "home.filter.type.income"
+    const val homeTypeFilterTransfer = "home.filter.type.transfer"
+    const val homeCategoryFilterTrigger = "home.filter.category.trigger"
+    const val homeCategoryFilterClear = "home.filter.category.clear"
+
+    fun homeCategoryFilterOption(categoryId: Long): String = "home.filter.category.option.$categoryId"
+
     const val homeTopBarSearch = "home.top_bar.search"
     const val homeTopBarApprovals = "home.top_bar.approvals"
     const val homeExportExcel = "home.total.export_excel"
@@ -43,7 +52,7 @@ object MmrTestTags {
     const val transactionDuplicateToday = "transaction.duplicate.today"
     const val transactionDuplicateSameDate = "transaction.duplicate.same_date"
 
-    const val backupExport = "backup.action.export"
+    const val backupBackupNow = "backup.action.backup_now"
     const val googleDriveBackupLink = "backup.action.google_drive"
     const val googleDriveBackupScreen = "backup.screen.google_drive"
     const val googleDriveBackupTurnOn = "backup.action.google_drive_turn_on"
@@ -118,6 +127,10 @@ object MmrTestTags {
     const val statsTabIncome = "stats.tab.income"
     const val statsTabExpense = "stats.tab.expense"
 
+    const val settingsNavHomeMenu = "settings.nav.home_menu"
+    const val settingsNavAppearance = "settings.nav.appearance"
+    const val settingsNavSecurity = "settings.nav.security"
+    const val settingsHomeMenuStartScreen = "settings.home_menu.start_screen"
     const val settingsNavAccounts = "settings.nav.accounts"
     const val settingsNavCategories = "settings.nav.categories"
     const val settingsNavBackup = "settings.nav.backup"

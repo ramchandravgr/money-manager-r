@@ -78,7 +78,7 @@ import com.rrparallelstudio.miapp.core.database.entity.TrustedLanDeviceEntity
         OwnerProfileEntity::class,
         SmsAccountOverrideEntity::class,
     ],
-    version = 29,
+    version = 30,
     exportSchema = false,
 )
 @TypeConverters(EnumConverters::class)

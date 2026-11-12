@@ -203,7 +203,13 @@ fun MmrDetailLinkedSmsCard(
             modifier = Modifier.padding(9.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Text(sender, fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MmrBrandColors.TextStrong)
+            Text(
+                sender,
+                style =
+                    com.rrparallelstudio.miapp.ui.theme.mmrSettingsRowPrimaryStyle(MmrBrandColors.TextStrong).copy(
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+            )
             Text(receivedLabel, style = MaterialTheme.typography.labelSmall, color = MmrBrandColors.TextMedium)
             amountFormatted?.let {
                 Text(it, style = MaterialTheme.typography.labelMedium, color = MmrBrandColors.Active)
@@ -227,9 +233,10 @@ fun MmrDetailTextLink(
     Text(
         text = text,
         modifier = modifier.clickable(onClick = onClick),
-        color = MmrBrandColors.Active,
-        fontSize = 14.sp,
-        fontWeight = FontWeight.Medium,
+        style =
+            com.rrparallelstudio.miapp.ui.theme.mmrSettingsRowPrimaryStyle(MmrBrandColors.Active).copy(
+                fontWeight = FontWeight.Medium,
+            ),
     )
 }
 

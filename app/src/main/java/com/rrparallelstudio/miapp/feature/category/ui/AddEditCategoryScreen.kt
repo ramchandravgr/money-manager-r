@@ -1,5 +1,6 @@
 package com.rrparallelstudio.miapp.feature.category.ui
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -10,7 +11,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rrparallelstudio.miapp.core.model.enums.CategoryType
 import com.rrparallelstudio.miapp.feature.category.model.AddEditCategoryUiEvent
@@ -19,14 +22,15 @@ import com.rrparallelstudio.miapp.testing.MmrTestTags
 import com.rrparallelstudio.miapp.ui.components.CategoryDeleteDialog
 import com.rrparallelstudio.miapp.ui.components.EntityPickerOption
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsChoiceRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsColorPickerSlot
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsDestructiveActionSection
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsEntityFormGate
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsInlineErrorSection
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsInlineTextRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsNavRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSection
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSingleChoiceSheet
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroup
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupDestructiveSection
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupError
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupInset
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupNavRow
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupTextField
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupValueRow
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsSaveTopBar
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenLayout
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenScaffold
@@ -110,20 +114,20 @@ fun AddEditCategoryScreen(
             loadErrorMessage = uiState.loadErrorMessage,
         ) {
             uiState.errorMessage?.let { message ->
-                MmrIosSettingsInlineErrorSection(message = message, isFirstInScreen = true)
+                MmrSettingsGroupError(message = message, modifier = Modifier.padding(top = 4.dp))
             }
 
-            MmrIosSettingsSection(
+            MmrSettingsGroup(
                 title = "Details",
                 isFirstInScreen = uiState.errorMessage == null,
                 footer =
                     if (uiState.isDefaultCategory) {
-                        "Built-in categories keep their type."
+                        "A smaller sort number appears higher in the list. A built-in category keeps its type."
                     } else {
-                        "Lower sort order values appear first in lists."
+                        "A smaller sort number appears higher in the list."
                     },
             ) {
-                MmrIosSettingsInlineTextRow(
+                MmrSettingsGroupTextField(
                     label = "Name",
                     value = uiState.name,
                     onValueChange = { viewModel.onEvent(AddEditCategoryUiEvent.OnNameChanged(it)) },
@@ -131,18 +135,18 @@ fun AddEditCategoryScreen(
                     testTag = MmrTestTags.categoryFieldName,
                 )
                 if (uiState.isDefaultCategory) {
-                    com.rrparallelstudio.miapp.ui.components.MmrIosSettingsValueRow(
+                    MmrSettingsGroupValueRow(
                         label = "Type",
                         value = if (uiState.type == CategoryType.EXPENSE) "Expense" else "Income",
                     )
                 } else {
-                    MmrIosSettingsNavRow(
+                    MmrSettingsGroupNavRow(
                         label = "Type",
                         value = if (uiState.type == CategoryType.EXPENSE) "Expense" else "Income",
                         onClick = { showTypeSheet = true },
                     )
                 }
-                MmrIosSettingsColorPickerSlot(showDividerBelow = true) {
+                MmrSettingsGroupInset(showDividerBelow = true) {
                     CategoryColorPicker(
                         selectedColorHex = uiState.colorHex,
                         onColorSelected = {
@@ -150,7 +154,16 @@ fun AddEditCategoryScreen(
                         },
                     )
                 }
-                MmrIosSettingsInlineTextRow(
+                MmrSettingsGroupInset(showDividerBelow = true) {
+                    CategoryIconPicker(
+                        selectedIconName = uiState.iconName,
+                        accentHex = uiState.colorHex,
+                        onIconSelected = {
+                            viewModel.onEvent(AddEditCategoryUiEvent.OnIconSelected(it))
+                        },
+                    )
+                }
+                MmrSettingsGroupTextField(
                     label = "Sort order",
                     value = uiState.sortOrder,
                     onValueChange = { viewModel.onEvent(AddEditCategoryUiEvent.OnSortOrderChanged(it)) },
@@ -169,8 +182,8 @@ fun AddEditCategoryScreen(
             }
 
             if (uiState.isEditMode) {
-                MmrIosSettingsDestructiveActionSection(
-                    label = "Remove category",
+                MmrSettingsGroupDestructiveSection(
+                    label = "Remove Category",
                     onClick = { showDeleteCategory = true },
                 )
             }

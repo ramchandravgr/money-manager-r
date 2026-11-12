@@ -34,17 +34,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rrparallelstudio.miapp.ui.state.MmrErrorState
 import com.rrparallelstudio.miapp.ui.state.MmrLoadingState
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
+import com.rrparallelstudio.miapp.ui.theme.mmrFormFieldLabelStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrSettingsGateCodeValueStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrSettingsInsetFieldStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrSettingsInsetRowPrimaryStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrSettingsRowPrimaryStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrSettingsRowSecondaryStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrSettingsStackedFieldValueStyle
 
 /** Helper / status copy inside an inset grouped section (standard horizontal inset). */
 @Composable
@@ -63,9 +67,7 @@ fun MmrIosSettingsSectionBodyText(
             Text(
                 text = text,
                 modifier = padded,
-                color = MaterialTheme.colorScheme.error,
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
+                style = mmrSettingsRowSecondaryStyle(MaterialTheme.colorScheme.error),
             )
         } else {
             MmrHelperText(
@@ -197,10 +199,10 @@ fun MmrIosSettingsTextField(
     ) {
         Text(
             text = label,
-            fontSize = 13.sp,
-            color = MmrBrandColors.TextMedium,
+            style = mmrFormFieldLabelStyle(MmrBrandColors.TextMedium),
         )
         Spacer(modifier = Modifier.height(4.dp))
+        val stackedFieldStyle = mmrSettingsStackedFieldValueStyle(fieldColor)
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
@@ -209,12 +211,7 @@ fun MmrIosSettingsTextField(
                     .fillMaxWidth()
                     .defaultMinSize(minHeight = if (singleLine) 22.dp else 56.dp)
                     .padding(vertical = 4.dp),
-            textStyle =
-                TextStyle(
-                    fontSize = 16.sp,
-                    lineHeight = 20.sp,
-                    color = fieldColor,
-                ),
+            textStyle = stackedFieldStyle,
             singleLine = singleLine,
             maxLines = if (singleLine) 1 else Int.MAX_VALUE,
             keyboardOptions = keyboardOptions,
@@ -316,8 +313,7 @@ private fun MmrIosSettingsInlineFieldRow(
             Text(
                 text = label,
                 modifier = Modifier.weight(0.42f),
-                color = MmrBrandColors.Reversal,
-                fontSize = 16.sp,
+                style = mmrSettingsInsetRowPrimaryStyle(MmrBrandColors.Reversal),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -328,12 +324,12 @@ private fun MmrIosSettingsInlineFieldRow(
                         .clip(RectangleShape),
                 contentAlignment = Alignment.CenterEnd,
             ) {
+                val inlineFieldStyle = mmrSettingsInsetFieldStyle(fieldColor)
+                val inlinePlaceholderStyle = mmrSettingsInsetFieldStyle(MmrBrandColors.TextMedium)
                 if (value.isEmpty() && placeholder.isNotEmpty()) {
                     Text(
                         text = placeholder,
-                        color = MmrBrandColors.TextMedium,
-                        fontSize = 16.sp,
-                        textAlign = TextAlign.End,
+                        style = inlinePlaceholderStyle,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
@@ -344,12 +340,7 @@ private fun MmrIosSettingsInlineFieldRow(
                         Modifier
                             .fillMaxWidth()
                             .then(if (testTag != null) Modifier.testTag(testTag) else Modifier),
-                    textStyle =
-                        TextStyle(
-                            fontSize = 16.sp,
-                            color = fieldColor,
-                            textAlign = TextAlign.End,
-                        ),
+                    textStyle = inlineFieldStyle,
                     singleLine = singleLine,
                     maxLines = if (singleLine) 1 else Int.MAX_VALUE,
                     enabled = enabled,
@@ -462,7 +453,7 @@ fun MmrIosSettingsRadioRow(
                     ),
         ) {
             RadioButton(selected = selected, onClick = onSelect)
-            Text(label, fontSize = 16.sp, color = MmrBrandColors.Reversal)
+            Text(label, style = mmrSettingsInsetRowPrimaryStyle(MmrBrandColors.Reversal))
         }
     }
 }
@@ -481,8 +472,7 @@ fun <T> MmrIosSettingsChipChoiceSlot(
     MmrIosSettingsControlSlot(showDividerBelow = showDividerBelow) {
         Text(
             text = fieldLabel,
-            fontSize = 14.sp,
-            color = MmrBrandColors.TextMedium,
+            style = mmrSettingsRowPrimaryStyle(MmrBrandColors.TextMedium),
         )
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             options.forEach { option ->
@@ -534,10 +524,10 @@ fun MmrIosSettingsCopyableCodeSlot(
                     Modifier
                         .weight(1f)
                         .then(if (valueTestTag != null) Modifier.testTag(valueTestTag) else Modifier),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 1.2.sp,
-                color = if (value.isNotBlank()) MmrBrandColors.Active else MmrBrandColors.TextMedium,
+                style =
+                    mmrSettingsGateCodeValueStyle(
+                        if (value.isNotBlank()) MmrBrandColors.Active else MmrBrandColors.TextMedium,
+                    ),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -567,7 +557,7 @@ fun MmrIosSettingsInlineErrorSection(
 ) {
     MmrIosSettingsSection(title = null, isFirstInScreen = isFirstInScreen) {
         MmrIosSettingsControlSlot(showDividerBelow = false) {
-            Text(message, color = MaterialTheme.colorScheme.error, fontSize = 14.sp)
+            Text(message, style = mmrSettingsRowPrimaryStyle(MaterialTheme.colorScheme.error))
         }
     }
 }

@@ -34,13 +34,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rrparallelstudio.miapp.feature.home.HomePeriodUtils
 import com.rrparallelstudio.miapp.feature.home.model.CalendarDayUi
 import com.rrparallelstudio.miapp.feature.home.model.TransactionGroupUi
 import com.rrparallelstudio.miapp.testing.MmrTestTags
 import com.rrparallelstudio.miapp.ui.components.MmrDimens
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
+import com.rrparallelstudio.miapp.ui.theme.mmrCalendarDayAmountStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrCalendarDayMicroStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrCalendarWeekdayStyle
 import com.rrparallelstudio.miapp.ui.theme.mmrContrastingContent
 import java.text.NumberFormat
 import java.time.DayOfWeek
@@ -173,9 +175,8 @@ private fun CalendarWeekdayHeaderRow(weekStart: DayOfWeek) {
                 text = label,
                 modifier = Modifier.weight(1f),
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+                style = mmrCalendarWeekdayStyle(color).copy(fontWeight = FontWeight.Medium),
                 color = color,
-                fontWeight = FontWeight.Medium,
             )
         }
     }
@@ -222,8 +223,18 @@ private fun CalendarDayCell(
         ) {
             Text(
                 text = cell.dayOfMonth.toString(),
-                style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),
-                fontWeight = FontWeight.SemiBold,
+                style =
+                    mmrCalendarDayAmountStyle(
+                        if (selected) {
+                            MmrBrandColors.CalendarSelectedDay.mmrContrastingContent()
+                        } else {
+                            if (cell.isCurrentMonth) {
+                                MaterialTheme.colorScheme.onSurface
+                            } else {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f)
+                            }
+                        },
+                    ).copy(fontWeight = FontWeight.SemiBold),
                 color =
                     if (selected) {
                         MmrBrandColors.CalendarSelectedDay.mmrContrastingContent()
@@ -243,7 +254,7 @@ private fun CalendarDayCell(
                     Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth(),
-                style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, lineHeight = 11.sp),
+                style = mmrCalendarDayMicroStyle(MmrBrandColors.CalendarExpense),
                 color = MmrBrandColors.CalendarExpense,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,

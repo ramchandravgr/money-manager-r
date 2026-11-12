@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import com.rrparallelstudio.miapp.core.data.preferences.LocalBackupFolderStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -14,8 +15,10 @@ class LocalAutoBackupRetention
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
+        private val folderStore: LocalBackupFolderStore,
     ) {
         fun pruneRetainedAutoBackups() {
+            if (folderStore.isConfigured()) return
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 pruneViaMediaStore()
             } else {

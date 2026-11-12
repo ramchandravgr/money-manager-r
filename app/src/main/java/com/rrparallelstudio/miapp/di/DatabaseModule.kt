@@ -42,6 +42,7 @@ object DatabaseModule {
                 MmrMigrations.MIGRATION_26_27,
                 MmrMigrations.MIGRATION_27_28,
                 MmrMigrations.MIGRATION_28_29,
+                MmrMigrations.MIGRATION_29_30,
             ).fallbackToDestructiveMigration(dropAllTables = true)
             // Pre-release: no shipped DBs; bump [MmrDatabase.SCHEMA_VERSION] without migration classes.
             .addCallback(

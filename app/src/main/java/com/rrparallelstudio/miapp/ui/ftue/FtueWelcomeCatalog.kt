@@ -92,7 +92,7 @@ object FtueWelcomeCatalog {
             FtueWelcomeStep(
                 id = "main_tabs",
                 title = "Bottom navigation",
-                body = "Open these from the tab bar. Hide tabs you do not need in Settings → Transaction Appearance.",
+                body = "Open these from the tab bar. Hide tabs you do not need in Settings → Home & Menu.",
                 bullets =
                     listOf(
                         FtueBullet(
@@ -126,7 +126,7 @@ object FtueWelcomeCatalog {
                             FtueBulletIcon.ApprovalsInbox,
                         ),
                         FtueBullet(
-                            "Refresh — import new bank SMS from your backup folder (set under Settings → Transaction scan).",
+                            "Refresh — import new bank SMS from your backup folder (set under Settings → Transaction Scan).",
                             FtueBulletIcon.ApprovalsInbox,
                         ),
                         FtueBullet(
@@ -141,7 +141,15 @@ object FtueWelcomeCatalog {
                 bullets =
                     listOf(
                         FtueBullet(
-                            "Transaction Appearance — theme, colors, start screen, visible tabs.",
+                            "Home & Menu — start screen, month and week, visible tabs.",
+                            FtueBulletIcon.Configuration,
+                        ),
+                        FtueBullet(
+                            "Appearance — theme, light or dark, and transaction list style.",
+                            FtueBulletIcon.Configuration,
+                        ),
+                        FtueBullet(
+                            "Security — lock the app when you open it.",
                             FtueBulletIcon.Configuration,
                         ),
                         FtueBullet(
@@ -153,27 +161,28 @@ object FtueWelcomeCatalog {
                             FtueBulletIcon.Categories,
                         ),
                         FtueBullet(
-                            "Transaction scan — SMS backup folder and how far back to read bank SMS.",
+                            "Transaction Scan — SMS backup folder, how far back to read, and optional custom SMS templates.",
                             FtueBulletIcon.ApprovalsInbox,
                         ),
                         FtueBullet(
-                            "Replay introduction — run this tour again anytime.",
+                            "Replay Introduction — run this tour again anytime.",
                             FtueBulletIcon.MainSettings,
                         ),
                     ),
             ),
             FtueWelcomeStep(
                 id = "backup",
-                title = "Backup & sync",
-                body = "No cloud account is required. Export when you want a copy off this phone.",
+                title = "Backup & Sync",
+                body = "No cloud account is required. Back up to a folder you choose on this phone.",
                 bullets =
                     listOf(
                         FtueBullet(
-                            "Backup & Restore — export or import a signed .mibxbac file, schedule automatic backups to Downloads, or merge a Money Manager or Monefy backup.",
+                            "Backup & Restore — Back Up Now saves a signed .mibxbac to your backup folder; " +
+                                "one schedule covers local files and Google Drive when linked. Import merges Money Manager or Monefy backups.",
                             FtueBulletIcon.Backup,
                         ),
                         FtueBullet(
-                            "Google Drive backup — optional daily, weekly, or monthly uploads when linked.",
+                            "Google Drive backup — link your account; the same local file uploads (Wi‑Fi only optional).",
                             FtueBulletIcon.DriveBackup,
                         ),
                         FtueBullet(

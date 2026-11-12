@@ -128,6 +128,27 @@ interface RecurringRuleDao {
         categoryId: Long,
         now: Long = System.currentTimeMillis(),
     )
+
+    @Query(
+        """
+        UPDATE recurring_rules
+        SET subcategoryId = NULL, updatedAt = :now
+        WHERE subcategoryId = :subcategoryId
+        """,
+    )
+    suspend fun clearSubcategory(
+        subcategoryId: Long,
+        now: Long = System.currentTimeMillis(),
+    )
+
+    @Query(
+        """
+        UPDATE recurring_rules
+        SET subcategoryId = NULL
+        WHERE subcategoryId = :subcategoryId
+        """,
+    )
+    suspend fun detachSubcategory(subcategoryId: Long)
 }
 
 @Dao

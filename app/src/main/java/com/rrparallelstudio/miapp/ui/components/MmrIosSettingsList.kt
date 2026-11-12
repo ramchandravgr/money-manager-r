@@ -22,14 +22,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rrparallelstudio.miapp.ui.copy.mmrStaticLabelCase
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
+import com.rrparallelstudio.miapp.ui.theme.mmrIosSettingsSectionHeaderStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrSettingsInsetRowPrimaryStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrSettingsRowSecondaryStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrTitleMediumFixedStyle
 
 @Composable
 internal fun MmrIosSettingsUsesSeparatedFieldCards(): Boolean =
@@ -111,11 +113,7 @@ fun MmrIosSettingsSection(
                                 end = MmrDimens.iosSettingsSectionHeaderInset,
                                 bottom = MmrDimens.iosSettingsSectionHeaderBottom,
                             ),
-                    color = MmrBrandColors.listAreaCaptionText(),
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Normal,
-                    letterSpacing = 0.2.sp,
-                    lineHeight = 16.sp,
+                    style = mmrIosSettingsSectionHeaderStyle(MmrBrandColors.listAreaCaptionText()),
                 )
             }
         }
@@ -175,8 +173,7 @@ internal fun MmrIosSettingsRowLabelText(
     Text(
         text = if (useStaticLabelCase) text.mmrStaticLabelCase() else text,
         modifier = modifier,
-        color = MmrBrandColors.formCardPrimaryText(),
-        fontSize = 16.sp,
+        style = mmrSettingsInsetRowPrimaryStyle(MmrBrandColors.formCardPrimaryText()),
         maxLines = MMR_IOS_SETTINGS_LABEL_MAX_LINES,
         overflow = TextOverflow.Ellipsis,
         softWrap = true,
@@ -191,8 +188,7 @@ internal fun MmrIosSettingsRowValueText(
     Text(
         text = text,
         modifier = modifier,
-        color = MmrBrandColors.TextMedium,
-        fontSize = 16.sp,
+        style = mmrSettingsInsetRowPrimaryStyle(MmrBrandColors.formCardSecondaryText()),
         maxLines = MMR_IOS_SETTINGS_VALUE_MAX_LINES,
         overflow = TextOverflow.Ellipsis,
         softWrap = true,
@@ -261,8 +257,7 @@ fun MmrIosSettingsNavRow(
                 if (!labelSubtitle.isNullOrBlank()) {
                     Text(
                         text = labelSubtitle,
-                        color = MmrBrandColors.TextMedium,
-                        fontSize = 13.sp,
+                        style = mmrSettingsRowSecondaryStyle(MmrBrandColors.formCardSecondaryText()),
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -287,7 +282,7 @@ fun MmrIosSettingsNavRow(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
-                tint = MmrBrandColors.TextLight,
+                tint = MmrBrandColors.formCardDisclosureIcon(),
                 modifier = Modifier.padding(start = 2.dp),
             )
         }
@@ -360,8 +355,7 @@ fun MmrIosSettingsCaptionRow(
                         horizontal = MmrDimens.iosSettingsRowHorizontalPadding,
                         vertical = 10.dp,
                     ),
-            color = MmrBrandColors.TextMedium,
-            fontSize = 15.sp,
+            style = mmrTitleMediumFixedStyle(MmrBrandColors.TextMedium),
         )
     }
 }
@@ -429,8 +423,7 @@ fun MmrIosSettingsDestructiveRow(
                         horizontal = MmrDimens.iosSettingsRowHorizontalPadding,
                         vertical = 11.dp,
                     ),
-            color = MaterialTheme.colorScheme.error,
-            fontSize = 16.sp,
+            style = mmrSettingsInsetRowPrimaryStyle(MaterialTheme.colorScheme.error),
         )
     }
 }

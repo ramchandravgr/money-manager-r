@@ -28,9 +28,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rrparallelstudio.miapp.core.backup.BackupImportMode
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
+import com.rrparallelstudio.miapp.ui.theme.mmrBottomSheetTitleStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrSettingsInsetRowPrimaryStyle
 
 /**
  * iOS Settings–style single-choice picker as a **bottom sheet** (not centered dialog).
@@ -71,9 +72,7 @@ fun MmrIosSettingsSingleChoiceSheet(
         ) {
             Text(
                 text = title,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MmrBrandColors.modalSheetTitleText(),
+                style = mmrBottomSheetTitleStyle(MmrBrandColors.modalSheetTitleText()),
                 modifier = Modifier.padding(bottom = if (message != null) 6.dp else 12.dp),
             )
             message?.let {
@@ -135,9 +134,10 @@ fun MmrIosSettingsBackupImportModeSheet(
     val helper =
         mergeHelper
             ?: when (selectedMode) {
-                BackupImportMode.REPLACE -> "Replace removes current data on this device and restores the backup."
+                BackupImportMode.REPLACE ->
+                    "Replace removes what is on this phone and uses the file."
                 BackupImportMode.MERGE ->
-                    "Merge adds records from the backup that are not already on this device (same IDs are skipped)."
+                    "Merge adds only what is not already here. Files from Money Manager and Monefy can only merge."
             }
     MmrIosSettingsSingleChoiceSheet(
         title = title,
@@ -150,7 +150,7 @@ fun MmrIosSettingsBackupImportModeSheet(
     ) {
         if (showReplaceOption) {
             MmrIosSettingsChoiceRow(
-                label = "Replace device data",
+                label = "Replace & Restore",
                 selected = selectedMode == BackupImportMode.REPLACE,
                 onClick = { onSelectMode(BackupImportMode.REPLACE) },
                 testTag = replaceModeTestTag,
@@ -159,7 +159,7 @@ fun MmrIosSettingsBackupImportModeSheet(
         MmrIosSettingsChoiceRow(
             label =
                 mergeChoiceLabel
-                    ?: if (showReplaceOption) "Merge with existing data" else "Merge transactions",
+                    ?: "Merge",
             selected = selectedMode == BackupImportMode.MERGE,
             onClick = { onSelectMode(BackupImportMode.MERGE) },
             showDividerBelow = false,
@@ -238,9 +238,10 @@ fun MmrIosSettingsChoiceRow(
                 Text(
                     text = label,
                     modifier = Modifier.weight(1f, fill = true).padding(end = 8.dp),
-                    color = MmrBrandColors.settingsSheetListRowText(),
-                    fontSize = 16.sp,
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                    style =
+                        mmrSettingsInsetRowPrimaryStyle(MmrBrandColors.settingsSheetListRowText()).copy(
+                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                        ),
                     maxLines = MMR_IOS_SETTINGS_LABEL_MAX_LINES,
                     overflow = TextOverflow.Ellipsis,
                     softWrap = true,

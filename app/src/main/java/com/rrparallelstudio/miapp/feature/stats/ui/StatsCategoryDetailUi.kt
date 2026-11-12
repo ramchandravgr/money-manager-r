@@ -29,7 +29,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rrparallelstudio.miapp.feature.home.model.TransactionGroupUi
 import com.rrparallelstudio.miapp.feature.stats.model.MonthlyChartPointUi
 import com.rrparallelstudio.miapp.feature.stats.model.SubcategoryBreakdownUi
@@ -37,6 +36,11 @@ import com.rrparallelstudio.miapp.ui.adaptive.mmrScreenHorizontalPadding
 import com.rrparallelstudio.miapp.ui.components.MmrDimens
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
 import com.rrparallelstudio.miapp.ui.theme.MmrChipPaints
+import com.rrparallelstudio.miapp.ui.theme.mmrSettingsRowPrimaryStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrStatsChartLabel10Style
+import com.rrparallelstudio.miapp.ui.theme.mmrStatsChartLabel11Style
+import com.rrparallelstudio.miapp.ui.theme.mmrStatsChartLabel12Style
+import com.rrparallelstudio.miapp.ui.theme.mmrStatsHeroAmountStyle
 import kotlin.math.max
 
 @Composable
@@ -71,15 +75,12 @@ fun StatsCategoryDetailHero(
         }
         Text(
             text = "Total Balance",
-            fontSize = 12.sp,
-            color = MmrBrandColors.TextMedium,
+            style = mmrStatsChartLabel12Style(MmrBrandColors.TextMedium),
             modifier = Modifier.padding(top = MmrDimens.spaceSm),
         )
         Text(
             text = totalFormatted,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.ExtraBold,
-            color = MmrBrandColors.Active,
+            style = mmrStatsHeroAmountStyle(MmrBrandColors.Active).copy(fontWeight = FontWeight.ExtraBold),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -113,14 +114,14 @@ fun StatsSubcategoryBreakdownCard(
         ) {
             Text(
                 text = "Sub-category Breakdown",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MmrBrandColors.TextStrong,
+                style =
+                    mmrStatsChartLabel12Style(MmrBrandColors.TextStrong).copy(
+                        fontWeight = FontWeight.SemiBold,
+                    ),
             )
             Text(
                 text = "${rows.size} items",
-                fontSize = 10.sp,
-                color = MmrBrandColors.TextMedium,
+                style = mmrStatsChartLabel10Style(MmrBrandColors.TextMedium),
                 modifier =
                     Modifier
                         .clip(RoundedCornerShape(12.dp))
@@ -208,22 +209,19 @@ private fun StatsSubcategoryMiniRow(
         Spacer(Modifier.width(MmrDimens.spaceSm))
         Text(
             text = row.name,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
+            style = mmrStatsChartLabel12Style(Color.Unspecified).copy(fontWeight = FontWeight.Medium),
             modifier = Modifier.weight(1f),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
         Text(
             text = row.percentageFormatted,
-            fontSize = 11.sp,
-            color = MmrBrandColors.TextMedium,
+            style = mmrStatsChartLabel11Style(MmrBrandColors.TextMedium),
         )
         Spacer(Modifier.width(MmrDimens.spaceSm))
         Text(
             text = row.amountFormatted,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
+            style = mmrStatsChartLabel12Style(Color.Unspecified).copy(fontWeight = FontWeight.Bold),
         )
     }
 }
@@ -273,14 +271,14 @@ fun StatsCategorySpendingBarChart(
         ) {
             Text(
                 text = "Spending Trend",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = MmrBrandColors.TextStrong,
+                style =
+                    mmrStatsChartLabel12Style(MmrBrandColors.TextStrong).copy(
+                        fontWeight = FontWeight.SemiBold,
+                    ),
             )
             Text(
                 text = rangeLabel,
-                fontSize = 11.sp,
-                color = MmrBrandColors.TextMedium,
+                style = mmrStatsChartLabel11Style(MmrBrandColors.TextMedium),
             )
         }
         Spacer(Modifier.height(MmrDimens.spaceMd))
@@ -317,9 +315,10 @@ fun StatsCategorySpendingBarChart(
                     Spacer(Modifier.height(6.dp))
                     Text(
                         text = point.label,
-                        fontSize = 11.sp,
-                        fontWeight = if (isLast) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isLast) MmrBrandColors.TextStrong else MmrBrandColors.TextMedium,
+                        style =
+                            mmrStatsChartLabel11Style(
+                                if (isLast) MmrBrandColors.TextStrong else MmrBrandColors.TextMedium,
+                            ).copy(fontWeight = if (isLast) FontWeight.Bold else FontWeight.Medium),
                         maxLines = 1,
                     )
                 }
@@ -343,14 +342,11 @@ fun StatsCategoryTransactionsSectionHeader(
     ) {
         Text(
             text = "Transactions History",
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            color = MmrBrandColors.TextStrong,
+            style = mmrSettingsRowPrimaryStyle(MmrBrandColors.TextStrong).copy(fontWeight = FontWeight.Bold),
         )
         Text(
             text = "$recordCount Records",
-            fontSize = 12.sp,
-            color = MmrBrandColors.TextMedium,
+            style = mmrStatsChartLabel12Style(MmrBrandColors.TextMedium),
             modifier =
                 Modifier
                     .clip(RoundedCornerShape(12.dp))
@@ -393,9 +389,7 @@ fun StatsCategoryDetailBottomChrome(
                     val textColor = paint.content
                     Text(
                         text = item.name,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = textColor,
+                        style = mmrStatsChartLabel12Style(textColor).copy(fontWeight = FontWeight.SemiBold),
                         maxLines = 1,
                         modifier =
                             Modifier
@@ -418,21 +412,17 @@ fun StatsCategoryDetailBottomChrome(
             Row(horizontalArrangement = Arrangement.spacedBy(MmrDimens.spaceSm)) {
                 Text(
                     text = "Avg/Tx: ${stats.avgFormatted}",
-                    fontSize = 11.sp,
-                    color = MmrBrandColors.TextMedium,
+                    style = mmrStatsChartLabel11Style(MmrBrandColors.TextMedium),
                 )
-                Text(text = "•", fontSize = 11.sp, color = MmrBrandColors.TextLight)
+                Text(text = "•", style = mmrStatsChartLabel11Style(MmrBrandColors.TextLight))
                 Text(
                     text = "Highest: ${stats.maxFormatted}",
-                    fontSize = 11.sp,
-                    color = MmrBrandColors.TextMedium,
+                    style = mmrStatsChartLabel11Style(MmrBrandColors.TextMedium),
                 )
             }
             Text(
                 text = categoryName,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                color = categoryColor,
+                style = mmrStatsChartLabel10Style(categoryColor).copy(fontWeight = FontWeight.Bold),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier =

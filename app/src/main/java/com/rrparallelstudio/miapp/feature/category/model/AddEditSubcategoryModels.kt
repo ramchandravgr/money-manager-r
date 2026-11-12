@@ -7,6 +7,7 @@ data class AddEditSubcategoryUiState(
     val parentCategoryId: Long = 0L,
     val parentCategoryName: String = "",
     val parentColorHex: String = "#3B82F6",
+    val iconName: String = "category_default",
     val name: String = "",
     val sortOrder: String = "0",
     val isSaving: Boolean = false,
@@ -23,6 +24,10 @@ sealed interface AddEditSubcategoryUiEvent {
 
     data class OnSortOrderChanged(
         val sortOrder: String,
+    ) : AddEditSubcategoryUiEvent
+
+    data class OnIconSelected(
+        val iconName: String,
     ) : AddEditSubcategoryUiEvent
 
     data object OnSaveClick : AddEditSubcategoryUiEvent

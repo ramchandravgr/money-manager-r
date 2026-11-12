@@ -32,6 +32,7 @@ import com.rrparallelstudio.miapp.feature.transaction.ui.TransactionNoteField
 import com.rrparallelstudio.miapp.feature.transaction.ui.TransactionRecurrenceIntervalChips
 import com.rrparallelstudio.miapp.ui.components.MmrAppBarSaveIcon
 import com.rrparallelstudio.miapp.ui.components.MmrImeAwareScrollColumn
+import com.rrparallelstudio.miapp.ui.components.MmrNestedScaffoldInsets
 import com.rrparallelstudio.miapp.ui.components.MmrPrimaryActionButton
 import com.rrparallelstudio.miapp.ui.components.MmrTopAppBar
 import com.rrparallelstudio.miapp.ui.components.MmrTransactionFormIcons
@@ -63,6 +64,7 @@ fun AddEditRecurringRuleScreen(
     }
 
     Scaffold(
+        contentWindowInsets = MmrNestedScaffoldInsets,
         topBar = {
             MmrTopAppBar(
                 title =
@@ -92,6 +94,9 @@ fun AddEditRecurringRuleScreen(
             MmrImeAwareScrollColumn(
                 horizontalPadding = 16.dp,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
+                extraBottomPadding =
+                    if (expandedField == RecurringFormExpandedField.None) 24.dp else 0.dp,
+                scrollEnabled = expandedField == RecurringFormExpandedField.None,
             ) {
                 RecurringRuleFormFields(
                     uiState = uiState,

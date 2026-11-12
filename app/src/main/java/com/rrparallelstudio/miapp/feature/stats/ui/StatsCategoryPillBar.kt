@@ -4,8 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -20,6 +22,7 @@ import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
 @Composable
 internal fun StatsCategoryPillBar(
     breakdowns: List<CategoryBreakdownUi>,
+    segmentColors: Map<String, Color>,
     focusedCategoryKey: String?,
     onSegmentClick: (CategoryBreakdownUi) -> Unit,
     modifier: Modifier = Modifier,
@@ -37,7 +40,10 @@ internal fun StatsCategoryPillBar(
                 .clip(pillShape)
                 .background(MmrBrandColors.BorderMain.copy(alpha = 0.18f)),
     ) {
-        breakdowns.forEach { item ->
+        breakdowns.forEachIndexed { index, item ->
+            if (index > 0) {
+                Spacer(modifier = Modifier.height(2.dp))
+            }
             val key = categoryBridgeKey(item)
             val fraction = (item.amount.toDouble() / total.toDouble()).toFloat().coerceAtLeast(0.001f)
             val segmentAlpha =
@@ -46,7 +52,7 @@ internal fun StatsCategoryPillBar(
                     focusedCategoryKey == key -> 1f
                     else -> 0.32f
                 }
-            val color = parseStatsCategoryColor(item.colorHex)
+            val color = segmentColors[key] ?: parseStatsCategoryColor(item.colorHex)
             Box(
                 modifier =
                     Modifier

@@ -27,6 +27,7 @@ import com.rrparallelstudio.miapp.feature.transaction.ui.TransactionReceiptViewe
 import com.rrparallelstudio.miapp.feature.transaction.ui.rememberTransactionReceiptAttachLauncher
 import com.rrparallelstudio.miapp.ui.components.MmrAppBarSaveIcon
 import com.rrparallelstudio.miapp.ui.components.MmrImeAwareScrollColumn
+import com.rrparallelstudio.miapp.ui.components.MmrNestedScaffoldInsets
 import com.rrparallelstudio.miapp.ui.components.MmrPrimaryActionButton
 import com.rrparallelstudio.miapp.ui.components.MmrTopAppBar
 import com.rrparallelstudio.miapp.ui.components.MmrTransactionFormScreenBackground
@@ -60,6 +61,7 @@ fun AddEditAssetScreen(
     }
 
     Scaffold(
+        contentWindowInsets = MmrNestedScaffoldInsets,
         topBar = {
             MmrTopAppBar(
                 title = if (isEdit) "Edit asset" else "New asset",

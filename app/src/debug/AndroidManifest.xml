@@ -12,5 +12,13 @@
                 <action android:name="com.rrparallelstudio.miapp.action.CRASHLYTICS_TEST_CRASH" />
             </intent-filter>
         </receiver>
+        <receiver
+            android:name="com.rrparallelstudio.miapp.debug.MmrMonefyImportDebugReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.rrparallelstudio.miapp.action.MONEYFY_IMPORT_PROBE" />
+                <action android:name="com.rrparallelstudio.miapp.action.MONEYFY_IMPORT_RUN" />
+            </intent-filter>
+        </receiver>
     </application>
 </manifest>

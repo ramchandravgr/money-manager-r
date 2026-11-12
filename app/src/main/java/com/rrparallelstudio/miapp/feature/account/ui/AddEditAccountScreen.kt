@@ -1,5 +1,6 @@
 package com.rrparallelstudio.miapp.feature.account.ui
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -11,7 +12,9 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rrparallelstudio.miapp.core.domain.model.AccountDeletionPreview
 import com.rrparallelstudio.miapp.core.model.enums.AccountType
@@ -20,14 +23,14 @@ import com.rrparallelstudio.miapp.feature.account.viewmodel.AddEditAccountViewMo
 import com.rrparallelstudio.miapp.testing.MmrTestTags
 import com.rrparallelstudio.miapp.ui.components.AccountDeleteDialog
 import com.rrparallelstudio.miapp.ui.components.EntityPickerOption
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsDestructiveActionSection
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsInlineErrorSection
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsInlineTextRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsNavRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSection
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSingleChoiceSheet
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSwitchRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsValueRow
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroup
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupDestructiveSection
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupError
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupNavRow
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupSwitchRow
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupTextField
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupValueRow
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsSaveTopBar
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenLayout
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenScaffold
@@ -108,12 +111,14 @@ fun AddEditAccountScreen(
             )
         },
     ) {
-        MmrIosSettingsSection(
+        MmrSettingsGroup(
             title = "Details",
             isFirstInScreen = true,
-            footer = "Opening balance is used when you first add the account.",
+            footer =
+                "Opening balance is what was already in this account when you started tracking it here. " +
+                    "Card last 4 helps match a bank message to this account.",
         ) {
-            MmrIosSettingsInlineTextRow(
+            MmrSettingsGroupTextField(
                 label = "Name",
                 value = state.name,
                 onValueChange = { viewModel.onEvent(AddEditAccountUiEvent.OnNameChanged(it)) },
@@ -122,24 +127,24 @@ fun AddEditAccountScreen(
             )
             val smsOrigin = state.smsOriginLabel
             if (smsOrigin != null) {
-                MmrIosSettingsValueRow(
+                MmrSettingsGroupValueRow(
                     label = "SMS provisioning",
                     value = smsOrigin,
                 )
             }
-            MmrIosSettingsNavRow(
+            MmrSettingsGroupNavRow(
                 label = "Type",
                 value = state.type.name,
                 onClick = { showTypeSheet = true },
             )
-            MmrIosSettingsInlineTextRow(
+            MmrSettingsGroupTextField(
                 label = "Opening balance",
                 value = state.openingBalance,
                 onValueChange = { viewModel.onEvent(AddEditAccountUiEvent.OnOpeningBalanceChanged(it)) },
                 placeholder = "₹",
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             )
-            MmrIosSettingsInlineTextRow(
+            MmrSettingsGroupTextField(
                 label = "Card last 4",
                 value = state.cardLastFour,
                 onValueChange = { viewModel.onEvent(AddEditAccountUiEvent.OnCardLastFourChanged(it)) },
@@ -149,18 +154,20 @@ fun AddEditAccountScreen(
             )
         }
 
-        MmrIosSettingsSection(
+        MmrSettingsGroup(
             title = "Options",
-            footer = "Primary account is used for loan repayments from your main cash or bank account.",
+            footer =
+                "Loan payments use the primary account when you do not pick another one. " +
+                    "Turn Active off to hide an account without deleting it.",
         ) {
-            MmrIosSettingsSwitchRow(
+            MmrSettingsGroupSwitchRow(
                 label = "Primary account",
                 checked = state.isPrimary,
                 onCheckedChange = { viewModel.onEvent(AddEditAccountUiEvent.OnPrimaryChanged(it)) },
                 showDividerBelow = isEdit,
             )
             if (isEdit) {
-                MmrIosSettingsSwitchRow(
+                MmrSettingsGroupSwitchRow(
                     label = "Active",
                     checked = state.isActive,
                     onCheckedChange = { viewModel.onEvent(AddEditAccountUiEvent.OnActiveChanged(it)) },
@@ -170,14 +177,14 @@ fun AddEditAccountScreen(
         }
 
         if (isEdit) {
-            MmrIosSettingsDestructiveActionSection(
-                label = "Remove account",
+            MmrSettingsGroupDestructiveSection(
+                label = "Remove Account",
                 onClick = { showDeleteDialog = true },
             )
         }
 
         state.errorMessage?.let { message ->
-            MmrIosSettingsInlineErrorSection(message = message)
+            MmrSettingsGroupError(message = message, modifier = Modifier.padding(top = 14.dp))
         }
     }
 }

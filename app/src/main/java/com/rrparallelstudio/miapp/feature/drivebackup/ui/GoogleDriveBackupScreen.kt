@@ -12,19 +12,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.rrparallelstudio.miapp.core.drive.GoogleDriveAutoSchedule
 import com.rrparallelstudio.miapp.feature.drivebackup.viewmodel.GoogleDriveBackupViewModel
 import com.rrparallelstudio.miapp.testing.MmrTestTags
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsBackupImportModeSheet
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsEmphasisTextSlot
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsNavRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsPrimaryActionSlot
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsRadioRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSecondaryActionSlot
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSection
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSectionBodyText
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSwitchRow
 import com.rrparallelstudio.miapp.ui.components.MmrProcessingOverlay
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroup
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupAction
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupEmphasis
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupNavRow
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupNote
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenLayout
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenScaffold
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsStatusBanners
@@ -60,7 +56,7 @@ fun GoogleDriveBackupScreen(
 
     if (uiState.showRestoreDialog) {
         MmrIosSettingsBackupImportModeSheet(
-            title = "Restore from Drive",
+            title = "Restore This File",
             fileLabel = uiState.pendingRestoreFile?.name ?: "backup",
             selectedMode = uiState.pendingImportMode,
             onSelectMode = viewModel::setPendingImportMode,
@@ -80,7 +76,7 @@ fun GoogleDriveBackupScreen(
     )
 
     MmrSettingsScreenScaffold(
-        title = "Google Drive backup",
+        title = "Google Drive",
         onNavigateBack = {
             if (!uiState.isBusy) {
                 onNavigateBack()
@@ -96,44 +92,46 @@ fun GoogleDriveBackupScreen(
             onDismissError = viewModel::dismissMessages,
         )
 
-        MmrIosSettingsSection(
+        MmrSettingsGroup(
             title = "About",
             isFirstInScreen = true,
-            footer = "Opt-in folder MoneyInbox/Backups on your Drive. Same signed .mibxbac format as local export.",
         ) {
-            MmrIosSettingsSectionBodyText(text = "Backups use your Google account storage and API quotas.")
+            MmrSettingsGroupNote(
+                text =
+                    "These copies use space in your Google account. " +
+                        "They are the same files saved in your backup folder, under MoneyInbox / Backups.",
+                showDividerBelow = false,
+            )
         }
 
         if (!uiState.isConfigured) {
-            MmrIosSettingsSection(
+            MmrSettingsGroup(
                 title = "Setup",
                 footer = "This copy of the app cannot connect to Google Drive.",
             ) {
-                MmrIosSettingsSectionBodyText(
-                    text = "Google Drive backup is not available.",
-                )
+                MmrSettingsGroupNote(text = "Google Drive backup is not available.", showDividerBelow = false)
             }
             return@MmrSettingsScreenScaffold
         }
 
-        MmrIosSettingsSection(title = "Account") {
+        MmrSettingsGroup(title = "Account") {
             if (uiState.linkedEmail == null) {
-                MmrIosSettingsEmphasisTextSlot(
+                MmrSettingsGroupEmphasis(
                     text = "Not connected",
                     helperBelow =
-                        "Pick your Google account, allow Drive access, enable daily backup (Wi‑Fi only), " +
-                            "and upload once.",
+                        "Pick your Google account and allow Drive access. Backup schedule and Back Up Now " +
+                            "live on Backup & Restore.",
                 )
-                MmrIosSettingsPrimaryActionSlot(
-                    text = "Turn on Google Drive backup",
+                MmrSettingsGroupAction(
+                    text = "Turn On Google Drive Backup",
                     onClick = viewModel::turnOnDriveBackup,
                     enabled = !uiState.isBusy,
                     showDividerBelow = false,
                     testTag = MmrTestTags.googleDriveBackupTurnOn,
                 )
             } else {
-                MmrIosSettingsEmphasisTextSlot(text = uiState.linkedEmail!!)
-                MmrIosSettingsSecondaryActionSlot(
+                MmrSettingsGroupEmphasis(text = uiState.linkedEmail!!, showDividerBelow = true)
+                MmrSettingsGroupAction(
                     text = "Disconnect",
                     onClick = viewModel::disconnect,
                     enabled = !uiState.isBusy,
@@ -143,60 +141,25 @@ fun GoogleDriveBackupScreen(
         }
 
         if (uiState.linkedEmail != null) {
-            MmrIosSettingsSection(
-                title = "Automatic backup",
+            MmrSettingsGroup(
+                title = "Backups On Drive",
                 footer =
                     buildString {
-                        append(
-                            "Runs in the background on a daily, weekly, or monthly schedule when Drive is linked. ",
-                        )
-                        uiState.lastBackupLabel?.let { append("Last backup: $it") }
-                    }.takeIf { it.isNotBlank() },
+                        append("Tap a backup to put it on this phone. ")
+                        append("To create a new one, use Back Up Now on Backup & Restore. ")
+                        uiState.lastBackupLabel?.let { append("Last upload: $it") }
+                    }.trim().takeIf { it.isNotBlank() },
             ) {
-                MmrIosSettingsRadioRow(
-                    label = "Off",
-                    selected = uiState.autoSchedule == GoogleDriveAutoSchedule.OFF,
-                    onSelect = { viewModel.setAutoSchedule(GoogleDriveAutoSchedule.OFF) },
-                )
-                MmrIosSettingsRadioRow(
-                    label = "Daily",
-                    selected = uiState.autoSchedule == GoogleDriveAutoSchedule.DAILY,
-                    onSelect = { viewModel.setAutoSchedule(GoogleDriveAutoSchedule.DAILY) },
-                )
-                MmrIosSettingsRadioRow(
-                    label = "Weekly",
-                    selected = uiState.autoSchedule == GoogleDriveAutoSchedule.WEEKLY,
-                    onSelect = { viewModel.setAutoSchedule(GoogleDriveAutoSchedule.WEEKLY) },
-                )
-                MmrIosSettingsRadioRow(
-                    label = "Monthly",
-                    selected = uiState.autoSchedule == GoogleDriveAutoSchedule.MONTHLY,
-                    onSelect = { viewModel.setAutoSchedule(GoogleDriveAutoSchedule.MONTHLY) },
-                )
-                MmrIosSettingsSwitchRow(
-                    label = "Wi‑Fi only",
-                    checked = uiState.wifiOnly,
-                    onCheckedChange = viewModel::setWifiOnly,
-                    showDividerBelow = true,
-                )
-                MmrIosSettingsPrimaryActionSlot(
-                    text = "Back up now",
-                    onClick = viewModel::uploadNow,
-                    enabled = !uiState.isBusy,
-                    showDividerBelow = false,
-                    testTag = MmrTestTags.googleDriveBackupNow,
-                )
-            }
-
-            MmrIosSettingsSection(
-                title = "Restore from Drive",
-                footer = if (uiState.remoteBackups.isEmpty()) "No backups in Drive yet." else null,
-            ) {
-                if (uiState.remoteBackups.isNotEmpty()) {
+                if (uiState.remoteBackups.isEmpty()) {
+                    MmrSettingsGroupNote(
+                        text = "Files you back up appear here when Drive is connected.",
+                        showDividerBelow = false,
+                    )
+                } else {
                     uiState.remoteBackups.forEachIndexed { index, file ->
                         val whenLabel =
                             DateFormat.getDateTimeInstance().format(Date(file.modifiedTimeMillis))
-                        MmrIosSettingsNavRow(
+                        MmrSettingsGroupNavRow(
                             label = file.name,
                             value = whenLabel,
                             onClick = { if (!uiState.isBusy) viewModel.beginRestore(file) },

@@ -56,7 +56,7 @@ class HomeViewModel
         private val displaySettings =
             displaySettingsStore.settings
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), displaySettingsStore.snapshot())
-        private val _selectedCategoryFilter = MutableStateFlow<String?>(null)
+        private val _selectedCategoryFilters = MutableStateFlow<Set<Long>>(emptySet())
         private val _selectedTypeFilter = MutableStateFlow(HomeTypeFilter.ALL)
         private val _isRefreshing = MutableStateFlow(false)
         private val _errorMessage = MutableStateFlow<String?>(null)
@@ -157,12 +157,12 @@ class HomeViewModel
         private val filterState =
             combine(
                 combine(
-                    _selectedCategoryFilter,
+                    _selectedCategoryFilters,
                     _selectedTypeFilter,
                     _isRefreshing,
-                ) { selectedCategory, selectedType, refreshing ->
+                ) { selectedCategories, selectedType, refreshing ->
                     FilterSnapshotPartial(
-                        selectedCategory = selectedCategory,
+                        selectedCategories = selectedCategories,
                         selectedType = selectedType,
                         refreshing = refreshing,
                     )
@@ -182,7 +182,7 @@ class HomeViewModel
                 },
             ) { partial, meta ->
                 FilterSnapshot(
-                    selectedCategory = partial.selectedCategory,
+                    selectedCategories = partial.selectedCategories,
                     selectedType = partial.selectedType,
                     refreshing = partial.refreshing,
                     error = meta.error,
@@ -200,13 +200,13 @@ class HomeViewModel
         )
 
         private data class FilterSnapshotPartial(
-            val selectedCategory: String?,
+            val selectedCategories: Set<Long>,
             val selectedType: HomeTypeFilter,
             val refreshing: Boolean,
         )
 
         private data class FilterSnapshot(
-            val selectedCategory: String?,
+            val selectedCategories: Set<Long>,
             val selectedType: HomeTypeFilter,
             val refreshing: Boolean,
             val error: String?,
@@ -256,7 +256,7 @@ class HomeViewModel
                 val filtered =
                     applyFilters(
                         items = baseList,
-                        selectedCategory = filters.selectedCategory,
+                        selectedCategories = filters.selectedCategories,
                         selectedType = filters.selectedType,
                     )
 
@@ -327,7 +327,7 @@ class HomeViewModel
                 val calendarTotalsSource =
                     applyFilters(
                         items = allTransactions,
-                        selectedCategory = filters.selectedCategory,
+                        selectedCategories = filters.selectedCategories,
                         selectedType = filters.selectedType,
                     )
                 val totalsByDate = HomeCalendarUtils.aggregateByDate(calendarTotalsSource, zoneId)
@@ -375,7 +375,7 @@ class HomeViewModel
                         val filteredAll =
                             applyFilters(
                                 items = allTransactions,
-                                selectedCategory = filters.selectedCategory,
+                                selectedCategories = filters.selectedCategories,
                                 selectedType = filters.selectedType,
                             )
                         val currentPeriod =
@@ -409,7 +409,7 @@ class HomeViewModel
                             transactions =
                                 applyFilters(
                                     items = allTransactions,
-                                    selectedCategory = filters.selectedCategory,
+                                    selectedCategories = filters.selectedCategories,
                                     selectedType = filters.selectedType,
                                 ),
                             anchorMonth = filters.yearMonth,
@@ -438,9 +438,13 @@ class HomeViewModel
                     showMonthPicker = filters.showMonthPicker,
                     selectedYear = filters.yearMonth.year,
                     selectedMonth = filters.yearMonth.monthValue,
-                    selectedCategoryFilter = filters.selectedCategory,
+                    selectedCategoryFilters = filters.selectedCategories,
                     selectedTypeFilter = filters.selectedType,
-                    categories = categories.map { it.name },
+                    categoryFilterRows =
+                        categoryFilterRowsForHomeTypeFilter(
+                            entities = categories,
+                            filter = filters.selectedType,
+                        ),
                     summary = summary,
                     groupedTransactions = grouped,
                     calendarCells = calendarCells,
@@ -580,13 +584,30 @@ class HomeViewModel
 
         fun onEvent(event: HomeUiEvent) {
             when (event) {
-                is HomeUiEvent.OnCategoryFilterSelected -> {
-                    _selectedCategoryFilter.value =
-                        if (_selectedCategoryFilter.value == event.category) null else event.category
+                is HomeUiEvent.OnCategoryFilterToggled -> {
+                    _selectedCategoryFilters.update { current ->
+                        if (event.categoryId in current) {
+                            current - event.categoryId
+                        } else {
+                            current + event.categoryId
+                        }
+                    }
+                }
+
+                HomeUiEvent.OnCategoryFiltersCleared -> {
+                    _selectedCategoryFilters.value = emptySet()
                 }
 
                 is HomeUiEvent.OnTypeFilterSelected -> {
                     _selectedTypeFilter.value = event.filter
+                    viewModelScope.launch {
+                        val active = categoryRepository.getActiveCategories().first()
+                        val allowed =
+                            homeCategoryFilterOptionIds(
+                                categoryFilterRowsForHomeTypeFilter(active, event.filter),
+                            )
+                        _selectedCategoryFilters.update { it.intersect(allowed) }
+                    }
                 }
 
                 is HomeUiEvent.OnViewTabSelected -> {
@@ -784,7 +805,7 @@ class HomeViewModel
                     val filteredByType =
                         applyFilters(
                             items = transactions,
-                            selectedCategory = _selectedCategoryFilter.value,
+                            selectedCategories = _selectedCategoryFilters.value,
                             selectedType = _selectedTypeFilter.value,
                         )
                     val filtered =
@@ -925,11 +946,12 @@ class HomeViewModel
 
         private fun applyFilters(
             items: List<TransactionWithDetails>,
-            selectedCategory: String?,
+            selectedCategories: Set<Long>,
             selectedType: HomeTypeFilter,
         ): List<TransactionWithDetails> =
             items.filter { item ->
-                val matchesCategory = selectedCategory == null || item.category?.name == selectedCategory
+                val matchesCategory =
+                    selectedCategories.isEmpty() || item.category?.id in selectedCategories
 
                 val loanType = item.loan?.loanType
                 val matchesType =

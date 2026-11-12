@@ -26,7 +26,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 object LanSyncJsonCodec {
-    const val CURRENT_FORMAT_VERSION = 7
+    const val CURRENT_FORMAT_VERSION = 8
 
     fun encode(payload: MmrLanSyncPayload): String =
         JSONObject()
@@ -188,6 +188,7 @@ object LanSyncJsonCodec {
             put("syncId", record.syncId)
             put("categorySyncId", record.categorySyncId)
             put("name", record.name)
+            put("iconName", record.iconName)
             put("isActive", record.isActive)
             put("orderIndex", record.orderIndex)
         }
@@ -197,6 +198,7 @@ object LanSyncJsonCodec {
             syncId = json.getString("syncId"),
             categorySyncId = json.getString("categorySyncId"),
             name = json.getString("name"),
+            iconName = json.optString("iconName", "category_default"),
             isActive = json.getBoolean("isActive"),
             orderIndex = json.getInt("orderIndex"),
         )

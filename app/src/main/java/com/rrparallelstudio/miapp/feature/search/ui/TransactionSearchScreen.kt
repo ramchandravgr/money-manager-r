@@ -45,7 +45,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rrparallelstudio.miapp.feature.home.HomePeriodUtils
 import com.rrparallelstudio.miapp.feature.home.model.HomeSummaryUi
@@ -62,6 +61,7 @@ import com.rrparallelstudio.miapp.ui.components.MmrLocaleAmountVisualTransformat
 import com.rrparallelstudio.miapp.ui.components.MmrPeriodChip
 import com.rrparallelstudio.miapp.ui.components.MmrSearchField
 import com.rrparallelstudio.miapp.ui.components.MmrSearchFilterRow
+import com.rrparallelstudio.miapp.ui.components.mmrSearchFilterFieldTextStyle
 import com.rrparallelstudio.miapp.ui.state.MmrEmptyState
 import com.rrparallelstudio.miapp.ui.state.MmrErrorState
 import com.rrparallelstudio.miapp.ui.state.MmrLoadingState
@@ -76,7 +76,31 @@ fun TransactionSearchScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     var periodMenuExpanded by remember { mutableStateOf(false) }
-    var expandedFilterField by remember { mutableStateOf(SearchFilterExpandedField.None) }
+    var showCategoryDialog by remember { mutableStateOf(false) }
+    var showAccountDialog by remember { mutableStateOf(false) }
+
+    if (showCategoryDialog) {
+        SearchCategoryFilterDialog(
+            categories = state.categories,
+            picks = state.categoryPicks,
+            onToggle = { categoryId, subcategoryId ->
+                viewModel.onEvent(
+                    TransactionSearchUiEvent.OnToggleCategoryPick(categoryId, subcategoryId),
+                )
+            },
+            onDismiss = { showCategoryDialog = false },
+        )
+    }
+    if (showAccountDialog) {
+        SearchAccountFilterDialog(
+            accounts = state.accounts,
+            matchingIds = state.accountsMatchingCategories,
+            selectedIds = state.selectedAccountIds,
+            onToggle = { viewModel.onEvent(TransactionSearchUiEvent.OnToggleAccount(it)) },
+            onClear = { viewModel.onEvent(TransactionSearchUiEvent.OnClearAccounts) },
+            onDismiss = { showAccountDialog = false },
+        )
+    }
 
     if (state.showDateRangePicker) {
         SearchDateRangeDialog(
@@ -138,10 +162,7 @@ fun TransactionSearchScreen(
                         onRetry = { viewModel.onEvent(TransactionSearchUiEvent.OnClearFilters) },
                     )
                 else -> {
-                    val selectedAccountName =
-                        state.accounts
-                            .firstOrNull { it.id == state.selectedAccountId }
-                            ?.name ?: "All"
+                    val selectedAccountName = accountLabel(state)
                     val categoryDisplay = categoryLabel(state)
 
                     Column(modifier = Modifier.fillMaxSize()) {
@@ -178,33 +199,27 @@ fun TransactionSearchScreen(
                                             null
                                         },
                                 )
-                                SearchExpandableAccountFilter(
-                                    state = state,
-                                    expanded = expandedFilterField == SearchFilterExpandedField.Account,
-                                    onExpandedChange = { open ->
-                                        expandedFilterField =
-                                            if (open) {
-                                                SearchFilterExpandedField.Account
-                                            } else {
-                                                SearchFilterExpandedField.None
-                                            }
-                                    },
-                                    onEvent = viewModel::onEvent,
-                                    selectedAccountName = selectedAccountName,
-                                )
-                                SearchExpandableCategoryFilter(
-                                    state = state,
-                                    expanded = expandedFilterField == SearchFilterExpandedField.Category,
-                                    onExpandedChange = { open ->
-                                        if (open) {
-                                            viewModel.onEvent(TransactionSearchUiEvent.OnCategoryRowClick)
-                                            expandedFilterField = SearchFilterExpandedField.Category
+                                MmrSearchFilterRow(
+                                    label = "Account",
+                                    value = selectedAccountName,
+                                    onClick = { showAccountDialog = true },
+                                    onClear =
+                                        if (state.selectedAccountIds.isNotEmpty()) {
+                                            { viewModel.onEvent(TransactionSearchUiEvent.OnClearAccounts) }
                                         } else {
-                                            expandedFilterField = SearchFilterExpandedField.None
-                                        }
-                                    },
-                                    onEvent = viewModel::onEvent,
-                                    categoryDisplay = categoryDisplay,
+                                            null
+                                        },
+                                )
+                                MmrSearchFilterRow(
+                                    label = "Category",
+                                    value = categoryDisplay,
+                                    onClick = { showCategoryDialog = true },
+                                    onClear =
+                                        if (state.categoryPicks.isNotEmpty()) {
+                                            { viewModel.onEvent(TransactionSearchUiEvent.OnClearCategoryPicks) }
+                                        } else {
+                                            null
+                                        },
                                 )
                                 SearchAmountMmRow(
                                     amountMin = state.amountMin,
@@ -334,9 +349,8 @@ private fun SearchAmountMmRow(
         Text(
             text = "Amount",
             modifier = Modifier.width(MmrDimens.searchFilterLabelWidth),
-            color = MmrBrandColors.onCanvasMuted(),
             textAlign = TextAlign.Start,
-            style = MaterialTheme.typography.bodyMedium,
+            style = mmrSearchFilterFieldTextStyle(MmrBrandColors.onCanvasMuted()),
             maxLines = 1,
         )
         SearchAmountCompactField(
@@ -348,8 +362,7 @@ private fun SearchAmountMmRow(
         Text(
             text = "~",
             modifier = Modifier.padding(horizontal = 4.dp),
-            color = MmrBrandColors.onCanvasMuted(),
-            style = MaterialTheme.typography.bodyMedium,
+            style = mmrSearchFilterFieldTextStyle(MmrBrandColors.onCanvasMuted()),
         )
         SearchAmountCompactField(
             value = amountMax,
@@ -378,6 +391,8 @@ private fun SearchAmountCompactField(
     modifier: Modifier = Modifier,
 ) {
     val amountTransformation = remember { MmrLocaleAmountVisualTransformation() }
+    val fieldStyle = mmrSearchFilterFieldTextStyle(MmrBrandColors.onCanvas())
+    val placeholderStyle = mmrSearchFilterFieldTextStyle(MmrBrandColors.onCanvasMuted())
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
@@ -394,11 +409,7 @@ private fun SearchAmountCompactField(
             } else {
                 amountTransformation
             },
-        textStyle =
-            MaterialTheme.typography.bodyMedium.copy(
-                fontSize = 14.sp,
-                color = MmrBrandColors.onCanvas(),
-            ),
+        textStyle = fieldStyle,
         cursorBrush = SolidColor(MmrBrandColors.Active),
         decorationBox = { inner ->
             Box(
@@ -406,11 +417,7 @@ private fun SearchAmountCompactField(
                 contentAlignment = Alignment.CenterStart,
             ) {
                 if (value.isEmpty()) {
-                    Text(
-                        text = placeholder,
-                        color = MmrBrandColors.onCanvasMuted(),
-                        fontSize = 13.sp,
-                    )
+                    Text(text = placeholder, style = placeholderStyle)
                 }
                 inner()
             }
@@ -428,11 +435,34 @@ private fun periodLabel(
     return "$s — $e"
 }
 
+private fun accountLabel(state: com.rrparallelstudio.miapp.feature.search.model.TransactionSearchUiState): String {
+    if (state.selectedAccountIds.isEmpty()) return "All"
+    return state.accounts
+        .filter { it.id in state.selectedAccountIds }
+        .joinToString(", ") { account ->
+            "${account.name} · ${searchAccountTypeLabel(account.type)}"
+        }.ifBlank { "All" }
+}
+
+private fun searchAccountTypeLabel(type: com.rrparallelstudio.miapp.core.model.enums.AccountType): String =
+    when (type) {
+        com.rrparallelstudio.miapp.core.model.enums.AccountType.BANK -> "Bank"
+        com.rrparallelstudio.miapp.core.model.enums.AccountType.CASH -> "Cash"
+        com.rrparallelstudio.miapp.core.model.enums.AccountType.CREDIT -> "Card"
+        com.rrparallelstudio.miapp.core.model.enums.AccountType.DEBIT -> "Debit"
+        com.rrparallelstudio.miapp.core.model.enums.AccountType.WALLET -> "Wallet"
+        com.rrparallelstudio.miapp.core.model.enums.AccountType.LOAN -> "Loan"
+        com.rrparallelstudio.miapp.core.model.enums.AccountType.OTHER -> "Other"
+    }
+
 private fun categoryLabel(state: com.rrparallelstudio.miapp.feature.search.model.TransactionSearchUiState): String {
-    val category = state.categories.firstOrNull { it.id == state.selectedCategoryId }
-    if (category == null) return "All"
-    val sub = category.subcategories.firstOrNull { it.id == state.selectedSubcategoryId }
-    return if (sub != null) "${category.name} › ${sub.name}" else category.name
+    if (state.categoryPicks.isEmpty()) return "All"
+    return state.categoryPicks.joinToString(", ") { pick ->
+        val category = state.categories.firstOrNull { it.id == pick.categoryId }
+        val name = category?.name ?: "Category"
+        val sub = pick.subcategoryId?.let { id -> category?.subcategories?.firstOrNull { it.id == id }?.name }
+        if (sub != null) "$name · $sub" else name
+    }
 }
 
 private fun filterSummary(state: com.rrparallelstudio.miapp.feature.search.model.TransactionSearchUiState): String {
@@ -440,8 +470,8 @@ private fun filterSummary(state: com.rrparallelstudio.miapp.feature.search.model
         buildList {
             if (state.noteQuery.isNotBlank()) add("Note")
             if (state.periodStart != null) add("Period")
-            if (state.selectedAccountId != null) add("Account")
-            if (state.selectedCategoryId != null) add("Category")
+            if (state.selectedAccountIds.isNotEmpty()) add("Account")
+            if (state.categoryPicks.isNotEmpty()) add("Category")
             if (state.amountMin.isNotBlank() || state.amountMax.isNotBlank()) add("Amount")
         }
     return if (parts.isEmpty()) "All transactions" else parts.joinToString(" · ")

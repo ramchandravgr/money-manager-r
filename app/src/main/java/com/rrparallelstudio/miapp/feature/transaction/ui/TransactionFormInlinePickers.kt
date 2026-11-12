@@ -37,11 +37,13 @@ fun TransactionExpandableCategoryField(
         onExpandedChange = onExpandedChange,
         modifier = modifier,
         enabled = enabled,
+        animateExpansion = false,
     ) {
         CategorySubcategoryPickerPanel(
             state = state,
             onEvent = onEvent,
             maxPanelHeight = 300.dp,
+            fillRemainingViewport = true,
             onPickerFinished = { onExpandedChange(false) },
         )
     }
@@ -75,6 +77,7 @@ fun TransactionExpandableAccountField(
         onExpandedChange = onExpandedChange,
         modifier = modifier,
         enabled = enabled,
+        animateExpansion = false,
     ) {
         AccountPickerPanel(
             accounts = accounts,
@@ -99,6 +102,7 @@ fun TransactionExpandableAccountField(
                 },
             onLightSurface = true,
             listMaxHeight = 280.dp,
+            fillRemainingViewport = true,
         )
     }
 }

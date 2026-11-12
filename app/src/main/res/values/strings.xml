@@ -9,7 +9,7 @@
     <string name="approval_open_sms_setup">Open setup in Settings</string>
     <string name="approval_sms_scan_failed">Could not scan SMS inbox. Try again or paste a bank SMS manually.</string>
     <string name="approval_sms_xml_import_failed">Could not read SMS backup file. Check that it is a valid SMS Backup &amp; Restore export.</string>
-    <string name="transaction_scan_sms_data_declaration">Money Inbox only accesses the SMS backup XML files you choose. We use them on this device to find bank transactions for Approval Center. SMS content is not uploaded to our servers.</string>
+    <string name="transaction_scan_sms_data_declaration">Only the backup file you choose is read, and only on this phone, to find bank transactions. Those messages are not uploaded.</string>
     <string name="notification_channel_sms_approvals">SMS approvals</string>
     <string name="notification_channel_sms_approvals_desc">Summary when new bank SMS are ready to review</string>
     <string name="notification_action_open_approvals">Open</string>
@@ -77,8 +77,8 @@
     <string name="amount_calculator_too_large">Amount is too large. Use a smaller value.</string>
 
     <string name="developer_support_email">rrparallelstudio@gmail.com</string>
-    <string name="backup_migration_section_footer">Migrating from another finance app? Money Manager `.mmbak` files can be merged via Import backup above. For other apps, tell us the app name and export format — we read your message on device and open your email app with a draft to %1$s.</string>
-    <string name="backup_migration_request_row">Request import support</string>
+    <string name="backup_migration_section_footer">If your old app is not listed, this opens an email so we can look at adding it.</string>
+    <string name="backup_migration_request_row">Request Import Help</string>
     <string name="backup_migration_email_subject">Money Inbox — import from another app</string>
     <string name="backup_migration_email_body">Hi RR Parallel Studio,\n\nI would like to migrate to Money Inbox from another finance app. Please consider adding import support for:\n\nApp name:\nExport file type (e.g. .csv, .json, backup extension):\n\nThank you!</string>
     <string name="backup_migration_no_email_app">No email app found. Contact us at %1$s</string>

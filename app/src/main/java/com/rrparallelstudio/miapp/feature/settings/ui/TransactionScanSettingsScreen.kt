@@ -3,41 +3,33 @@ package com.rrparallelstudio.miapp.feature.settings.ui
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rrparallelstudio.miapp.R
 import com.rrparallelstudio.miapp.feature.settings.viewmodel.TransactionScanSettingsViewModel
 import com.rrparallelstudio.miapp.testing.MmrTestTags
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsDestructiveRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsNavRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsPrimaryActionSlot
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSection
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSliderSlot
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroup
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupDestructiveRow
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupNavRow
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupSlider
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenLayout
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenScaffold
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TransactionScanSettingsScreen(
     onNavigateBack: () -> Unit,
     onNavigateToSmsTemplateOverlay: () -> Unit = {},
+    onNavigateToSetupGuide: () -> Unit = {},
     viewModel: TransactionScanSettingsViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
     val scanMonths by viewModel.scanMonths.collectAsState()
     val folderName by viewModel.folderDisplayName.collectAsState()
     val folderUri by viewModel.folderTreeUri.collectAsState()
-    var showSbrGuide by remember { mutableStateOf(false) }
-    val sbrGuideSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     val folderLauncher =
         rememberLauncherForActivityResult(
@@ -62,20 +54,18 @@ fun TransactionScanSettingsScreen(
         }
 
     MmrSettingsScreenScaffold(
-        title = "Transaction scan",
+        title = "Transaction Scan",
         onNavigateBack = onNavigateBack,
         layout = MmrSettingsScreenLayout.InsetGrouped,
     ) {
-        MmrIosSettingsSection(
-            title = "Scan range",
+        MmrSettingsGroup(
+            title = "How Far Back To Read",
             isFirstInScreen = true,
-            footer =
-                "When importing SMS Backup & Restore XML, only bank messages within this window " +
-                    "are considered. Approval Center refresh and app launch use the same range.",
+            footer = "Approval Center only offers bank messages from this far back.",
         ) {
             val steps = (viewModel.maxScanMonths - viewModel.minScanMonths - 1).coerceAtLeast(0)
-            MmrIosSettingsSliderSlot(
-                caption = "Look back",
+            MmrSettingsGroupSlider(
+                caption = "Look Back",
                 value = scanMonths.toFloat(),
                 onValueChange = { viewModel.setScanMonths(it.toInt()) },
                 valueRange = viewModel.minScanMonths.toFloat()..viewModel.maxScanMonths.toFloat(),
@@ -87,26 +77,26 @@ fun TransactionScanSettingsScreen(
             )
         }
 
-        MmrIosSettingsSection(
-            title = "Data use",
+        MmrSettingsGroup(
+            title = "Privacy",
             footer = stringResource(R.string.transaction_scan_sms_data_declaration),
+            showCard = false,
         ) {}
 
-        MmrIosSettingsSection(
-            title = "SMS backups",
+        MmrSettingsGroup(
+            title = "SMS Backup & Restore",
             footer =
-                "Choose the folder where SMS Backup & Restore writes XML (hourly overwrite of one file is fine). " +
-                    "The app reads the latest compatible sms-*.xml when you refresh Approval Center or open the app.",
+                "Choose the folder where SMS Backup & Restore saves messages. " +
+                    "Money Inbox reads the newest file when you open the app or refresh Approval Center.",
         ) {
-            MmrIosSettingsNavRow(
-                label = "SMS Backup & Restore setup",
-                value = "Step-by-step guide",
-                onClick = { showSbrGuide = true },
+            MmrSettingsGroupNavRow(
+                label = "Setup Guide",
+                onClick = onNavigateToSetupGuide,
                 testTag = MmrTestTags.settingsTransactionScanSbrGuide,
             )
-            MmrIosSettingsNavRow(
-                label = "Backup folder",
-                value = folderName ?: "Not set",
+            MmrSettingsGroupNavRow(
+                label = "Backup Folder",
+                value = folderName ?: "Not Set",
                 onClick = {
                     val initial = folderUri
                     if (initial != null) {
@@ -116,52 +106,26 @@ fun TransactionScanSettingsScreen(
                     }
                 },
                 testTag = MmrTestTags.settingsTransactionScanBackupFolder,
-            )
-            MmrIosSettingsPrimaryActionSlot(
-                text = if (folderUri == null) "Choose folder…" else "Change folder…",
-                onClick = {
-                    val initial = folderUri
-                    if (initial != null) {
-                        folderLauncher.launch(initial)
-                    } else {
-                        folderLauncher.launch(null)
-                    }
-                },
                 showDividerBelow = folderUri != null,
             )
             if (folderUri != null) {
-                MmrIosSettingsDestructiveRow(
-                    label = "Clear folder",
+                MmrSettingsGroupDestructiveRow(
+                    label = "Forget Folder",
                     onClick = { viewModel.clearBackupFolder() },
                     showDividerBelow = false,
                 )
             }
         }
 
-        MmrIosSettingsSection(
+        MmrSettingsGroup(
             title = "Advanced",
-            footer = "Optional JSON rules layered on built-in bank SMS templates.",
+            footer = "Most people can skip this. Open it only if a bank message is not recognized.",
         ) {
-            MmrIosSettingsNavRow(
-                label = "SMS template overlay",
+            MmrSettingsGroupNavRow(
+                label = "SMS Templates",
                 onClick = onNavigateToSmsTemplateOverlay,
                 showDividerBelow = false,
             )
         }
-    }
-
-    if (showSbrGuide) {
-        SmsBackupRestoreSetupGuideSheet(
-            sheetState = sbrGuideSheetState,
-            onDismiss = { showSbrGuide = false },
-            onChooseBackupFolder = {
-                val initial = folderUri
-                if (initial != null) {
-                    folderLauncher.launch(initial)
-                } else {
-                    folderLauncher.launch(null)
-                }
-            },
-        )
     }
 }

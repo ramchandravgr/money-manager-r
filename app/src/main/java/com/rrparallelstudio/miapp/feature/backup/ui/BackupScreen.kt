@@ -1,18 +1,25 @@
 package com.rrparallelstudio.miapp.feature.backup.ui
 
+import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rrparallelstudio.miapp.R
 import com.rrparallelstudio.miapp.core.backup.BackupImportMode
-import com.rrparallelstudio.miapp.core.backup.BackupSignedZipCodec
 import com.rrparallelstudio.miapp.core.backup.model.BackupRestoreSummary
 import com.rrparallelstudio.miapp.core.drive.GoogleDriveAutoSchedule
 import com.rrparallelstudio.miapp.core.platform.MmrDeveloperContactIntents
@@ -21,22 +28,19 @@ import com.rrparallelstudio.miapp.feature.backup.viewmodel.BackupViewModel
 import com.rrparallelstudio.miapp.testing.MmrTestTags
 import com.rrparallelstudio.miapp.ui.components.MmrConfirmDialog
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsBackupImportModeSheet
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsNavRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsPrimaryActionSlot
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsRadioRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSecondaryActionSlot
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSection
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSectionBodyText
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsValueRow
 import com.rrparallelstudio.miapp.ui.components.MmrProcessingOverlay
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroup
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupAction
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupNavRow
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupNote
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupRadioRow
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupSwitchRow
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupValueRow
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenLayout
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenScaffold
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsStatusBanners
 import com.rrparallelstudio.miapp.ui.state.MmrErrorState
 import com.rrparallelstudio.miapp.ui.state.MmrLoadingState
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,27 +49,52 @@ fun BackupScreen(
     onNavigateToGoogleDrive: () -> Unit = {},
     viewModel: BackupViewModel = hiltViewModel(),
     testImportUri: Uri? = null,
+    testImportDisplayName: String? = null,
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
     val importSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    LaunchedEffect(testImportUri) {
+    LaunchedEffect(testImportUri, testImportDisplayName) {
         testImportUri?.let { uri ->
             viewModel.onEvent(
-                BackupUiEvent.OnImportUriSelected(uri, "mmr-test-import.json"),
+                BackupUiEvent.OnImportUriSelected(
+                    uri,
+                    testImportDisplayName ?: "mmr-test-import.json",
+                ),
             )
         }
     }
 
-    val exportLauncher =
+    val backupFolderLauncher =
         rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.CreateDocument("application/zip"),
+            contract = ActivityResultContracts.OpenDocumentTree(),
         ) { uri: Uri? ->
             if (uri != null) {
-                viewModel.onEvent(BackupUiEvent.OnExportToUri(uri))
+                try {
+                    val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                    context.contentResolver.takePersistableUriPermission(uri, flags)
+                } catch (_: SecurityException) {
+                    try {
+                        context.contentResolver.takePersistableUriPermission(
+                            uri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                        )
+                    } catch (_: SecurityException) {
+                    }
+                }
+                viewModel.onEvent(BackupUiEvent.OnBackupFolderSelected(uri))
+            } else {
+                viewModel.onEvent(BackupUiEvent.OnBackupFolderPickerDismissed)
             }
         }
+
+    LaunchedEffect(uiState.requestBackupFolderPicker) {
+        if (uiState.requestBackupFolderPicker) {
+            viewModel.onEvent(BackupUiEvent.OnConsumeBackupFolderPickerRequest)
+            backupFolderLauncher.launch(null)
+        }
+    }
 
     val spreadsheetImportLauncher =
         rememberLauncherForActivityResult(
@@ -161,7 +190,7 @@ fun BackupScreen(
 
     if (uiState.showSpreadsheetImportConfirmDialog) {
         MmrConfirmDialog(
-            title = "Import Spreadsheet?",
+            title = "Import Spreadsheet",
             message =
                 "Rows from ${uiState.pendingSpreadsheetLabel} merge into your ledger. " +
                     "Use the import template column layout. Re-importing skips rows already added.",
@@ -207,23 +236,22 @@ fun BackupScreen(
                         summary = uiState.summary,
                         isEmpty = uiState.isEmpty,
                         isBusy = uiState.isBusy,
-                        localAutoSchedule = uiState.localAutoSchedule,
-                        lastLocalBackupLabel = uiState.lastLocalBackupLabel,
-                        onSetLocalAutoSchedule = {
-                            viewModel.onEvent(BackupUiEvent.OnSetLocalAutoSchedule(it))
+                        autoBackupSchedule = uiState.autoBackupSchedule,
+                        lastBackupLabel = uiState.lastBackupLabel,
+                        backupFolderLabel = uiState.backupFolderLabel,
+                        driveLinked = uiState.driveLinked,
+                        driveWifiOnly = uiState.driveWifiOnly,
+                        onSetAutoBackupSchedule = {
+                            viewModel.onEvent(BackupUiEvent.OnSetAutoBackupSchedule(it))
                         },
-                        onLocalBackupNow = { viewModel.onEvent(BackupUiEvent.OnLocalBackupNow) },
+                        onBackupNow = { viewModel.onEvent(BackupUiEvent.OnBackupNow) },
+                        onChangeBackupFolder = { viewModel.onEvent(BackupUiEvent.OnRequestChangeBackupFolder) },
+                        onSetDriveWifiOnly = { enabled ->
+                            viewModel.onEvent(BackupUiEvent.OnSetDriveWifiOnly(enabled))
+                        },
                         statusMessage = uiState.statusMessage,
                         errorMessage = uiState.errorMessage,
                         onDismissMessage = { viewModel.onEvent(BackupUiEvent.OnDismissMessage) },
-                        onExport = {
-                            val stamp =
-                                SimpleDateFormat("yyyyMMdd-HHmmss", Locale.getDefault())
-                                    .format(Date())
-                            exportLauncher.launch(
-                                "money-inbox-backup-$stamp.${BackupSignedZipCodec.SUGGESTED_FILE_EXTENSION}",
-                            )
-                        },
                         onImport = {
                             importLauncher.launch(
                                 arrayOf(
@@ -262,15 +290,19 @@ private fun BackupContent(
     statusMessage: String?,
     errorMessage: String?,
     onDismissMessage: () -> Unit,
-    onExport: () -> Unit,
     onImport: () -> Unit,
     onNavigateToGoogleDrive: () -> Unit,
     onExportSpreadsheetTemplate: () -> Unit,
     onImportSpreadsheet: () -> Unit,
-    localAutoSchedule: GoogleDriveAutoSchedule,
-    lastLocalBackupLabel: String?,
-    onSetLocalAutoSchedule: (GoogleDriveAutoSchedule) -> Unit,
-    onLocalBackupNow: () -> Unit,
+    autoBackupSchedule: GoogleDriveAutoSchedule,
+    lastBackupLabel: String?,
+    backupFolderLabel: String?,
+    driveLinked: Boolean,
+    driveWifiOnly: Boolean,
+    onSetAutoBackupSchedule: (GoogleDriveAutoSchedule) -> Unit,
+    onBackupNow: () -> Unit,
+    onChangeBackupFolder: () -> Unit,
+    onSetDriveWifiOnly: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
     val supportEmail = stringResource(R.string.developer_support_email)
@@ -281,27 +313,28 @@ private fun BackupContent(
             onDismissStatus = onDismissMessage,
             onDismissError = onDismissMessage,
         )
-        MmrIosSettingsSection(
-            title = "About backups",
+        MmrSettingsGroup(
+            title = "On This Phone",
             isFirstInScreen = true,
             footer =
-                "Includes transactions, accounts, categories, budgets, loans, recurring rules, processed SMS, " +
-                    "approval history, and app settings. Pending approvals are not included.",
+                "A backup includes these, plus your settings. " +
+                    "Bank messages you have not accepted yet are left out.",
         ) {
             if (isEmpty) {
-                MmrIosSettingsSectionBodyText(
+                MmrSettingsGroupNote(
                     text = "No local data yet. Add transactions from Home or import a backup file.",
+                    showDividerBelow = false,
                 )
             } else {
                 summary?.let { s ->
-                    MmrIosSettingsValueRow(label = "Total records", value = s.totalRecords.toString())
-                    MmrIosSettingsValueRow(label = "Transactions", value = s.transactions.toString())
-                    MmrIosSettingsValueRow(label = "Accounts", value = s.accounts.toString())
-                    MmrIosSettingsValueRow(label = "Categories", value = s.categories.toString())
-                    MmrIosSettingsValueRow(label = "Loans", value = s.loans.toString())
-                    MmrIosSettingsValueRow(label = "Recurring rules", value = s.recurringRules.toString())
-                    MmrIosSettingsValueRow(label = "Budgets", value = s.budgets.toString())
-                    MmrIosSettingsValueRow(
+                    MmrSettingsGroupValueRow(label = "Total records", value = s.totalRecords.toString())
+                    MmrSettingsGroupValueRow(label = "Transactions", value = s.transactions.toString())
+                    MmrSettingsGroupValueRow(label = "Accounts", value = s.accounts.toString())
+                    MmrSettingsGroupValueRow(label = "Categories", value = s.categories.toString())
+                    MmrSettingsGroupValueRow(label = "Loans", value = s.loans.toString())
+                    MmrSettingsGroupValueRow(label = "Recurring rules", value = s.recurringRules.toString())
+                    MmrSettingsGroupValueRow(label = "Budgets", value = s.budgets.toString())
+                    MmrSettingsGroupValueRow(
                         label = "SMS / approvals",
                         value = (s.smsMessageRecords + s.transactionApprovals).toString(),
                         showDividerBelow = false,
@@ -310,84 +343,93 @@ private fun BackupContent(
             }
         }
 
-        MmrIosSettingsSection(
-            title = "Automatic Local Backup",
+        MmrSettingsGroup(
+            title = "Backup",
             footer =
                 buildString {
                     append(
-                        "Saves signed .mibxbac files to Downloads on a schedule (keeps the latest ",
+                        "Saves a backup in the folder you chose and keeps the latest " +
+                            "${com.rrparallelstudio.miapp.core.backup.LocalAutoBackupContracts.MAX_RETAINED_FILES}. ",
                     )
-                    append("${com.rrparallelstudio.miapp.core.backup.LocalAutoBackupContracts.MAX_RETAINED_FILES}). ")
-                    lastLocalBackupLabel?.let { append("Last backup: $it") }
-                }.takeIf { it.isNotBlank() },
+                    if (driveLinked) {
+                        append("If Google Drive is connected, that same file is uploaded. ")
+                    }
+                    lastBackupLabel?.let { append("Last backup: $it") }
+                }.trim().takeIf { it.isNotBlank() },
         ) {
-            MmrIosSettingsRadioRow(
+            MmrSettingsGroupNavRow(
+                label = "Backup Folder",
+                value = backupFolderLabel ?: "Not Set",
+                onClick = onChangeBackupFolder,
+            )
+            MmrSettingsGroupRadioRow(
                 label = "Off",
-                selected = localAutoSchedule == GoogleDriveAutoSchedule.OFF,
-                onSelect = { onSetLocalAutoSchedule(GoogleDriveAutoSchedule.OFF) },
+                selected = autoBackupSchedule == GoogleDriveAutoSchedule.OFF,
+                onSelect = { onSetAutoBackupSchedule(GoogleDriveAutoSchedule.OFF) },
             )
-            MmrIosSettingsRadioRow(
+            MmrSettingsGroupRadioRow(
                 label = "Daily",
-                selected = localAutoSchedule == GoogleDriveAutoSchedule.DAILY,
-                onSelect = { onSetLocalAutoSchedule(GoogleDriveAutoSchedule.DAILY) },
+                selected = autoBackupSchedule == GoogleDriveAutoSchedule.DAILY,
+                onSelect = { onSetAutoBackupSchedule(GoogleDriveAutoSchedule.DAILY) },
             )
-            MmrIosSettingsRadioRow(
+            MmrSettingsGroupRadioRow(
                 label = "Weekly",
-                selected = localAutoSchedule == GoogleDriveAutoSchedule.WEEKLY,
-                onSelect = { onSetLocalAutoSchedule(GoogleDriveAutoSchedule.WEEKLY) },
+                selected = autoBackupSchedule == GoogleDriveAutoSchedule.WEEKLY,
+                onSelect = { onSetAutoBackupSchedule(GoogleDriveAutoSchedule.WEEKLY) },
             )
-            MmrIosSettingsRadioRow(
+            MmrSettingsGroupRadioRow(
                 label = "Monthly",
-                selected = localAutoSchedule == GoogleDriveAutoSchedule.MONTHLY,
-                onSelect = { onSetLocalAutoSchedule(GoogleDriveAutoSchedule.MONTHLY) },
+                selected = autoBackupSchedule == GoogleDriveAutoSchedule.MONTHLY,
+                onSelect = { onSetAutoBackupSchedule(GoogleDriveAutoSchedule.MONTHLY) },
             )
-            MmrIosSettingsPrimaryActionSlot(
-                text = "Back Up Now to Downloads",
-                onClick = onLocalBackupNow,
+            if (driveLinked) {
+                MmrSettingsGroupSwitchRow(
+                    label = "Google Drive Wi‑Fi Only",
+                    checked = driveWifiOnly,
+                    onCheckedChange = onSetDriveWifiOnly,
+                )
+            }
+            MmrSettingsGroupAction(
+                text = "Back Up Now",
+                onClick = onBackupNow,
                 enabled = !isBusy,
                 showDividerBelow = false,
+                testTag = MmrTestTags.backupBackupNow,
             )
         }
 
-        MmrIosSettingsSection(
-            title = "Actions",
+        MmrSettingsGroup(
+            title = "Restore & Cloud",
             footer =
-                "Export saves a signed .mibxbac file. Import also accepts Money Manager `.mmbak` exports " +
-                    "and Monefy backup files (merge into this ledger; nothing on this phone is erased). " +
-                    "Google Drive opens cloud backup settings.",
+                "Import a Money Inbox backup, or a file from Money Manager or Monefy. " +
+                    "Google Drive shows copies already uploaded so you can restore one.",
         ) {
-            MmrIosSettingsPrimaryActionSlot(
-                text = "Export backup",
-                onClick = onExport,
-                enabled = !isBusy,
-                testTag = MmrTestTags.backupExport,
-            )
-            MmrIosSettingsSecondaryActionSlot(
-                text = "Import backup",
+            MmrSettingsGroupAction(
+                text = "Import Backup",
                 onClick = onImport,
                 enabled = !isBusy,
                 testTag = MmrTestTags.backupImport,
             )
-            MmrIosSettingsNavRow(
-                label = "Google Drive backup",
+            MmrSettingsGroupNavRow(
+                label = "Google Drive Backup",
                 onClick = onNavigateToGoogleDrive,
                 showDividerBelow = false,
                 testTag = MmrTestTags.googleDriveBackupLink,
             )
         }
 
-        MmrIosSettingsSection(
-            title = "Ledger Spreadsheet",
+        MmrSettingsGroup(
+            title = "Spreadsheet",
             footer =
-                "Download the Excel template, fill rows using the same columns as Home → export, " +
-                    "then import .xlsx or .xml exports here (merge only).",
+                "Download the sample spreadsheet, fill in the rows, then import it. " +
+                    "Rows you already added are skipped.",
         ) {
-            MmrIosSettingsSecondaryActionSlot(
+            MmrSettingsGroupAction(
                 text = "Download Import Template",
                 onClick = onExportSpreadsheetTemplate,
                 enabled = !isBusy,
             )
-            MmrIosSettingsSecondaryActionSlot(
+            MmrSettingsGroupAction(
                 text = "Import Spreadsheet",
                 onClick = onImportSpreadsheet,
                 enabled = !isBusy,
@@ -395,11 +437,11 @@ private fun BackupContent(
             )
         }
 
-        MmrIosSettingsSection(
-            title = "Migrate from another app",
+        MmrSettingsGroup(
+            title = "Migrate From Another App",
             footer = stringResource(R.string.backup_migration_section_footer, supportEmail),
         ) {
-            MmrIosSettingsNavRow(
+            MmrSettingsGroupNavRow(
                 label = stringResource(R.string.backup_migration_request_row),
                 value = supportEmail,
                 onClick = { MmrDeveloperContactIntents.openMigrationImportRequest(context) },

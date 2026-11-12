@@ -694,6 +694,7 @@ class LanSyncMerger
                 syncId = syncId,
                 categoryId = categoryId,
                 name = name,
+                iconName = iconName,
                 isActive = isActive,
                 orderIndex = orderIndex,
             )

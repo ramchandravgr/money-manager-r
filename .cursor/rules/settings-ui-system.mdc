@@ -6,7 +6,11 @@ alwaysApply: false
 
 # Settings UI system (MMR)
 
-Settings tab routes and **all nested settings screens** (Backup & Restore, Google Drive backup, LAN sync, Web Manage, Transaction Appearance, SMS templates, etc.) must look like **one product**, not one-off Compose screens.
+Settings tab routes and **all nested settings screens** (Backup & Restore, Google Drive backup, LAN sync, Web Manage, appearance, and the rest) must look like **one product**.
+
+**Body kit (2026-11-12):** Plan: `tasks/plan.md`. Use **`MmrSettingsGroup.kt`** on all settings flows (uppercase heading, one card, footer under the card, exact label casing — do not call `mmrStaticLabelCase()`). Rose canvas and top bar stay on `MmrSettingsScreenScaffold`. Do not flip `MmrSettingsFieldGrouping` to mimic the mock.
+
+Legacy **`MmrIosSettingsSection`** remains for non-settings surfaces only; new settings work uses `MmrSettingsGroup*`.
 
 **Source of truth:** `MmrSettingsScreenTemplate.kt` (start here), **`MmrGroupedFormCard.kt`**, **`MmrDestructiveIcons.kt`** (red delete icons; do not hand-roll `DeleteOutline` tints) (shared white field cards + **`MmrSettingsFieldGrouping`**), **`MmrIosSettingsList.kt`** (sections/rows), **`MmrIosSettingsForm.kt`** (text fields, **`MmrIosSettingsSecureTextRow`**, actions, chips, radio, slider, form gates), **`MmrIosSettingsPickers.kt`** (**`MmrIosSettingsSingleChoiceSheet`**, **`MmrIosSettingsChoiceRow`**), then `MmrAppChrome.kt`, `MmrActionButtons.kt`, `MmrInputDialog.kt`, `MmrDimens.kt`, `MmrBrandColors.kt`.
 
@@ -31,7 +35,8 @@ When adding or editing these screens, **reuse shared components**. Do not invent
 - **Section title + subtitle:** `MmrSettingsSectionTitle` → `MmrConfigSectionHeader` (15sp semibold `TextStrong` + optional subtitle).
 - **Intro / bullets at top of screen:** `MmrScreenIntroPanel` (same band style as section headers).
 - **Any other explanatory copy:** `MmrHelperText` (13sp, `TextMedium`, line height 18sp).
-- **List row primary label:** 14sp via `MmrLightNavRow` / `MmrLightSwitchRow` / `MmrConfigValueRow` — do not duplicate with ad-hoc `Text(fontSize = …)`.
+- **List row primary label:** `mmrSettingsRowPrimaryStyle` (14sp) via `MmrLightNavRow` / `MmrLightSwitchRow` / `MmrConfigValueRow` — do not duplicate with ad-hoc `Text(fontSize = …)`. Grouped settings card rows use `mmrSettingsCardRowPrimaryStyle` (15sp) from `MmrSettingsGroup.kt`.
+- **Style factories:** `MmrStaticTextStyles.kt` (`ui/theme`) — use `style = mmr…Style(color)` on `Text`; mirror the same `TextStyle` on `BasicTextField` + placeholders. Detekt rule `MmrRawFontSize` blocks raw `fontSize = …sp` outside the theme allowlist.
 
 ## Lists, rows, toggles
 

@@ -62,7 +62,7 @@ From peer-sync product notes and in-progress LAN work.
 | `[x]` | Notification **actions**: Approve / Open only | Tap opens Approval Center; **Approve** quick-approves latest non–card-refund pending (`SmsApprovalNotificationReceiver`) |
 | `[~]` | **reconcilePendingWithCurrentParser()** | Manual from Approval Center; **no** daily WorkManager job yet |
 | `[-]` | Backfill disbursal txn for old loans | One-time tool — deferred |
-| `[~]` | **SMS template overlay** | Import + Settings screen; **no** export overlay / match-rate debug / AI drafting |
+| `[~]` | **SMS template overlay** | Import + Settings screen. **Copy Prompt** (`SmsTemplateOverlayPrompt`) for any AI + the user’s SMS export. No export of the overlay file, no match-rate debug. |
 | `[x]` | Inbox scan + parser phases 1–3 | Templates, classifier, approval metadata |
 | `[x]` | Account/card mapping on approve | `SmsAccountResolver` (credit last4, wallets, bank) |
 

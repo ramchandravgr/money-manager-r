@@ -17,11 +17,13 @@ class BackupScreenHostActivity : ComponentActivity() {
         val importUri =
             intent.getParcelableExtra(IMPORT_URI_EXTRA, Uri::class.java)
                 ?: BackupScreenHostTestBridge.pendingImportUri
+        val importDisplayName = BackupScreenHostTestBridge.pendingImportDisplayName
         setContent {
             MoneyInboxTheme {
                 BackupScreen(
                     onNavigateBack = { finish() },
                     testImportUri = importUri,
+                    testImportDisplayName = importDisplayName,
                 )
             }
         }

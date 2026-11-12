@@ -306,6 +306,7 @@ class CategoryViewModel
                 id = id.value,
                 categoryId = categoryId.value,
                 name = name,
+                iconName = iconName,
                 sortOrder = sortOrder,
             )
 

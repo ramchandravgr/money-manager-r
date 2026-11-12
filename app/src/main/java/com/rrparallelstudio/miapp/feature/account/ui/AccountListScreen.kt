@@ -14,8 +14,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.rrparallelstudio.miapp.feature.account.viewmodel.AccountListViewModel
 import com.rrparallelstudio.miapp.testing.MmrTestTags
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsListEmptySection
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsNavRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSection
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroup
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupNavRow
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsListAddTopBar
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsListScaffold
 import com.rrparallelstudio.miapp.ui.state.MmrErrorState
@@ -70,10 +70,10 @@ fun AccountListScreen(
                     contentPadding = padding,
                 ) {
                     item {
-                        MmrIosSettingsSection(
-                            title = "Your accounts",
+                        MmrSettingsGroup(
+                            title = "Your Accounts",
                             isFirstInScreen = true,
-                            footer = "Tap a row to edit, set primary, or remove an account.",
+                            footer = "Tap an account to edit it. Tap + to add one.",
                         ) {
                             state.accounts.forEachIndexed { index, account ->
                                 val value =
@@ -82,9 +82,9 @@ fun AccountListScreen(
                                         if (!account.isActive) append("Inactive · ")
                                         append(account.balanceFormatted)
                                     }
-                                MmrIosSettingsNavRow(
+                                MmrSettingsGroupNavRow(
                                     label = account.name,
-                                    labelSubtitle = account.smsOriginLabel,
+                                    subtitle = account.smsOriginLabel,
                                     value = value,
                                     onClick = { onNavigateToEditAccount(account.id) },
                                     showDividerBelow = index < state.accounts.lastIndex,

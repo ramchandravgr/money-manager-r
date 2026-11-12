@@ -15,7 +15,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SelectAll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,7 +34,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rrparallelstudio.miapp.R
 import com.rrparallelstudio.miapp.feature.home.ui.HomeMonthPickerDialog
@@ -46,6 +44,7 @@ import com.rrparallelstudio.miapp.feature.stats.StatsPeriodUtils
 import com.rrparallelstudio.miapp.feature.stats.model.StatsCategoryDetailUiEvent
 import com.rrparallelstudio.miapp.feature.stats.model.StatsPeriodMode
 import com.rrparallelstudio.miapp.feature.stats.viewmodel.StatsCategoryDetailViewModel
+import com.rrparallelstudio.miapp.ui.components.MmrConfirmDialog
 import com.rrparallelstudio.miapp.ui.components.MmrDeleteIconButton
 import com.rrparallelstudio.miapp.ui.components.MmrDimens
 import com.rrparallelstudio.miapp.ui.components.MmrHeaderBar
@@ -101,20 +100,13 @@ fun StatsCategoryDetailScreen(
     }
 
     if (uiState.showDeleteConfirmDialog) {
-        AlertDialog(
-            onDismissRequest = { viewModel.onEvent(StatsCategoryDetailUiEvent.OnDismissDeleteConfirm) },
-            title = { Text("Delete transactions?") },
-            text = { Text("Delete ${uiState.selectedTransactionIds.size} selected transaction(s)?") },
-            confirmButton = {
-                TextButton(onClick = { viewModel.onEvent(StatsCategoryDetailUiEvent.OnConfirmDeleteSelected) }) {
-                    Text("Delete")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { viewModel.onEvent(StatsCategoryDetailUiEvent.OnDismissDeleteConfirm) }) {
-                    Text("Cancel")
-                }
-            },
+        MmrConfirmDialog(
+            title = "Delete Transactions?",
+            message = "Delete ${uiState.selectedTransactionIds.size} selected transaction(s)?",
+            confirmLabel = "Delete",
+            onConfirm = { viewModel.onEvent(StatsCategoryDetailUiEvent.OnConfirmDeleteSelected) },
+            onDismiss = { viewModel.onEvent(StatsCategoryDetailUiEvent.OnDismissDeleteConfirm) },
+            confirmIsDestructive = true,
         )
     }
 
@@ -142,8 +134,9 @@ fun StatsCategoryDetailScreen(
                 Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                     Text(
                         text = startLabel,
-                        color = MmrBrandColors.HeaderIcon,
-                        fontSize = 15.sp,
+                        style =
+                            com.rrparallelstudio.miapp.ui.theme
+                                .mmrTitleMediumFixedStyle(MmrBrandColors.HeaderIcon),
                         modifier =
                             Modifier.clickable(
                                 interactionSource = remember { MutableInteractionSource() },
@@ -151,11 +144,17 @@ fun StatsCategoryDetailScreen(
                                 onClick = { viewModel.onEvent(StatsCategoryDetailUiEvent.OnPeriodStartFieldClick) },
                             ),
                     )
-                    Text(text = " ~ ", color = MmrBrandColors.HeaderIcon, fontSize = 15.sp)
+                    Text(
+                        text = " ~ ",
+                        style =
+                            com.rrparallelstudio.miapp.ui.theme
+                                .mmrTitleMediumFixedStyle(MmrBrandColors.HeaderIcon),
+                    )
                     Text(
                         text = endLabel,
-                        color = MmrBrandColors.HeaderIcon,
-                        fontSize = 15.sp,
+                        style =
+                            com.rrparallelstudio.miapp.ui.theme
+                                .mmrTitleMediumFixedStyle(MmrBrandColors.HeaderIcon),
                         modifier =
                             Modifier.clickable(
                                 interactionSource = remember { MutableInteractionSource() },

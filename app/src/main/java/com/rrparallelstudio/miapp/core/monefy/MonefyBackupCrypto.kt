@@ -17,11 +17,15 @@ internal object MonefyBackupCrypto {
         val cipher = Cipher.getInstance("AES/ECB/NoPadding")
         cipher.init(Cipher.DECRYPT_MODE, key)
         val plain = cipher.doFinal(encrypted)
-        require(plain.size >= 16 && plain.copyOfRange(0, 15).decodeToString() == "SQLite format") {
+        require(
+            plain.size >= SQLITE_HEADER.size && plain.copyOfRange(0, SQLITE_HEADER.size).contentEquals(SQLITE_HEADER),
+        ) {
             "Not a Monefy backup (could not read the ledger database)."
         }
         return plain
     }
 
     private const val BLOCK = 16
+
+    private val SQLITE_HEADER = "SQLite format 3\u0000".toByteArray(Charsets.US_ASCII)
 }

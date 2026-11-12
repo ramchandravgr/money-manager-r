@@ -156,6 +156,27 @@ interface TransactionDao {
         now: Long = System.currentTimeMillis(),
     )
 
+    @Query(
+        """
+        UPDATE transactions
+        SET subcategoryId = NULL, updatedAt = :now, isEdited = 1
+        WHERE subcategoryId = :subcategoryId
+        """,
+    )
+    suspend fun clearSubcategory(
+        subcategoryId: Long,
+        now: Long = System.currentTimeMillis(),
+    )
+
+    @Query(
+        """
+        UPDATE transactions
+        SET subcategoryId = NULL
+        WHERE subcategoryId = :subcategoryId
+        """,
+    )
+    suspend fun detachSubcategory(subcategoryId: Long)
+
     @Query("SELECT id FROM transactions WHERE sourceReferenceId = :ref LIMIT 1")
     suspend fun findIdBySourceReference(ref: String): Long?
 

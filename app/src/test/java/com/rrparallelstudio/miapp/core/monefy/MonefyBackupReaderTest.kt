@@ -13,6 +13,17 @@ import javax.crypto.spec.SecretKeySpec
 @RunWith(RobolectricTestRunner::class)
 class MonefyBackupReaderTest {
     @Test
+    fun decryptsDevSampleFileFromDocsSamples() {
+        val encrypted =
+            javaClass.classLoader!!
+                .getResourceAsStream("monefy_backup_2026_11_12_07_09_25")
+                ?.use { it.readBytes() }
+                ?: error("Missing docs/samples/monefy backup in test resources")
+        val snapshot = MonefyBackupReader.read(encrypted, File(System.getProperty("java.io.tmpdir")))
+        assertTrue(snapshot.transactions.isNotEmpty())
+    }
+
+    @Test
     fun decryptsAndReadsAccountsCategoriesTransactionsAndTransfers() {
         val plain = buildSqlite()
         val encrypted = encrypt(plain)

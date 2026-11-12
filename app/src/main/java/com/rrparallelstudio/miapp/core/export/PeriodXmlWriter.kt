@@ -49,23 +49,21 @@ object PeriodXmlWriter {
         serializer.attribute(null, "account", item.account?.name ?: "")
         serializer.attribute(null, "category", item.category?.name ?: "")
         serializer.attribute(null, "subcategory", item.subcategory?.name ?: "")
-        serializer.attribute(null, "note", tx.note ?: "")
+        serializer.attribute(null, "note", noteWithTransferSuffix(item))
         serializer.attribute(null, "amount", tx.amount.toString())
         serializer.attribute(null, "flow", incomeExpenseLabel(item))
-        serializer.attribute(null, "payment", paymentLabel(tx.paymentInstrument, tx.paymentChannel))
         if (item.transaction.type == TransactionType.TRANSFER) {
             item.relatedAccount?.name?.let { serializer.attribute(null, "transferTo", it) }
         }
         serializer.endTag(null, "Transaction")
     }
 
-    private fun paymentLabel(
-        instrument: String?,
-        channel: String?,
-    ): String {
-        instrument?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
-        channel?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
-        return ""
+    private fun noteWithTransferSuffix(item: TransactionWithDetails): String {
+        val base = item.transaction.note?.trim() ?: ""
+        if (item.transaction.type != TransactionType.TRANSFER) return base
+        val dest = item.relatedAccount?.name ?: item.loan?.name ?: return base
+        val arrow = " → $dest"
+        return if (base.isEmpty()) arrow.trimStart() else base + arrow
     }
 
     private fun incomeExpenseLabel(item: TransactionWithDetails): String {

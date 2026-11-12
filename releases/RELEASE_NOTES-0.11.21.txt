@@ -1,0 +1,7 @@
+Money Inbox 0.11.21 (versionCode 1121)
+
+• Home: category filter menu centered on screen, compact layout (no oversized panel).
+• Home: fix crash when opening the category filter menu.
+• Approval Center: Link to existing — Category on merge selects on first tap.
+
+Play upload: MoneyInbox-0.11.21-1121-release.aab (bundleRelease)

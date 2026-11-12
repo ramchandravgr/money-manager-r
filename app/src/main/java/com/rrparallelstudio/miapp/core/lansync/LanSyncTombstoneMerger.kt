@@ -238,6 +238,8 @@ class LanSyncTombstoneMerger
                 yours = sub.name,
                 theirs = "Hidden on the other phone",
             )
+            database.transactionDao().detachSubcategory(sub.id)
+            database.recurringRuleDao().detachSubcategory(sub.id)
             database.categoryDao().updateSubcategory(sub.copy(isActive = false))
             return LanSyncTombstoneMergeStats(applied = 1)
         }

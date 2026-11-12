@@ -27,7 +27,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rrparallelstudio.miapp.feature.recurring.ui.RecurringPickerRow
 import com.rrparallelstudio.miapp.feature.search.model.TransactionSearchUiEvent
 import com.rrparallelstudio.miapp.feature.search.model.TransactionSearchUiState
@@ -38,6 +37,7 @@ import com.rrparallelstudio.miapp.feature.transaction.ui.CategoryPickerPanelStat
 import com.rrparallelstudio.miapp.feature.transaction.ui.CategorySubcategoryPickerPanel
 import com.rrparallelstudio.miapp.feature.transaction.ui.searchCategoryPickerCallbacks
 import com.rrparallelstudio.miapp.ui.components.MmrDimens
+import com.rrparallelstudio.miapp.ui.components.mmrSearchFilterFieldTextStyle
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
 
 internal enum class SearchFilterExpandedField {
@@ -75,8 +75,7 @@ internal fun MmrSearchFilterExpandableRow(
             Text(
                 text = label,
                 modifier = Modifier.width(MmrDimens.searchFilterLabelWidth),
-                fontSize = 14.sp,
-                color = MmrBrandColors.onCanvasMuted(),
+                style = mmrSearchFilterFieldTextStyle(MmrBrandColors.onCanvasMuted()),
                 textAlign = TextAlign.Start,
                 maxLines = 1,
             )
@@ -86,8 +85,7 @@ internal fun MmrSearchFilterExpandableRow(
                     Modifier
                         .weight(1f)
                         .padding(end = if (onClear != null) 0.dp else MmrDimens.spaceXs),
-                fontSize = 14.sp,
-                color = MmrBrandColors.onCanvas(),
+                style = mmrSearchFilterFieldTextStyle(MmrBrandColors.onCanvas()),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

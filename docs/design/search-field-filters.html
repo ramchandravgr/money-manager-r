@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Search — transaction entry layout</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --header: #3f4671;
+      --bg: #eef0f4;
+      --surface: #fff;
+      --border: #e2e6ee;
+      --text: #1a2332;
+      --muted: #6b7280;
+      --accent: #e85d4c;
+      --income: #0d9488;
+      --expense: #d35151;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Plus Jakarta Sans", system-ui, sans-serif; background: #e4e9f2; color: var(--text); }
+    .page { max-width: 880px; margin: 0 auto; padding: 28px 16px 48px; }
+    h1 { font-size: 20px; margin: 0 0 8px; }
+    .lead { color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 68ch; }
+    .stage { display: flex; justify-content: center; margin-top: 18px; }
+    .phone { position: relative; width: 390px; min-height: 780px; background: var(--bg); border-radius: 28px; overflow: hidden; box-shadow: 0 16px 40px rgba(26,35,50,.16); }
+    .app-bar { background: var(--header); color: #fff; padding: 18px 16px 12px; display: flex; align-items: center; gap: 12px; }
+    .app-bar button { width: 36px; height: 36px; border: 0; border-radius: 10px; background: rgba(255,255,255,.12); color: #fff; font-size: 18px; }
+    .app-bar h4 { margin: 0; font-size: 17px; font-weight: 650; }
+    .entry-scroll { padding: 12px 16px 20px; }
+    .field-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; }
+    .field-card.open { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(232,93,76,.2); }
+    .field-head, .note-row { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 0; background: transparent; font: inherit; text-align: left; cursor: pointer; color: var(--text); }
+    .note-row { cursor: text; }
+    .ico { width: 22px; text-align: center; color: var(--muted); flex: 0 0 auto; }
+    .field-body { flex: 1; min-width: 0; }
+    .field-label { font-size: 11px; font-weight: 700; color: var(--muted); }
+    .field-value { font-size: 16px; font-weight: 650; margin-top: 2px; }
+    .field-value.muted { color: var(--muted); font-weight: 500; }
+    .chev { color: var(--muted); }
+    .note-row input { border: 0; outline: none; font: inherit; font-size: 16px; width: 100%; background: transparent; }
+    .note-row input::placeholder { color: var(--muted); }
+    .panel { border-top: 1px solid var(--border); padding: 6px 8px 8px; }
+    .sec { font-size: 11px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); padding: 8px 8px 2px; }
+    .opt { display: flex; width: 100%; align-items: center; gap: 10px; border: 0; background: transparent; font: inherit; font-size: 15px; font-weight: 600; text-align: left; padding: 9px 8px; border-radius: 8px; cursor: pointer; }
+    .box { width: 18px; height: 18px; border: 1.5px solid #c5c9d6; border-radius: 4px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; color: transparent; font-size: 12px; }
+    .opt.on .box { background: #3f4671; border-color: #3f4671; color: #fff; }
+    .pill-track { position: relative; display: grid; grid-template-columns: 1fr 1fr; height: 40px; margin: 0 0 8px; background: #ececf3; border-radius: 999px; }
+    .pill-thumb { position: absolute; top: 3px; bottom: 3px; left: 3px; width: calc(50% - 3px); border-radius: 999px; background: #fff; box-shadow: 0 1px 2px rgba(26,35,50,.16); transition: transform .18s ease; }
+    .pill-track.expense .pill-thumb { transform: translateX(100%); }
+    .pill-track button { position: relative; z-index: 1; border: 0; background: transparent; font: inherit; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; }
+    .pill-track button.on { font-weight: 700; color: var(--text); }
+    .opt.sub { padding-left: 28px; font-weight: 500; font-size: 14px; }
+    .opt .meta { display: flex; flex-direction: column; align-items: flex-start; }
+    .opt .meta small { color: var(--muted); font-size: 12px; font-weight: 500; }
+    .dot { width: 8px; height: 8px; border-radius: 99px; background: var(--expense); }
+    .dot.inc { background: var(--income); }
+    .amt { display: flex; gap: 8px; }
+    .amt input { flex: 1; border: 1px solid var(--border); border-radius: 10px; padding: 10px; font: inherit; font-size: 15px; }
+    .sum { display: flex; justify-content: space-between; padding: 4px 4px 8px; font-size: 12px; font-weight: 750; }
+    .tx { background: #fff; border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; display: flex; justify-content: space-between; font-size: 13px; }
+    .tx small { display: block; color: var(--muted); margin-top: 2px; font-weight: 500; }
+    .empty { color: var(--muted); font-size: 13px; padding: 8px; }
+    .entry-scroll.dimmed { opacity: .4; pointer-events: none; }
+    .overlay { position: absolute; inset: 0; background: rgba(26, 35, 50, .45); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 3; }
+    .dialog { width: min(360px, 100%); max-height: 86%; background: #fff; border-radius: 16px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 28px rgba(26,35,50,.22); }
+    .dialog-body { padding: 16px 16px 8px; overflow: auto; }
+    .dialog-body h5 { margin: 0 0 4px; font-size: 17px; font-weight: 650; }
+    .dialog-body .sub { margin: 0 0 10px; color: var(--muted); font-size: 13px; line-height: 1.35; }
+    .sheet-search { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; }
+    .sheet-search input { border: 0; width: 100%; font: inherit; font-size: 14px; outline: none; }
+    .dialog-footer { border-top: 1px solid var(--border); padding: 12px 16px 14px; display: flex; flex-direction: column; gap: 4px; }
+    .done { width: 100%; border: 0; border-radius: 10px; background: var(--header); color: #fff; font: inherit; font-weight: 700; font-size: 15px; padding: 12px; cursor: pointer; }
+    .cancel { width: 100%; border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 650; font-size: 15px; padding: 8px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Search, using the transaction entry cards</h1>
+    <p class="lead">
+      Same shell as Add Transaction: gray canvas, white field cards, icon, label, value, chevron.
+      Category and Account open in a popup over the dimmed form, the same sheet Add Transaction uses.
+      The category dialog lists Expense and Income together, and a subcategory can be ticked on its own.
+      The account dialog only lists accounts that have one of the ticked categories. Amount stays a card with Min and Max.
+    </p>
+    <div class="stage"><div class="phone" id="phone"></div></div>
+  </div>
+  <script>
+    const TX = [
+      { side: "expense", account: "Cash", category: "Food", sub: "Restaurants", amount: 5689, note: "Dinner" },
+      { side: "expense", account: "Cash", category: "Car", sub: "", amount: 455, note: "Fuel" },
+      { side: "expense", account: "Cash", category: "Toiletry", sub: "", amount: 125, note: "Brushes" },
+      { side: "expense", account: "HDFC Credit", category: "Food", sub: "Delivery", amount: 890, note: "Swiggy" },
+      { side: "expense", account: "HDFC Credit", category: "Shopping", sub: "", amount: 2100, note: "Shirt" },
+      { side: "expense", account: "Pluxee", category: "Food", sub: "Restaurants", amount: 340, note: "Lunch" },
+      { side: "income", account: "HDFC Savings", category: "Salary", sub: "Monthly", amount: 50000, note: "Payroll" },
+      { side: "income", account: "Cash", category: "Investment / Return", sub: "Interest", amount: 1200, note: "FD" }
+    ];
+    const PERIODS = ["1–30 Nov 2026", "Last 30 Days", "1–31 Oct 2026"];
+    const ACCOUNT_TYPE = { "Cash": "Cash", "HDFC Savings": "Bank", "HDFC Credit": "Card", "Pluxee": "Wallet" };
+    const TYPE_ORDER = ["Cash", "Bank", "Debit", "Card", "Wallet", "Loan", "Other"];
+    const state = { q: "", find: "", period: PERIODS[0], accounts: [], picks: [], min: "", max: "", open: "", catSide: "expense" };
+
+    function money(n) { return "₹" + n.toLocaleString("en-IN"); }
+    function idOf(side, name, sub) { return side + "|" + name + "|" + (sub || ""); }
+    function has(side, name, sub) { return state.picks.some(function (p) { return idOf(p.side, p.name, p.sub) === idOf(side, name, sub); }); }
+    function matchPick(t) {
+      if (!state.picks.length) return true;
+      return state.picks.some(function (p) { return p.side === t.side && p.name === t.category && (!p.sub || p.sub === t.sub); });
+    }
+    function catalog(side) {
+      const map = {};
+      TX.filter(function (t) { return t.side === side; }).forEach(function (t) {
+        if (!map[t.category]) map[t.category] = new Set();
+        if (t.sub) map[t.category].add(t.sub);
+      });
+      return Object.keys(map).map(function (name) { return { name: name, subs: Array.from(map[name]) }; });
+    }
+    function allowedAccounts() {
+      return Array.from(new Set(TX.filter(matchPick).map(function (t) { return t.account; })));
+    }
+    function reconcile() {
+      const ok = allowedAccounts();
+      state.accounts = state.accounts.filter(function (a) { return ok.indexOf(a) >= 0; });
+    }
+    function categoryValue() {
+      if (!state.picks.length) return "";
+      return state.picks.map(function (p) { return p.sub ? p.name + " · " + p.sub : p.name; }).join(", ");
+    }
+    function rows() {
+      const q = state.q.trim().toLowerCase();
+      return TX.filter(function (t) {
+        if (!matchPick(t)) return false;
+        if (state.accounts.length && state.accounts.indexOf(t.account) < 0) return false;
+        if (state.min !== "" && t.amount < Number(state.min)) return false;
+        if (state.max !== "" && t.amount > Number(state.max)) return false;
+        if (q && (t.note + " " + t.category + " " + t.account).toLowerCase().indexOf(q) < 0) return false;
+        return true;
+      });
+    }
+    function visibleCatalog(side) {
+      const q = state.find.trim().toLowerCase();
+      return catalog(side).filter(function (c) {
+        return !q || c.name.toLowerCase().indexOf(q) >= 0 || c.subs.some(function (s) { return s.toLowerCase().indexOf(q) >= 0; });
+      });
+    }
+    function group(side, title) {
+      const items = visibleCatalog(side);
+      if (!items.length) return "";
+      return (title ? '<div class="sec">' + title + "</div>" : "") + items.map(function (c) {
+        const on = has(side, c.name, "");
+        const parent = '<button type="button" class="opt' + (on ? " on" : "") + '" data-pick="' + idOf(side, c.name, "") + '"><span class="box">' + (on ? "✓" : "") + '</span><span class="dot' + (side === "income" ? " inc" : "") + '"></span>' + c.name + "</button>";
+        const subs = c.subs.filter(function (s) {
+          const q = state.find.trim().toLowerCase();
+          return !q || c.name.toLowerCase().indexOf(q) >= 0 || s.toLowerCase().indexOf(q) >= 0;
+        }).map(function (s) {
+          const subOn = has(side, c.name, s);
+          return '<button type="button" class="opt sub' + (subOn ? " on" : "") + '" data-pick="' + idOf(side, c.name, s) + '"><span class="box">' + (subOn ? "✓" : "") + "</span>" + s + "</button>";
+        }).join("");
+        return parent + subs;
+      }).join("");
+    }
+    function accountDialogBody() {
+      const q = state.find.trim().toLowerCase();
+      const names = allowedAccounts().filter(function (a) {
+        const type = ACCOUNT_TYPE[a] || "Other";
+        return a.toLowerCase().indexOf(q) >= 0 || type.toLowerCase().indexOf(q) >= 0;
+      });
+      const all = '<button type="button" class="opt' + (!state.accounts.length ? " on" : "") + '" data-account="All"><span class="box">' + (!state.accounts.length ? "✓" : "") + "</span><span class=\"meta\">All Accounts<small>Every type</small></span></button>";
+      const groups = TYPE_ORDER.map(function (type) {
+        const inType = names.filter(function (a) { return (ACCOUNT_TYPE[a] || "Other") === type; });
+        if (!inType.length) return "";
+        return '<div class="sec">' + type + "</div>" + inType.map(function (a) {
+          const on = state.accounts.indexOf(a) >= 0;
+          return '<button type="button" class="opt' + (on ? " on" : "") + '" data-account="' + a + '"><span class="box">' + (on ? "✓" : "") + '</span><span class="meta">' + a + "<small>" + type + "</small></span></button>";
+        }).join("");
+      }).join("");
+      return all + groups;
+    }
+    function accountFieldValue() {
+      if (!state.accounts.length) return "";
+      return state.accounts.map(function (a) { return a + " · " + (ACCOUNT_TYPE[a] || "Other"); }).join(", ");
+    }
+    function card(name, icon, label, value, placeholder) {
+      const open = state.open === name;
+      const shown = value || placeholder;
+      return '<div class="field-card' + (open ? " open" : "") + '"><button type="button" class="field-head" data-open="' + name + '"><span class="ico">' + icon + '</span><span class="field-body"><span class="field-label">' + label + '</span><span class="field-value' + (value ? "" : " muted") + '">' + shown + '</span></span><span class="chev">▾</span></button>' + (name === "period" && open ? '<div class="panel">' + PERIODS.map(function (p) { return '<button type="button" class="opt' + (p === state.period ? " on" : "") + '" data-period="' + p + '">' + p + "</button>"; }).join("") + "</div>" : "") + "</div>";
+    }
+    function popup() {
+      if (state.open !== "category" && state.open !== "account") return "";
+      const category = state.open === "category";
+      const pill = '<div class="pill-track ' + state.catSide + '"><div class="pill-thumb"></div><button type="button" class="' + (state.catSide === "income" ? "on" : "") + '" data-cat-side="income">Income</button><button type="button" class="' + (state.catSide === "expense" ? "on" : "") + '" data-cat-side="expense">Expense</button></div>';
+      const body = category
+        ? pill + group(state.catSide, "")
+        : accountDialogBody();
+      return '<div class="overlay"><div class="dialog" role="dialog"><div class="dialog-body"><h5>' + (category ? "Category" : "Account") + '</h5><p class="sub">' + (category ? "Ticks stay when you slide to the other side." : "Only accounts that have one of the ticked categories.") + '</p><div class="sheet-search"><input id="find" placeholder="' + (category ? "Search Category Or Subcategory" : "Search Accounts") + '" value="' + state.find.replace(/"/g, "&quot;") + '" /></div>' + body + '</div><div class="dialog-footer"><button type="button" class="done" data-close="1">Done</button><button type="button" class="cancel" data-close="1">Cancel</button></div></div></div>';
+    }
+    function render() {
+      reconcile();
+      const list = rows();
+      const earned = list.filter(function (t) { return t.side === "income"; }).reduce(function (s, t) { return s + t.amount; }, 0);
+      const spent = list.filter(function (t) { return t.side === "expense"; }).reduce(function (s, t) { return s + t.amount; }, 0);
+      const txs = list.length ? list.map(function (t) {
+        return '<div class="tx"><div>' + t.category + (t.sub ? " · " + t.sub : "") + "<small>" + t.account + " · " + (ACCOUNT_TYPE[t.account] || "Other") + " · " + t.note + "</small></div><div>" + money(t.amount) + "</div></div>";
+      }).join("") : '<div class="empty">No transactions match.</div>';
+      const dim = state.open === "category" || state.open === "account";
+      document.getElementById("phone").innerHTML =
+        '<div class="app-bar"><button type="button">←</button><h4>Search</h4></div><div class="entry-scroll' + (dim ? " dimmed" : "") + '">' +
+        '<div class="field-card"><label class="note-row"><span class="ico">✎</span><input id="q" placeholder="Note" value="' + state.q.replace(/"/g, "&quot;") + '" /></label></div>' +
+        card("period", "📅", "Period", state.period, "Select Period") +
+        card("category", "▦", "Category", categoryValue(), "Select Category") +
+        card("account", "👛", "Account", accountFieldValue(), "Select Account") +
+        '<div class="field-card"><div class="field-head" style="cursor:default"><span class="ico">#</span><span class="field-body"><span class="field-label">Amount</span><span class="amt"><input data-min placeholder="Min" value="' + state.min + '" /><input data-max placeholder="Max" value="' + state.max + '" /></span></span></div></div>' +
+        '<div class="sum"><span style="color:var(--income)">↓ ' + money(earned) + '</span><span style="color:var(--expense)">↑ ' + money(spent) + '</span><span>' + list.length + ' rows</span></div>' +
+        txs + "</div>" + popup();
+      const q = document.getElementById("q");
+      if (q && document.activeElement && document.activeElement.id === "q") {
+        q.focus();
+        q.setSelectionRange(q.value.length, q.value.length);
+      }
+    }
+    document.body.addEventListener("click", function (e) {
+      const open = e.target.closest("[data-open]");
+      const catSide = e.target.closest("[data-cat-side]");
+      if (catSide) { state.catSide = catSide.dataset.catSide; state.find = ""; render(); return; }
+      if (e.target.closest("[data-close]")) { state.open = ""; state.find = ""; render(); return; }
+      if (e.target.classList && e.target.classList.contains("overlay")) { state.open = ""; state.find = ""; render(); return; }
+      if (open && e.target.closest(".field-head")) {
+        state.open = state.open === open.dataset.open ? "" : open.dataset.open;
+        state.find = "";
+        render();
+        return;
+      }
+      const period = e.target.closest("[data-period]");
+      if (period) { state.period = period.dataset.period; state.open = ""; render(); return; }
+      const pick = e.target.closest("[data-pick]");
+      if (pick) {
+        const parts = pick.dataset.pick.split("|");
+        const item = { side: parts[0], name: parts[1], sub: parts[2] || "" };
+        const id = idOf(item.side, item.name, item.sub);
+        state.picks = state.picks.some(function (p) { return idOf(p.side, p.name, p.sub) === id; })
+          ? state.picks.filter(function (p) { return idOf(p.side, p.name, p.sub) !== id; })
+          : state.picks.concat(item);
+        render();
+        return;
+      }
+      const account = e.target.closest("[data-account]");
+      if (account) {
+        const name = account.dataset.account;
+        state.accounts = name === "All" ? [] : (state.accounts.indexOf(name) >= 0 ? state.accounts.filter(function (a) { return a !== name; }) : state.accounts.concat(name));
+        render();
+      }
+    });
+    document.body.addEventListener("input", function (e) {
+      if (e.target.id === "q") state.q = e.target.value;
+      if (e.target.id === "find") state.find = e.target.value;
+      if (e.target.matches("[data-min]")) state.min = e.target.value.replace(/[^0-9]/g, "");
+      if (e.target.matches("[data-max]")) state.max = e.target.value.replace(/[^0-9]/g, "");
+      const which = e.target.id === "find" ? "#find" : e.target.matches("[data-min]") ? "[data-min]" : e.target.matches("[data-max]") ? "[data-max]" : "";
+      render();
+      if (which) {
+        const next = document.querySelector(which);
+        if (next) { next.focus(); next.setSelectionRange(next.value.length, next.value.length); }
+      }
+    });
+    render();
+  </script>
+</body>
+</html>

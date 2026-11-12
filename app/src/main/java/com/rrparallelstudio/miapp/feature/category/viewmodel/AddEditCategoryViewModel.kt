@@ -59,6 +59,13 @@ class AddEditCategoryViewModel
                     }
                 }
 
+                is AddEditCategoryUiEvent.OnIconSelected -> {
+                    _uiState.update {
+                        val next = it.copy(iconName = event.iconName, errorMessage = null)
+                        next.copy(canSave = validate(next))
+                    }
+                }
+
                 is AddEditCategoryUiEvent.OnTypeSelected -> {
                     if (_uiState.value.isDefaultCategory) return
                     _uiState.update {
@@ -131,6 +138,7 @@ class AddEditCategoryViewModel
                                 id = sub.id.value,
                                 categoryId = sub.categoryId.value,
                                 name = sub.name,
+                                iconName = sub.iconName,
                                 sortOrder = sub.sortOrder,
                             )
                         } ?: emptyList()

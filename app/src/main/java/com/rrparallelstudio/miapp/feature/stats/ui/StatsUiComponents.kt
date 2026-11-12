@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rrparallelstudio.miapp.feature.stats.model.StatsSiblingCategoryUi
 import com.rrparallelstudio.miapp.ui.components.MmrDimens
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
@@ -42,8 +41,9 @@ fun StatsCategoryPickerBar(
             val textColor = paint.content
             Text(
                 text = item.name,
-                fontSize = 12.sp,
-                color = textColor,
+                style =
+                    com.rrparallelstudio.miapp.ui.theme
+                        .mmrStatsChartLabel12Style(textColor),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier =

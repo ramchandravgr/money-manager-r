@@ -416,7 +416,7 @@ class AddEditRecurringRuleViewModel
                     iconName = node.category.iconName,
                     subcategories =
                         node.subcategories.map { sub ->
-                            SubcategoryUi(id = sub.id.value, name = sub.name)
+                            SubcategoryUi(id = sub.id.value, name = sub.name, iconName = sub.iconName)
                         },
                 )
             }

@@ -55,6 +55,11 @@ formatting:
   ImportOrdering:
     active: false
 
+mmr:
+  active: true
+  MmrRawFontSize:
+    active: true
+
 style:
   active: true
   MaxLineLength:

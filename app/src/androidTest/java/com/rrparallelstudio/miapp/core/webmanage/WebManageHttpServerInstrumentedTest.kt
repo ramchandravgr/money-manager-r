@@ -47,9 +47,11 @@ class WebManageHttpServerInstrumentedTest {
 
         val categoryRepository =
             CategoryRepositoryImpl(
+                graph.database,
                 graph.database.categoryDao(),
                 graph.database.transactionDao(),
                 graph.database.recurringRuleDao(),
+                graph.database.categorizationRuleDao(),
                 LanSyncTombstoneRecorder(
                     graph.database.syncTombstoneDao(),
                     LanSyncIdentityStore(context),

@@ -24,8 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
+import com.rrparallelstudio.miapp.ui.theme.mmrSettingsSliderCaptionStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrSettingsSliderEndpointStyle
 
 @Composable
 private fun mmrSettingsRangeSliderColors() =
@@ -66,8 +67,7 @@ fun MmrSettingsRangeSlider(
     ) {
         Text(
             text = caption,
-            fontSize = 16.sp,
-            color = MmrBrandColors.Reversal,
+            style = mmrSettingsSliderCaptionStyle(MmrBrandColors.Reversal),
         )
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -117,14 +117,12 @@ fun MmrSettingsRangeSlider(
         ) {
             Text(
                 text = minLabel,
-                fontSize = 12.sp,
-                color = MmrBrandColors.TextMedium,
+                style = mmrSettingsSliderEndpointStyle(MmrBrandColors.TextMedium),
             )
             Spacer(Modifier.weight(1f))
             Text(
                 text = maxLabel,
-                fontSize = 12.sp,
-                color = MmrBrandColors.TextMedium,
+                style = mmrSettingsSliderEndpointStyle(MmrBrandColors.TextMedium),
             )
         }
     }

@@ -167,7 +167,22 @@ sealed class Screen(
 
     object Settings : Screen("settings")
 
+    /** Legacy deep link; navigates to [Settings] hub. */
     object Configuration : Screen("configuration")
+
+    object HomeMenuSettings : Screen("settings_home_menu")
+
+    object AppearanceSettings : Screen("settings_appearance")
+
+    object SecuritySettings : Screen("settings_security")
+
+    object SettingsChoice : Screen("settings_choice/{picker}") {
+        const val ARG_PICKER = "picker"
+
+        fun createRoute(picker: String): String = "settings_choice/$picker"
+    }
+
+    object SmsBackupSetupGuide : Screen("sms_backup_setup_guide")
 
     object Backup : Screen("backup")
 

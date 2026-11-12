@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Money Inbox — settings screens</title>
+  <style>
+    :root {
+      --ink: #1c1917;
+      --muted: #57534e;
+      --line: #e7e5e4;
+      --bg: #f5f5f4;
+      --card: #fff;
+      --brand: #6b2d3c;
+      --danger: #b42318;
+      --ok: #067647;
+      --warn: #b54708;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: #eceae6;
+      color: var(--ink);
+    }
+    header.page {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 28px 20px 8px;
+    }
+    header.page h1 { font-size: 22px; margin: 0 0 8px; }
+    header.page p { margin: 0; color: var(--muted); max-width: 720px; line-height: 1.45; }
+    .layout {
+      display: flex;
+      gap: 28px;
+      align-items: flex-start;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 20px;
+      flex-wrap: wrap;
+    }
+    .index {
+      min-width: 240px;
+      flex: 1;
+    }
+    .index h2 { font-size: 14px; margin: 0 0 8px; }
+    .index button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: #fff;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      padding: 12px 14px;
+      font: inherit;
+      cursor: pointer;
+    }
+    .index button:first-of-type { border-radius: 12px 12px 0 0; }
+    .index button:last-of-type { border-radius: 0 0 12px 12px; border-bottom: 0; }
+    .index button.active { color: var(--brand); font-weight: 650; }
+    .index p { color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .phone {
+      width: 360px;
+      background: #111;
+      border-radius: 28px;
+      padding: 10px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.18);
+    }
+    .screen {
+      background: var(--bg);
+      border-radius: 20px;
+      overflow: hidden;
+      min-height: 720px;
+      max-height: 820px;
+      display: flex;
+      flex-direction: column;
+    }
+    .bar {
+      background: var(--brand);
+      color: #fff;
+      padding: 14px 16px;
+      font-weight: 600;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .bar button {
+      background: transparent;
+      border: 0;
+      color: #fff;
+      font: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+    }
+    .body { padding: 12px; overflow: auto; }
+    .panel { display: none; }
+    .panel.on { display: block; }
+    .section { margin-bottom: 14px; }
+    .section h2 {
+      margin: 0 8px 6px;
+      font-size: 12px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 650;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .row, .note, .btn, .choice {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      font-size: 15px;
+    }
+    a.row { color: inherit; text-decoration: none; background: #fff; }
+    button.row, button.btn {
+      width: 100%;
+      background: #fff;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    button.btn { text-align: center; color: var(--brand); font-weight: 600; }
+    button.btn.danger { color: var(--danger); }
+    .row:last-child, .card > :last-child { border-bottom: 0; }
+    .row { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .row small, .note, .foot { color: var(--muted); font-size: 13px; line-height: 1.4; }
+    .foot { margin: 6px 8px 0; }
+    .val { color: var(--muted); }
+    .switch {
+      width: 40px; height: 24px; border-radius: 99px; background: #d6d3d1; position: relative; flex: none;
+    }
+    .switch.on { background: var(--brand); }
+    .switch i {
+      position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: #fff;
+    }
+    .switch.on i { left: 18px; }
+    .choice { display: flex; gap: 6px; }
+    button.pill {
+      flex: 1; text-align: center; padding: 8px 4px; border-radius: 8px; background: #f5f5f4;
+      border: 0; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    button.pill.on { background: #f3e6ea; color: var(--brand); }
+    .url {
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 13px;
+      background: #fafaf9;
+      padding: 12px 14px;
+    }
+    .warn {
+      background: #fff7ed;
+      color: var(--warn);
+      font-size: 13px;
+      line-height: 1.4;
+      padding: 12px 14px;
+      border-radius: 12px;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--brand);
+      margin: 4px 0 0;
+    }
+    .slider-ends {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+    .code {
+      font-size: 28px;
+      letter-spacing: .18em;
+      text-align: center;
+      font-weight: 700;
+      padding: 8px 14px 14px;
+    }
+    .toast {
+      margin: 8px 12px 0;
+      background: #ecfdf3;
+      color: var(--ok);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      display: none;
+    }
+    .toast.on { display: block; }
+    .swatches, .icons { display: flex; gap: 8px; flex-wrap: wrap; padding: 4px 0 2px; }
+    .swatch, .icon-chip {
+      width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0;
+    }
+    .swatch.on, .icon-chip.on { border-color: var(--ink); }
+    .icon-chip { background: #f5f5f4; font-size: 14px; }
+    .field {
+      width: 100%; border: 0; background: transparent; font: inherit; text-align: right; color: var(--ink);
+    }
+    .chrome { margin-left: auto; display: flex; gap: 14px; align-items: center; }
+    .save, .add {
+      background: transparent; border: 0; color: #fff; font: inherit; font-weight: 650; cursor: pointer; padding: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 32px; min-height: 32px;
+    }
+    .add { font-size: 22px; line-height: 1; }
+    .save svg { width: 22px; height: 22px; display: block; }
+  </style>
+</head>
+<body>
+  <header class="page">
+    <h1>Settings screens</h1>
+    <p>Click a row to open the next screen. Back returns. Transaction Appearance is split into Home &amp; Menu, Appearance, and Security. Accounts, Categories, and SMS Templates are included. Backup still uses one schedule and one Back Up Now.</p>
+  </header>
+  <div class="layout">
+    <nav class="index" aria-label="Screens">
+      <h2>Jump</h2>
+      <button type="button" data-jump="settings" class="active">Settings</button>
+      <button type="button" data-jump="home">Home &amp; Menu</button>
+      <button type="button" data-jump="appearance">Appearance</button>
+      <button type="button" data-jump="security">Security</button>
+      <button type="button" data-jump="accounts">Accounts</button>
+      <button type="button" data-jump="categories">Categories</button>
+      <button type="button" data-jump="sms">Transaction Scan</button>
+      <button type="button" data-jump="sms-rules">SMS Templates</button>
+      <button type="button" data-jump="backup">Backup &amp; Restore</button>
+      <button type="button" data-jump="drive">Google Drive</button>
+      <button type="button" data-jump="peer">Peer Device Sync</button>
+      <button type="button" data-jump="web">Web Manage</button>
+      <p>Today, Home, colors, tabs, autocomplete, and app lock share one screen named Transaction Appearance. The mock splits those. SMS Templates stay under Transaction Scan, not a second Settings row. Drive starts connected.</p>
+    </nav>
+
+    <div class="phone">
+      <div class="screen">
+        <div class="bar"><button type="button" id="back" hidden>‹</button><span id="title">Settings</span><span class="chrome"><button type="button" class="add" id="add" hidden aria-label="Add">+</button><button type="button" class="save" id="save" hidden aria-label="Save" title="Save"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M17 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg></button></span></div>
+        <div class="toast" id="toast"></div>
+        <div class="body">
+
+          <div class="panel on" id="settings" data-title="Settings">
+            <div class="section">
+              <h2>General</h2>
+              <div class="card">
+                <button class="row" type="button" data-go="home"><span>Home &amp; Menu</span><span class="val">›</span></button>
+                <button class="row" type="button" data-go="appearance"><span>Appearance</span><span class="val">›</span></button>
+                <button class="row" type="button" data-go="security"><span>Security</span><span class="val">›</span></button>
+                <button class="row" type="button" data-go="accounts"><span>Accounts</span><span class="val">›</span></button>
+                <button class="row" type="button" data-go="categories"><span>Categories</span><span class="val">›</span></button>
+                <button class="row" type="button" data-toast="Shows the introduction again."><span>Replay Introduction</span><span class="val">›</span></button>
+              </div>
+            </div>
+            <div class="section">
+              <h2>Approvals</h2>
+              <div class="card">
+                <button class="row" type="button" data-go="sms"><span>Transaction Scan</span><span class="val">›</span></button>
+              </div>
+              <p class="foot">Bank messages you bring in are checked here, then offered in Approval Center.</p>
+            </div>
+            <div class="section">
+              <h2>Backup &amp; Sync</h2>
+              <div class="card">
+                <button class="row" type="button" data-go="backup"><span>Backup &amp; Restore</span><span class="val">›</span></button>
+                <button class="row" type="button" data-go="peer"><span>Peer Device Sync</span><span class="val">›</span></button>
+                <button class="row" type="button" data-go="web"><span>Web Manage</span><span class="val">›</span></button>
+              </div>
+              <p class="foot">Save a copy on this phone, send that copy to Google Drive, share with another phone, or open Money Inbox in a browser on the same Wi‑Fi.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="home" data-title="Home &amp; Menu">
+            <div class="section">
+              <h2>Home</h2>
+              <div class="card">
+                <button class="row" type="button" data-go="pick-start"><span>Start Screen</span><span class="val">Daily ›</span></button>
+                <button class="row" type="button" data-go="pick-month"><span>Monthly Start Date</span><span class="val">Every 1 ›</span></button>
+                <button class="row" type="button" data-go="pick-week"><span>Weekly Start Day</span><span class="val">Monday ›</span></button>
+                <div class="row"><span>Balance Carry-Over</span><span class="switch on"><i></i></span></div>
+              </div>
+              <p class="foot">Choose which view opens first, when your month and week start, and whether today’s balance includes what was left yesterday.</p>
+            </div>
+            <div class="section">
+              <h2>Main Menu</h2>
+              <div class="card">
+                <div class="row"><span>Show Trends</span><span class="switch on"><i></i></span></div>
+                <div class="row"><span>Show Budgets</span><span class="switch on"><i></i></span></div>
+                <div class="row"><span>Show Assets</span><span class="switch on"><i></i></span></div>
+                <div class="row"><span>Show Scheduled</span><span class="switch on"><i></i></span></div>
+              </div>
+              <p class="foot">Transactions and Settings always stay at the bottom. Turn the others off to hide them.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="pick-start" data-title="Start Screen">
+            <div class="section">
+              <h2>Open Transactions On</h2>
+              <div class="card">
+                <button class="row" type="button" data-toast="Start screen set to Daily."><span>Daily</span><span class="val">Selected</span></button>
+                <button class="row" type="button" data-toast="Start screen set to Monthly."><span>Monthly</span><span class="val"></span></button>
+              </div>
+              <p class="foot">Transactions opens on the day list, or on the month calendar.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="pick-month" data-title="Monthly Start Date">
+            <div class="section">
+              <h2>Month Begins</h2>
+              <div class="card" id="month-days"></div>
+              <p class="foot">Your budget month starts on this day. A short month, such as February, still ends on its last day.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="pick-week" data-title="Weekly Start Day">
+            <div class="section">
+              <h2>Week Begins</h2>
+              <div class="card" id="week-days"></div>
+              <p class="foot">Trends, budgets, and the week view start on this day.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="appearance" data-title="Appearance">
+            <div class="section">
+              <h2>Colors</h2>
+              <div class="card">
+                <button class="row" type="button" data-go="pick-mode"><span>Light Or Dark</span><span class="val">System ›</span></button>
+                <button class="row" type="button" data-go="pick-theme"><span>Color Theme</span><span class="val">Ocean ›</span></button>
+                <button class="row" type="button" data-go="pick-amounts"><span>Income / Expense Colors</span><span class="val">Teal &amp; Brick Red ›</span></button>
+              </div>
+              <p class="foot">Light or dark can follow your phone. The color theme is the accent color used on buttons and headers.</p>
+            </div>
+            <div class="section">
+              <h2>Transactions</h2>
+              <div class="card">
+                <button class="row" type="button" data-go="pick-time"><span>Time On Transactions</span><span class="val">None, Newest First ›</span></button>
+                <div class="row"><span>Show Description On Home</span><span class="switch on"><i></i></span></div>
+                <div class="row"><span>Suggest Notes</span><span class="switch on"><i></i></span></div>
+              </div>
+              <p class="foot">Autocomplete suggests notes while you add a transaction.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="pick-mode" data-title="Light Or Dark">
+            <div class="section">
+              <h2>Choose</h2>
+              <div class="card">
+                <button class="row" type="button" data-toast="Using the system appearance."><span>System</span><span class="val">Selected</span></button>
+                <button class="row" type="button" data-toast="Light mode on."><span>Light</span></button>
+                <button class="row" type="button" data-toast="Dark mode on."><span>Dark</span></button>
+                <button class="row" type="button" data-toast="Pure black on."><span>Pure Black</span></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" id="pick-theme" data-title="Color Theme">
+            <div class="section">
+              <h2>Theme</h2>
+              <div class="card" id="theme-list"></div>
+              <p class="foot">This color is used for buttons, headers, and charts.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="pick-amounts" data-title="Income / Expense Colors">
+            <div class="section">
+              <h2>Amount Colors</h2>
+              <div class="card" id="amount-list"></div>
+              <p class="foot">Income uses the first color. Expense uses the second.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="pick-time" data-title="Time On Transactions">
+            <div class="section">
+              <h2>Home Order</h2>
+              <div class="card">
+                <button class="row" type="button" data-toast="Time hidden. Oldest first."><span>Hide Time, Oldest First</span></button>
+                <button class="row" type="button" data-toast="Time hidden. Newest first."><span>Hide Time, Newest First</span><span class="val">Selected</span></button>
+                <button class="row" type="button" data-toast="Time shown. Oldest first."><span>Show Time, Oldest First</span></button>
+                <button class="row" type="button" data-toast="Time shown. Newest first."><span>Show Time, Newest First</span></button>
+              </div>
+              <p class="foot">Choose whether a transaction shows its time, and whether the newest or the oldest is at the top.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="security" data-title="Security">
+            <div class="section">
+              <h2>App Lock</h2>
+              <div class="card">
+                <div class="row"><span>Lock App On Launch</span><span class="switch"><i></i></span></div>
+              </div>
+              <p class="foot">When you open the app, or come back to it, unlock with this phone’s PIN, pattern, or fingerprint. The phone needs a screen lock first. Turning this on asks you to confirm once.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="accounts" data-title="Accounts" data-add="account">
+            <div class="section">
+              <h2>Your Accounts</h2>
+              <div class="card">
+                <button class="row" type="button" data-go="account-edit" data-acct="HDFC Savings" data-acct-type="Bank" data-acct-bal="42180" data-acct-card="4421"><span>HDFC Savings</span><span class="val">₹42,180</span></button>
+                <button class="row" type="button" data-go="account-edit" data-acct="Cash" data-acct-type="Cash" data-acct-bal="1200"><span>Cash</span><span class="val">₹1,200</span></button>
+              </div>
+              <p class="foot">Tap an account to edit it. Tap + to add one.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="account-edit" data-title="Edit Account" data-save="1">
+            <div class="section">
+              <h2>Details</h2>
+              <div class="card">
+                <div class="row"><span>Name</span><input class="field" id="acct-name" value="HDFC Savings" /></div>
+                <button class="row" type="button" data-go="account-type"><span>Type</span><span class="val" id="acct-type">Bank ›</span></button>
+                <div class="row"><span>Opening Balance</span><input class="field" id="acct-bal" value="42180" inputmode="decimal" /></div>
+                <div class="row"><span>Card Last 4</span><input class="field" id="acct-card" value="4421" inputmode="numeric" placeholder="Optional" /></div>
+              </div>
+              <p class="foot">Opening balance is what was already in this account when you started tracking it here. Card last 4 helps match a bank message to this account.</p>
+            </div>
+            <div class="section">
+              <h2>Options</h2>
+              <div class="card">
+                <div class="row"><span>Primary Account</span><span class="switch on" id="acct-primary"><i></i></span></div>
+                <div class="row" id="acct-active-row"><span>Active</span><span class="switch on"><i></i></span></div>
+              </div>
+              <p class="foot">Loan payments use the primary account when you do not pick another one. Turn Active off to hide an account without deleting it.</p>
+            </div>
+            <div class="section" id="acct-remove">
+              <div class="card">
+                <button class="btn danger" type="button" data-go="account-delete">Remove Account</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" id="account-type" data-title="Account Type">
+            <div class="section">
+              <h2>Type</h2>
+              <div class="card" id="acct-types"></div>
+            </div>
+          </div>
+
+          <div class="panel" id="account-delete" data-title="Remove Account">
+            <div class="section">
+              <h2 id="acct-delete-title">HDFC Savings</h2>
+              <div class="card">
+                <div class="note">These transactions are on this account. Move them to another account, then you can remove this one.</div>
+                <button class="row" type="button" data-toast="Transactions move to Cash."><span>Move Transactions To Cash</span><span class="val">Selected</span></button>
+                <button class="btn danger" type="button" id="acct-delete-confirm">Remove Account</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" id="categories" data-title="Categories" data-add="category">
+            <div class="section">
+              <h2>Filter</h2>
+              <div class="card">
+                <div class="choice" id="cat-filter">
+                  <button class="pill on" type="button" data-cat="All">All</button>
+                  <button class="pill" type="button" data-cat="Expense">Expense</button>
+                  <button class="pill" type="button" data-cat="Income">Income</button>
+                </div>
+              </div>
+            </div>
+            <div class="section">
+              <h2>Expense</h2>
+              <div class="card">
+                <button class="row" type="button" data-go="category-edit" data-cat-name="Food" data-cat-order="10"><span>Food</span><span class="val">3 ›</span></button>
+                <button class="row" type="button" data-go="category-edit" data-cat-name="Fuel" data-cat-order="20"><span>Fuel</span><span class="val">1 ›</span></button>
+              </div>
+            </div>
+            <div class="section">
+              <h2>Income</h2>
+              <div class="card">
+                <button class="row" type="button" data-go="category-edit" data-cat-name="Salary" data-cat-order="10" data-cat-kind="Income"><span>Salary</span><span class="val">0 ›</span></button>
+              </div>
+              <p class="foot">The number is how many subcategories it has. Tap a category to change it. Tap + to add one.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="category-edit" data-title="Edit Category" data-save="1">
+            <div class="section">
+              <h2>Details</h2>
+              <div class="card">
+                <div class="row"><span>Name</span><input class="field" id="cat-name" value="Food" /></div>
+                <button class="row" type="button" data-go="pick-type"><span>Type</span><span class="val" id="cat-type">Expense ›</span></button>
+                <div class="choice" style="display:block">
+                  <div>Color</div>
+                  <div class="swatches" id="cat-colors">
+                    <button class="swatch on" type="button" data-color="Coral" style="background:#e24660"></button>
+                    <button class="swatch" type="button" data-color="Teal" style="background:#0f766e"></button>
+                    <button class="swatch" type="button" data-color="Amber" style="background:#d97706"></button>
+                    <button class="swatch" type="button" data-color="Indigo" style="background:#4338ca"></button>
+                    <button class="swatch" type="button" data-color="Slate" style="background:#57534e"></button>
+                  </div>
+                </div>
+                <div class="choice" style="display:block">
+                  <div>Icon</div>
+                  <div class="icons" id="cat-icons">
+                    <button class="icon-chip on" type="button" data-icon="Utensils">🍴</button>
+                    <button class="icon-chip" type="button" data-icon="Cart">🛒</button>
+                    <button class="icon-chip" type="button" data-icon="Home">🏠</button>
+                    <button class="icon-chip" type="button" data-icon="Car">🚗</button>
+                  </div>
+                </div>
+                <div class="row"><span>Sort Order</span><input class="field" id="cat-order" value="10" inputmode="numeric" /></div>
+              </div>
+              <p class="foot">A smaller sort number appears higher in the list. A built-in category keeps its type.</p>
+            </div>
+            <div class="section" id="cat-subs">
+              <h2>Subcategories</h2>
+              <div class="card">
+                <button class="row" type="button" data-go="subcategory-edit" data-sub="Groceries" data-sub-order="1"><span>Groceries</span><span class="val">1 ›</span></button>
+                <button class="row" type="button" data-go="subcategory-edit" data-sub="Dining" data-sub-order="2"><span>Dining</span><span class="val">2 ›</span></button>
+                <button class="row" type="button" data-go="subcategory-edit" data-sub="Cafe" data-sub-order="3"><span>Cafe</span><span class="val">3 ›</span></button>
+                <button class="row" type="button" data-go="subcategory-edit" data-sub-new="1"><span>Add Subcategory</span><span class="val">›</span></button>
+              </div>
+              <p class="foot">Tap one to rename it or change its icon. You can remove it on the next screen.</p>
+            </div>
+            <div class="section" id="cat-remove">
+              <div class="card">
+                <button class="btn danger" type="button" data-go="category-delete">Remove Category</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" id="pick-type" data-title="Category Type">
+            <div class="section">
+              <h2>Type</h2>
+              <div class="card">
+                <button class="row" type="button" data-type="Expense"><span>Expense</span><span class="val">Selected</span></button>
+                <button class="row" type="button" data-type="Income"><span>Income</span></button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" id="category-delete" data-title="Remove Category">
+            <div class="section">
+              <h2>Food</h2>
+              <div class="card">
+                <div class="note">Food is on 18 transactions. Move them to another category, or leave them without a category. Subcategories under Food are removed too.</div>
+                <button class="row" type="button" id="del-move"><span>Move Them To Fuel</span><span class="val">Selected</span></button>
+                <button class="row" type="button" id="del-none"><span>Leave Them Without A Category</span><span class="val"></span></button>
+                <button class="btn danger" type="button" id="del-confirm">Remove Category</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" id="subcategory-edit" data-title="Edit Subcategory" data-save="1">
+            <div class="section">
+              <h2>Category</h2>
+              <div class="card">
+                <div class="row"><span id="sub-parent">Food</span><span class="val">Expense</span></div>
+              </div>
+            </div>
+            <div class="section">
+              <h2>Details</h2>
+              <div class="card">
+                <div class="row"><span>Name</span><input class="field" id="sub-name" value="Groceries" /></div>
+                <div class="choice" style="display:block">
+                  <div>Icon</div>
+                  <div class="icons" id="sub-icons">
+                    <button class="icon-chip on" type="button" data-icon="Cart">🛒</button>
+                    <button class="icon-chip" type="button" data-icon="Basket">🧺</button>
+                    <button class="icon-chip" type="button" data-icon="Store">🏪</button>
+                  </div>
+                </div>
+                <div class="row"><span>Sort Order</span><input class="field" id="sub-order" value="1" inputmode="numeric" /></div>
+              </div>
+              <p class="foot">A smaller number appears first under this category. The icon uses the category color.</p>
+            </div>
+            <div class="section" id="sub-delete-section">
+              <div class="card">
+                <button class="btn danger" type="button" data-go="subcategory-delete">Remove Subcategory</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" id="subcategory-delete" data-title="Remove Subcategory">
+            <div class="section">
+              <h2 id="sub-delete-title">Groceries</h2>
+              <div class="card">
+                <div class="note" id="sub-delete-note">Groceries will no longer appear when you add a transaction. Existing ones stay under Food, without a subcategory.</div>
+                <button class="btn danger" type="button" id="sub-delete-confirm">Remove</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" id="sms" data-title="Transaction Scan">
+            <div class="section">
+              <h2>How far back to read</h2>
+              <div class="card">
+              <div class="row"><span>Look Back</span><span class="val" id="lookback-val">6 Months</span></div>
+              <div class="choice" style="display:block">
+                <input id="lookback" type="range" min="1" max="36" step="1" value="6" />
+                <div class="slider-ends"><span>1 mo</span><span>36 mo</span></div>
+              </div>
+              </div>
+              <p class="foot">Approval Center only offers bank messages from this far back.</p>
+            </div>
+            <div class="section">
+              <h2>SMS Backup &amp; Restore</h2>
+              <div class="card">
+                <button class="row" type="button" data-go="sms-guide"><span>Setup Guide</span><span class="val">›</span></button>
+                <button class="row" type="button" data-toast="Choose the folder where your SMS backup file is saved."><span>Backup Folder</span><span class="val">sms-backups ›</span></button>
+                <button class="btn danger" type="button" data-toast="Money Inbox will stop reading that folder. The files stay on your phone.">Forget Folder</button>
+              </div>
+              <p class="foot">Choose the folder where SMS Backup &amp; Restore saves messages. Money Inbox reads the newest file when you open the app or refresh Approval Center.</p>
+            </div>
+            <div class="section">
+              <h2>Privacy</h2>
+              <div class="card">
+                <div class="note">Only the backup file you choose is read, and only on this phone, to find bank transactions. Those messages are not uploaded.</div>
+              </div>
+            </div>
+            <div class="section">
+              <h2>Advanced</h2>
+              <div class="card">
+                <button class="row" type="button" data-go="sms-rules"><span>SMS Templates</span><span class="val">›</span></button>
+              </div>
+              <p class="foot">Most people can skip this. Open it only if a bank message is not recognized.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="sms-guide" data-title="Setup Guide">
+            <div class="section">
+              <h2>SMS Backup &amp; Restore</h2>
+              <div class="card">
+                <div class="note">This app does not read your message inbox. Save messages with SMS Backup &amp; Restore, then choose that folder here.</div>
+                <a class="row" href="https://play.google.com/store/apps/details?id=com.riteshsahu.SMSBackupRestore" target="_blank" rel="noopener noreferrer"><span>1. Get SMS Backup &amp; Restore</span><span class="val">Play Store ›</span></a>
+                <div class="note">Opens the SyncTech app on the Play Store. Install it, then come back here.</div>
+                <div class="row"><span>2. Save Messages As A File</span></div>
+                <div class="note">In that app, save messages as an XML file, not a database. Pick a folder you can find again. One file name is enough.</div>
+                <div class="row"><span>3. Repeat That Save</span></div>
+                <div class="note">An hourly schedule is enough. Let it replace the same file each time.</div>
+                <div class="row"><span>4. Choose That Folder Here</span></div>
+                <div class="note">Go back to Transaction Scan and tap Backup Folder. Allow access to the same folder.</div>
+                <div class="row"><span>5. Refresh Approval Center</span></div>
+                <div class="note">Open Approval Center and tap Refresh. New bank messages from that file are offered for you to accept.</div>
+              </div>
+              <p class="foot">Look Back sets how many months of those messages are offered. Forget Folder stops reading the folder. It does not delete the files.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="sms-rules" data-title="SMS Templates">
+            <div class="section">
+              <h2>Build Your Own</h2>
+              <div class="card">
+                <button class="btn" type="button" data-toast="Prompt copied. Paste it into any AI with your SMS export, then import the JSON file here.">Copy Prompt</button>
+              </div>
+              <p class="foot">Paste the prompt and your SMS export into any AI you choose. Save the JSON after ---JSON--- as a file, then import it below. Your messages go only to that AI.</p>
+            </div>
+            <div class="section">
+              <h2>Your Rules</h2>
+              <div class="card">
+                <div class="note">Using the built-in bank messages. No extra rules file is loaded.</div>
+                <button class="btn" type="button" data-toast="Choose a JSON file. A file that is not valid is not used.">Import JSON</button>
+                <button class="btn danger" type="button" data-toast="Extra rules removed. Built-in bank messages are used again. Your transactions stay.">Remove Extra Rules</button>
+              </div>
+              <p class="foot">An extra file can recognize more bank messages. Removing it does not delete transactions.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="backup" data-title="Backup &amp; Restore">
+            <div class="section">
+              <h2>On This Phone</h2>
+              <div class="card">
+                <div class="row"><span>Total Records</span><span class="val">200</span></div>
+                <div class="row"><span>Transactions</span><span class="val">128</span></div>
+                <div class="row"><span>Accounts</span><span class="val">4</span></div>
+                <div class="row"><span>Categories</span><span class="val">22</span></div>
+                <div class="row"><span>Loans</span><span class="val">1</span></div>
+                <div class="row"><span>Recurring Rules</span><span class="val">2</span></div>
+                <div class="row"><span>Budgets</span><span class="val">3</span></div>
+                <div class="row"><span>SMS / Approvals</span><span class="val">40</span></div>
+              </div>
+              <p class="foot">A backup includes these, plus your settings. Bank messages you have not accepted yet are left out.</p>
+            </div>
+            <div class="section">
+              <h2>Backup</h2>
+              <div class="card">
+                <button class="row" type="button" id="folder-row" data-toast="Choose a folder. Later backups use the same folder.">
+                  <span>Backup Folder</span><span class="val" id="folder-val">MoneyInbox ›</span>
+                </button>
+                <div class="choice" id="schedule">
+                  <button class="pill" type="button" data-schedule="Off">Off</button>
+                  <button class="pill on" type="button" data-schedule="Daily">Daily</button>
+                  <button class="pill" type="button" data-schedule="Weekly">Weekly</button>
+                  <button class="pill" type="button" data-schedule="Monthly">Monthly</button>
+                </div>
+                <button class="row" type="button" id="wifi-row">
+                  <span>Google Drive Wi‑Fi Only</span>
+                  <span class="switch on" id="wifi-switch"><i></i></span>
+                </button>
+                <button class="btn" type="button" id="backup-now">Back Up Now</button>
+              </div>
+              <p class="foot" id="backup-foot">Saves a backup in the folder you chose and keeps the latest 6. If Google Drive is connected, that same file is uploaded. Last backup: Today, 9:40.</p>
+            </div>
+            <div class="section">
+              <h2>Restore &amp; Cloud</h2>
+              <div class="card">
+                <button class="row" type="button" data-go="import"><span>Import Backup</span><span class="val">›</span></button>
+                <button class="row" type="button" data-go="drive"><span>Google Drive Backup</span><span class="val" id="drive-row-val">Connected ›</span></button>
+              </div>
+              <p class="foot">Import a Money Inbox backup, or a file from Money Manager or Monefy. Google Drive shows copies already uploaded so you can restore one.</p>
+            </div>
+            <div class="section">
+              <h2>Spreadsheet</h2>
+              <div class="card">
+                <button class="btn" type="button" data-toast="Template saved to Downloads.">Download Import Template</button>
+                <button class="btn" type="button" data-go="sheet">Import Spreadsheet</button>
+              </div>
+              <p class="foot">Download the sample spreadsheet, fill in the rows, then import it. Rows you already added are skipped.</p>
+            </div>
+            <div class="section">
+              <h2>Migrate From Another App</h2>
+              <div class="card">
+                <button class="row" type="button" data-toast="Opens an email so you can ask for help importing another app.">
+                  <span>Request Import Help</span><span class="val">Email ›</span>
+                </button>
+              </div>
+              <p class="foot">If your old app is not listed, this opens an email so we can look at adding it.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="import" data-title="Import Backup">
+            <div class="section">
+              <h2>Choose A File</h2>
+              <div class="card">
+                <div class="note">money-inbox-backup-20261112.mibxbac</div>
+                <button class="btn" type="button" data-toast="This phone now matches the backup.">Replace &amp; Restore</button>
+                <button class="btn" type="button" data-toast="New records added. What you already had stays.">Merge</button>
+              </div>
+              <p class="foot">Replace removes what is on this phone and uses the file. Merge adds only what is not already here. Files from Money Manager and Monefy can only merge.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="sheet" data-title="Import Spreadsheet">
+            <div class="section">
+              <h2>Merge Rows</h2>
+              <div class="card">
+                <div class="note">These rows are added to your transactions. Importing the same file again skips rows already added.</div>
+                <button class="btn" type="button" data-toast="Rows added. Ones you already had were skipped.">Import</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" id="drive" data-title="Google Drive Backup">
+            <div class="section">
+              <h2>About</h2>
+              <div class="card">
+                <div class="note">These copies use space in your Google account. They are the same files saved in your backup folder, under MoneyInbox / Backups.</div>
+              </div>
+            </div>
+            <div class="section">
+              <h2>Account</h2>
+              <div class="card" id="drive-off">
+                <div class="row"><span>Not Connected</span></div>
+                <button class="btn" type="button" id="drive-connect">Turn On Google Drive Backup</button>
+              </div>
+              <div class="card" id="drive-on">
+                <div class="row"><span>you@gmail.com</span></div>
+                <button class="btn danger" type="button" id="drive-disconnect">Disconnect</button>
+              </div>
+            </div>
+            <div class="section" id="drive-restore">
+              <h2>Backups On Drive</h2>
+              <div class="card" id="drive-files">
+                <button class="row" type="button" data-drive-file="money-inbox-current.mibxbac">
+                  <span>money-inbox-current.mibxbac</span><span class="val">Today, 9:41</span>
+                </button>
+                <button class="row" type="button" data-drive-file="money-inbox-backup-20261105.mibxbac">
+                  <span>money-inbox-backup-20261105.mibxbac</span><span class="val">5 Nov</span>
+                </button>
+                <button class="row" type="button" data-drive-file="money-inbox-backup-20261028.mibxbac">
+                  <span>money-inbox-backup-20261028.mibxbac</span><span class="val">28 Oct</span>
+                </button>
+              </div>
+              <p class="foot">Tap a backup to put it on this phone. To create a new one, use Back Up Now on Backup &amp; Restore. Last upload: Today, 9:41.</p>
+              <div class="card" id="drive-restore-actions" hidden style="margin-top:12px">
+                <div class="note" id="drive-restore-file">Restore this file onto this phone.</div>
+                <button class="btn" type="button" id="drive-replace">Replace &amp; Restore</button>
+                <button class="btn" type="button" id="drive-merge">Merge</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" id="peer" data-title="Peer Device Sync">
+            <div class="card warn">This connection is not locked. Use your home Wi‑Fi or your own hotspot, not a public or guest network.</div>
+            <div class="section" style="margin-top:12px">
+              <h2>Enable</h2>
+              <div class="card">
+                <div class="row"><span>Sync On Same Wi‑Fi</span><span class="switch on"><i></i></span></div>
+              </div>
+              <p class="foot">Copies transactions you have already approved. Messages still waiting in Approval Center stay on the phone that received them.</p>
+            </div>
+            <div class="section">
+              <h2>This Phone</h2>
+              <div class="card">
+                <div class="row"><span>Network</span><span class="val">Home</span></div>
+                <button class="row" type="button" data-go="peer-name"><span>Your Name</span><span class="val" id="peer-name-val">Ram ›</span></button>
+                <div class="row"><span>Address</span><span class="val">192.168.0.23:54321</span></div>
+                <div class="code">K7M P2Q</div>
+                <div class="note">Read this code to the other phone. It changes after 15 minutes. They will see your name on transactions you add.</div>
+              </div>
+            </div>
+            <div class="section">
+              <h2>On This Network</h2>
+              <div class="card">
+                <button class="row" type="button" data-go="peer-device"><span>Pixel</span><span class="val">Selected</span></button>
+              </div>
+              <p class="foot">Tap their phone, then type the code shown on their screen. Skip this if you already trust that phone.</p>
+            </div>
+            <div class="section">
+              <h2>Trust A Device</h2>
+              <div class="card">
+                <div class="row"><span>Other Phone Address</span><input class="field" placeholder="192.168.43.2:54321" /></div>
+                <div class="row"><span>Pairing Code</span><input class="field" placeholder="Code On Their Phone" /></div>
+                <button class="btn" type="button" data-toast="Pixel added as a trusted device.">Add Trusted Device</button>
+              </div>
+              <p class="foot">Type the code from their screen, not the code on this phone. Type an address only if their phone is not in the list above.</p>
+            </div>
+            <div class="section">
+              <h2>Waiting For You</h2>
+              <div class="card">
+                <div class="row"><span>Pixel Asked To Sync</span></div>
+                <button class="btn" type="button" data-toast="Pixel approved.">Approve</button>
+                <button class="btn danger" type="button" data-toast="Request declined.">Decline</button>
+              </div>
+            </div>
+            <div class="section">
+              <h2>Trusted Devices</h2>
+              <div class="card">
+                <button class="btn danger" type="button" data-toast="Pixel can no longer sync with this phone.">Remove Pixel</button>
+              </div>
+            </div>
+            <div class="section">
+              <h2>Sync Options</h2>
+              <div class="card">
+                <div class="row"><span>Auto Sync On App Open</span><span class="switch"><i></i></span></div>
+                <div class="row"><span>Sync One Device Only</span><span class="switch on"><i></i></span></div>
+                <button class="row" type="button" data-toast="Sync Now will use only Pixel."><span>Pixel</span><span class="val">Selected</span></button>
+                <div class="row"><span>Include Attachments</span><span class="switch"><i></i></span></div>
+              </div>
+              <p class="foot">With auto sync on, opening the app syncs when a trusted phone is on this Wi‑Fi. On a new Wi‑Fi name, tap Sync Now once so that network is allowed. Receipt photos are included only when Include Attachments is on.</p>
+            </div>
+            <div class="section">
+              <h2>Sync Now</h2>
+              <div class="card">
+                <button class="btn" type="button" data-toast="Sync with Pixel finished. 3 items updated from the other phone.">Sync With Pixel</button>
+                <div class="note">2 bank messages are still waiting for you to accept them. They are not sent to the other phone.</div>
+              </div>
+            </div>
+            <div class="section">
+              <h2>Sync History</h2>
+              <div class="card">
+                <button class="row" type="button" data-go="peer-history"><span>Last 30 Syncs</span><span class="val">›</span></button>
+              </div>
+              <p class="foot">Shows what changed on this phone. Colors and theme stay on this phone.</p>
+            </div>
+            <div class="section">
+              <h2>Advanced</h2>
+              <div class="card">
+                <button class="row" type="button" data-go="peer-replace"><span>Replace This Phone From Pixel</span><span class="val">Deletes Yours ›</span></button>
+                <button class="row" type="button" data-go="peer-clear"><span>Clear Sync History</span><span class="val">Clear ›</span></button>
+              </div>
+              <p class="foot">Replace deletes everything on this phone and copies the other phone. Sync Now combines both phones instead.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="peer-name" data-title="Your Name" data-save="1">
+            <div class="section">
+              <h2>Shown On The Other Phone</h2>
+              <div class="card">
+                <div class="row"><span>Your Name</span><input class="field" id="peer-name-input" value="Ram" /></div>
+              </div>
+              <p class="foot">The other phone shows this name on transactions you add.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="peer-device" data-title="Pixel">
+            <div class="section">
+              <h2>This Phone Has No Transactions</h2>
+              <div class="card">
+                <button class="btn" type="button" data-toast="Copied Pixel onto this phone.">Copy All Data From Pixel</button>
+              </div>
+              <p class="foot">Use this only when this phone has no transactions yet. It copies their data here. It does not combine both phones.</p>
+            </div>
+          </div>
+
+          <div class="panel" id="peer-replace" data-title="Replace From Pixel">
+            <div class="section">
+              <h2>This Deletes Your Transactions</h2>
+              <div class="card">
+                <div class="note">Everything on this phone is deleted and replaced with Pixel. Sync Now keeps both phones and combines them.</div>
+                <button class="btn danger" type="button" data-toast="This phone was replaced with Pixel.">Replace This Phone</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" id="peer-clear" data-title="Clear Sync History">
+            <div class="section">
+              <h2>Last 30 Syncs</h2>
+              <div class="card">
+                <div class="note">This removes the list of past syncs. Your transactions stay.</div>
+                <button class="btn danger" type="button" data-toast="Sync history cleared.">Clear</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" id="peer-history" data-title="Sync History">
+            <div class="section">
+              <h2>Recent</h2>
+              <div class="card">
+                <div class="row"><span>Sync With Pixel</span><span class="val">Today</span></div>
+                <div class="note">3 items updated from the other phone.</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel" id="web" data-title="Web Manage">
+            <div class="card warn">The browser connection is not locked. Use home Wi‑Fi or your hotspot. You stay signed in for 2 hours in that browser.</div>
+            <div class="section" style="margin-top:12px">
+              <h2>Access</h2>
+              <div class="card">
+                <div class="row"><span>Password</span><input class="field" id="web-password" type="password" value="secret1" /></div>
+                <button class="btn" type="button" id="web-password-save">Update Password</button>
+              </div>
+              <p class="foot">Use at least 6 characters. You can change it without turning Web Manage off.</p>
+            </div>
+            <div class="section">
+              <h2>Server</h2>
+              <div class="card">
+                <div class="row"><span>Web Manage</span><span class="switch on"><i></i></span></div>
+                <div class="note">Phone-to-phone sync turns off while this is on.</div>
+                <div class="row"><span>Network</span><span class="val">Home</span></div>
+                <div class="row"><span>IP Address</span><span class="val">192.168.0.23</span></div>
+                <div class="row"><span>Port</span><span class="val">8080</span></div>
+                <div class="url">http://192.168.0.23:8080</div>
+                <button class="btn" type="button" data-toast="Address copied.">Copy Address</button>
+              </div>
+              <p class="foot">On a laptop on the same Wi‑Fi, or on this phone’s hotspot, open the address above. Turn off VPN on the phone and the laptop.</p>
+            </div>
+            <div class="section">
+              <h2>Connection Help</h2>
+              <div class="card">
+                <div class="row"><span>Test On This Phone</span><span class="val">127.0.0.1:8080</span></div>
+                <div class="row"><span>Waiting For Approval</span><span class="val">2</span></div>
+              </div>
+              <p class="foot">Try the test address in this phone’s browser first. If a laptop still cannot connect, the router may be blocking phones and computers from seeing each other.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const stack = ["settings"];
+    const title = document.getElementById("title");
+    const back = document.getElementById("back");
+    const toast = document.getElementById("toast");
+    let driveLinked = true;
+
+    function showToast(text) {
+      toast.textContent = text;
+      toast.classList.add("on");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(() => toast.classList.remove("on"), 2200);
+    }
+
+    function renderDrive() {
+      document.getElementById("drive-on").hidden = !driveLinked;
+      document.getElementById("drive-off").hidden = driveLinked;
+      document.getElementById("drive-restore").hidden = !driveLinked;
+      if (!driveLinked) document.getElementById("drive-restore-actions").hidden = true;
+      document.getElementById("wifi-row").hidden = !driveLinked;
+      document.getElementById("drive-row-val").textContent = driveLinked ? "Connected ›" : "Not Connected ›";
+      document.getElementById("backup-foot").textContent = driveLinked
+        ? "Saves a backup in the folder you chose and keeps the latest 6. If Google Drive is connected, that same file is uploaded. Last backup: Today, 9:40."
+        : "Saves a backup in the folder you chose and keeps the latest 6. Last backup: Today, 9:40.";
+    }
+
+    function show(id, push) {
+      const panel = document.getElementById(id);
+      if (!panel) return;
+      document.querySelectorAll(".panel").forEach((el) => el.classList.remove("on"));
+      panel.classList.add("on");
+      title.textContent = panel.dataset.title || id;
+      if (push) stack.push(id);
+      back.hidden = stack.length < 2;
+      document.querySelectorAll("[data-jump]").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.jump === id);
+      });
+      panel.parentElement.scrollTop = 0;
+      document.getElementById("save").hidden = panel.dataset.save !== "1";
+      const add = document.getElementById("add");
+      add.hidden = !panel.dataset.add;
+      add.dataset.action = panel.dataset.add || "";
+    }
+
+    function choiceList(parent, items, selected) {
+      parent.innerHTML = items.map((label) => {
+        const mark = label === selected ? "<span class=\"val\">Selected</span>" : "";
+        return "<button class=\"row\" type=\"button\" data-toast=\"" + label + " selected.\"><span>" + label + "</span>" + mark + "</button>";
+      }).join("");
+    }
+
+    choiceList(document.getElementById("month-days"), Array.from({length: 28}, (_, i) => "Every " + (i + 1)), "Every 1");
+    choiceList(document.getElementById("week-days"), ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"], "Monday");
+    choiceList(document.getElementById("theme-list"), ["Ocean", "Forest", "Slate", "Royal", "Sunset", "Midnight", "Rose Gold", "Mint", "Charcoal & Gold"], "Ocean");
+    choiceList(document.getElementById("amount-list"), ["Teal & Brick Red", "Emerald & Bright Red", "Sky & Crimson", "Lime & Amber", "Indigo & Magenta"], "Teal & Brick Red");
+    choiceList(document.getElementById("acct-types"), ["Cash", "Bank", "Debit", "Credit", "Wallet", "Loan", "Other"], "Bank");
+
+    document.getElementById("add").addEventListener("click", () => {
+      const action = document.getElementById("add").dataset.action;
+      if (action === "category") {
+        document.getElementById("cat-name").value = "";
+        document.getElementById("cat-order").value = "0";
+        document.getElementById("cat-type").textContent = "Expense ›";
+        document.getElementById("cat-subs").hidden = true;
+        document.getElementById("cat-remove").hidden = true;
+        document.getElementById("category-edit").dataset.title = "New Category";
+        show("category-edit", true);
+      }
+      if (action === "account") {
+        document.getElementById("acct-name").value = "";
+        document.getElementById("acct-bal").value = "";
+        document.getElementById("acct-card").value = "";
+        document.getElementById("acct-type").textContent = "Bank ›";
+        document.getElementById("acct-active-row").hidden = true;
+        document.getElementById("acct-remove").hidden = true;
+        document.getElementById("account-edit").dataset.title = "New Account";
+        show("account-edit", true);
+      }
+    });
+
+    document.body.addEventListener("click", (event) => {
+      const go = event.target.closest("[data-go]");
+      if (go) {
+        show(go.dataset.go, true);
+        return;
+      }
+      const jump = event.target.closest("[data-jump]");
+      if (jump) {
+        stack.length = 0;
+        if (jump.dataset.jump !== "settings") stack.push("settings");
+        show(jump.dataset.jump, true);
+        return;
+      }
+      const toastBtn = event.target.closest("[data-toast]");
+      if (toastBtn) showToast(toastBtn.dataset.toast);
+      const schedule = event.target.closest("[data-schedule]");
+      if (schedule) {
+        document.querySelectorAll("#schedule .pill").forEach((pill) => pill.classList.remove("on"));
+        schedule.classList.add("on");
+        showToast(schedule.dataset.schedule === "Off" ? "Automatic backup is off." : "Backup runs " + schedule.dataset.schedule.toLowerCase() + ". Google Drive uses the same timing when it is connected.");
+      }
+    });
+
+    back.addEventListener("click", () => {
+      if (stack.length < 2) return;
+      stack.pop();
+      show(stack[stack.length - 1], false);
+    });
+
+    document.getElementById("wifi-row").addEventListener("click", () => {
+      document.getElementById("wifi-switch").classList.toggle("on");
+      const on = document.getElementById("wifi-switch").classList.contains("on");
+      showToast(on ? "Drive uploads wait for Wi‑Fi." : "Drive uploads can use mobile data.");
+    });
+
+    document.getElementById("backup-now").addEventListener("click", () => {
+      const wifi = document.getElementById("wifi-switch").classList.contains("on");
+      if (!driveLinked) {
+        showToast("Backup saved to MoneyInbox.");
+      } else if (wifi) {
+        showToast("Backup saved to MoneyInbox. Drive upload waits for Wi‑Fi.");
+      } else {
+        showToast("Backup saved to MoneyInbox. Uploaded to Google Drive.");
+      }
+    });
+
+    document.getElementById("drive-files").addEventListener("click", (event) => {
+      const row = event.target.closest("[data-drive-file]");
+      if (!row) return;
+      document.getElementById("drive-restore-file").textContent = "Restore " + row.dataset.driveFile + " onto this phone.";
+      document.getElementById("drive-restore-actions").hidden = false;
+      document.getElementById("drive-restore-actions").dataset.file = row.dataset.driveFile;
+    });
+
+    document.getElementById("drive-replace").addEventListener("click", () => {
+      const file = document.getElementById("drive-restore-actions").dataset.file || "backup";
+      showToast("Replaced this phone from " + file + ".");
+    });
+
+    document.getElementById("drive-merge").addEventListener("click", () => {
+      const file = document.getElementById("drive-restore-actions").dataset.file || "backup";
+      showToast("Merged " + file + " into this phone.");
+    });
+
+    document.getElementById("drive-connect").addEventListener("click", () => {
+      driveLinked = true;
+      renderDrive();
+      showToast("Google Drive is connected. Use Back Up Now on Backup & Restore.");
+    });
+
+    document.getElementById("drive-disconnect").addEventListener("click", () => {
+      driveLinked = false;
+      renderDrive();
+      showToast("Disconnected from Google Drive.");
+    });
+
+    const lookback = document.getElementById("lookback");
+    const lookbackVal = document.getElementById("lookback-val");
+    document.getElementById("save").addEventListener("click", () => {
+      if (document.getElementById("peer-name").classList.contains("on")) {
+        const name = document.getElementById("peer-name-input").value.trim() || "Ram";
+        document.getElementById("peer-name-val").textContent = name + " ›";
+      }
+      showToast("Saved.");
+    });
+
+    document.getElementById("cat-colors").addEventListener("click", (event) => {
+      const chip = event.target.closest("[data-color]");
+      if (!chip) return;
+      document.querySelectorAll("#cat-colors .swatch").forEach((el) => el.classList.remove("on"));
+      chip.classList.add("on");
+    });
+
+    function selectIcon(group, event) {
+      const chip = event.target.closest("[data-icon]");
+      if (!chip) return;
+      group.querySelectorAll(".icon-chip").forEach((el) => el.classList.remove("on"));
+      chip.classList.add("on");
+    }
+    document.getElementById("cat-icons").addEventListener("click", (event) => selectIcon(document.getElementById("cat-icons"), event));
+    document.getElementById("sub-icons").addEventListener("click", (event) => selectIcon(document.getElementById("sub-icons"), event));
+
+    document.body.addEventListener("click", (event) => {
+      const cat = event.target.closest("[data-cat-name]");
+      if (cat) {
+        document.getElementById("cat-name").value = cat.dataset.catName;
+        document.getElementById("cat-order").value = cat.dataset.catOrder || "0";
+        document.getElementById("cat-type").textContent = (cat.dataset.catKind || "Expense") + " ›";
+        document.getElementById("cat-subs").hidden = false;
+        document.getElementById("cat-remove").hidden = false;
+        document.getElementById("category-edit").dataset.title = "Edit Category";
+        document.getElementById("title").textContent = "Edit Category";
+      }
+      const acct = event.target.closest("[data-acct]");
+      if (acct) {
+        document.getElementById("acct-name").value = acct.dataset.acct;
+        document.getElementById("acct-bal").value = acct.dataset.acctBal || "";
+        document.getElementById("acct-card").value = acct.dataset.acctCard || "";
+        document.getElementById("acct-type").textContent = (acct.dataset.acctType || "Bank") + " ›";
+        document.getElementById("acct-active-row").hidden = false;
+        document.getElementById("acct-remove").hidden = false;
+        document.getElementById("account-edit").dataset.title = "Edit Account";
+        document.getElementById("title").textContent = "Edit Account";
+        document.getElementById("acct-delete-title").textContent = acct.dataset.acct;
+      }
+      const sub = event.target.closest("[data-sub]");
+      if (sub) {
+        document.getElementById("sub-name").value = sub.dataset.sub;
+        document.getElementById("sub-order").value = sub.dataset.subOrder || "0";
+        document.getElementById("sub-delete-section").hidden = false;
+        document.getElementById("subcategory-edit").dataset.title = "Edit Subcategory";
+        document.getElementById("title").textContent = "Edit Subcategory";
+        document.getElementById("sub-delete-note").textContent =
+          sub.dataset.sub + " will no longer appear when you add a transaction. Existing ones stay under Food, without a subcategory.";
+      }
+      const fresh = event.target.closest("[data-sub-new]");
+      if (fresh) {
+        document.getElementById("sub-name").value = "";
+        document.getElementById("sub-order").value = "0";
+        document.getElementById("sub-delete-section").hidden = true;
+        document.getElementById("subcategory-edit").dataset.title = "New Subcategory";
+        document.getElementById("title").textContent = "New Subcategory";
+      }
+      const acctType = event.target.closest("#acct-types [data-toast]");
+      if (acctType) {
+        const label = acctType.querySelector("span").textContent;
+        document.getElementById("acct-type").textContent = label + " ›";
+        if (stack[stack.length - 1] === "account-type") stack.pop();
+        show("account-edit", false);
+      }
+      const type = event.target.closest("[data-type]");
+      if (type) {
+        document.getElementById("cat-type").textContent = type.dataset.type + " ›";
+        show("category-edit", false);
+        if (stack[stack.length - 1] === "pick-type") stack.pop();
+      }
+    });
+
+    document.getElementById("acct-delete-confirm").addEventListener("click", () => {
+      showToast(document.getElementById("acct-name").value + " removed.");
+      show("accounts", false);
+    });
+
+    document.getElementById("web-password-save").addEventListener("click", () => {
+      const value = document.getElementById("web-password").value;
+      showToast(value.length >= 6 ? "Password updated." : "Password must be at least 6 characters.");
+    });
+
+    document.getElementById("del-confirm").addEventListener("click", () => {
+      showToast("Food removed. Transactions were updated.");
+      show("categories", false);
+    });
+
+    document.getElementById("sub-delete-confirm").addEventListener("click", () => {
+      const name = document.getElementById("sub-name").value || "Subcategory";
+      showToast(name + " removed. Transactions stay on Food.");
+      show("category-edit", false);
+    });
+
+    document.querySelectorAll("#cat-filter .pill").forEach((pill) => {
+      pill.addEventListener("click", () => {
+        document.querySelectorAll("#cat-filter .pill").forEach((p) => p.classList.remove("on"));
+        pill.classList.add("on");
+      });
+    });
+
+    lookback.addEventListener("input", () => {
+      const months = Number(lookback.value);
+      lookbackVal.textContent = months === 1 ? "1 Month" : months + " Months";
+    });
+
+    renderDrive();
+  </script>
+</body>
+</html>

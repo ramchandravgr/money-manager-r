@@ -18,7 +18,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rrparallelstudio.miapp.R
 import com.rrparallelstudio.miapp.ads.MmrAdPlacementPolicy
@@ -272,8 +271,9 @@ private fun StatsTopBar(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = startLabel,
-                        color = MmrBrandColors.HeaderIcon,
-                        fontSize = 15.sp,
+                        style =
+                            com.rrparallelstudio.miapp.ui.theme
+                                .mmrTitleMediumFixedStyle(MmrBrandColors.HeaderIcon),
                         modifier =
                             Modifier.clickable(
                                 interactionSource = remember { MutableInteractionSource() },
@@ -281,11 +281,17 @@ private fun StatsTopBar(
                                 onClick = onPeriodStartClick,
                             ),
                     )
-                    Text(text = " ~ ", color = MmrBrandColors.HeaderIcon, fontSize = 15.sp)
+                    Text(
+                        text = " ~ ",
+                        style =
+                            com.rrparallelstudio.miapp.ui.theme
+                                .mmrTitleMediumFixedStyle(MmrBrandColors.HeaderIcon),
+                    )
                     Text(
                         text = endLabel,
-                        color = MmrBrandColors.HeaderIcon,
-                        fontSize = 15.sp,
+                        style =
+                            com.rrparallelstudio.miapp.ui.theme
+                                .mmrTitleMediumFixedStyle(MmrBrandColors.HeaderIcon),
                         modifier =
                             Modifier.clickable(
                                 interactionSource = remember { MutableInteractionSource() },

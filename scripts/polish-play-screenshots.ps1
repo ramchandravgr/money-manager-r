@@ -126,7 +126,7 @@ if ($RecaptureUploadSet) {
     Wait-Until { (Dump-Raw) -match 'Settings' } | Out-Null
     Prep-Device; Screenshot (Join-Path $Dir "11_settings.png")
 
-    Tap-Text "Transaction Appearance"
+    Tap-Text "Home & Menu"
     Start-Sleep -Seconds 1
     Invoke-Adb shell, input, swipe, 540, 2000, 540, 600, 450 | Out-Null
     Start-Sleep -Seconds 1

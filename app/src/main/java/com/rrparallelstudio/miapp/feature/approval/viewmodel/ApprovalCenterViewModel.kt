@@ -353,10 +353,17 @@ class ApprovalCenterViewModel
 
                 is ApprovalCenterUiEvent.OnMergePickerParentSelected -> {
                     pendingSmsMergeState.value =
-                        pendingSmsMergeState.value?.copy(
-                            mergePickerHighlightedCategoryId = event.categoryId,
-                            useLedgerCategory = false,
-                        )
+                        pendingSmsMergeState.value?.let { current ->
+                            if (current.mergeCategories.none { it.id == event.categoryId }) {
+                                return@let current
+                            }
+                            current.copy(
+                                mergePickerHighlightedCategoryId = event.categoryId,
+                                selectedCategoryId = event.categoryId,
+                                selectedSubcategoryId = null,
+                                useLedgerCategory = false,
+                            )
+                        }
                 }
 
                 is ApprovalCenterUiEvent.OnMergePickerSubcategorySelected -> {
@@ -941,7 +948,7 @@ class ApprovalCenterViewModel
                     iconName = node.category.iconName,
                     subcategories =
                         node.subcategories.map { sub ->
-                            SubcategoryUi(id = sub.id.value, name = sub.name)
+                            SubcategoryUi(id = sub.id.value, name = sub.name, iconName = sub.iconName)
                         },
                 )
             }

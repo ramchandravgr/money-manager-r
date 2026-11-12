@@ -40,6 +40,7 @@ data class Subcategory(
     val id: SubcategoryId,
     val categoryId: CategoryId,
     val name: String,
+    val iconName: String = MmrCategoryIconCatalog.DEFAULT_ICON_NAME,
     val isActive: Boolean,
     val sortOrder: Int,
 )

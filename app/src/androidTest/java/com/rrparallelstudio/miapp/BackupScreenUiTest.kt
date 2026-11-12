@@ -16,7 +16,7 @@ import org.junit.runner.RunWith
 @HiltAndroidTest
 class BackupScreenUiTest : MmrHiltUiTest() {
     @Test
-    fun backupScreen_showsSummaryAndExportImportActions() {
+    fun backupScreen_showsSummaryAndBackupImportActions() {
         runBlocking { MmrUiTestFixtures.seedHomeSummarySample(database) }
 
         composeRule.traceClickTag(MmrTestTags.navSettings)
@@ -26,9 +26,9 @@ class BackupScreenUiTest : MmrHiltUiTest() {
         composeRule.onNodeWithText("Backup & Restore").assertExists()
         composeRule.onNodeWithText("Total records", substring = true).assertExists()
         composeRule.onNodeWithText("Transactions", substring = true).assertExists()
-        composeRule.onNodeWithTag(MmrTestTags.backupExport).assertExists()
+        composeRule.onNodeWithTag(MmrTestTags.backupBackupNow).assertExists()
         composeRule.onNodeWithTag(MmrTestTags.googleDriveBackupLink).assertExists()
         composeRule.onNodeWithTag(MmrTestTags.backupImport).assertExists()
-        composeRule.traceClickTag(MmrTestTags.backupExport)
+        composeRule.traceClickTag(MmrTestTags.backupBackupNow)
     }
 }

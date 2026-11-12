@@ -20,15 +20,15 @@ data class BackupUiState(
     val importMode: BackupImportMode = BackupImportMode.REPLACE,
     val showSpreadsheetImportConfirmDialog: Boolean = false,
     val pendingSpreadsheetLabel: String? = null,
-    val localAutoSchedule: GoogleDriveAutoSchedule = GoogleDriveAutoSchedule.OFF,
-    val lastLocalBackupLabel: String? = null,
+    val autoBackupSchedule: GoogleDriveAutoSchedule = GoogleDriveAutoSchedule.OFF,
+    val lastBackupLabel: String? = null,
+    val backupFolderLabel: String? = null,
+    val driveLinked: Boolean = false,
+    val driveWifiOnly: Boolean = true,
+    val requestBackupFolderPicker: Boolean = false,
 )
 
 sealed interface BackupUiEvent {
-    data class OnExportToUri(
-        val uri: Uri,
-    ) : BackupUiEvent
-
     data class OnImportUriSelected(
         val uri: Uri,
         val displayName: String?,
@@ -57,9 +57,23 @@ sealed interface BackupUiEvent {
 
     object OnDismissSpreadsheetImportDialog : BackupUiEvent
 
-    data class OnSetLocalAutoSchedule(
+    data class OnSetAutoBackupSchedule(
         val schedule: GoogleDriveAutoSchedule,
     ) : BackupUiEvent
 
-    object OnLocalBackupNow : BackupUiEvent
+    object OnBackupNow : BackupUiEvent
+
+    data class OnBackupFolderSelected(
+        val treeUri: Uri,
+    ) : BackupUiEvent
+
+    object OnRequestChangeBackupFolder : BackupUiEvent
+
+    object OnBackupFolderPickerDismissed : BackupUiEvent
+
+    object OnConsumeBackupFolderPickerRequest : BackupUiEvent
+
+    data class OnSetDriveWifiOnly(
+        val enabled: Boolean,
+    ) : BackupUiEvent
 }

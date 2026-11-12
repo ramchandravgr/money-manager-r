@@ -1,10 +1,12 @@
 package com.rrparallelstudio.miapp.core.data.repository
 
 import androidx.room.withTransaction
+import com.rrparallelstudio.miapp.core.categorization.CategorizationRuleLabelSync
 import com.rrparallelstudio.miapp.core.common.sync.MmrSyncId
 import com.rrparallelstudio.miapp.core.common.widget.HomeScreenWidgetRefreshTrigger
 import com.rrparallelstudio.miapp.core.database.MmrDatabase
 import com.rrparallelstudio.miapp.core.database.dao.AccountDao
+import com.rrparallelstudio.miapp.core.database.dao.CategorizationRuleDao
 import com.rrparallelstudio.miapp.core.database.dao.CategoryDao
 import com.rrparallelstudio.miapp.core.database.dao.LoanDao
 import com.rrparallelstudio.miapp.core.database.dao.RecurringRuleDao
@@ -251,9 +253,11 @@ class TransactionRepositoryImpl
 class CategoryRepositoryImpl
     @Inject
     constructor(
+        private val database: MmrDatabase,
         private val categoryDao: CategoryDao,
         private val transactionDao: TransactionDao,
         private val recurringRuleDao: RecurringRuleDao,
+        private val categorizationRuleDao: CategorizationRuleDao,
         private val tombstoneRecorder: com.rrparallelstudio.miapp.core.lansync.LanSyncTombstoneRecorder,
     ) : CategoryRepository {
         override fun getActiveCategories(): Flow<List<CategoryEntity>> = categoryDao.getActiveCategories()
@@ -308,7 +312,21 @@ class CategoryRepositoryImpl
         override suspend fun updateCategory(category: CategoryEntity) {
             require(category.id > 0L) { "Category id is required for update." }
             RepositoryGuards.requireValidCategoryEntity(category)
+            val previous = categoryDao.getCategoryById(category.id)
             categoryDao.update(category)
+            if (previous != null &&
+                previous.name != category.name &&
+                !categoryNameIsShared(category.id, previous.name)
+            ) {
+                rewriteRules(
+                    CategorizationRuleLabelSync.categoryRenamed(
+                        rules = categorizationRuleDao.getAll(),
+                        oldName = previous.name,
+                        newName = category.name,
+                        now = System.currentTimeMillis(),
+                    ),
+                )
+            }
         }
 
         override suspend fun countTransactionsForCategory(categoryId: Long): Int {
@@ -327,7 +345,14 @@ class CategoryRepositoryImpl
             val taggedCount = transactionDao.countByCategoryTree(categoryId)
             val now = System.currentTimeMillis()
             when {
-                taggedCount == 0 -> Unit
+                taggedCount == 0 ->
+                    rewriteRules(
+                        CategorizationRuleLabelSync.categoryRemoved(
+                            rules = categorizationRuleDao.getAll(),
+                            categoryName = existing.name,
+                            now = now,
+                        ),
+                    )
                 transactionMode == CategoryDeleteTransactionMode.MIGRATE -> {
                     val targetId =
                         migrateToCategoryId
@@ -342,10 +367,25 @@ class CategoryRepositoryImpl
                     }
                     transactionDao.migrateTransactionsToCategory(categoryId, targetId, now)
                     recurringRuleDao.migrateCategory(categoryId, targetId, now)
+                    rewriteRules(
+                        CategorizationRuleLabelSync.categoryMigrated(
+                            rules = categorizationRuleDao.getAll(),
+                            oldName = existing.name,
+                            newName = target.name,
+                            now = now,
+                        ),
+                    )
                 }
                 transactionMode == CategoryDeleteTransactionMode.UNCATEGORIZE -> {
                     transactionDao.uncategorizeTransactionsForCategory(categoryId, now)
                     recurringRuleDao.clearCategory(categoryId, now)
+                    rewriteRules(
+                        CategorizationRuleLabelSync.categoryRemoved(
+                            rules = categorizationRuleDao.getAll(),
+                            categoryName = existing.name,
+                            now = now,
+                        ),
+                    )
                 }
                 else ->
                     throw IllegalArgumentException(
@@ -379,22 +419,64 @@ class CategoryRepositoryImpl
         override suspend fun updateSubcategory(subcategory: SubcategoryEntity) {
             require(subcategory.id > 0L) { "Subcategory id is required for update." }
             RepositoryGuards.requireValidSubcategoryEntity(subcategory)
+            val previous = categoryDao.getSubcategoryById(subcategory.id)
             val parent =
                 categoryDao.getCategoryById(subcategory.categoryId)
                     ?: throw IllegalArgumentException("Parent category not found.")
             require(parent.isActive) { "Parent category is not active." }
             categoryDao.updateSubcategory(subcategory)
+            if (previous != null && previous.name != subcategory.name) {
+                rewriteRules(
+                    CategorizationRuleLabelSync.subcategoryRenamed(
+                        rules = categorizationRuleDao.getAll(),
+                        categoryName = parent.name,
+                        oldName = previous.name,
+                        newName = subcategory.name,
+                        now = System.currentTimeMillis(),
+                    ),
+                )
+            }
         }
 
         override suspend fun deleteSubcategory(subcategoryId: Long) {
             val existing =
                 categoryDao.getSubcategoryById(subcategoryId)
                     ?: throw IllegalArgumentException("Subcategory not found.")
-            tombstoneRecorder.recordDeletion(
-                existing.syncId,
-                com.rrparallelstudio.miapp.core.lansync.SyncEntityType.SUBCATEGORY,
-            )
-            categoryDao.updateSubcategory(existing.copy(isActive = false))
+            val parent = categoryDao.getCategoryById(existing.categoryId)
+            val now = System.currentTimeMillis()
+            database.withTransaction {
+                transactionDao.clearSubcategory(subcategoryId, now)
+                recurringRuleDao.clearSubcategory(subcategoryId, now)
+                if (parent != null) {
+                    rewriteRules(
+                        CategorizationRuleLabelSync.subcategoryRemoved(
+                            rules = categorizationRuleDao.getAll(),
+                            categoryName = parent.name,
+                            subcategoryName = existing.name,
+                            now = now,
+                        ),
+                    )
+                }
+                tombstoneRecorder.recordDeletion(
+                    existing.syncId,
+                    com.rrparallelstudio.miapp.core.lansync.SyncEntityType.SUBCATEGORY,
+                )
+                categoryDao.updateSubcategory(existing.copy(isActive = false))
+            }
+        }
+
+        private suspend fun categoryNameIsShared(
+            categoryId: Long,
+            name: String,
+        ): Boolean =
+            categoryDao.getActiveCategoriesOnce().any { other ->
+                other.id != categoryId && other.name.equals(name, ignoreCase = true)
+            }
+
+        private suspend fun rewriteRules(
+            changed: List<com.rrparallelstudio.miapp.core.database.entity.CategorizationRuleEntity>,
+        ) {
+            changed.forEach { categorizationRuleDao.upsert(it) }
         }
     }
 

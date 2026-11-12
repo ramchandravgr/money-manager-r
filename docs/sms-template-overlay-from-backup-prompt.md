@@ -1,140 +1,84 @@
-# SMS template overlay from SMS Backup & Restore XML
+# SMS templates from your own SMS export
 
-Use this when you want **custom parsing rules** for bank SMS that Money Inbox does not match yet. You upload your **SMS Backup & Restore** export (`sms-YYYYMMDDHHMMSS.xml`) to any chat agent, paste the prompt below, then import the JSON the agent returns in the app.
+Money Inbox can read an extra JSON file of parsing rules on top of the built-in bank messages. Same `id` replaces a built-in rule. At most **120** templates. Invalid regex or duplicate `id` values reject the whole file.
 
-**In Money Inbox:** Settings → Approvals → **Transaction scan** → **SMS templates** (or direct **SMS template overlay** if linked) → **Import overlay JSON**.
+**In the app:** Settings → **Transaction Scan** → **SMS Templates** → **Copy Prompt**. Paste that text into any AI, attach or paste your SMS Backup & Restore XML (or copied bank messages), then save the JSON after the `---JSON---` line and tap **Import Overlay JSON**.
 
-The app merges your file on top of built-in templates (same `id` **replaces** a built-in rule). At most **120** overlay templates; invalid regex or duplicate overlay `id` values are rejected.
+The button copies the prompt below. Keep this file and `SmsTemplateOverlayPrompt` the same if you edit either one.
 
 ---
 
-## Copy this prompt into your chat agent
+## Prompt
 
-Paste everything in the fenced block below, then **attach or upload** your `sms-*.xml` file in the same message.
+```
+You are writing a JSON file of SMS parsing rules for the Android app Money Inbox. I will attach or paste an SMS export after this prompt (SMS Backup & Restore XML, or copied bank messages). Use only those messages. Follow this schema exactly so the app can import the file.
 
-````
-You are helping me build an SMS template overlay JSON file for the Android app **Money Inbox** (package `com.rrparallelstudio.miapp`).
+What to build
+- Find messages that are real money movement: spends, UPI, credits, card spends, ATM, transfers, merchant refunds.
+- Group repeated shapes. Write one template per shape, not one per message.
+- Prefer fewer broader patterns. At most 80 templates. The app rejects a file with more than 120.
+- Skip OTP, login codes, promos, and statement-only notices.
 
-## Input
+How the app matches
+- The message is lowercased. The rupee symbol and a standalone Rs. or Rs: become "inr " (the word "reversed" is left alone). Line breaks become single spaces. Write bodyRegex for that text.
+- Regex is Java (named groups like (?<amount>…)), case-insensitive. Do not use Python (?P<amount>…).
+- Sender: the app uppercases the address and drops everything before the first hyphen. VM-HDFCBK-S becomes HDFCBK-S. A senderSuffix matches when it equals that key, or the key ends with it, or the key contains it. HDFCBK matches HDFCBK-S.
+- A template is used only when the amount group is a number greater than 0.
 
-I will upload an SMS Backup & Restore XML file. Each message is an `<sms>` element with attributes:
-- `address` — sender (e.g. `VM-HDFCBK`, `HDFCBK-S`, `AX-AXISBK`)
-- `body` — full message text
-- `date` — epoch milliseconds
-
-Ignore OTP/login/promo/statement-only messages unless they are clearly money movement.
-
-## Your job
-
-1. Parse the XML and find **transaction-like** SMS that look like spends, UPI sends, credits, card spends, ATM, refunds, etc.
-2. Group unmatched messages by **sender suffix** + **normalized body signature** (replace amounts with `#`, card masks like `xx1234` with `xx####`, long alphanumeric ids with `<id>`).
-3. For each recurring pattern (at least 2–3 similar messages), write **one** template that matches the pattern on **normalized** text (see normalization rules).
-4. Prefer **fewer, broader** regexes over dozens of near-duplicates. Cap output at **80 templates** (hard app limit 120).
-5. Output **only** valid JSON—no markdown fence, no commentary before or after the JSON.
-
-## JSON schema (required)
-
-Root object:
-
-```json
+JSON shape
 {
   "version": 1,
-  "templates": [ … ]
+  "templates": []
 }
-```
 
-Each template object:
+Each template:
+- id (required): unique snake_case, for example hdfc_upi_sent_custom. The same id as a built-in rule replaces that built-in rule. Duplicate ids in this file are rejected.
+- senderSuffixes (required): uppercase strings, for example ["HDFCBK","HDFCBK-S"]. An empty array matches every sender; avoid that.
+- priority (optional, default 50): higher runs first. Use 70 to 110 for one bank.
+- bodyRegex (required): max 4000 characters. In the JSON file a regex backslash is written twice, so whitespace is \\s and a dot is \\.
+- transactionType (required): EXPENSE, INCOME, or TRANSFER.
+- paymentChannel (optional): UPI, NEFT, CARD, NACH, WALLET, NET_BANKING, UNKNOWN.
+- instrument (optional): SAVINGS, CREDIT_CARD, MEAL_WALLET, FUEL_WALLET, UNKNOWN.
+- intent (optional, default SETTLED): SETTLED offers a transaction to approve. CARD_PAYMENT is paying a credit-card bill (not a new spend). CARD_REFUND is a merchant refund onto the card. MANDATE, STATEMENT, and INVESTMENT are notices, not new spends.
+- amountGroup (optional, default "amount"): the regex must contain that named group.
+- merchantGroup (optional, default "merchant"): set to "" when there is no payee.
+- last4Group (optional, default "last4"): account or card last 4. Set to "" when there is none.
+- refGroup (optional, default "ref"): set to "" when there is none.
+- balanceGroup (optional, default "balance"): set to "" when there is none.
 
-| Field | Required | Values / notes |
-|-------|----------|----------------|
-| `id` | Yes | Unique snake_case, start with bank/channel hint, e.g. `hdfc_upi_sent_custom` |
-| `senderSuffixes` | Yes | Array of uppercase sender keys **without** `XX-` prefix and **without** trailing `-S` / `-G` where applicable. Match how Indian DLT addresses appear (e.g. `HDFCBK`, `HDFCBN`, `AXISBK`). Empty array `[]` = match any sender (avoid unless necessary). |
-| `priority` | Yes | Integer 1–150; **higher runs first**. Use 70–110 for bank-specific; 40–60 for generic fallbacks. |
-| `bodyRegex` | Yes | Java-compatible regex (NOT PCRE `(?P<name>)`; use `(?<name>…)` named groups). Max 4000 chars. Applied **case-insensitive** to **normalized** body (lowercase, see below). |
-| `transactionType` | Yes | `EXPENSE` or `INCOME` |
-| `paymentChannel` | No | `UPI`, `CARD`, `NEFT`, `NACH`, `WALLET`, `NET_BANKING`, `UNKNOWN` — omit or empty if unclear |
-| `instrument` | No | `SAVINGS`, `CREDIT_CARD`, `MEAL_WALLET`, `FUEL_WALLET`, `UNKNOWN` |
-| `intent` | No | Default `SETTLED` (creates approval). Use `CARD_PAYMENT` for credit-card bill payment SMS only (do not double-count spend). Use `CARD_REFUND` for merchant refunds to card. Use `INVESTMENT` for NPS/EPFO/MF notices. Use `MANDATE` / `STATEMENT` for non-ledger notices. |
-| `amountGroup` | No | Named group for amount; default `amount` |
-| `merchantGroup` | No | Named group for payee/merchant; default `merchant`. Use `""` if no merchant. |
-| `last4Group` | No | Named group for account/card last 4; default `last4`. Use `""` if none. |
-| `refGroup` | No | UPI/bank reference; default `ref`. Use `""` if none. |
-| `balanceGroup` | No | Available balance; default `balance`. Use `""` if none. |
+Reuse these pieces inside bodyRegex:
+- Amount: (?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)
+- Last 4: (?<last4>[0-9]{4})
 
-## Normalization (match regex against this style of text)
+Do not put full account numbers or the original message text in the JSON. Invalid regex rejects the whole file.
 
-Before regex runs, the app:
-- Lowercases text
-- Replaces `₹` and standalone `Rs.` / `Rs:` / `rs ` (not inside words like “reversed”) with `inr `
-- Collapses all whitespace (including newlines) to single spaces
-
-So your `bodyRegex` should assume **lowercase** and often use `inr\\s+` instead of `rs\\.?`.
-
-## Regex tips
-
-- Amount: `(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)`
-- Card/account last 4: `(?<last4>[0-9]{4})` with prefixes like `xx`, `x`, `\\*`, `a/c x`
-- Escape backslashes in JSON: `\\s`, `\\.`, `\\*`
-- Use non-greedy merchant captures where needed: `(?<merchant>.+?)`
-- Test mentally: regex must **not** match OTP (“otp”, “one-time password”, “do not share”)
-
-## Sender matching
-
-The app compares `senderSuffixes` to the sender after:
-- Stripping leading `XX-` country/operator prefix
-- Uppercasing
-- Partial suffix match (e.g. `HDFCBK` matches `VM-HDFCBK-S`)
-
-## Skip these (do not create SETTLED templates)
-
-- OTP, login, KYC-only, EMI reminders with no new money movement you already track
-- “Statement generated”, “passbook balance” summaries
-- Telecom promos (Vi/Airtel data gifts) unless they are wallet top-ups with clear amount
-- Duplicate patterns already covered by obvious generic HDFC/Axis/ICICI/UPI phrases—focus on **gaps** in my export
-
-## Example template (structure only)
-
-```json
+Example of one template (structure only):
 {
   "id": "union_mob_bk_debit",
-  "senderSuffixes": ["UNIONB", "UNIONBK"],
+  "senderSuffixes": ["UNIONB"],
   "priority": 88,
-  "bodyRegex": "a/c \\*[0-9]+ debited for inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)\\s+on .*?mob bk",
+  "bodyRegex": "debited for inr\\s+(?<amount>[0-9]+(?:,[0-9]+)*(?:\\.[0-9]{1,2})?)",
   "transactionType": "EXPENSE",
   "paymentChannel": "UPI",
-  "instrument": "SAVINGS"
+  "instrument": "SAVINGS",
+  "intent": "SETTLED"
 }
+
+Reply format
+1. At most 12 short bullets: which banks you covered and what you skipped.
+2. A line that is exactly ---JSON---
+3. Only the JSON object after that line, pretty-printed, starting with { and ending with }.
+
+Then wait for my SMS export if it is not already attached. Build the templates from that export only.
 ```
 
-## Deliverable
+## After the AI replies
 
-1. A short bullet list (max 15 lines): top senders you targeted, how many template groups, what you intentionally skipped.
-2. Then the full `version` + `templates` JSON object only, pretty-printed, valid UTF-8.
-
-Begin by analyzing my uploaded XML.
-````
-
----
-
-## After you get the JSON
-
-1. Save as `.json` (e.g. `my_sms_templates_overlay.json`).
-2. Money Inbox → **SMS templates** → **Import overlay JSON**.
-3. Open **Approval Center** and tap **Refresh** (with Transaction scan folder set) or paste a test SMS manually to verify.
-
-If import fails, the app shows validation errors (bad regex, duplicate `id`, too many templates). Fix those entries and re-import.
-
-## Optional: local check (developers)
-
-From the repo root, compare your export against built-in templates:
-
-```bash
-set MMR_SMS_EXPORT=path\to\your\sms-20261110120000.xml
-python tools/analyze_unmatched_sms.py
-```
-
-Use unmatched signatures as hints for what the chat agent should target.
+1. Copy from the first `{` after `---JSON---` through the closing `}`.
+2. Save as a `.json` file.
+3. Money Inbox → **SMS Templates** → **Import Overlay JSON**.
+4. Open **Approval Center** and tap **Refresh**, or paste one of those messages, to check the new rules.
 
 ## Privacy
 
-SMS exports contain financial and personal data. Only upload to agents you trust, or run a **local** model. Delete the chat and file when done.
+An SMS export has account and payment details. Send it only to an AI you trust, or run a model on your own computer. Money Inbox does not upload the export; it only reads the JSON file you import.

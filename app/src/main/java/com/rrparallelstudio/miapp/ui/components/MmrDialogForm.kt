@@ -32,9 +32,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rrparallelstudio.miapp.ui.copy.mmrStaticLabelCase
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
+import com.rrparallelstudio.miapp.ui.theme.mmrDialogFieldCaptionStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrFormFieldLabelStyle
+import com.rrparallelstudio.miapp.ui.theme.mmrFormFieldStyle
 
 /** Title + optional message — shared body chrome for [MmrContentDialog] (Design 12 mockup `.t` / `.m`). */
 @Composable
@@ -46,17 +48,16 @@ fun MmrDialogHeader(
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
             text = title.mmrStaticLabelCase(),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = MmrBrandColors.dialogTitleText(),
-            lineHeight = 22.sp,
+            style =
+                MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = MmrBrandColors.dialogTitleText(),
+                ),
         )
         message?.let {
             Text(
                 text = it,
-                style = MaterialTheme.typography.bodySmall,
-                color = MmrBrandColors.dialogMessageText(),
-                lineHeight = 18.sp,
+                style = mmrFormFieldStyle(MmrBrandColors.dialogMessageText()),
             )
         }
     }
@@ -70,21 +71,14 @@ fun MmrDialogFieldLabel(
     Text(
         text = text.mmrStaticLabelCase(),
         modifier = modifier.padding(bottom = 4.dp),
-        fontSize = 13.sp,
-        fontWeight = FontWeight.SemiBold,
-        color = MmrBrandColors.dialogTitleText(),
+        style = mmrFormFieldLabelStyle(MmrBrandColors.dialogTitleText()),
     )
 }
 
 private val dialogFieldShape = RoundedCornerShape(8.dp)
 
 @Composable
-private fun dialogFieldTextStyle(): TextStyle =
-    TextStyle(
-        fontSize = 13.sp,
-        lineHeight = 18.sp,
-        color = MmrBrandColors.dialogFieldValueText(),
-    )
+private fun dialogFieldTextStyle(): TextStyle = mmrFormFieldStyle(MmrBrandColors.dialogFieldValueText())
 
 @Composable
 fun MmrDialogTextField(
@@ -272,9 +266,7 @@ fun MmrDialogRadioRow(
         Text(
             text = label,
             modifier = Modifier.padding(start = 2.dp),
-            fontSize = 13.sp,
-            lineHeight = 18.sp,
-            color = MmrBrandColors.dialogFieldValueText(),
+            style = mmrFormFieldStyle(MmrBrandColors.dialogFieldValueText()),
             maxLines = 3,
             overflow = TextOverflow.Ellipsis,
         )
@@ -300,8 +292,7 @@ fun MmrDialogOptionButton(
         Text(
             text = text,
             modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-            fontSize = 13.sp,
-            color = MmrBrandColors.dialogFieldValueText(),
+            style = mmrFormFieldStyle(MmrBrandColors.dialogFieldValueText()),
         )
     }
 }
@@ -315,14 +306,11 @@ fun MmrDialogSmsPreview(
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text(
             text = fromLine,
-            fontSize = 12.sp,
-            color = MmrBrandColors.dialogFieldMutedText(),
+            style = mmrDialogFieldCaptionStyle(MmrBrandColors.dialogFieldMutedText()),
         )
         Text(
             text = body,
-            fontSize = 13.sp,
-            lineHeight = 18.sp,
-            color = MmrBrandColors.dialogTitleText(),
+            style = mmrFormFieldStyle(MmrBrandColors.dialogTitleText()),
         )
     }
 }
@@ -339,14 +327,11 @@ fun MmrDialogDetailLine(
     ) {
         Text(
             text = label,
-            fontSize = 13.sp,
-            color = MmrBrandColors.dialogFieldMutedText(),
+            style = mmrFormFieldStyle(MmrBrandColors.dialogFieldMutedText()),
         )
         Text(
             text = value,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            color = MmrBrandColors.dialogFieldValueText(),
+            style = mmrFormFieldStyle(MmrBrandColors.dialogFieldValueText()).copy(fontWeight = FontWeight.Medium),
         )
     }
 }
@@ -359,8 +344,6 @@ fun MmrDialogBodyNote(
     Text(
         text = text,
         modifier = modifier.fillMaxWidth(),
-        fontSize = 13.sp,
-        lineHeight = 18.sp,
-        color = MmrBrandColors.dialogFieldMutedText(),
+        style = mmrFormFieldStyle(MmrBrandColors.dialogFieldMutedText()),
     )
 }

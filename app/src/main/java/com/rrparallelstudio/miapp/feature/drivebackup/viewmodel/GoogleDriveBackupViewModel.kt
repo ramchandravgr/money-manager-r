@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rrparallelstudio.miapp.core.backup.BackupImportMode
 import com.rrparallelstudio.miapp.core.data.preferences.GoogleDriveBackupPreferencesStore
+import com.rrparallelstudio.miapp.core.data.preferences.LocalAutoBackupPreferencesStore
 import com.rrparallelstudio.miapp.core.domain.repository.BackupRepository
 import com.rrparallelstudio.miapp.core.domain.repository.GoogleDriveBackupRepository
 import com.rrparallelstudio.miapp.core.drive.GoogleDriveAutoSchedule
@@ -47,6 +48,7 @@ class GoogleDriveBackupViewModel
     constructor(
         private val authGateway: GoogleDriveAuthGateway,
         private val preferencesStore: GoogleDriveBackupPreferencesStore,
+        private val localAutoBackupPreferencesStore: LocalAutoBackupPreferencesStore,
         private val driveBackupRepository: GoogleDriveBackupRepository,
         private val backupRepository: BackupRepository,
         private val workScheduler: GoogleDriveBackupWorkScheduler,
@@ -136,33 +138,23 @@ class GoogleDriveBackupViewModel
 
         private suspend fun onDriveAuthorized(
             email: String,
-            accessToken: String,
+            @Suppress("UNUSED_PARAMETER") accessToken: String,
         ) {
-            preferencesStore.setAutoSchedule(GoogleDriveAutoSchedule.DAILY)
+            val schedule = localAutoBackupPreferencesStore.getAutoSchedule()
+            preferencesStore.setAutoSchedule(schedule)
             preferencesStore.setWifiOnly(true)
             workScheduler.syncPeriodicAutoBackupSchedule()
-            _uiState.update { it.copy(linkedEmail = email) }
-            refreshStatus()
-            runCatching {
-                driveBackupRepository.uploadBackup(accessToken)
-            }.onSuccess {
-                _uiState.update {
-                    it.copy(
-                        isBusy = false,
-                        statusMessage = "Google Drive backup is on. First backup uploaded.",
-                    )
-                }
-                refreshRemoteBackups()
-            }.onFailure { error ->
-                _uiState.update {
-                    it.copy(
-                        isBusy = false,
-                        statusMessage = "Google Drive backup is on (daily, Wi‑Fi only).",
-                        errorMessage = MmrUiMessages.friendly(error.message, MmrUiMessages.GENERIC_ACTION),
-                    )
-                }
-                refreshRemoteBackups()
+            _uiState.update {
+                it.copy(
+                    isBusy = false,
+                    linkedEmail = email,
+                    statusMessage =
+                        "Google Drive is connected. Use Back Up Now on Backup & Restore; " +
+                            "the same local file uploads when Wi‑Fi allows.",
+                )
             }
+            refreshStatus()
+            refreshRemoteBackups()
         }
 
         fun disconnect() {

@@ -28,6 +28,7 @@ object CategoryPersistenceMapper {
             id = SubcategoryId(id),
             categoryId = CategoryId(categoryId),
             name = name,
+            iconName = iconName,
             isActive = isActive,
             sortOrder = orderIndex,
         )
@@ -60,6 +61,7 @@ object CategoryPersistenceMapper {
             id = id.value,
             categoryId = categoryId.value,
             name = name,
+            iconName = iconName,
             isActive = isActive,
             orderIndex = sortOrder,
         )

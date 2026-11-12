@@ -1,6 +1,8 @@
 package com.rrparallelstudio.miapp.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
@@ -53,7 +55,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rrparallelstudio.miapp.core.model.enums.TransactionType
 import com.rrparallelstudio.miapp.ui.copy.mmrStaticLabelCase
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
@@ -81,14 +82,12 @@ fun MmrFormCompactSearchField(
         onValueChange = onValueChange,
         singleLine = true,
         textStyle =
-            TextStyle(
-                fontSize = 14.sp,
-                color =
-                    when {
-                        useDarkCanvasChrome -> MmrBrandColors.onCanvas()
-                        onLightFormCard -> MmrBrandColors.formCardPrimaryText()
-                        else -> MmrBrandColors.Reversal
-                    },
+            com.rrparallelstudio.miapp.ui.theme.mmrSettingsRowPrimaryStyle(
+                when {
+                    useDarkCanvasChrome -> MmrBrandColors.onCanvas()
+                    onLightFormCard -> MmrBrandColors.formCardPrimaryText()
+                    else -> MmrBrandColors.Reversal
+                },
             ),
         modifier =
             modifier
@@ -308,6 +307,8 @@ fun MmrTransactionFormExpandablePicker(
     onExpandedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    /** False for tall inline lists ([fillRemainingViewport]) — avoids fighting [mmrFillDownToFormBottom]. */
+    animateExpansion: Boolean = true,
     expandedContent: @Composable ColumnScope.() -> Unit,
 ) {
     if (!enabled) {
@@ -365,8 +366,8 @@ fun MmrTransactionFormExpandablePicker(
             }
             AnimatedVisibility(
                 visible = expanded,
-                enter = expandVertically(),
-                exit = shrinkVertically(),
+                enter = if (animateExpansion) expandVertically() else EnterTransition.None,
+                exit = if (animateExpansion) shrinkVertically() else ExitTransition.None,
             ) {
                 Column {
                     HorizontalDivider(color = MmrBrandColors.BorderMain.copy(alpha = 0.5f))

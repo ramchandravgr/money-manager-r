@@ -254,6 +254,7 @@ class LanSyncExporter
                 syncId = syncId,
                 categorySyncId = categorySyncMap[categoryId] ?: error("Missing category sync id"),
                 name = name,
+                iconName = iconName,
                 isActive = isActive,
                 orderIndex = orderIndex,
             )

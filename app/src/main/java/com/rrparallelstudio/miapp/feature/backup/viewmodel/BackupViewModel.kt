@@ -6,14 +6,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rrparallelstudio.miapp.backup.LocalAutoBackupWorkScheduler
 import com.rrparallelstudio.miapp.core.backup.BackupImportMode
-import com.rrparallelstudio.miapp.core.backup.LocalAutoBackupExporter
+import com.rrparallelstudio.miapp.core.backup.UnifiedBackupRunner
 import com.rrparallelstudio.miapp.core.data.preferences.AppDisplaySettingsStore
+import com.rrparallelstudio.miapp.core.data.preferences.GoogleDriveBackupPreferencesStore
 import com.rrparallelstudio.miapp.core.data.preferences.LocalAutoBackupPreferencesStore
+import com.rrparallelstudio.miapp.core.data.preferences.LocalBackupFolderStore
 import com.rrparallelstudio.miapp.core.domain.repository.BackupRepository
 import com.rrparallelstudio.miapp.core.export.PeriodExcelExporter
 import com.rrparallelstudio.miapp.core.export.PeriodLedgerSpreadsheetFormat
 import com.rrparallelstudio.miapp.core.monefy.MonefyBackupFormat
 import com.rrparallelstudio.miapp.core.moneymanager.MoneyManagerMmbakFormat
+import com.rrparallelstudio.miapp.drive.GoogleDriveBackupWorkScheduler
 import com.rrparallelstudio.miapp.feature.backup.model.BackupUiEvent
 import com.rrparallelstudio.miapp.feature.backup.model.BackupUiState
 import com.rrparallelstudio.miapp.feature.backup.monefyImportStatusMessage
@@ -42,12 +45,16 @@ class BackupViewModel
         private val periodExcelExporter: PeriodExcelExporter,
         private val displaySettingsStore: AppDisplaySettingsStore,
         private val localAutoBackupPreferencesStore: LocalAutoBackupPreferencesStore,
+        private val driveBackupPreferencesStore: GoogleDriveBackupPreferencesStore,
+        private val localBackupFolderStore: LocalBackupFolderStore,
         private val localAutoBackupWorkScheduler: LocalAutoBackupWorkScheduler,
-        private val localAutoBackupExporter: LocalAutoBackupExporter,
+        private val driveBackupWorkScheduler: GoogleDriveBackupWorkScheduler,
+        private val unifiedBackupRunner: UnifiedBackupRunner,
         @ApplicationContext private val context: Context,
     ) : ViewModel() {
         private var pendingImportUri: Uri? = null
         private var pendingSpreadsheetUri: Uri? = null
+        private var runBackupAfterFolderPick: Boolean = false
 
         private val _uiState = MutableStateFlow(BackupUiState())
         val uiState: StateFlow<BackupUiState> = _uiState.asStateFlow()
@@ -58,7 +65,6 @@ class BackupViewModel
 
         fun onEvent(event: BackupUiEvent) {
             when (event) {
-                is BackupUiEvent.OnExportToUri -> exportToUri(event.uri)
                 is BackupUiEvent.OnImportUriSelected -> {
                     pendingImportUri = event.uri
                     val label = event.displayName ?: "selected backup file"
@@ -122,12 +128,85 @@ class BackupViewModel
                         )
                     }
                 }
-                is BackupUiEvent.OnSetLocalAutoSchedule -> {
-                    localAutoBackupPreferencesStore.setAutoSchedule(event.schedule)
-                    localAutoBackupWorkScheduler.syncPeriodicAutoBackupSchedule()
-                    _uiState.update { it.copy(localAutoSchedule = event.schedule) }
+                is BackupUiEvent.OnSetAutoBackupSchedule -> setAutoBackupSchedule(event.schedule)
+                BackupUiEvent.OnBackupNow -> startBackupNow()
+                is BackupUiEvent.OnBackupFolderSelected -> onBackupFolderSelected(event.treeUri)
+                BackupUiEvent.OnRequestChangeBackupFolder -> {
+                    runBackupAfterFolderPick = false
+                    _uiState.update { it.copy(requestBackupFolderPicker = true) }
                 }
-                BackupUiEvent.OnLocalBackupNow -> localBackupNow()
+                BackupUiEvent.OnBackupFolderPickerDismissed -> {
+                    runBackupAfterFolderPick = false
+                    _uiState.update { it.copy(requestBackupFolderPicker = false) }
+                }
+                BackupUiEvent.OnConsumeBackupFolderPickerRequest -> {
+                    _uiState.update { it.copy(requestBackupFolderPicker = false) }
+                }
+                is BackupUiEvent.OnSetDriveWifiOnly -> {
+                    driveBackupPreferencesStore.setWifiOnly(event.enabled)
+                    driveBackupWorkScheduler.syncPeriodicAutoBackupSchedule()
+                    _uiState.update { it.copy(driveWifiOnly = event.enabled) }
+                }
+            }
+        }
+
+        private fun setAutoBackupSchedule(schedule: com.rrparallelstudio.miapp.core.drive.GoogleDriveAutoSchedule) {
+            localAutoBackupPreferencesStore.setAutoSchedule(schedule)
+            driveBackupPreferencesStore.setAutoSchedule(schedule)
+            localAutoBackupWorkScheduler.syncPeriodicAutoBackupSchedule()
+            driveBackupWorkScheduler.syncPeriodicAutoBackupSchedule()
+            _uiState.update { it.copy(autoBackupSchedule = schedule) }
+        }
+
+        private fun startBackupNow() {
+            if (!localBackupFolderStore.isConfigured()) {
+                runBackupAfterFolderPick = true
+                _uiState.update { it.copy(requestBackupFolderPicker = true) }
+                return
+            }
+            runUnifiedBackupNow()
+        }
+
+        private fun onBackupFolderSelected(treeUri: Uri) {
+            localBackupFolderStore.setFolderTree(treeUri)
+            _uiState.update {
+                it.copy(
+                    requestBackupFolderPicker = false,
+                    backupFolderLabel = localBackupFolderStore.getFolderDisplayName(),
+                )
+            }
+            if (runBackupAfterFolderPick) {
+                runBackupAfterFolderPick = false
+                runUnifiedBackupNow()
+            }
+        }
+
+        private fun runUnifiedBackupNow() {
+            viewModelScope.launch {
+                beginBusy("Saving backup…")
+                try {
+                    val result = unifiedBackupRunner.exportNow(uploadToDrive = true)
+                    if (result.driveDeferredWifi) {
+                        driveBackupWorkScheduler.enqueueDeferredDriveUpload()
+                    }
+                    val status =
+                        buildString {
+                            append("Backup saved: ${result.savedFileName}.")
+                            when {
+                                result.driveUploaded -> append(" Uploaded to Google Drive.")
+                                result.driveDeferredWifi ->
+                                    append(" Google Drive upload waits for Wi‑Fi.")
+                                _uiState.value.driveLinked -> Unit
+                                else -> Unit
+                            }
+                        }
+                    endBusy(
+                        statusMessage = status,
+                        lastBackupLabel = formatLastBackupLabel(),
+                    )
+                } catch (e: Exception) {
+                    endBusy(errorMessage = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_ACTION))
+                }
             }
         }
 
@@ -191,13 +270,20 @@ class BackupViewModel
                 _uiState.update { it.copy(isLoading = true, errorMessage = null) }
                 try {
                     val summary = backupRepository.getLocalDataSummary()
+                    val schedule = localAutoBackupPreferencesStore.getAutoSchedule()
+                    if (driveBackupPreferencesStore.getAutoSchedule() != schedule) {
+                        driveBackupPreferencesStore.setAutoSchedule(schedule)
+                    }
                     _uiState.update {
                         it.copy(
                             isLoading = false,
                             summary = summary,
                             isEmpty = summary.totalRecords == 0,
-                            localAutoSchedule = localAutoBackupPreferencesStore.getAutoSchedule(),
-                            lastLocalBackupLabel = formatLastBackupLabel(),
+                            autoBackupSchedule = schedule,
+                            lastBackupLabel = formatLastBackupLabel(),
+                            backupFolderLabel = localBackupFolderStore.getFolderDisplayName(),
+                            driveLinked = driveBackupPreferencesStore.isLinked(),
+                            driveWifiOnly = driveBackupPreferencesStore.isWifiOnly(),
                         )
                     }
                 } catch (e: Exception) {
@@ -207,43 +293,6 @@ class BackupViewModel
                             errorMessage = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_LOAD),
                         )
                     }
-                }
-            }
-        }
-
-        private fun localBackupNow() {
-            viewModelScope.launch {
-                beginBusy("Saving backup to Downloads…")
-                try {
-                    val result = localAutoBackupExporter.exportNow()
-                    endBusy(
-                        statusMessage = "Backup saved to Downloads: ${result.savedFileName}",
-                        lastLocalBackupLabel = formatLastBackupLabel(),
-                    )
-                } catch (e: Exception) {
-                    endBusy(errorMessage = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_ACTION))
-                }
-            }
-        }
-
-        private fun exportToUri(uri: Uri) {
-            viewModelScope.launch {
-                beginBusy("Exporting backup…")
-                try {
-                    val archive = backupRepository.exportBackupArchive()
-                    withContext(Dispatchers.IO) {
-                        context.contentResolver.openOutputStream(uri)?.use { stream ->
-                            stream.write(archive)
-                        } ?: throw IllegalStateException("Unable to write backup file.")
-                    }
-                    val summary = backupRepository.getLocalDataSummary()
-                    endBusy(
-                        summary = summary,
-                        isEmpty = summary.totalRecords == 0,
-                        statusMessage = "Backup exported successfully.",
-                    )
-                } catch (e: Exception) {
-                    endBusy(errorMessage = MmrUiMessages.friendly(e.message, MmrUiMessages.GENERIC_ACTION))
                 }
             }
         }
@@ -341,7 +390,7 @@ class BackupViewModel
             pendingImportIsMoneyManager: Boolean = _uiState.value.pendingImportIsMoneyManager,
             pendingImportIsMonefy: Boolean = _uiState.value.pendingImportIsMonefy,
             pendingSpreadsheetLabel: String? = _uiState.value.pendingSpreadsheetLabel,
-            lastLocalBackupLabel: String? = _uiState.value.lastLocalBackupLabel,
+            lastBackupLabel: String? = _uiState.value.lastBackupLabel,
         ) {
             _uiState.update { current ->
                 current.copy(
@@ -355,7 +404,7 @@ class BackupViewModel
                     pendingImportIsMoneyManager = pendingImportIsMoneyManager,
                     pendingImportIsMonefy = pendingImportIsMonefy,
                     pendingSpreadsheetLabel = pendingSpreadsheetLabel,
-                    lastLocalBackupLabel = lastLocalBackupLabel ?: current.lastLocalBackupLabel,
+                    lastBackupLabel = lastBackupLabel ?: current.lastBackupLabel,
                 )
             }
         }

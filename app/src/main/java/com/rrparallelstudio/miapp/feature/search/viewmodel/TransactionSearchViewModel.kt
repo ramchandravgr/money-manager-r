@@ -19,7 +19,9 @@ import com.rrparallelstudio.miapp.feature.home.HomePeriodUtils
 import com.rrparallelstudio.miapp.feature.home.TransactionGrouping
 import com.rrparallelstudio.miapp.feature.search.SearchHeaderPeriodMode
 import com.rrparallelstudio.miapp.feature.search.SearchHeaderPeriodRanges
+import com.rrparallelstudio.miapp.feature.search.SearchSelectionFilter
 import com.rrparallelstudio.miapp.feature.search.model.SearchAccountUi
+import com.rrparallelstudio.miapp.feature.search.model.SearchCategoryPick
 import com.rrparallelstudio.miapp.feature.search.model.TransactionSearchUiEvent
 import com.rrparallelstudio.miapp.feature.search.model.TransactionSearchUiState
 import com.rrparallelstudio.miapp.feature.transaction.model.CategoryUi
@@ -53,8 +55,10 @@ class TransactionSearchViewModel
         private val periodStart = MutableStateFlow<LocalDate?>(null)
         private val periodEnd = MutableStateFlow<LocalDate?>(null)
         private val selectedAccountId = MutableStateFlow<Long?>(null)
+        private val selectedAccountIds = MutableStateFlow<Set<Long>>(emptySet())
         private val selectedCategoryId = MutableStateFlow<Long?>(null)
         private val selectedSubcategoryId = MutableStateFlow<Long?>(null)
+        private val selectedPicks = MutableStateFlow<Set<SearchCategoryPick>>(emptySet())
         private val amountMin = MutableStateFlow("")
         private val amountMax = MutableStateFlow("")
         private val showDateRangePicker = MutableStateFlow(false)
@@ -66,12 +70,17 @@ class TransactionSearchViewModel
 
         init {
             val categoryId = savedStateHandle.get<Long>(Screen.TransactionSearch.ARG_CATEGORY_ID) ?: -1L
+            val subcategoryId = savedStateHandle.get<Long>(Screen.TransactionSearch.ARG_SUBCATEGORY_ID) ?: -1L
             if (categoryId >= 0) {
                 selectedCategoryId.value = categoryId
-            }
-            val subcategoryId = savedStateHandle.get<Long>(Screen.TransactionSearch.ARG_SUBCATEGORY_ID) ?: -1L
-            if (subcategoryId >= 0) {
-                selectedSubcategoryId.value = subcategoryId
+                selectedSubcategoryId.value = subcategoryId.takeIf { it >= 0 }
+                selectedPicks.value =
+                    setOf(
+                        SearchCategoryPick(
+                            categoryId = categoryId,
+                            subcategoryId = subcategoryId.takeIf { it >= 0 },
+                        ),
+                    )
             }
             val startMillis = savedStateHandle.get<Long>(Screen.TransactionSearch.ARG_START_MILLIS) ?: -1L
             val endMillis = savedStateHandle.get<Long>(Screen.TransactionSearch.ARG_END_MILLIS) ?: -1L
@@ -124,25 +133,25 @@ class TransactionSearchViewModel
 
         private val displayFilters =
             combine(
-                combine(noteQuery, periodStart, periodEnd, selectedAccountId) { note, start, end, accountId ->
-                    DisplayFiltersPrimary(note, start, end, accountId)
+                combine(noteQuery, periodStart, periodEnd, selectedAccountIds) { note, start, end, accountIds ->
+                    DisplayFiltersPrimary(note, start, end, accountIds)
                 },
                 combine(
+                    selectedPicks,
                     selectedCategoryId,
-                    selectedSubcategoryId,
                     amountMin,
                     amountMax,
-                ) { categoryId, subcategoryId, min, max ->
-                    DisplayFiltersSecondary(categoryId, subcategoryId, min, max)
+                ) { picks, legacyCategoryId, min, max ->
+                    DisplayFiltersSecondary(picks, legacyCategoryId, min, max)
                 },
             ) { primary, secondary ->
                 DisplayFilters(
                     noteQuery = primary.noteQuery,
                     periodStart = primary.periodStart,
                     periodEnd = primary.periodEnd,
-                    accountId = primary.accountId,
-                    categoryId = secondary.categoryId,
-                    subcategoryId = secondary.subcategoryId,
+                    accountIds = primary.accountIds,
+                    categoryPicks = secondary.categoryPicks,
+                    categoryId = secondary.legacyCategoryId,
                     amountMin = secondary.amountMin,
                     amountMax = secondary.amountMax,
                 )
@@ -178,9 +187,9 @@ class TransactionSearchViewModel
                     .getFilteredTransactions(
                         startDate = startMillis,
                         endDate = endMillis,
-                        accountId = params.accountId,
-                        categoryId = params.categoryId,
-                        subcategoryId = params.subcategoryId,
+                        accountId = null,
+                        categoryId = null,
+                        subcategoryId = null,
                         type = params.transactionType,
                     ).catch { emit(emptyList()) }
             }
@@ -239,14 +248,32 @@ class TransactionSearchViewModel
                 val displayPrefs = shell.displayPrefs
                 val expanded = shell.expanded
                 val periodMode = shell.periodMode
+                val matchingAccountIds =
+                    if (display.categoryPicks.isEmpty()) {
+                        meta.accounts.map { it.id }.toSet()
+                    } else {
+                        SearchSelectionFilter.matchingAccountIds(
+                            transactions.map {
+                                Triple(
+                                    it.category?.id,
+                                    it.subcategory?.id,
+                                    it.transaction.accountId,
+                                )
+                            },
+                            display.categoryPicks,
+                        )
+                    }
+                val effectiveAccountIds = display.accountIds.intersect(matchingAccountIds)
+                if (effectiveAccountIds != display.accountIds) {
+                    selectedAccountIds.value = effectiveAccountIds
+                }
                 val clientTrigger =
                     SearchTrigger(
                         noteQuery = debouncedNote,
                         periodStart = display.periodStart,
                         periodEnd = display.periodEnd,
-                        accountId = display.accountId,
-                        categoryId = display.categoryId,
-                        subcategoryId = display.subcategoryId,
+                        accountIds = effectiveAccountIds,
+                        categoryPicks = display.categoryPicks,
                         amountMin = display.amountMin,
                         amountMax = display.amountMax,
                     )
@@ -264,9 +291,12 @@ class TransactionSearchViewModel
                     noteQuery = display.noteQuery,
                     periodStart = display.periodStart,
                     periodEnd = display.periodEnd,
-                    selectedAccountId = display.accountId,
+                    selectedAccountId = effectiveAccountIds.singleOrNull(),
+                    selectedAccountIds = effectiveAccountIds,
                     selectedCategoryId = display.categoryId,
-                    selectedSubcategoryId = display.subcategoryId,
+                    selectedSubcategoryId = display.categoryPicks.singleOrNull()?.subcategoryId,
+                    categoryPicks = display.categoryPicks,
+                    accountsMatchingCategories = matchingAccountIds,
                     amountMin = display.amountMin,
                     amountMax = display.amountMax,
                     accounts = meta.accounts,
@@ -304,7 +334,38 @@ class TransactionSearchViewModel
                     periodStart.value = null
                     periodEnd.value = null
                 }
-                is TransactionSearchUiEvent.OnAccountSelected -> selectedAccountId.value = event.accountId
+                is TransactionSearchUiEvent.OnAccountSelected -> {
+                    selectedAccountId.value = event.accountId
+                    selectedAccountIds.value = event.accountId?.let { setOf(it) } ?: emptySet()
+                }
+                is TransactionSearchUiEvent.OnToggleAccount -> {
+                    selectedAccountIds.value =
+                        if (event.accountId in selectedAccountIds.value) {
+                            selectedAccountIds.value - event.accountId
+                        } else {
+                            selectedAccountIds.value + event.accountId
+                        }
+                }
+                TransactionSearchUiEvent.OnClearAccounts -> {
+                    selectedAccountId.value = null
+                    selectedAccountIds.value = emptySet()
+                }
+                is TransactionSearchUiEvent.OnToggleCategoryPick -> {
+                    val pick = SearchCategoryPick(event.categoryId, event.subcategoryId)
+                    selectedPicks.value =
+                        if (pick in selectedPicks.value) {
+                            selectedPicks.value - pick
+                        } else {
+                            selectedPicks.value + pick
+                        }
+                    selectedCategoryId.value = selectedPicks.value.singleOrNull()?.categoryId
+                    selectedSubcategoryId.value = selectedPicks.value.singleOrNull()?.subcategoryId
+                }
+                TransactionSearchUiEvent.OnClearCategoryPicks -> {
+                    selectedPicks.value = emptySet()
+                    selectedCategoryId.value = null
+                    selectedSubcategoryId.value = null
+                }
                 TransactionSearchUiEvent.OnCategoryRowClick -> {
                     pickerHighlightedCategoryId.value =
                         selectedCategoryId.value
@@ -336,6 +397,7 @@ class TransactionSearchViewModel
                     selectedSubcategoryId.value = null
                 }
                 TransactionSearchUiEvent.OnClearCategory -> {
+                    selectedPicks.value = emptySet()
                     selectedCategoryId.value = null
                     selectedSubcategoryId.value = null
                     pickerHighlightedCategoryId.value = null
@@ -362,6 +424,8 @@ class TransactionSearchViewModel
                     periodStart.value = null
                     periodEnd.value = null
                     selectedAccountId.value = null
+                    selectedAccountIds.value = emptySet()
+                    selectedPicks.value = emptySet()
                     selectedCategoryId.value = null
                     selectedSubcategoryId.value = null
                     amountMin.value = ""
@@ -374,12 +438,12 @@ class TransactionSearchViewModel
             val noteQuery: String,
             val periodStart: LocalDate?,
             val periodEnd: LocalDate?,
-            val accountId: Long?,
+            val accountIds: Set<Long>,
         )
 
         private data class DisplayFiltersSecondary(
-            val categoryId: Long?,
-            val subcategoryId: Long?,
+            val categoryPicks: Set<SearchCategoryPick>,
+            val legacyCategoryId: Long?,
             val amountMin: String,
             val amountMax: String,
         )
@@ -399,9 +463,9 @@ class TransactionSearchViewModel
             val noteQuery: String,
             val periodStart: LocalDate?,
             val periodEnd: LocalDate?,
-            val accountId: Long?,
+            val accountIds: Set<Long>,
+            val categoryPicks: Set<SearchCategoryPick>,
             val categoryId: Long?,
-            val subcategoryId: Long?,
             val amountMin: String,
             val amountMax: String,
         )
@@ -419,9 +483,8 @@ class TransactionSearchViewModel
             val noteQuery: String,
             val periodStart: LocalDate?,
             val periodEnd: LocalDate?,
-            val accountId: Long?,
-            val categoryId: Long?,
-            val subcategoryId: Long?,
+            val accountIds: Set<Long>,
+            val categoryPicks: Set<SearchCategoryPick>,
             val amountMin: String,
             val amountMax: String,
         )
@@ -473,7 +536,15 @@ class TransactionSearchViewModel
                 val amount = item.transaction.amount
                 val minMatch = min == null || amount >= min
                 val maxMatch = max == null || amount <= max
-                noteMatch && minMatch && maxMatch
+                val categoryMatch =
+                    SearchSelectionFilter.matchesCategory(
+                        item.category?.id,
+                        item.subcategory?.id,
+                        trigger.categoryPicks,
+                    )
+                val accountMatch =
+                    trigger.accountIds.isEmpty() || item.transaction.accountId in trigger.accountIds
+                noteMatch && minMatch && maxMatch && categoryMatch && accountMatch
             }
         }
 
@@ -484,9 +555,10 @@ class TransactionSearchViewModel
                     name = node.category.name,
                     colorHex = node.category.color.hex,
                     iconName = node.category.iconName,
+                    type = node.category.type,
                     subcategories =
                         node.subcategories.map { sub ->
-                            SubcategoryUi(id = sub.id.value, name = sub.name)
+                            SubcategoryUi(id = sub.id.value, name = sub.name, iconName = sub.iconName)
                         },
                 )
             }

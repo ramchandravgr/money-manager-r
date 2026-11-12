@@ -58,6 +58,13 @@ class AddEditSubcategoryViewModel
                     }
                 }
 
+                is AddEditSubcategoryUiEvent.OnIconSelected -> {
+                    _uiState.update {
+                        val next = it.copy(iconName = event.iconName, errorMessage = null)
+                        next.copy(canSave = validate(next))
+                    }
+                }
+
                 AddEditSubcategoryUiEvent.OnSaveClick -> saveSubcategory()
                 AddEditSubcategoryUiEvent.OnDeleteClick -> deleteSubcategory()
                 AddEditSubcategoryUiEvent.OnDismissError -> {
@@ -99,6 +106,7 @@ class AddEditSubcategoryViewModel
                                 parentCategoryId = parent.id,
                                 parentCategoryName = parent.name,
                                 parentColorHex = parent.colorHex,
+                                iconName = parent.iconName,
                             )
                         loaded.copy(canSave = validate(loaded))
                     }
@@ -132,6 +140,7 @@ class AddEditSubcategoryViewModel
                                 parentCategoryId = parent.id,
                                 parentCategoryName = parent.name,
                                 parentColorHex = parent.colorHex,
+                                iconName = entity.iconName,
                                 name = entity.name,
                                 sortOrder = entity.orderIndex.toString(),
                             )
@@ -167,6 +176,7 @@ class AddEditSubcategoryViewModel
                             existing.copy(
                                 categoryId = state.parentCategoryId,
                                 name = state.name.trim(),
+                                iconName = state.iconName,
                                 orderIndex = sortOrder,
                             ),
                         )
@@ -175,6 +185,7 @@ class AddEditSubcategoryViewModel
                             SubcategoryEntity(
                                 categoryId = state.parentCategoryId,
                                 name = state.name.trim(),
+                                iconName = state.iconName,
                                 orderIndex = sortOrder,
                             ),
                         )

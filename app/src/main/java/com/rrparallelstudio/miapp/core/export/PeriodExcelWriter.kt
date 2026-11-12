@@ -11,8 +11,9 @@ import java.time.ZonedDateTime
 import java.util.Date
 
 /**
- * Period Excel export (fastexcel), column layout:
- * Date, Account, Category, Subcategory, Note, Amount, Income/Expense, Description, Payment, Currency, Amount (account).
+ * Ledger spreadsheet export (fastexcel). Import reads the same columns via [PeriodExcelSheetReader].
+ *
+ * Date, Account, Category, Subcategory, Note, Amount (header uses [currencySymbol]), Income/Expense.
  */
 object PeriodExcelWriter {
     private val headers =
@@ -24,15 +25,11 @@ object PeriodExcelWriter {
             "Note",
             "Amount",
             "Income/Expense",
-            "Description",
-            "Payment",
-            "Currency",
-            "Amount",
         )
 
     fun writeImportTemplate(
         currencySymbol: String,
-        currencyCode: String,
+        @Suppress("UNUSED_PARAMETER") currencyCode: String,
         applicationName: String,
         sheetName: String,
         output: OutputStream,
@@ -44,21 +41,13 @@ object PeriodExcelWriter {
                 sheet.value(0, col, header)
             }
             columnWidths.forEachIndexed { col, width -> sheet.width(col, width) }
-            sheet.value(
-                1,
-                0,
-                "2026-01-15",
-            )
+            sheet.value(1, 0, "2026-01-15")
             sheet.value(1, 1, "Cash")
             sheet.value(1, 2, "Food")
             sheet.value(1, 3, "")
             sheet.value(1, 4, "Example note")
             sheet.value(1, 5, 250.0)
             sheet.value(1, 6, "Expense")
-            sheet.value(1, 7, "Example note")
-            sheet.value(1, 8, "")
-            sheet.value(1, 9, currencyCode)
-            sheet.value(1, 10, 250.0)
         }
     }
 
@@ -68,7 +57,7 @@ object PeriodExcelWriter {
         items: List<TransactionWithDetails>,
         zoneId: ZoneId,
         currencySymbol: String,
-        currencyCode: String,
+        @Suppress("UNUSED_PARAMETER") currencyCode: String,
         applicationName: String,
         sheetName: String,
         output: OutputStream,
@@ -84,7 +73,7 @@ object PeriodExcelWriter {
 
             var row = 1
             for (item in sorted) {
-                writeRow(sheet, row, item, zoneId, currencyCode)
+                writeRow(sheet, row, item, zoneId)
                 row++
             }
         }
@@ -95,27 +84,18 @@ object PeriodExcelWriter {
         row: Int,
         item: TransactionWithDetails,
         zoneId: ZoneId,
-        currencyCode: String,
     ) {
         val tx = item.transaction
         val zoned = ZonedDateTime.ofInstant(Instant.ofEpochMilli(tx.dateTime), zoneId)
         val excelDate = Date.from(zoned.toInstant())
         sheet.value(row, 0, excelDate)
 
-        val accountName = item.account?.name ?: ""
-        sheet.value(row, 1, accountName)
-
-        val categoryName = item.category?.name ?: ""
-        val subcategoryName = item.subcategory?.name ?: ""
-        sheet.value(row, 2, categoryName)
-        sheet.value(row, 3, subcategoryName)
+        sheet.value(row, 1, item.account?.name ?: "")
+        sheet.value(row, 2, item.category?.name ?: "")
+        sheet.value(row, 3, item.subcategory?.name ?: "")
         sheet.value(row, 4, noteWithTransferSuffix(item))
         sheet.value(row, 5, tx.amount)
         sheet.value(row, 6, incomeExpenseLabel(item))
-        sheet.value(row, 7, descriptionLabel(item))
-        sheet.value(row, 8, paymentLabel(tx.paymentInstrument, tx.paymentChannel))
-        sheet.value(row, 9, currencyCode)
-        sheet.value(row, 10, tx.amount)
     }
 
     private fun noteWithTransferSuffix(item: TransactionWithDetails): String {
@@ -124,21 +104,6 @@ object PeriodExcelWriter {
         val dest = item.relatedAccount?.name ?: item.loan?.name ?: return base
         val arrow = " → $dest"
         return if (base.isEmpty()) arrow.trimStart() else base + arrow
-    }
-
-    private fun descriptionLabel(item: TransactionWithDetails): String {
-        val note = item.transaction.note?.trim()
-        if (!note.isNullOrEmpty()) return note
-        return item.category?.name ?: ""
-    }
-
-    private fun paymentLabel(
-        instrument: String?,
-        channel: String?,
-    ): String {
-        instrument?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
-        channel?.trim()?.takeIf { it.isNotEmpty() }?.let { return it }
-        return ""
     }
 
     private fun incomeExpenseLabel(item: TransactionWithDetails): String {
@@ -169,10 +134,6 @@ object PeriodExcelWriter {
             15.0,
             30.0,
             15.0,
-            12.0,
-            30.0,
-            10.0,
-            10.0,
-            10.0,
+            14.0,
         )
 }

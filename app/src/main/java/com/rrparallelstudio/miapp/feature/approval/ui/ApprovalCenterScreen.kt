@@ -57,7 +57,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rrparallelstudio.miapp.R
 import com.rrparallelstudio.miapp.core.model.enums.TransactionType
@@ -497,17 +496,16 @@ fun ApprovalCandidateCard(
                 ) {
                     Text(
                         text = candidate.amountFormatted,
-                        fontSize = 14.sp,
-                        lineHeight = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = amountColor,
+                        style =
+                            com.rrparallelstudio.miapp.ui.theme
+                                .mmrApprovalAmountStyle(amountColor),
                     )
                     Text(
                         text = candidate.statusLabel,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontSize = 9.sp,
-                        lineHeight = 11.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style =
+                            com.rrparallelstudio.miapp.ui.theme.mmrApprovalStatusMicroStyle(
+                                MaterialTheme.colorScheme.onSurfaceVariant,
+                            ),
                         modifier = Modifier.padding(top = 1.dp),
                     )
                 }
@@ -614,16 +612,18 @@ private fun ApprovalCompactDetailRow(
     ) {
         Text(
             text = label,
-            fontSize = 12.sp,
-            lineHeight = 16.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style =
+                com.rrparallelstudio.miapp.ui.theme.mmrApprovalMetaStyle(
+                    MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
             modifier = Modifier.width(ApprovalCardLabelWidth),
         )
         Text(
             text = value,
-            fontSize = 12.sp,
-            lineHeight = 16.sp,
-            fontWeight = FontWeight.Medium,
+            style =
+                com.rrparallelstudio.miapp.ui.theme.mmrApprovalMetaStyle(MaterialTheme.colorScheme.onSurface).copy(
+                    fontWeight = FontWeight.Medium,
+                ),
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),
             maxLines = valueMaxLines,

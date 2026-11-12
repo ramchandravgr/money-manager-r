@@ -237,6 +237,24 @@ object MmrBrandColors {
             Reversal
         }
 
+    /** Secondary labels and values on grouped settings cards (light, dark, and pure black themes). */
+    fun formCardSecondaryText(): Color =
+        if (SurfaceWhite.mmrRelativeLuminance() >= 0.45f) {
+            TextMedium
+        } else {
+            TextLight
+        }
+
+    fun formCardDisclosureIcon(): Color = formCardSecondaryText()
+
+    /** Hairline between rows inside one grouped settings card. */
+    fun formCardDivider(): Color =
+        if (SurfaceWhite.mmrRelativeLuminance() >= 0.45f) {
+            BorderMain
+        } else {
+            Color.White.copy(alpha = 0.14f)
+        }
+
     val BorderMain: Color get() = p.borderMain
 
     /** Selected row fill on grouped lists (safe when list and surface match, e.g. OLED). */

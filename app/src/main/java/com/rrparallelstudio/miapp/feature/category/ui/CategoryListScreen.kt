@@ -16,8 +16,8 @@ import com.rrparallelstudio.miapp.feature.category.viewmodel.CategoryViewModel
 import com.rrparallelstudio.miapp.testing.MmrTestTags
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsFilterChipRow
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsListEmptySection
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsNavRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSection
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroup
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupNavRow
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsListAddTopBar
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsListScaffold
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsStatusBanners
@@ -113,6 +113,8 @@ fun CategoryListScreen(
                                 )
                             else -> listOf(uiState.typeFilter!! to uiState.categories)
                         }
+                    val lastNonEmptySection =
+                        sections.indexOfLast { (_, categories) -> categories.isNotEmpty() }
                     sections.forEachIndexed { sectionIndex, (type, categories) ->
                         if (categories.isEmpty()) return@forEachIndexed
                         item(key = type.name) {
@@ -124,10 +126,16 @@ fun CategoryListScreen(
                                     CategoryType.ALL,
                                     -> "Categories"
                                 }
-                            MmrIosSettingsSection(
+                            MmrSettingsGroup(
                                 title = sectionTitle,
                                 isFirstInScreen = sectionIndex == 0,
-                                footer = "Tap a category to edit or manage subcategories.",
+                                footer =
+                                    if (sectionIndex == lastNonEmptySection) {
+                                        "The number is how many subcategories it has. " +
+                                            "Tap a category to change it. Tap + to add one."
+                                    } else {
+                                        null
+                                    },
                             ) {
                                 categories.forEachIndexed { index, category ->
                                     val subLabel =
@@ -141,7 +149,7 @@ fun CategoryListScreen(
                                             1 -> "1 subcategory"
                                             else -> "${category.subcategories.size} subcategories"
                                         }
-                                    MmrIosSettingsNavRow(
+                                    MmrSettingsGroupNavRow(
                                         label = category.name,
                                         value = subLabel,
                                         onClick = { onNavigateToEditCategory(category.id) },

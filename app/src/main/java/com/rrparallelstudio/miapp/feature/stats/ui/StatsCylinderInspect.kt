@@ -30,11 +30,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rrparallelstudio.miapp.R
 import com.rrparallelstudio.miapp.feature.stats.model.CategoryBreakdownUi
 import com.rrparallelstudio.miapp.ui.adaptive.mmrScreenHorizontalPadding
@@ -63,6 +63,11 @@ fun StatsCylinderInspectSection(
         }
     }
 
+    val segmentColors =
+        StatsCylinderPaint.resolve(
+            breakdowns = breakdowns,
+            themeAccent = MmrBrandColors.Active,
+        )
     val horizontal = mmrScreenHorizontalPadding()
 
     Column(modifier = modifier.fillMaxSize()) {
@@ -80,6 +85,7 @@ fun StatsCylinderInspectSection(
         ) {
             StatsCategoryPillBar(
                 breakdowns = breakdowns,
+                segmentColors = segmentColors,
                 focusedCategoryKey = focusedKey,
                 onSegmentClick = { onCategoryTap(it) },
                 modifier =
@@ -99,6 +105,7 @@ fun StatsCylinderInspectSection(
                     val key = categoryBridgeKey(item)
                     StatsCylinderCategoryCard(
                         breakdown = item,
+                        accent = segmentColors[key] ?: parseStatsCategoryColor(item.colorHex),
                         focused = focusedKey == key,
                         dimmed = focusedKey != null && focusedKey != key,
                         onClick = { onCategoryTap(item) },
@@ -120,11 +127,11 @@ fun StatsCylinderInspectSection(
 @Composable
 private fun StatsCylinderCategoryCard(
     breakdown: CategoryBreakdownUi,
+    accent: Color,
     focused: Boolean,
     dimmed: Boolean,
     onClick: () -> Unit,
 ) {
-    val accent = parseStatsCategoryColor(breakdown.colorHex)
     val contentAlpha = if (dimmed) 0.38f else 1f
     val borderColor = if (focused) accent else MmrBrandColors.BorderMain.copy(alpha = 0.5f)
     val bg = if (focused) accent.copy(alpha = 0.1f) else MmrBrandColors.SurfaceWhite
@@ -161,9 +168,11 @@ private fun StatsCylinderCategoryCard(
             )
             Text(
                 text = breakdown.percentageFormatted,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                color = accent.copy(alpha = contentAlpha),
+                style =
+                    com.rrparallelstudio.miapp.ui.theme
+                        .mmrStatsChartLabel10Style(
+                            accent.copy(alpha = contentAlpha),
+                        ).copy(fontWeight = FontWeight.Bold),
                 modifier =
                     Modifier
                         .clip(RoundedCornerShape(6.dp))
@@ -209,8 +218,9 @@ private fun StatsCylinderNativeFooter(
             TextButton(onClick = onClearFocus) {
                 Text(
                     text = stringResource(R.string.stats_cylinder_clear_focus),
-                    fontSize = 12.sp,
-                    color = MmrBrandColors.Active,
+                    style =
+                        com.rrparallelstudio.miapp.ui.theme
+                            .mmrStatsChartLabel12Style(MmrBrandColors.Active),
                 )
             }
         }

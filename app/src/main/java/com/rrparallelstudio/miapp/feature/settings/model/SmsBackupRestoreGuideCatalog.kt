@@ -1,8 +1,8 @@
 package com.rrparallelstudio.miapp.feature.settings.model
 
 /**
- * In-app setup for [SMS Backup & Restore](https://play.google.com/store/apps/details?id=com.riteshsahu.SMSBackupRestore)
- * (SyncTech). Play builds of Money Inbox import bank SMS from XML files in a folder you choose — not live inbox read.
+ * In-app setup for SMS Backup & Restore (SyncTech).
+ * Play builds import bank SMS from XML in a folder you choose.
  */
 object SmsBackupRestoreGuideCatalog {
     const val PLAY_STORE_PACKAGE = "com.riteshsahu.SMSBackupRestore"
@@ -14,48 +14,38 @@ object SmsBackupRestoreGuideCatalog {
     )
 
     val intro: String =
-        "Money Inbox on Play cannot read SMS directly. Use ${PLAY_STORE_APP_NAME} to export " +
-            "messages as XML, then point Transaction scan at that folder."
+        "This app does not read your message inbox. Save messages with $PLAY_STORE_APP_NAME, " +
+            "then choose that folder here."
 
     val steps: List<Step> =
         listOf(
             Step(
-                title = "Install the backup app",
-                body = "Get ${PLAY_STORE_APP_NAME} from the Play Store (SyncTech).",
+                title = "Get $PLAY_STORE_APP_NAME",
+                body = "Opens the SyncTech app on the Play Store. Install it, then come back here.",
             ),
             Step(
-                title = "Back up SMS as XML",
+                title = "Save Messages As A File",
                 body =
-                    "In ${PLAY_STORE_APP_NAME}: open Back up → choose XML (not .db). " +
-                        "Pick a folder you can find later, for example Documents or Download. " +
-                        "You can use one fixed file name; Money Inbox re-reads it when the file is updated.",
+                    "In that app, save messages as an XML file, not a database. " +
+                        "Pick a folder you can find again. One file name is enough.",
             ),
             Step(
-                title = "Schedule automatic backups (recommended)",
-                body =
-                    "In ${PLAY_STORE_APP_NAME} → schedule / automatic backup: choose hourly " +
-                        "(or as often as you like). Enable overwrite the same XML file on each run " +
-                        "so the folder stays tidy—Refresh picks up the latest version.",
+                title = "Repeat That Save",
+                body = "An hourly schedule is enough. Let it replace the same file each time.",
             ),
             Step(
-                title = "Link the folder in Money Inbox",
-                body =
-                    "Here: Settings → Approvals → Transaction scan → Backup folder. " +
-                        "Grant access to the same folder where XML files are saved.",
+                title = "Choose That Folder Here",
+                body = "Go back to Transaction Scan and tap Backup Folder. Allow access to the same folder.",
             ),
             Step(
-                title = "Refresh approvals",
+                title = "Refresh Approval Center",
                 body =
-                    "Open Approval Center and tap Refresh. The latest sms-*.xml in that folder is imported " +
-                        "(only bank-like messages in your scan range). Tap Refresh again after the next hourly backup.",
+                    "Open Approval Center and tap Refresh. " +
+                        "New bank messages from that file are offered for you to accept.",
             ),
         )
 
     val footnote: String =
-        "You can change how far back we look under Look back on this screen. Clear the folder anytime to stop imports."
-
-    /** Shown on Transaction scan settings (matches [com.rrparallelstudio.miapp.R.string.transaction_scan_sms_data_declaration]). */
-    const val DATA_USE_DECLARATION =
-        "Money Inbox only accesses the SMS backup XML files you choose. We use them on this device " +
-            "to find bank transactions for Approval Center. SMS content is not uploaded to our servers."
+        "Look Back sets how many months of those messages are offered. " +
+            "Forget Folder stops reading the folder. It does not delete the files."
 }

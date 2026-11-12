@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -49,7 +50,9 @@ import com.rrparallelstudio.miapp.ui.components.MmrDimens
 import com.rrparallelstudio.miapp.ui.components.MmrFormCompactSearchField
 import com.rrparallelstudio.miapp.ui.components.MmrLedgerPickerSheetShell
 import com.rrparallelstudio.miapp.ui.components.MmrTransactionFormFilterChip
+import com.rrparallelstudio.miapp.ui.components.mmrFillDownToFormBottom
 import com.rrparallelstudio.miapp.ui.components.rememberMmrBottomSheetNestedScrollConnection
+import com.rrparallelstudio.miapp.ui.components.rememberMmrConsumeOverscrollConnection
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
 import com.rrparallelstudio.miapp.ui.theme.MmrChipPaints
 import com.rrparallelstudio.miapp.ui.theme.mmrContrastingContent
@@ -169,6 +172,7 @@ fun AccountPickerPanel(
      */
     onLightSurface: Boolean = false,
     listMaxHeight: Dp = 280.dp,
+    fillRemainingViewport: Boolean = false,
 ) {
     val useDarkCanvas = MmrBrandColors.canvasIsDark() && !onLightSurface
     var query by remember { mutableStateOf("") }
@@ -220,6 +224,7 @@ fun AccountPickerPanel(
             }
         }
     val sheetScrollConnection = rememberMmrBottomSheetNestedScrollConnection()
+    val consumeOverscroll = rememberMmrConsumeOverscrollConnection()
     val showAccountSections =
         mode != AccountPickerMode.TransferTo ||
             transferFilter == TransferToListFilter.All ||
@@ -314,66 +319,83 @@ fun AccountPickerPanel(
                     },
             )
         } else {
-            LazyColumn(
-                modifier =
+            val listSectionModifier =
+                if (fillRemainingViewport) {
+                    Modifier
+                        .fillMaxWidth()
+                        .mmrFillDownToFormBottom(minHeight = 200.dp, endInset = 8.dp)
+                } else {
+                    Modifier.fillMaxWidth()
+                }
+            val lazyModifier =
+                if (fillRemainingViewport) {
+                    Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = true)
+                        .fillMaxHeight()
+                        .nestedScroll(consumeOverscroll)
+                } else {
                     Modifier
                         .fillMaxWidth()
                         .heightIn(max = listMaxHeight)
-                        .nestedScroll(sheetScrollConnection),
-            ) {
-                if (showAllOption && onAllSelected != null && showAccountSections) {
-                    item(key = "all") {
-                        AccountPickerRow(
-                            title = "All accounts",
-                            selected = allOptionSelected,
-                            onClick = onAllSelected,
-                            account = null,
-                            isLoan = false,
-                            onLightSurface = onLightSurface,
-                        )
-                    }
+                        .nestedScroll(sheetScrollConnection)
                 }
-                if (showAccountSections) {
-                    sections.forEach { section ->
-                        item(key = "header-${section.title}") {
-                            SectionHeader(
-                                title = section.title,
-                                onLightSurface = onLightSurface,
-                                useDarkCanvas = useDarkCanvas,
-                            )
-                        }
-                        items(section.accounts, key = { "acc-${it.id}" }) { account ->
-                            val selected =
-                                account.id == selectedAccountId &&
-                                    (mode != AccountPickerMode.TransferTo || selectedLoanId == null)
+            Column(modifier = listSectionModifier) {
+                LazyColumn(modifier = lazyModifier) {
+                    if (showAllOption && onAllSelected != null && showAccountSections) {
+                        item(key = "all") {
                             AccountPickerRow(
-                                title = account.name,
-                                selected = selected,
-                                onClick = { onAccountSelected(account.id) },
-                                account = account,
+                                title = "All accounts",
+                                selected = allOptionSelected,
+                                onClick = onAllSelected,
+                                account = null,
                                 isLoan = false,
                                 onLightSurface = onLightSurface,
                             )
                         }
                     }
-                }
-                if (showLoanSection) {
-                    item(key = "header-loans") {
-                        SectionHeader(
-                            title = "Loans",
-                            onLightSurface = onLightSurface,
-                            useDarkCanvas = useDarkCanvas,
-                        )
+                    if (showAccountSections) {
+                        sections.forEach { section ->
+                            item(key = "header-${section.title}") {
+                                SectionHeader(
+                                    title = section.title,
+                                    onLightSurface = onLightSurface,
+                                    useDarkCanvas = useDarkCanvas,
+                                )
+                            }
+                            items(section.accounts, key = { "acc-${it.id}" }) { account ->
+                                val selected =
+                                    account.id == selectedAccountId &&
+                                        (mode != AccountPickerMode.TransferTo || selectedLoanId == null)
+                                AccountPickerRow(
+                                    title = account.name,
+                                    selected = selected,
+                                    onClick = { onAccountSelected(account.id) },
+                                    account = account,
+                                    isLoan = false,
+                                    onLightSurface = onLightSurface,
+                                )
+                            }
+                        }
                     }
-                    items(filteredLoans, key = { "loan-${it.id}" }) { loan ->
-                        AccountPickerRow(
-                            title = loan.name,
-                            selected = loan.id == selectedLoanId,
-                            onClick = { onLoanSelected?.invoke(loan.id) },
-                            account = null,
-                            isLoan = true,
-                            onLightSurface = onLightSurface,
-                        )
+                    if (showLoanSection) {
+                        item(key = "header-loans") {
+                            SectionHeader(
+                                title = "Loans",
+                                onLightSurface = onLightSurface,
+                                useDarkCanvas = useDarkCanvas,
+                            )
+                        }
+                        items(filteredLoans, key = { "loan-${it.id}" }) { loan ->
+                            AccountPickerRow(
+                                title = loan.name,
+                                selected = loan.id == selectedLoanId,
+                                onClick = { onLoanSelected?.invoke(loan.id) },
+                                account = null,
+                                isLoan = true,
+                                onLightSurface = onLightSurface,
+                            )
+                        }
                     }
                 }
             }

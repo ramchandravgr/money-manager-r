@@ -16,6 +16,37 @@ object MmrReleaseNotesCatalog {
     private val entries: List<VersionNotes> =
         listOf(
             VersionNotes(
+                version = "0.11.21",
+                changesNewestFirst =
+                    listOf(
+                        "Home: category filter menu is centered on screen with a compact layout (no oversized panel).",
+                        "Home: fixes a crash when opening the category filter menu.",
+                        "Approval Center: link to existing — category on merge selects on the first tap.",
+                    ),
+            ),
+            VersionNotes(
+                version = "0.11.20",
+                changesNewestFirst =
+                    listOf(
+                        "Home: category filter no longer crashes when you scroll the list on All.",
+                        "Home: on All, Expenses and Income sections list categories separately (including Uncategorised for each).",
+                        "Home: category filter menu is centered on the chip and matches the app dialog styling.",
+                    ),
+            ),
+            VersionNotes(
+                version = "0.11.19",
+                changesNewestFirst =
+                    listOf(
+                        "Settings: Home & Menu, Appearance, and Security replace the old Transaction Appearance screen.",
+                        "Settings cards use clearer secondary text on dark and pure black themes.",
+                        "SMS Backup & Restore setup: step 1 opens that app on the Play Store.",
+                        "SMS templates: copy a prompt, build a JSON file from your SMS export with any AI, then import that file.",
+                        "Home: category filter dropdown is capped at half the screen, rounded, with Clear at the top; category list matches All, Expense, or Income.",
+                        "Home: type and category filters show on Weekly and Monthly and apply to those views.",
+                        "Add transaction: category and account pickers fill the form area without a blank band when the keyboard is open.",
+                    ),
+            ),
+            VersionNotes(
                 version = "0.11.18",
                 changesNewestFirst =
                     listOf(

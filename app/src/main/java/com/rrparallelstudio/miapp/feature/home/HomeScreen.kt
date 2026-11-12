@@ -35,6 +35,7 @@ import com.rrparallelstudio.miapp.feature.home.HomeCarryOverInjector
 import com.rrparallelstudio.miapp.feature.home.model.*
 import com.rrparallelstudio.miapp.feature.home.ui.GroupedTransactionList
 import com.rrparallelstudio.miapp.feature.home.ui.HomeCalendarTabContent
+import com.rrparallelstudio.miapp.feature.home.ui.HomeCategoryFilterDropdown
 import com.rrparallelstudio.miapp.feature.home.ui.HomeExcelExportPeriodDialog
 import com.rrparallelstudio.miapp.feature.home.ui.HomeMonthPickerDialog
 import com.rrparallelstudio.miapp.feature.home.ui.HomeMonthTopBar
@@ -354,9 +355,7 @@ fun HomeScreen(
                         )
                     }
 
-                    if (uiState.selectedViewTab == HomeViewTab.DAILY || uiState.selectedViewTab == HomeViewTab.TOTAL) {
-                        HomeFilterChipsRow(uiState = uiState, onEvent = viewModel::onEvent)
-                    }
+                    HomeFilterChipsRow(uiState = uiState, onEvent = viewModel::onEvent)
                 }
 
                 MmrPeriodSwipeBox(
@@ -513,34 +512,56 @@ private fun HomeFilterChipsRow(
     uiState: HomeUiState,
     onEvent: (HomeUiEvent) -> Unit,
 ) {
-    Row(
+    Box(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .horizontalScroll(rememberScrollState())
-                .padding(horizontal = MmrDimens.listItemPaddingHorizontal, vertical = 2.dp),
-        horizontalArrangement = Arrangement.spacedBy(MmrDimens.spaceXs),
+                .padding(vertical = 2.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        MmrFilterChip(
-            label = "All",
-            selected = uiState.selectedTypeFilter == HomeTypeFilter.ALL,
-            onClick = { onEvent(HomeUiEvent.OnTypeFilterSelected(HomeTypeFilter.ALL)) },
-        )
-        MmrFilterChip(
-            label = "Expenses",
-            selected = uiState.selectedTypeFilter == HomeTypeFilter.EXPENSE,
-            onClick = { onEvent(HomeUiEvent.OnTypeFilterSelected(HomeTypeFilter.EXPENSE)) },
-        )
-        MmrFilterChip(
-            label = "Income",
-            selected = uiState.selectedTypeFilter == HomeTypeFilter.INCOME,
-            onClick = { onEvent(HomeUiEvent.OnTypeFilterSelected(HomeTypeFilter.INCOME)) },
-        )
-        uiState.categories.forEach { category ->
+        Row(
+            modifier =
+                Modifier
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = MmrDimens.listItemPaddingHorizontal),
+            horizontalArrangement = Arrangement.spacedBy(MmrDimens.spaceXs),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             MmrFilterChip(
-                label = category,
-                selected = uiState.selectedCategoryFilter == category,
-                onClick = { onEvent(HomeUiEvent.OnCategoryFilterSelected(category)) },
+                label = "All",
+                selected = uiState.selectedTypeFilter == HomeTypeFilter.ALL,
+                onClick = { onEvent(HomeUiEvent.OnTypeFilterSelected(HomeTypeFilter.ALL)) },
+                modifier = Modifier.testTag(MmrTestTags.homeTypeFilterAll),
+            )
+            MmrFilterChip(
+                label = "Expenses",
+                selected = uiState.selectedTypeFilter == HomeTypeFilter.EXPENSE,
+                onClick = { onEvent(HomeUiEvent.OnTypeFilterSelected(HomeTypeFilter.EXPENSE)) },
+                modifier = Modifier.testTag(MmrTestTags.homeTypeFilterExpense),
+            )
+            MmrFilterChip(
+                label = "Income",
+                selected = uiState.selectedTypeFilter == HomeTypeFilter.INCOME,
+                onClick = { onEvent(HomeUiEvent.OnTypeFilterSelected(HomeTypeFilter.INCOME)) },
+                modifier = Modifier.testTag(MmrTestTags.homeTypeFilterIncome),
+            )
+            MmrFilterChip(
+                label = "Transfers",
+                selected = uiState.selectedTypeFilter == HomeTypeFilter.TRANSFER,
+                onClick = { onEvent(HomeUiEvent.OnTypeFilterSelected(HomeTypeFilter.TRANSFER)) },
+                modifier = Modifier.testTag(MmrTestTags.homeTypeFilterTransfer),
+            )
+            HomeCategoryFilterDropdown(
+                rows = uiState.categoryFilterRows,
+                selected = uiState.selectedCategoryFilters,
+                onToggleCategory = { onEvent(HomeUiEvent.OnCategoryFilterToggled(it)) },
+                onClearCategories = { onEvent(HomeUiEvent.OnCategoryFiltersCleared) },
+                emptyCategoriesMessage =
+                    when (uiState.selectedTypeFilter) {
+                        HomeTypeFilter.TRANSFER ->
+                            "Transfers are not filtered by category."
+                        else -> "No categories yet."
+                    },
             )
         }
     }
@@ -604,7 +625,7 @@ private fun HomeDailyMrecPane(
 
 private fun emptyMessage(uiState: HomeUiState): String {
     val filtered =
-        uiState.selectedCategoryFilter != null ||
+        uiState.selectedCategoryFilters.isNotEmpty() ||
             uiState.selectedTypeFilter != HomeTypeFilter.ALL
     return when (uiState.selectedViewTab) {
         HomeViewTab.CALENDAR -> "No activity this month."

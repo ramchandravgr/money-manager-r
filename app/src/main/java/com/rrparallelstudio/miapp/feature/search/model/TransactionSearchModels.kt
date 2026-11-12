@@ -1,5 +1,6 @@
 package com.rrparallelstudio.miapp.feature.search.model
 
+import com.rrparallelstudio.miapp.core.model.enums.AccountType
 import com.rrparallelstudio.miapp.core.model.settings.MmrAmountColorScheme
 import com.rrparallelstudio.miapp.feature.home.model.TransactionGroupUi
 import com.rrparallelstudio.miapp.feature.search.SearchHeaderPeriodMode
@@ -11,8 +12,11 @@ data class TransactionSearchUiState(
     val periodStart: LocalDate? = null,
     val periodEnd: LocalDate? = null,
     val selectedAccountId: Long? = null,
+    val selectedAccountIds: Set<Long> = emptySet(),
     val selectedCategoryId: Long? = null,
     val selectedSubcategoryId: Long? = null,
+    val categoryPicks: Set<SearchCategoryPick> = emptySet(),
+    val accountsMatchingCategories: Set<Long> = emptySet(),
     val amountMin: String = "",
     val amountMax: String = "",
     val accounts: List<SearchAccountUi> = emptyList(),
@@ -30,10 +34,15 @@ data class TransactionSearchUiState(
     val headerPeriodMode: SearchHeaderPeriodMode = SearchHeaderPeriodMode.MONTH,
 )
 
+data class SearchCategoryPick(
+    val categoryId: Long,
+    val subcategoryId: Long? = null,
+)
+
 data class SearchAccountUi(
     val id: Long,
     val name: String,
-    val type: com.rrparallelstudio.miapp.core.model.enums.AccountType = com.rrparallelstudio.miapp.core.model.enums.AccountType.BANK,
+    val type: AccountType = AccountType.BANK,
     val smsOriginLabel: String? = null,
 )
 
@@ -56,6 +65,19 @@ sealed interface TransactionSearchUiEvent {
     data class OnAccountSelected(
         val accountId: Long?,
     ) : TransactionSearchUiEvent
+
+    data class OnToggleAccount(
+        val accountId: Long,
+    ) : TransactionSearchUiEvent
+
+    object OnClearAccounts : TransactionSearchUiEvent
+
+    data class OnToggleCategoryPick(
+        val categoryId: Long,
+        val subcategoryId: Long? = null,
+    ) : TransactionSearchUiEvent
+
+    object OnClearCategoryPicks : TransactionSearchUiEvent
 
     object OnCategoryRowClick : TransactionSearchUiEvent
 

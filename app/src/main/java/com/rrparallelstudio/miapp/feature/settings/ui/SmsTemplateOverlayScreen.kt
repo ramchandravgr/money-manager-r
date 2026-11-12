@@ -1,18 +1,23 @@
 package com.rrparallelstudio.miapp.feature.settings.ui
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.rrparallelstudio.miapp.feature.settings.model.SmsTemplateOverlayPrompt
 import com.rrparallelstudio.miapp.feature.settings.viewmodel.SmsTemplateOverlayUiEvent
 import com.rrparallelstudio.miapp.feature.settings.viewmodel.SmsTemplateOverlayViewModel
 import com.rrparallelstudio.miapp.ui.components.MmrConfirmDialog
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsDestructiveRow
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsPrimaryActionSlot
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSection
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSectionBodyText
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroup
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupAction
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupDestructiveRow
+import com.rrparallelstudio.miapp.ui.components.MmrSettingsGroupNote
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenLayout
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenScaffold
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsStatusBanners
@@ -23,6 +28,7 @@ fun SmsTemplateOverlayScreen(
     viewModel: SmsTemplateOverlayViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     val importLauncher =
         rememberLauncherForActivityResult(
@@ -44,7 +50,7 @@ fun SmsTemplateOverlayScreen(
     }
 
     MmrSettingsScreenScaffold(
-        title = "SMS templates",
+        title = "SMS Templates",
         onNavigateBack = onNavigateBack,
         layout = MmrSettingsScreenLayout.InsetGrouped,
     ) {
@@ -54,32 +60,49 @@ fun SmsTemplateOverlayScreen(
             onDismissStatus = { viewModel.onEvent(SmsTemplateOverlayUiEvent.OnDismissMessage) },
             onDismissError = { viewModel.onEvent(SmsTemplateOverlayUiEvent.OnDismissMessage) },
         )
-        MmrIosSettingsSection(
-            title = "Template overlay",
+        MmrSettingsGroup(
+            title = "Build Your Own",
             isFirstInScreen = true,
             footer =
-                "Import a JSON file to add or replace SMS parsing rules. " +
-                    "Invalid patterns are rejected. Manual paste uses the updated list immediately.",
+                "Paste the prompt and your SMS export into any AI you choose. " +
+                    "Save the JSON after ---JSON--- as a file, then import it below. " +
+                    "Your messages go only to that AI. This app reads the file you pick.",
         ) {
-            MmrIosSettingsSectionBodyText(
+            MmrSettingsGroupAction(
+                text = "Copy Prompt",
+                onClick = {
+                    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    clipboard.setPrimaryClip(
+                        ClipData.newPlainText(SmsTemplateOverlayPrompt.CLIPBOARD_LABEL, SmsTemplateOverlayPrompt.text),
+                    )
+                    viewModel.onEvent(SmsTemplateOverlayUiEvent.OnPromptCopied)
+                },
+                enabled = !uiState.isBusy,
+                showDividerBelow = false,
+            )
+        }
+        MmrSettingsGroup(
+            title = "Your Rules",
+            footer = "An extra file can recognize more bank messages. Removing it does not delete transactions.",
+        ) {
+            MmrSettingsGroupNote(
                 text =
                     when (uiState.status.overlayCount) {
-                        0 -> "No overlay loaded (${uiState.status.mergedCount} templates active)."
+                        0 -> "Using the built-in bank messages. No extra rules file is loaded."
                         else ->
-                            "${uiState.status.overlayCount} overlay; " +
-                                "${uiState.status.overrideBuiltInCount} override built-in; " +
-                                "${uiState.status.mergedCount} total active."
+                            "${uiState.status.overlayCount} extra rules are loaded " +
+                                "(${uiState.status.mergedCount} rules in use)."
                     },
             )
-            MmrIosSettingsPrimaryActionSlot(
-                text = if (uiState.isBusy) "Working…" else "Import overlay JSON",
+            MmrSettingsGroupAction(
+                text = if (uiState.isBusy) "Working…" else "Import JSON",
                 onClick = { importLauncher.launch(arrayOf("application/json", "application/*", "text/*")) },
                 enabled = !uiState.isBusy,
                 showDividerBelow = uiState.status.overlayCount > 0,
             )
             if (uiState.status.overlayCount > 0) {
-                MmrIosSettingsDestructiveRow(
-                    label = "Clear overlay",
+                MmrSettingsGroupDestructiveRow(
+                    label = "Remove Extra Rules",
                     onClick = { viewModel.requestReset() },
                     showDividerBelow = false,
                 )

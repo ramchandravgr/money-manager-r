@@ -35,7 +35,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.rrparallelstudio.miapp.feature.home.HomeCarryOverInjector
 import com.rrparallelstudio.miapp.feature.home.model.TransactionGroupUi
 import com.rrparallelstudio.miapp.feature.home.model.TransactionRowUi
@@ -171,14 +170,18 @@ fun TransactionDayHeaderRow(
                     Text(
                         text = group.weekdayShort,
                         modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.5.dp),
-                        style = mmrLedgerListTextStyle().copy(fontSize = 10.sp, lineHeight = 12.sp),
+                        style =
+                            com.rrparallelstudio.miapp.ui.theme
+                                .mmrLedgerList10Style(),
                         color = dayPillText,
                         maxLines = 1,
                     )
                 }
                 Text(
                     text = group.monthYearLabel,
-                    style = mmrLedgerListTextStyle().copy(fontSize = 10.sp, lineHeight = 12.sp),
+                    style =
+                        com.rrparallelstudio.miapp.ui.theme
+                            .mmrLedgerList10Style(),
                     color = dateMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -257,7 +260,9 @@ private fun TransactionRowContent(
             if (item.timeLabel.isNotBlank()) {
                 Text(
                     text = item.timeLabel,
-                    style = mmrLedgerListTextStyle().copy(fontSize = 10.sp, lineHeight = 14.sp),
+                    style =
+                        com.rrparallelstudio.miapp.ui.theme
+                            .mmrLedgerList10TightStyle(),
                     color = MmrBrandColors.TextLight,
                 )
             }

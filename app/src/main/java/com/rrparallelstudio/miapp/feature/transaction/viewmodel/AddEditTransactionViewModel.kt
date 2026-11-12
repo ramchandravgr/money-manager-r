@@ -770,7 +770,7 @@ class AddEditTransactionViewModel
                                 categoryRepository.createCategory(
                                     CategoryEntity(
                                         name = trimmed,
-                                        colorHex = CategoryColorPresets.defaultHex,
+                                        colorHex = CategoryColorPresets.DEFAULT_HEX,
                                         type = transactionTypeToCategoryType(state.selectedType),
                                         iconName = "category_default",
                                         orderIndex = state.categories.size,
@@ -1036,7 +1036,7 @@ class AddEditTransactionViewModel
                     iconName = node.category.iconName,
                     subcategories =
                         node.subcategories.map { sub ->
-                            SubcategoryUi(id = sub.id.value, name = sub.name)
+                            SubcategoryUi(id = sub.id.value, name = sub.name, iconName = sub.iconName)
                         },
                 )
             }

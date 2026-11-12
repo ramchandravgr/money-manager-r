@@ -81,8 +81,8 @@ android {
         minSdk = 28
         targetSdk = 36
         // Play versionCode: major*10000 + minor*100 + patch (0.10.1 -> 1001). Bump every upload.
-        versionCode = 1118
-        versionName = "0.11.18"
+        versionCode = 1121
+        versionName = "0.11.21"
 
         testInstrumentationRunner = "com.rrparallelstudio.miapp.HiltTestRunner"
 
@@ -133,6 +133,15 @@ android {
         compose = true
         buildConfig = true
     }
+
+    sourceSets {
+        getByName("test") {
+            resources.srcDir("$rootDir/docs/samples")
+        }
+        getByName("androidTest") {
+            assets.srcDir("$rootDir/docs/samples")
+        }
+    }
 }
 
 kotlin {
@@ -168,6 +177,7 @@ ktlint {
 dependencies {
     detektPlugins(libs.detekt.formatting)
     detektPlugins(libs.detekt.compose.rules)
+    detektPlugins(project(":detekt-rules"))
     implementation(platform(libs.androidx.compose.bom))
 
     implementation(libs.androidx.core.ktx)

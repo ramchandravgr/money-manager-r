@@ -673,6 +673,7 @@ object BackupJsonCodec {
             put("syncId", entity.syncId)
             put("categoryId", entity.categoryId)
             put("name", entity.name)
+            put("iconName", entity.iconName)
             put("isActive", entity.isActive)
             put("orderIndex", entity.orderIndex)
         }
@@ -683,6 +684,7 @@ object BackupJsonCodec {
             syncId = syncIdFromJson(json),
             categoryId = json.getLong("categoryId"),
             name = json.getString("name"),
+            iconName = json.optString("iconName", "category_default"),
             isActive = json.getBoolean("isActive"),
             orderIndex = json.getInt("orderIndex"),
         )

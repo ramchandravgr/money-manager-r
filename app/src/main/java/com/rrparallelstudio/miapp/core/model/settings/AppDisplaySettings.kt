@@ -78,11 +78,11 @@ enum class MmrAmountColorScheme {
     val label: String
         get() =
             when (this) {
-                SET_A -> "Teal & brick red"
-                SET_B -> "Emerald & bright red"
-                SET_C -> "Sky & crimson"
-                SET_D -> "Lime & amber"
-                SET_E -> "Indigo & magenta"
+                SET_A -> "Teal & Brick Red"
+                SET_B -> "Emerald & Bright Red"
+                SET_C -> "Sky & Crimson"
+                SET_D -> "Lime & Amber"
+                SET_E -> "Indigo & Magenta"
             }
 }
 
@@ -96,10 +96,10 @@ enum class MmrTimeDisplay {
     val label: String
         get() =
             when (this) {
-                NONE_ASC -> "None, Asc."
-                NONE_DESC -> "None, Desc."
-                SHOW_ASC -> "Show, Asc."
-                SHOW_DESC -> "Show, Desc."
+                NONE_ASC -> "Hide Time, Oldest First"
+                NONE_DESC -> "Hide Time, Newest First"
+                SHOW_ASC -> "Show Time, Oldest First"
+                SHOW_DESC -> "Show Time, Newest First"
             }
 
     val showTime: Boolean
@@ -133,7 +133,7 @@ enum class MmrThemeMode {
     val label: String
         get() =
             when (this) {
-                SYSTEM -> "System default"
+                SYSTEM -> "System"
                 LIGHT -> "Light"
                 DARK -> "Dark"
                 OLED -> "Pure black"
