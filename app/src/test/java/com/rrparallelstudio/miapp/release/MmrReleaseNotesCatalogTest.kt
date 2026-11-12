@@ -21,6 +21,15 @@ class MmrReleaseNotesCatalogTest {
     }
 
     @Test
+    fun priorMajorMinorHistory_capsAtFivePastVersions() {
+        val history = MmrReleaseNotesCatalog.priorMajorMinorHistory("99.99.99")
+        assertEquals(
+            MmrReleaseNotesCatalog.MAX_PAST_VERSIONS_IN_WHATS_NEW,
+            history.size,
+        )
+    }
+
+    @Test
     fun notesForVersion_unknownReturnsNull() {
         assertNull(MmrReleaseNotesCatalog.notesForVersion("99.0.0"))
     }

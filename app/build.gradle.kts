@@ -78,11 +78,11 @@ android {
 
     defaultConfig {
         applicationId = "com.rrparallelstudio.miapp"
-        minSdk = 24
+        minSdk = 28
         targetSdk = 36
         // Play versionCode: major*10000 + minor*100 + patch (0.10.1 -> 1001). Bump every upload.
-        versionCode = 1117
-        versionName = "0.11.17"
+        versionCode = 1118
+        versionName = "0.11.18"
 
         testInstrumentationRunner = "com.rrparallelstudio.miapp.HiltTestRunner"
 
@@ -106,8 +106,8 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("release")
-            // Initial Play releases: minify off (easier release debugging; see PROJECT_MEMORY §6 Release builds, audit §12 RELEASE-R8).
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
@@ -118,7 +118,8 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-        isCoreLibraryDesugaringEnabled = true
+        // minSdk 28: java.time is on-device (API 26+); skip j$ desugar backports (Play/Firebase dex issues).
+        isCoreLibraryDesugaringEnabled = false
     }
 
     lint {
@@ -165,7 +166,6 @@ ktlint {
 }
 
 dependencies {
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
     detektPlugins(libs.detekt.formatting)
     detektPlugins(libs.detekt.compose.rules)
     implementation(platform(libs.androidx.compose.bom))
@@ -200,6 +200,7 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.fastexcel)
+    implementation(libs.fastexcel.reader)
     implementation(libs.play.services.auth)
     implementation(libs.play.services.ads)
     implementation(platform(libs.firebase.bom))

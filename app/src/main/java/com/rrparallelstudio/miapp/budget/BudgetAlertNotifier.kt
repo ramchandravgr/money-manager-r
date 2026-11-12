@@ -3,7 +3,6 @@ package com.rrparallelstudio.miapp.budget
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.rrparallelstudio.miapp.R
 import com.rrparallelstudio.miapp.core.common.display.MmrMoneyFormat
@@ -42,7 +41,6 @@ class BudgetAlertNotifier
         }
 
         private fun ensureChannel() {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val channel =
                 NotificationChannel(

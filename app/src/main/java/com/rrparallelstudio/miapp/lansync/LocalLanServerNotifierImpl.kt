@@ -21,7 +21,12 @@ class LocalLanServerNotifierImpl
                 Intent(context, LocalLanForegroundService::class.java).apply {
                     putExtra(LocalLanForegroundService.EXTRA_MODE, mode.name)
                 }
-            ContextCompat.startForegroundService(context, intent)
+            try {
+                ContextCompat.startForegroundService(context, intent)
+            } catch (e: RuntimeException) {
+                if (e.isForegroundServiceQuotaBlocked()) return
+                throw e
+            }
         }
 
         override fun onLanServerStopped() {

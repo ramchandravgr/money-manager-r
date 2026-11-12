@@ -1,5 +1,6 @@
 package com.rrparallelstudio.miapp.lansync
 
+import android.app.ForegroundServiceStartNotAllowedException
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -27,17 +28,40 @@ class LocalLanForegroundService : Service() {
         val modeName = intent?.getStringExtra(EXTRA_MODE) ?: LocalLanServerMode.PEER_SYNC.name
         val mode = runCatching { LocalLanServerMode.valueOf(modeName) }.getOrDefault(LocalLanServerMode.PEER_SYNC)
         val notification = buildNotification(mode)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(
-                NOTIFICATION_ID,
-                notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
-            )
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
+        if (!promoteToForeground(notification)) {
+            stopSelf()
+            return START_NOT_STICKY
         }
         return START_STICKY
     }
+
+    private fun promoteToForeground(notification: Notification): Boolean =
+        try {
+            when {
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE ->
+                    startForeground(
+                        NOTIFICATION_ID,
+                        notification,
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE,
+                    )
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ->
+                    startForeground(
+                        NOTIFICATION_ID,
+                        notification,
+                        ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC,
+                    )
+                else -> startForeground(NOTIFICATION_ID, notification)
+            }
+            true
+        } catch (e: ForegroundServiceStartNotAllowedException) {
+            false
+        } catch (e: RuntimeException) {
+            if (e.isForegroundServiceQuotaBlocked()) {
+                false
+            } else {
+                throw e
+            }
+        }
 
     private fun buildNotification(mode: LocalLanServerMode): Notification {
         ensureChannel()
@@ -46,7 +70,7 @@ class LocalLanForegroundService : Service() {
                 LocalLanServerMode.WEB_MANAGE ->
                     "Web Manage active" to "Browser access on your Wi‑Fi network"
                 LocalLanServerMode.PEER_SYNC ->
-                    "Peer Device Sync active" to "Syncing with trusted devices on Wi‑Fi"
+                    "Peer Device Sync active" to "Stays on so family phones can sync on this Wi‑Fi"
                 LocalLanServerMode.NONE ->
                     "LAN service" to "Money Inbox"
             }
@@ -82,7 +106,6 @@ class LocalLanForegroundService : Service() {
     }
 
     private fun ensureChannel() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val channel =
             NotificationChannel(

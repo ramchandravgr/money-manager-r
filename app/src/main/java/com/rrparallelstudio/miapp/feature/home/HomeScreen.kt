@@ -2,7 +2,6 @@
 
 package com.rrparallelstudio.miapp.feature.home
 
-import android.widget.Toast
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
@@ -17,19 +16,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.rrparallelstudio.miapp.R
 import com.rrparallelstudio.miapp.ads.HomeAdPlacementContext
 import com.rrparallelstudio.miapp.ads.MmrAdPlacementPolicy
 import com.rrparallelstudio.miapp.ads.MmrAdSlot
+import com.rrparallelstudio.miapp.core.export.MmrPeriodExportShare
 import com.rrparallelstudio.miapp.feature.home.HomeCarryOverInjector
 import com.rrparallelstudio.miapp.feature.home.model.*
 import com.rrparallelstudio.miapp.feature.home.ui.GroupedTransactionList
@@ -38,9 +39,11 @@ import com.rrparallelstudio.miapp.feature.home.ui.HomeExcelExportPeriodDialog
 import com.rrparallelstudio.miapp.feature.home.ui.HomeMonthPickerDialog
 import com.rrparallelstudio.miapp.feature.home.ui.HomeMonthTopBar
 import com.rrparallelstudio.miapp.feature.home.ui.HomeMonthlyTabContent
+import com.rrparallelstudio.miapp.feature.home.ui.HomePeriodExportShareDialog
 import com.rrparallelstudio.miapp.feature.home.ui.HomePeriodSummaryStrip
 import com.rrparallelstudio.miapp.feature.home.ui.HomeTotalTabContent
 import com.rrparallelstudio.miapp.feature.home.ui.HomeViewTabRow
+import com.rrparallelstudio.miapp.feature.search.ui.SearchDateRangeDialog
 import com.rrparallelstudio.miapp.testing.MmrTestTags
 import com.rrparallelstudio.miapp.ui.adaptive.MmrAdaptiveWidthBox
 import com.rrparallelstudio.miapp.ui.components.MmrAddListFab
@@ -50,6 +53,7 @@ import com.rrparallelstudio.miapp.ui.components.MmrDimens
 import com.rrparallelstudio.miapp.ui.components.MmrFilterChip
 import com.rrparallelstudio.miapp.ui.components.MmrNestedScaffoldInsets
 import com.rrparallelstudio.miapp.ui.components.MmrPeriodSwipeBox
+import com.rrparallelstudio.miapp.ui.components.MmrProcessingOverlay
 import com.rrparallelstudio.miapp.ui.components.MmrSelectionModeBackHandler
 import com.rrparallelstudio.miapp.ui.components.MmrTopAppBar
 import com.rrparallelstudio.miapp.ui.components.MmrTransactionMergeDialog
@@ -57,6 +61,7 @@ import com.rrparallelstudio.miapp.ui.state.MmrEmptyState
 import com.rrparallelstudio.miapp.ui.state.MmrErrorState
 import com.rrparallelstudio.miapp.ui.state.MmrLoadingState
 import com.rrparallelstudio.miapp.ui.theme.MmrBrandColors
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,15 +97,42 @@ fun HomeScreen(
         }
     }
 
+    var pendingExportShare by remember { mutableStateOf<HomePeriodExportResult?>(null) }
     LaunchedEffect(Unit) {
         viewModel.periodExportResult.collect { result ->
-            Toast
-                .makeText(
-                    context,
-                    context.getString(R.string.home_excel_saved_to_downloads, result.savedFileName),
-                    Toast.LENGTH_LONG,
-                ).show()
+            pendingExportShare = result
         }
+    }
+    pendingExportShare?.let { result ->
+        val appName = stringResource(R.string.app_name)
+        val shareSubject = HomeExcelExportPeriods.formatShareSubject(appName, result.range)
+        val exportDir = File(context.cacheDir, "exports")
+        HomePeriodExportShareDialog(
+            savedFileName = result.savedFileName,
+            onDismiss = { pendingExportShare = null },
+            onShareExcel = {
+                val file = File(exportDir, result.cacheXlsxFileName)
+                MmrPeriodExportShare.share(
+                    context = context,
+                    file = file,
+                    mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    subject = shareSubject,
+                    chooserTitle = "Share Export",
+                )
+                pendingExportShare = null
+            },
+            onShareXml = {
+                val file = File(exportDir, result.cacheXmlFileName)
+                MmrPeriodExportShare.share(
+                    context = context,
+                    file = file,
+                    mimeType = "application/xml",
+                    subject = shareSubject.replace("Excel", "XML"),
+                    chooserTitle = "Share Export",
+                )
+                pendingExportShare = null
+            },
+        )
     }
 
     HomeMonthPickerDialog(
@@ -150,18 +182,21 @@ fun HomeScreen(
         },
     )
 
-    if (uiState.isExcelExporting) {
-        Dialog(onDismissRequest = {}) {
-            Surface(shape = MaterialTheme.shapes.medium) {
-                Box(
-                    modifier = Modifier.padding(32.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-        }
+    if (uiState.showExcelCustomRangeDialog) {
+        SearchDateRangeDialog(
+            initialStart = null,
+            initialEnd = null,
+            onConfirm = { start, end ->
+                viewModel.onEvent(HomeUiEvent.OnExcelCustomRangeConfirmed(start, end))
+            },
+            onDismiss = { viewModel.onEvent(HomeUiEvent.OnDismissExcelCustomRangeDialog) },
+        )
     }
+
+    MmrProcessingOverlay(
+        visible = uiState.isExcelExporting,
+        message = "Exporting to Excel…",
+    )
 
     if (uiState.showDeleteConfirmDialog) {
         val count = uiState.selectedTransactionIds.size

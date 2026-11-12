@@ -11,7 +11,7 @@ interface BackupRepository {
     /** Signed ZIP archive (default export format). */
     suspend fun exportBackupArchive(): ByteArray
 
-    /** Imports signed `.mibxbac` zip or Realbyte Money Manager `.mmbak` (file picker). */
+    /** Imports signed `.mibxbac` zip, Money Manager `.mmbak`, or a Monefy backup (file picker). */
     suspend fun importBackup(
         data: ByteArray,
         mode: BackupImportMode = BackupImportMode.REPLACE,
@@ -22,4 +22,13 @@ interface BackupRepository {
     suspend fun importMoneyManagerMmbak(
         data: ByteArray,
     ): com.rrparallelstudio.miapp.core.moneymanager.MoneyManagerMmbakLedgerImporter.Result
+
+    /** Merge a Monefy backup into the ledger (accounts, categories, transactions, transfers). */
+    suspend fun importMonefyBackup(data: ByteArray): com.rrparallelstudio.miapp.core.monefy.MonefyLedgerImporter.Result
+
+    /** Merge transactions from a period export spreadsheet (.xlsx / .xml). */
+    suspend fun importLedgerSpreadsheet(
+        data: ByteArray,
+        displayName: String?,
+    ): com.rrparallelstudio.miapp.core.export.PeriodLedgerSpreadsheetImporter.Result
 }

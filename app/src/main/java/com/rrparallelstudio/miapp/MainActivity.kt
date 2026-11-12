@@ -29,6 +29,7 @@ import com.rrparallelstudio.miapp.ads.LocalMmrAdCoordinator
 import com.rrparallelstudio.miapp.ads.MmrAdCoordinator
 import com.rrparallelstudio.miapp.ads.firebase.MmrAppVersionPolicy
 import com.rrparallelstudio.miapp.ads.firebase.MmrFirebaseRemoteConfigSync
+import com.rrparallelstudio.miapp.backup.LocalAutoBackupTrigger
 import com.rrparallelstudio.miapp.core.approval.ApprovalSmsIntakeCoordinator
 import com.rrparallelstudio.miapp.core.data.catalog.MmrCategorizationRuleSeeder
 import com.rrparallelstudio.miapp.core.data.catalog.MmrDefaultCatalogSeeder
@@ -75,6 +76,8 @@ class MainActivity : FragmentActivity() {
 
     @Inject lateinit var googleDriveAutoBackupTrigger: GoogleDriveAutoBackupTrigger
 
+    @Inject lateinit var localAutoBackupTrigger: LocalAutoBackupTrigger
+
     @Inject lateinit var pendingNotificationCoordinator: PendingNotificationCoordinator
 
     @Inject lateinit var launchPermissionStore: LaunchPermissionStore
@@ -114,6 +117,7 @@ class MainActivity : FragmentActivity() {
         installSplashScreen().setKeepOnScreenCondition { keepSystemSplash }
         super.onCreate(savedInstanceState)
         googleDriveAutoBackupTrigger.onAppForeground()
+        localAutoBackupTrigger.onAppForeground()
         lifecycleScope.launch {
             MmrDefaultCatalogSeeder.seedIfMissing(database)
             MmrCategorizationRuleSeeder.seedIfMissing(this@MainActivity, database.categorizationRuleDao())

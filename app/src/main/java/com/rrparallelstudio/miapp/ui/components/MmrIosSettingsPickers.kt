@@ -130,6 +130,7 @@ fun MmrIosSettingsBackupImportModeSheet(
     mergeModeTestTag: String? = null,
     showReplaceOption: Boolean = true,
     mergeHelper: String? = null,
+    mergeChoiceLabel: String? = null,
 ) {
     val helper =
         mergeHelper
@@ -156,7 +157,9 @@ fun MmrIosSettingsBackupImportModeSheet(
             )
         }
         MmrIosSettingsChoiceRow(
-            label = if (showReplaceOption) "Merge with existing data" else "Merge transactions",
+            label =
+                mergeChoiceLabel
+                    ?: if (showReplaceOption) "Merge with existing data" else "Merge transactions",
             selected = selectedMode == BackupImportMode.MERGE,
             onClick = { onSelectMode(BackupImportMode.MERGE) },
             showDividerBelow = false,

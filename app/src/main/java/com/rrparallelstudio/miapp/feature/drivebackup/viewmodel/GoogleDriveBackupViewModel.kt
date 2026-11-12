@@ -12,6 +12,7 @@ import com.rrparallelstudio.miapp.core.drive.GoogleDriveAutoSchedule
 import com.rrparallelstudio.miapp.core.drive.GoogleDriveFileRef
 import com.rrparallelstudio.miapp.drive.GoogleDriveAuthGateway
 import com.rrparallelstudio.miapp.drive.GoogleDriveAuthorizeStep
+import com.rrparallelstudio.miapp.drive.GoogleDriveBackupWorkScheduler
 import com.rrparallelstudio.miapp.ui.state.MmrUiMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +32,7 @@ data class GoogleDriveBackupUiState(
     val lastBackupLabel: String? = null,
     val remoteBackups: List<GoogleDriveFileRef> = emptyList(),
     val isBusy: Boolean = false,
+    val busyMessage: String? = null,
     val statusMessage: String? = null,
     val errorMessage: String? = null,
     val showRestoreDialog: Boolean = false,
@@ -47,6 +49,7 @@ class GoogleDriveBackupViewModel
         private val preferencesStore: GoogleDriveBackupPreferencesStore,
         private val driveBackupRepository: GoogleDriveBackupRepository,
         private val backupRepository: BackupRepository,
+        private val workScheduler: GoogleDriveBackupWorkScheduler,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow(GoogleDriveBackupUiState())
         val uiState: StateFlow<GoogleDriveBackupUiState> = _uiState.asStateFlow()
@@ -75,7 +78,14 @@ class GoogleDriveBackupViewModel
 
         fun turnOnDriveBackup() {
             viewModelScope.launch {
-                _uiState.update { it.copy(isBusy = true, errorMessage = null, statusMessage = null) }
+                _uiState.update {
+                    it.copy(
+                        isBusy = true,
+                        busyMessage = "Connecting to Google Drive…",
+                        errorMessage = null,
+                        statusMessage = null,
+                    )
+                }
                 runCatching { authGateway.authorize() }
                     .onSuccess { step ->
                         when (step) {
@@ -130,6 +140,7 @@ class GoogleDriveBackupViewModel
         ) {
             preferencesStore.setAutoSchedule(GoogleDriveAutoSchedule.DAILY)
             preferencesStore.setWifiOnly(true)
+            workScheduler.syncPeriodicAutoBackupSchedule()
             _uiState.update { it.copy(linkedEmail = email) }
             refreshStatus()
             runCatching {
@@ -166,23 +177,33 @@ class GoogleDriveBackupViewModel
                         statusMessage = "Disconnected from Google Drive.",
                     )
                 }
+                workScheduler.syncPeriodicAutoBackupSchedule()
                 refreshStatus()
             }
         }
 
         fun setAutoSchedule(schedule: GoogleDriveAutoSchedule) {
             preferencesStore.setAutoSchedule(schedule)
+            workScheduler.syncPeriodicAutoBackupSchedule()
             refreshStatus()
         }
 
         fun setWifiOnly(enabled: Boolean) {
             preferencesStore.setWifiOnly(enabled)
+            workScheduler.syncPeriodicAutoBackupSchedule()
             refreshStatus()
         }
 
         fun uploadNow() {
             viewModelScope.launch {
-                _uiState.update { it.copy(isBusy = true, errorMessage = null, statusMessage = null) }
+                _uiState.update {
+                    it.copy(
+                        isBusy = true,
+                        busyMessage = "Uploading to Google Drive…",
+                        errorMessage = null,
+                        statusMessage = null,
+                    )
+                }
                 runCatching {
                     val token =
                         authGateway.fetchAccessToken()
@@ -190,7 +211,7 @@ class GoogleDriveBackupViewModel
                     driveBackupRepository.uploadBackup(token)
                 }.onSuccess {
                     _uiState.update {
-                        it.copy(isBusy = false, statusMessage = "Backup uploaded to Google Drive.")
+                        it.copy(isBusy = false, busyMessage = null, statusMessage = "Backup uploaded to Google Drive.")
                     }
                     refreshStatus()
                     refreshRemoteBackups()
@@ -198,6 +219,7 @@ class GoogleDriveBackupViewModel
                     _uiState.update {
                         it.copy(
                             isBusy = false,
+                            busyMessage = null,
                             errorMessage = MmrUiMessages.friendly(error.message, MmrUiMessages.GENERIC_ACTION),
                         )
                     }
@@ -244,7 +266,13 @@ class GoogleDriveBackupViewModel
             val mode = _uiState.value.pendingImportMode
             viewModelScope.launch {
                 _uiState.update {
-                    it.copy(isBusy = true, showRestoreDialog = false, errorMessage = null, statusMessage = null)
+                    it.copy(
+                        isBusy = true,
+                        busyMessage = "Restoring from Google Drive…",
+                        showRestoreDialog = false,
+                        errorMessage = null,
+                        statusMessage = null,
+                    )
                 }
                 runCatching {
                     val token =
@@ -256,6 +284,7 @@ class GoogleDriveBackupViewModel
                     _uiState.update {
                         it.copy(
                             isBusy = false,
+                            busyMessage = null,
                             pendingRestoreFile = null,
                             statusMessage =
                                 buildString {
@@ -268,6 +297,7 @@ class GoogleDriveBackupViewModel
                     _uiState.update {
                         it.copy(
                             isBusy = false,
+                            busyMessage = null,
                             pendingRestoreFile = null,
                             errorMessage = MmrUiMessages.friendly(error.message, MmrUiMessages.GENERIC_ACTION),
                         )

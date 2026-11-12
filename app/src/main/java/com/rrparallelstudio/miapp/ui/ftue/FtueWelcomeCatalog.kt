@@ -169,19 +169,37 @@ object FtueWelcomeCatalog {
                 bullets =
                     listOf(
                         FtueBullet(
-                            "Backup & Restore — export or import a signed .mibxbac file.",
+                            "Backup & Restore — export or import a signed .mibxbac file, schedule automatic backups to Downloads, or merge a Money Manager or Monefy backup.",
                             FtueBulletIcon.Backup,
                         ),
                         FtueBullet(
-                            "Google Drive backup — optional scheduled uploads.",
+                            "Google Drive backup — optional daily, weekly, or monthly uploads when linked.",
                             FtueBulletIcon.DriveBackup,
                         ),
                         FtueBullet(
-                            "Peer Device Sync — merge on the same Wi‑Fi or your hotspot. Auto sync when you open the app, or tap Sync now. Theme stays on each phone.",
+                            "Ledger spreadsheet — export periods from Home as Excel or XML; import via template on Backup & Restore.",
+                            FtueBulletIcon.Backup,
+                        ),
+                        FtueBullet(
+                            "Settings → Peer Device Sync — turn on to merge with another phone on the same " +
+                                "Wi‑Fi or phone hotspot. An ongoing notification may show while sync stays on; " +
+                                "themes stay separate on each phone.",
                             FtueBulletIcon.LanSync,
                         ),
                         FtueBullet(
-                            "Web Manage — edit the ledger from a browser on your Wi‑Fi or phone hotspot.",
+                            "Pairing — the host shows a code; the other phone enters it and you tap Approve " +
+                                "on the host. On a hotspot, pick On this network or enter the other phone's " +
+                                "address on Sync now if discovery fails.",
+                            FtueBulletIcon.LanSync,
+                        ),
+                        FtueBullet(
+                            "Settings → Web Manage — set a password, turn it on, then open the link in a browser " +
+                                "on the same Wi‑Fi or hotspot.",
+                            FtueBulletIcon.WebManage,
+                        ),
+                        FtueBullet(
+                            "Only one of Peer Device Sync or Web Manage can listen on the LAN at a time. " +
+                                "Turn the other off first if a toggle is blocked.",
                             FtueBulletIcon.WebManage,
                         ),
                     ),

@@ -26,8 +26,11 @@ import com.rrparallelstudio.miapp.core.database.dao.SyncTombstoneDao
 import com.rrparallelstudio.miapp.core.database.entity.AssetAttachmentEntity
 import com.rrparallelstudio.miapp.core.database.entity.TransactionAttachmentEntity
 import com.rrparallelstudio.miapp.core.domain.repository.BackupRepository
+import com.rrparallelstudio.miapp.core.export.PeriodLedgerSpreadsheetImporter
 import com.rrparallelstudio.miapp.core.lansync.LanSyncTombstoneMerger
 import com.rrparallelstudio.miapp.core.lansync.model.LanSyncTombstoneRecord
+import com.rrparallelstudio.miapp.core.monefy.MonefyBackupFormat
+import com.rrparallelstudio.miapp.core.monefy.MonefyLedgerImporter
 import com.rrparallelstudio.miapp.core.moneymanager.MoneyManagerMmbakFormat
 import com.rrparallelstudio.miapp.core.moneymanager.MoneyManagerMmbakLedgerImporter
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -49,6 +52,8 @@ class BackupRepositoryImpl
         private val attachmentStore: TransactionAttachmentStore,
         private val assetAttachmentStore: AssetAttachmentStore,
         private val moneyManagerMmbakLedgerImporter: MoneyManagerMmbakLedgerImporter,
+        private val monefyLedgerImporter: MonefyLedgerImporter,
+        private val ledgerSpreadsheetImporter: PeriodLedgerSpreadsheetImporter,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : BackupRepository {
         override suspend fun getLocalDataSummary(): BackupRestoreSummary =
@@ -74,6 +79,19 @@ class BackupRepositoryImpl
                 moneyManagerMmbakLedgerImporter.importFromBytes(data, context.cacheDir)
             }
 
+        override suspend fun importMonefyBackup(data: ByteArray): MonefyLedgerImporter.Result =
+            withContext(ioDispatcher) {
+                monefyLedgerImporter.importFromBytes(data, context.cacheDir)
+            }
+
+        override suspend fun importLedgerSpreadsheet(
+            data: ByteArray,
+            displayName: String?,
+        ): PeriodLedgerSpreadsheetImporter.Result =
+            withContext(ioDispatcher) {
+                ledgerSpreadsheetImporter.importFromBytes(data, displayName)
+            }
+
         override suspend fun importBackup(
             data: ByteArray,
             mode: BackupImportMode,
@@ -88,6 +106,16 @@ class BackupRepositoryImpl
                         )
                     }
                     importMoneyManagerMmbak(data)
+                    return@withContext readLocalSummary()
+                }
+                if (MonefyBackupFormat.isProbablyMonefyBackup(data, displayName)) {
+                    if (mode == BackupImportMode.REPLACE) {
+                        error(
+                            "Monefy import only merges accounts, categories, and transactions. " +
+                                "Choose merge — it will not erase data on this device.",
+                        )
+                    }
+                    importMonefyBackup(data)
                     return@withContext readLocalSummary()
                 }
                 if (!BackupSignedZipCodec.isZipArchive(data)) {

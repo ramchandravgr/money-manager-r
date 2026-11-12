@@ -3,13 +3,14 @@ package com.rrparallelstudio.miapp.feature.home
 import com.rrparallelstudio.miapp.feature.home.model.HomeExcelExportOptionUi
 import com.rrparallelstudio.miapp.feature.home.model.HomeExcelExportPreset
 import com.rrparallelstudio.miapp.feature.home.model.HomeExcelExportRange
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
- * Period export choices (month / last month / year / last year / total).
+ * Period export choices (week / month / year / total / custom).
  */
 object HomeExcelExportPeriods {
     private val shortRangeFormat: DateTimeFormatter =
@@ -18,15 +19,32 @@ object HomeExcelExportPeriods {
     fun buildOptions(
         anchorMonth: YearMonth,
         monthStartDay: Int,
+        weekStart: DayOfWeek = DayOfWeek.MONDAY,
+        anchorDate: LocalDate = LocalDate.now(),
     ): List<HomeExcelExportOptionUi> {
         val day = monthStartDay.coerceIn(1, 28)
         val (thisMonthStart, thisMonthEnd) = HomePeriodUtils.monthDateRange(anchorMonth, day)
         val (lastMonthStart, lastMonthEnd) =
             HomePeriodUtils.monthDateRange(anchorMonth.minusMonths(1), day)
+        val (thisWeekStart, thisWeekEnd) = HomePeriodUtils.weekRangeContaining(anchorDate, weekStart)
+        val (lastWeekStart, lastWeekEnd) =
+            HomePeriodUtils.weekRangeContaining(anchorDate.minusWeeks(1), weekStart)
         val (thisYearStart, thisYearEnd) = calendarYearDateRange(anchorMonth.year, day)
         val (lastYearStart, lastYearEnd) = calendarYearDateRange(anchorMonth.year - 1, day)
 
         return listOf(
+            option(
+                preset = HomeExcelExportPreset.CURRENT_WEEK,
+                title = "Weekly",
+                start = thisWeekStart,
+                end = thisWeekEnd,
+            ),
+            option(
+                preset = HomeExcelExportPreset.LAST_WEEK,
+                title = "Last week",
+                start = lastWeekStart,
+                end = lastWeekEnd,
+            ),
             option(
                 preset = HomeExcelExportPreset.CURRENT_MONTH,
                 title = "Monthly",
@@ -55,6 +73,11 @@ object HomeExcelExportPeriods {
                 preset = HomeExcelExportPreset.ALL,
                 label = "Total",
                 range = HomeExcelExportRange.AllTime,
+            ),
+            HomeExcelExportOptionUi(
+                preset = HomeExcelExportPreset.CUSTOM,
+                label = "Custom Period…",
+                range = HomeExcelExportRange.Bounded(anchorDate, anchorDate),
             ),
         )
     }

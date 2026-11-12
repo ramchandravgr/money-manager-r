@@ -17,6 +17,9 @@ enum class TransactionSourceType {
 
     /** Imported from Realbyte Money Manager `.mmbak` (local folder sync). */
     MONEY_MANAGER,
+
+    /** Imported from a Monefy Android backup file. */
+    MONEYFY,
 }
 
 enum class RecordStatus {

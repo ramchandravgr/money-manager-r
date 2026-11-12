@@ -1,6 +1,7 @@
 package com.rrparallelstudio.miapp.core.data.preferences
 
 import android.content.Context
+import com.rrparallelstudio.miapp.core.drive.GoogleDriveAutoBackupPolicy
 import com.rrparallelstudio.miapp.core.drive.GoogleDriveAutoSchedule
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.text.SimpleDateFormat
@@ -75,30 +76,10 @@ class GoogleDriveBackupPreferencesStore
             if (schedule == GoogleDriveAutoSchedule.OFF || !isLinked()) return false
             if (getLastAutoRequestDay() == todayKey()) return false
             val lastSuccess = getLastSuccessfulBackupMillis()
-            return when (schedule) {
-                GoogleDriveAutoSchedule.DAILY -> !isSameCalendarDay(lastSuccess, System.currentTimeMillis())
-                GoogleDriveAutoSchedule.WEEKLY ->
-                    lastSuccess <= 0L ||
-                        daysBetween(lastSuccess, System.currentTimeMillis()) >= 7
-                GoogleDriveAutoSchedule.OFF -> false
-            }
+            return GoogleDriveAutoBackupPolicy.isBackupDue(schedule, lastSuccess)
         }
 
         private fun todayKey(): String = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
-
-        private fun isSameCalendarDay(
-            firstMillis: Long,
-            secondMillis: Long,
-        ): Boolean {
-            if (firstMillis <= 0L) return false
-            val fmt = SimpleDateFormat("yyyyMMdd", Locale.US)
-            return fmt.format(Date(firstMillis)) == fmt.format(Date(secondMillis))
-        }
-
-        private fun daysBetween(
-            startMillis: Long,
-            endMillis: Long,
-        ): Long = ((endMillis - startMillis) / (24L * 60L * 60L * 1000L)).coerceAtLeast(0L)
 
         private companion object {
             const val PREFS_NAME = "mmr_google_drive_backup"

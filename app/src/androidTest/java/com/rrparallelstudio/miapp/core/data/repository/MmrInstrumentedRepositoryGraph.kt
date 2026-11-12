@@ -10,11 +10,14 @@ import com.rrparallelstudio.miapp.core.data.preferences.AppDisplaySettingsStore
 import com.rrparallelstudio.miapp.core.data.preferences.LanSyncIdentityStore
 import com.rrparallelstudio.miapp.core.data.repository.TransactionAttachmentRepositoryImpl
 import com.rrparallelstudio.miapp.core.database.MmrDatabase
+import com.rrparallelstudio.miapp.core.export.PeriodLedgerSpreadsheetImporter
+import com.rrparallelstudio.miapp.core.lansync.LanSyncAccountBalanceValidator
 import com.rrparallelstudio.miapp.core.lansync.LanSyncTombstoneRecorder
 import com.rrparallelstudio.miapp.core.loan.EmiAutoPostCoordinator
 import com.rrparallelstudio.miapp.core.loan.LoanCategoryResolver
 import com.rrparallelstudio.miapp.core.loan.LoanLedgerCoordinator
 import com.rrparallelstudio.miapp.core.loan.LoanTransactionCoordinator
+import com.rrparallelstudio.miapp.core.monefy.MonefyLedgerImporter
 import com.rrparallelstudio.miapp.core.moneymanager.MoneyManagerMmbakLedgerImporter
 import com.rrparallelstudio.miapp.core.owner.MmrOwnerProfileCoordinator
 import com.rrparallelstudio.miapp.core.parser.account.SmsAccountResolver
@@ -141,6 +144,24 @@ class MmrInstrumentedRepositoryGraph(
             transactionRepository = transactionRepository,
             accountRepository = accountRepository,
             categoryRepository = categoryRepository,
+        )
+
+    val monefyLedgerImporter: MonefyLedgerImporter =
+        MonefyLedgerImporter(
+            transactionDao = database.transactionDao(),
+            transactionRepository = transactionRepository,
+            accountRepository = accountRepository,
+            categoryRepository = categoryRepository,
+            balanceValidator = LanSyncAccountBalanceValidator(database),
+        )
+
+    val periodLedgerSpreadsheetImporter: PeriodLedgerSpreadsheetImporter =
+        PeriodLedgerSpreadsheetImporter(
+            transactionDao = database.transactionDao(),
+            transactionRepository = transactionRepository,
+            accountRepository = accountRepository,
+            categoryRepository = categoryRepository,
+            balanceValidator = LanSyncAccountBalanceValidator(database),
         )
 
     private val loanCategoryResolver =

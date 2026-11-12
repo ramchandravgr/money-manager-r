@@ -82,6 +82,7 @@ class HomeViewModel
         val ledgerScrollToTopNonce: StateFlow<Int> = _ledgerScrollToTopNonce.asStateFlow()
 
         private val _showExcelExportDialog = MutableStateFlow(false)
+        private val _showExcelCustomRangeDialog = MutableStateFlow(false)
         private val _excelExportOptions = MutableStateFlow<List<HomeExcelExportOptionUi>>(emptyList())
         private val _isExcelExporting = MutableStateFlow(false)
 
@@ -500,10 +501,11 @@ class HomeViewModel
                 },
                 combine(
                     _showExcelExportDialog,
+                    _showExcelCustomRangeDialog,
                     _excelExportOptions,
                     _isExcelExporting,
-                ) { showExcel, options, exporting ->
-                    ExcelExportOverlay(showExcel, options, exporting)
+                ) { showExcel, showCustom, options, exporting ->
+                    ExcelExportOverlay(showExcel, showCustom, options, exporting)
                 },
             ) { home, display, selection, excel ->
                 val selectableIds = visibleSelectableTransactionIds(home)
@@ -519,6 +521,7 @@ class HomeViewModel
                     mergeErrorMessage = selection.mergeErrorMessage,
                     showDeleteConfirmDialog = selection.showDeleteConfirmDialog,
                     showExcelExportDialog = excel.showDialog,
+                    showExcelCustomRangeDialog = excel.showCustomRange,
                     excelExportOptions = excel.options,
                     isExcelExporting = excel.isExporting,
                     canMergeSelection = selected.size >= 2,
@@ -560,6 +563,7 @@ class HomeViewModel
 
         private data class ExcelExportOverlay(
             val showDialog: Boolean,
+            val showCustomRange: Boolean,
             val options: List<HomeExcelExportOptionUi>,
             val isExporting: Boolean,
         )
@@ -709,12 +713,27 @@ class HomeViewModel
 
                 HomeUiEvent.OnExportPeriodClick -> openExcelExportDialog()
                 HomeUiEvent.OnDismissExcelExportDialog -> _showExcelExportDialog.value = false
+                HomeUiEvent.OnDismissExcelCustomRangeDialog -> _showExcelCustomRangeDialog.value = false
                 is HomeUiEvent.OnExcelExportPeriodSelected -> {
                     _showExcelExportDialog.value = false
-                    val option = _excelExportOptions.value.find { it.preset == event.preset }
-                    if (option != null) {
-                        exportExcelForRange(option.range)
+                    if (event.preset == HomeExcelExportPreset.CUSTOM) {
+                        _showExcelCustomRangeDialog.value = true
+                    } else {
+                        val option = _excelExportOptions.value.find { it.preset == event.preset }
+                        if (option != null) {
+                            exportExcelForRange(option.range)
+                        }
                     }
+                }
+                is HomeUiEvent.OnExcelCustomRangeConfirmed -> {
+                    _showExcelCustomRangeDialog.value = false
+                    val start = event.start
+                    val end = event.end
+                    val boundedStart = minOf(start, end)
+                    val boundedEnd = maxOf(start, end)
+                    exportExcelForRange(
+                        HomeExcelExportRange.Bounded(boundedStart, boundedEnd),
+                    )
                 }
 
                 HomeUiEvent.OnLedgerTabReselected -> {
@@ -736,6 +755,7 @@ class HomeViewModel
         private fun applyDefaultLedgerHome() {
             clearSelection()
             _showExcelExportDialog.value = false
+            _showExcelCustomRangeDialog.value = false
             val nowMonth = YearMonth.now()
             _viewTab.value = HomeViewTab.DAILY
             _yearMonth.value = nowMonth
@@ -749,6 +769,7 @@ class HomeViewModel
                 HomeExcelExportPeriods.buildOptions(
                     anchorMonth = _yearMonth.value,
                     monthStartDay = display.monthStartDay,
+                    weekStart = HomePeriodUtils.toDayOfWeek(display.weekStartDay),
                 )
             _showExcelExportDialog.value = true
         }
@@ -779,7 +800,7 @@ class HomeViewModel
                         }
                     val appName = appContext.getString(com.rrparallelstudio.miapp.R.string.app_name)
                     val fileName = HomeExcelExportPeriods.buildFileName(appName, range)
-                    val savedFileName =
+                    val export =
                         periodExcelExporter.exportPeriodToDownloads(
                             items = filtered,
                             fileName = fileName,
@@ -787,7 +808,14 @@ class HomeViewModel
                             currencySymbol = display.mainCurrencySymbol,
                             currencyCode = display.mainCurrencyCode,
                         )
-                    _periodExportResult.emit(HomePeriodExportResult(savedFileName = savedFileName))
+                    _periodExportResult.emit(
+                        HomePeriodExportResult(
+                            savedFileName = export.savedFileName,
+                            cacheXlsxFileName = export.cacheXlsxFile.name,
+                            cacheXmlFileName = export.cacheXmlFile.name,
+                            range = range,
+                        ),
+                    )
                 } catch (_: Exception) {
                     _errorMessage.value = "Could not export Excel file. Please try again."
                 } finally {

@@ -101,6 +101,8 @@ class AssetPhotoBackupRestoreInstrumentedTest {
                 attachmentStore = TransactionAttachmentStore(context),
                 assetAttachmentStore = assetAttachmentStore,
                 moneyManagerMmbakLedgerImporter = repoGraph.moneyManagerMmbakLedgerImporter,
+                monefyLedgerImporter = repoGraph.monefyLedgerImporter,
+                ledgerSpreadsheetImporter = repoGraph.periodLedgerSpreadsheetImporter,
                 ioDispatcher = Dispatchers.IO,
             )
         repoGraph.close()

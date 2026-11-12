@@ -59,6 +59,7 @@
     <ID>CyclomaticComplexMethod:BackupImportPlanner.kt$BackupImportPlanner$fun prepareMerge( payload: MmrBackupPayload, existing: ExistingIds, ): MmrBackupPayload</ID>
     <ID>CyclomaticComplexMethod:BackupScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun BackupScreen( onNavigateBack: () -&gt; Unit, onNavigateToGoogleDrive: () -&gt; Unit = {}, viewModel: BackupViewModel = hiltViewModel(), testImportUri: Uri? = null, )</ID>
     <ID>CyclomaticComplexMethod:BackupSignedZipCodec.kt$BackupSignedZipCodec$fun decode(bytes: ByteArray): ParsedArchive</ID>
+    <ID>CyclomaticComplexMethod:BackupViewModel.kt$BackupViewModel$fun onEvent(event: BackupUiEvent)</ID>
     <ID>CyclomaticComplexMethod:BudgetRepositoryImpl.kt$BudgetRepositoryImpl$override suspend fun evaluateAlertsForTransaction( categoryId: Long?, subcategoryId: Long?, transactionMillis: Long, )</ID>
     <ID>CyclomaticComplexMethod:CategoryListScreen.kt$@Composable fun CategoryListScreen( onNavigateBack: () -&gt; Unit, onNavigateToAddCategory: () -&gt; Unit, onNavigateToEditCategory: (Long) -&gt; Unit, viewModel: CategoryViewModel = hiltViewModel(), )</ID>
     <ID>CyclomaticComplexMethod:CategorySubcategoryPickerPanel.kt$@Composable fun CategorySubcategoryPickerPanel( panelState: CategoryPickerPanelState, callbacks: CategoryPickerPanelCallbacks, modifier: Modifier = Modifier, maxPanelHeight: Dp = 300.dp, onPickerFinished: () -&gt; Unit = {}, showDismissAction: Boolean = false, onDismiss: () -&gt; Unit = {}, )</ID>
@@ -87,7 +88,9 @@
     <ID>CyclomaticComplexMethod:MmrPeriodSwipeBox.kt$@Composable fun MmrPeriodSwipeBox( periodKey: Any, enabled: Boolean, onPrevious: () -&gt; Unit, onNext: () -&gt; Unit, modifier: Modifier = Modifier, content: @Composable () -&gt; Unit, )</ID>
     <ID>CyclomaticComplexMethod:MmrReceiptImage.kt$MmrReceiptImage$private fun rotateBitmap( bitmap: Bitmap, orientation: Int, ): Bitmap?</ID>
     <ID>CyclomaticComplexMethod:MmrTopAppBar.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun MmrTopAppBar( title: String, subtitle: String? = null, modifier: Modifier = Modifier, showBackNavigation: Boolean = false, onNavigateBack: (() -&gt; Unit)? = null, /** When set with back navigation, shows a text action (e.g. "Cancel") instead of the back icon. */ navigationLabel: String? = null, /** Indigo header that extends under the status bar (matches Transactions / Home). */ useBrandHeaderStyle: Boolean = false, /** Lighter header title (15sp, normal weight). Default true when [useBrandHeaderStyle]. */ useCompactHeaderTitle: Boolean? = null, /** When false, [title] is shown verbatim (user-entered names, etc.). */ applyStaticLabelCaseToTitle: Boolean = true, actions: @Composable RowScope.() -&gt; Unit = {}, )</ID>
+    <ID>CyclomaticComplexMethod:MonefyLedgerImporter.kt$MonefyLedgerImporter$private suspend fun importUnchecked( data: ByteArray, cacheDir: File, ): Result</ID>
     <ID>CyclomaticComplexMethod:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$fun readCategoryNames(database: SQLiteDatabase): Map&lt;Long, CategoryRef&gt;</ID>
+    <ID>CyclomaticComplexMethod:PeriodXmlLedgerParser.kt$PeriodXmlLedgerParser$fun readRows(data: ByteArray): List&lt;SpreadsheetLedgerRow&gt;</ID>
     <ID>CyclomaticComplexMethod:RecurringListScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun RecurringListScreen( onNavigateBack: () -&gt; Unit, onNavigateToDetail: (Long) -&gt; Unit, onNavigateToAddRule: () -&gt; Unit, showBackNavigation: Boolean = true, embeddedInScheduledHub: Boolean = false, viewModel: RecurringListViewModel = hiltViewModel(), )</ID>
     <ID>CyclomaticComplexMethod:SmsBackupXmlImportCoordinator.kt$SmsBackupXmlImportCoordinator$private fun parseBackupFileUnchecked( fileUri: Uri, sinceTimestamp: Long, watermarkMillis: Long, ): SmsInboxScanSummary</ID>
     <ID>CyclomaticComplexMethod:SmsBackupXmlImportCoordinator.kt$SmsBackupXmlImportCoordinator$suspend fun importLatest(updateUserMessage: Boolean): ImportResult</ID>
@@ -278,6 +281,15 @@
     <ID>Indentation:LoanRepositoryImpl.kt$LoanRepositoryImpl$ </ID>
     <ID>Indentation:LoanTopUpDialog.kt$ </ID>
     <ID>Indentation:LoanTransactionCoordinator.kt$LoanTransactionCoordinator$ </ID>
+    <ID>Indentation:LocalAutoBackupExporter.kt$LocalAutoBackupExporter$ </ID>
+    <ID>Indentation:LocalAutoBackupExporter.kt$LocalAutoBackupExporter.Result$ </ID>
+    <ID>Indentation:LocalAutoBackupPreferencesStore.kt$LocalAutoBackupPreferencesStore$ </ID>
+    <ID>Indentation:LocalAutoBackupPreferencesStore.kt$LocalAutoBackupPreferencesStore.Companion$ </ID>
+    <ID>Indentation:LocalAutoBackupRetention.kt$LocalAutoBackupRetention$ </ID>
+    <ID>Indentation:LocalAutoBackupTrigger.kt$LocalAutoBackupTrigger$ </ID>
+    <ID>Indentation:LocalAutoBackupWorkScheduler.kt$LocalAutoBackupWorkScheduler$ </ID>
+    <ID>Indentation:LocalAutoBackupWorker.kt$LocalAutoBackupWorker$ </ID>
+    <ID>Indentation:LocalBackupDownloadsSaver.kt$LocalBackupDownloadsSaver$ </ID>
     <ID>Indentation:LocalLanServerCoordinator.kt$LocalLanServerCoordinator$ </ID>
     <ID>Indentation:LocalLanServerNotifierImpl.kt$LocalLanServerNotifierImpl$ </ID>
     <ID>Indentation:LocalSmsScannerService.kt$LocalSmsScannerService$ </ID>
@@ -327,6 +339,7 @@
     <ID>Indentation:MmrOwnerProfileCoordinator.kt$MmrOwnerProfileCoordinator$ </ID>
     <ID>Indentation:MmrPendingApprovalsWidget.kt$ </ID>
     <ID>Indentation:MmrPeriodSwipeBox.kt$ </ID>
+    <ID>Indentation:MmrProcessingOverlay.kt$ </ID>
     <ID>Indentation:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$ </ID>
     <ID>Indentation:MmrRemoteConfigDailyFetchStore.kt$MmrRemoteConfigDailyFetchStore$ </ID>
     <ID>Indentation:MmrRemoteConfigDailyFetchStore.kt$MmrRemoteConfigDailyFetchStore.Companion$ </ID>
@@ -348,6 +361,10 @@
     <ID>Indentation:MmrWidgetScanStateStore.kt$MmrWidgetScanStateStore$ </ID>
     <ID>Indentation:MmrWidgetSnapshotLoader.kt$MmrWidgetSnapshotLoader$ </ID>
     <ID>Indentation:MmrWindowInsets.kt$ </ID>
+    <ID>Indentation:MonefyLedgerImporter.kt$MonefyLedgerImporter$ </ID>
+    <ID>Indentation:MonefyLedgerImporter.kt$MonefyLedgerImporter.AccountCache$ </ID>
+    <ID>Indentation:MonefyLedgerImporter.kt$MonefyLedgerImporter.CategoryCache$ </ID>
+    <ID>Indentation:MonefyLedgerImporter.kt$MonefyLedgerImporter.Result$ </ID>
     <ID>Indentation:MoneyManagerMmbakLedgerImporter.kt$MoneyManagerMmbakLedgerImporter$ </ID>
     <ID>Indentation:MoneyManagerMmbakLedgerImporter.kt$MoneyManagerMmbakLedgerImporter.AccountNameResolver$ </ID>
     <ID>Indentation:MoneyManagerMmbakLedgerImporter.kt$MoneyManagerMmbakLedgerImporter.CategoryNameResolver$ </ID>
@@ -359,6 +376,10 @@
     <ID>Indentation:PeriodExcelDownloadsSaver.kt$PeriodExcelDownloadsSaver$ </ID>
     <ID>Indentation:PeriodExcelExporter.kt$PeriodExcelExporter$ </ID>
     <ID>Indentation:PeriodExcelWriterTest.kt$PeriodExcelWriterTest$ </ID>
+    <ID>Indentation:PeriodLedgerSpreadsheetImporter.kt$PeriodLedgerSpreadsheetImporter$ </ID>
+    <ID>Indentation:PeriodLedgerSpreadsheetImporter.kt$PeriodLedgerSpreadsheetImporter.AccountCache$ </ID>
+    <ID>Indentation:PeriodLedgerSpreadsheetImporter.kt$PeriodLedgerSpreadsheetImporter.CategoryCache$ </ID>
+    <ID>Indentation:PeriodLedgerSpreadsheetImporter.kt$PeriodLedgerSpreadsheetImporter.Result$ </ID>
     <ID>Indentation:ProcessIncomingSmsWorker.kt$ProcessIncomingSmsWorker$ </ID>
     <ID>Indentation:ProcessIncomingSmsWorker.kt$ProcessIncomingSmsWorker.Companion$ </ID>
     <ID>Indentation:RecurringAutoPostCoordinator.kt$RecurringAutoPostCoordinator$ </ID>
@@ -525,7 +546,7 @@
     <ID>LongMethod:AssetListScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun AssetListScreen( onNavigateToAssetDetail: (Long) -&gt; Unit, onNavigateToAddAsset: () -&gt; Unit, showBackNavigation: Boolean = false, onNavigateBack: () -&gt; Unit = {}, viewModel: AssetListViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:BackupImportPlanner.kt$BackupImportPlanner$fun prepareMerge( payload: MmrBackupPayload, existing: ExistingIds, ): MmrBackupPayload</ID>
     <ID>LongMethod:BackupRepositoryImpl.kt$BackupRepositoryImpl$private suspend fun importPayload( rawPayload: MmrBackupPayload, mode: BackupImportMode, attachmentBytesBySyncId: Map&lt;String, ByteArray&gt;?, ): BackupRestoreSummary</ID>
-    <ID>LongMethod:BackupScreen.kt$@Composable private fun BackupContent( summary: BackupRestoreSummary?, isEmpty: Boolean, isBusy: Boolean, statusMessage: String?, errorMessage: String?, onDismissMessage: () -&gt; Unit, onExport: () -&gt; Unit, onImport: () -&gt; Unit, onNavigateToGoogleDrive: () -&gt; Unit, )</ID>
+    <ID>LongMethod:BackupScreen.kt$@Composable private fun BackupContent( summary: BackupRestoreSummary?, isEmpty: Boolean, isBusy: Boolean, statusMessage: String?, errorMessage: String?, onDismissMessage: () -&gt; Unit, onExport: () -&gt; Unit, onImport: () -&gt; Unit, onNavigateToGoogleDrive: () -&gt; Unit, onExportSpreadsheetTemplate: () -&gt; Unit, onImportSpreadsheet: () -&gt; Unit, localAutoSchedule: GoogleDriveAutoSchedule, lastLocalBackupLabel: String?, onSetLocalAutoSchedule: (GoogleDriveAutoSchedule) -&gt; Unit, onLocalBackupNow: () -&gt; Unit, )</ID>
     <ID>LongMethod:BackupScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun BackupScreen( onNavigateBack: () -&gt; Unit, onNavigateToGoogleDrive: () -&gt; Unit = {}, viewModel: BackupViewModel = hiltViewModel(), testImportUri: Uri? = null, )</ID>
     <ID>LongMethod:BackupSignedZipCodec.kt$BackupSignedZipCodec$fun decode(bytes: ByteArray): ParsedArchive</ID>
     <ID>LongMethod:CategoryListScreen.kt$@Composable fun CategoryListScreen( onNavigateBack: () -&gt; Unit, onNavigateToAddCategory: () -&gt; Unit, onNavigateToEditCategory: (Long) -&gt; Unit, viewModel: CategoryViewModel = hiltViewModel(), )</ID>
@@ -566,6 +587,7 @@
     <ID>LongMethod:MmrPendingApprovalsWidget.kt$@Composable private fun ApprovalTriageContent( context: Context, data: MmrApprovalTriageWidgetData, canScanSms: Boolean, )</ID>
     <ID>LongMethod:MmrPeriodSwipeBox.kt$@Composable fun MmrPeriodSwipeBox( periodKey: Any, enabled: Boolean, onPrevious: () -&gt; Unit, onNext: () -&gt; Unit, modifier: Modifier = Modifier, content: @Composable () -&gt; Unit, )</ID>
     <ID>LongMethod:MmrTopAppBar.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun MmrTopAppBar( title: String, subtitle: String? = null, modifier: Modifier = Modifier, showBackNavigation: Boolean = false, onNavigateBack: (() -&gt; Unit)? = null, /** When set with back navigation, shows a text action (e.g. "Cancel") instead of the back icon. */ navigationLabel: String? = null, /** Indigo header that extends under the status bar (matches Transactions / Home). */ useBrandHeaderStyle: Boolean = false, /** Lighter header title (15sp, normal weight). Default true when [useBrandHeaderStyle]. */ useCompactHeaderTitle: Boolean? = null, /** When false, [title] is shown verbatim (user-entered names, etc.). */ applyStaticLabelCaseToTitle: Boolean = true, actions: @Composable RowScope.() -&gt; Unit = {}, )</ID>
+    <ID>LongMethod:MonefyLedgerImporter.kt$MonefyLedgerImporter$private suspend fun importUnchecked( data: ByteArray, cacheDir: File, ): Result</ID>
     <ID>LongMethod:RecurringDetailScreen.kt$@Composable fun RecurringDetailScreen( onNavigateBack: () -&gt; Unit, onNavigateToEdit: (Long) -&gt; Unit, viewModel: RecurringDetailViewModel = hiltViewModel(), )</ID>
     <ID>LongMethod:RecurringListScreen.kt$@Composable private fun RecurringRuleCard( rule: RecurringRuleItemUi, onClick: () -&gt; Unit, onToggleEnabled: (Boolean) -&gt; Unit, )</ID>
     <ID>LongMethod:RecurringListScreen.kt$@OptIn(ExperimentalMaterial3Api::class) @Composable fun RecurringListScreen( onNavigateBack: () -&gt; Unit, onNavigateToDetail: (Long) -&gt; Unit, onNavigateToAddRule: () -&gt; Unit, showBackNavigation: Boolean = true, embeddedInScheduledHub: Boolean = false, viewModel: RecurringListViewModel = hiltViewModel(), )</ID>
@@ -592,8 +614,9 @@
     <ID>LongParameterList:ApprovalCenterScreen.kt$( candidate: ApprovalCandidateUi, isSelectionMode: Boolean = false, isSelected: Boolean = false, onLongPress: () -&gt; Unit = {}, onToggleSelect: () -&gt; Unit = {}, onViewSms: () -&gt; Unit, onEdit: () -&gt; Unit, onLink: () -&gt; Unit = {}, onApprove: () -&gt; Unit, onReject: () -&gt; Unit, )</ID>
     <ID>LongParameterList:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$( private val transactionApprovalDao: TransactionApprovalDao, private val approvalLedgerDao: ApprovalLedgerDao, private val accountDao: AccountDao, private val categoryDao: CategoryDao, private val transactionDao: TransactionDao, private val smsAccountResolver: SmsAccountResolver, private val smsAccountOverrideStore: SmsAccountOverrideStore, private val smsParserEngine: SmsParserEngine, private val loanTransactionCoordinator: LoanTransactionCoordinator, private val categorizationRuleEngine: CategorizationRuleEngine, private val widgetRefreshTrigger: HomeScreenWidgetRefreshTrigger, private val ownerProfileCoordinator: MmrOwnerProfileCoordinator, )</ID>
     <ID>LongParameterList:BackupDao.kt$BackupDao$( categories: List&lt;CategoryEntity&gt;, subcategories: List&lt;SubcategoryEntity&gt;, accounts: List&lt;AccountEntity&gt;, loans: List&lt;LoanEntity&gt;, loanInterestRevisions: List&lt;LoanInterestRevisionEntity&gt;, loanScheduleEntries: List&lt;LoanScheduleEntryEntity&gt;, transactions: List&lt;TransactionEntity&gt;, loanPayments: List&lt;LoanPaymentEntity&gt;, recurringRules: List&lt;RecurringRuleEntity&gt;, budgets: List&lt;BudgetEntity&gt; = emptyList(), assets: List&lt;AssetEntity&gt; = emptyList(), assetValuations: List&lt;AssetValuationEntity&gt; = emptyList(), notificationRules: List&lt;NotificationRuleEntity&gt;, smsMessageRecords: List&lt;SmsMessageRecordEntity&gt;, transactionApprovals: List&lt;TransactionApprovalEntity&gt;, categorizationRules: List&lt;CategorizationRuleEntity&gt; = emptyList(), trustedLanDevices: List&lt;TrustedLanDeviceEntity&gt; = emptyList(), transactionAttachments: List&lt;TransactionAttachmentEntity&gt; = emptyList(), assetAttachments: List&lt;AssetAttachmentEntity&gt; = emptyList(), smsAccountOverrides: List&lt;SmsAccountOverrideEntity&gt; = emptyList(), )</ID>
-    <ID>LongParameterList:BackupRepositoryImpl.kt$BackupRepositoryImpl$( @ApplicationContext private val context: Context, private val backupDao: BackupDao, private val lanSyncDao: LanSyncDao, private val syncTombstoneDao: SyncTombstoneDao, private val tombstoneMerger: LanSyncTombstoneMerger, private val appSettingsBackupCoordinator: AppSettingsBackupCoordinator, private val attachmentStore: TransactionAttachmentStore, private val assetAttachmentStore: AssetAttachmentStore, private val moneyManagerMmbakLedgerImporter: MoneyManagerMmbakLedgerImporter, @IoDispatcher private val ioDispatcher: CoroutineDispatcher, )</ID>
-    <ID>LongParameterList:BackupScreen.kt$( summary: BackupRestoreSummary?, isEmpty: Boolean, isBusy: Boolean, statusMessage: String?, errorMessage: String?, onDismissMessage: () -&gt; Unit, onExport: () -&gt; Unit, onImport: () -&gt; Unit, onNavigateToGoogleDrive: () -&gt; Unit, )</ID>
+    <ID>LongParameterList:BackupRepositoryImpl.kt$BackupRepositoryImpl$( @ApplicationContext private val context: Context, private val backupDao: BackupDao, private val lanSyncDao: LanSyncDao, private val syncTombstoneDao: SyncTombstoneDao, private val tombstoneMerger: LanSyncTombstoneMerger, private val appSettingsBackupCoordinator: AppSettingsBackupCoordinator, private val attachmentStore: TransactionAttachmentStore, private val assetAttachmentStore: AssetAttachmentStore, private val moneyManagerMmbakLedgerImporter: MoneyManagerMmbakLedgerImporter, private val monefyLedgerImporter: MonefyLedgerImporter, private val ledgerSpreadsheetImporter: PeriodLedgerSpreadsheetImporter, @IoDispatcher private val ioDispatcher: CoroutineDispatcher, )</ID>
+    <ID>LongParameterList:BackupScreen.kt$( summary: BackupRestoreSummary?, isEmpty: Boolean, isBusy: Boolean, statusMessage: String?, errorMessage: String?, onDismissMessage: () -&gt; Unit, onExport: () -&gt; Unit, onImport: () -&gt; Unit, onNavigateToGoogleDrive: () -&gt; Unit, onExportSpreadsheetTemplate: () -&gt; Unit, onImportSpreadsheet: () -&gt; Unit, localAutoSchedule: GoogleDriveAutoSchedule, lastLocalBackupLabel: String?, onSetLocalAutoSchedule: (GoogleDriveAutoSchedule) -&gt; Unit, onLocalBackupNow: () -&gt; Unit, )</ID>
+    <ID>LongParameterList:BackupViewModel.kt$BackupViewModel$( statusMessage: String? = null, errorMessage: String? = null, summary: com.rrparallelstudio.miapp.core.backup.model.BackupRestoreSummary? = null, isEmpty: Boolean? = null, pendingImportLabel: String? = _uiState.value.pendingImportLabel, pendingImportIsMoneyManager: Boolean = _uiState.value.pendingImportIsMoneyManager, pendingImportIsMonefy: Boolean = _uiState.value.pendingImportIsMonefy, pendingSpreadsheetLabel: String? = _uiState.value.pendingSpreadsheetLabel, lastLocalBackupLabel: String? = _uiState.value.lastLocalBackupLabel, )</ID>
     <ID>LongParameterList:ConfigurationScreen.kt$( picker: ConfigPicker, settings: AppDisplaySettingsSnapshot, previewAppearance: MmrThemeAppearance, sheetState: SheetState, onDismiss: () -&gt; Unit, onSelectStartScreen: (MmrStartScreenTab) -&gt; Unit, onSelectMonthDay: (Int) -&gt; Unit, onSelectWeekDay: (MmrWeekStartDay) -&gt; Unit, onSelectColors: (MmrAmountColorScheme) -&gt; Unit, onSelectTime: (MmrTimeDisplay) -&gt; Unit, onSelectAppTheme: (MmrAppColorTheme) -&gt; Unit, onSelectThemeMode: (MmrThemeMode) -&gt; Unit, )</ID>
     <ID>LongParameterList:HomeCalendarComponents.kt$( cells: List&lt;CalendarDayUi&gt;, weekStart: DayOfWeek, selectedDate: LocalDate?, selectedDayGroup: TransactionGroupUi?, onDateSelected: (LocalDate) -&gt; Unit, onPreviousDay: () -&gt; Unit, onNextDay: () -&gt; Unit, onAddForDay: () -&gt; Unit, onTransactionClick: (Long) -&gt; Unit, modifier: Modifier = Modifier, )</ID>
     <ID>LongParameterList:HomeTotalTabContent.kt$( summary: HomeTotalAccountsSummaryUi, groups: List&lt;TransactionGroupUi&gt;, selectionMode: Boolean, selectedIds: Set&lt;Long&gt;, onItemClick: (Long) -&gt; Unit, onItemLongClick: (Long) -&gt; Unit, onExportClick: () -&gt; Unit, modifier: Modifier = Modifier, listState: LazyListState = rememberLazyListState(), )</ID>
@@ -624,7 +647,7 @@
     <ID>LongParameterList:MmrIosSettingsForm.kt$( label: String, value: String, onValueChange: (String) -&gt; Unit, modifier: Modifier, placeholder: String, enabled: Boolean, showDividerBelow: Boolean, singleLine: Boolean, keyboardOptions: KeyboardOptions, password: Boolean, testTag: String?, )</ID>
     <ID>LongParameterList:MmrIosSettingsForm.kt$( label: String, value: String, onValueChange: (String) -&gt; Unit, showDividerBelow: Boolean = true, singleLine: Boolean = true, keyboardOptions: KeyboardOptions = KeyboardOptions.Default, enabled: Boolean = true, password: Boolean = false, supportingText: String? = null, testTag: String? = null, )</ID>
     <ID>LongParameterList:MmrIosSettingsForm.kt$( value: String, onValueChange: (String) -&gt; Unit, label: String, modifier: Modifier = Modifier, singleLine: Boolean = true, keyboardOptions: KeyboardOptions = KeyboardOptions.Default, enabled: Boolean = true, password: Boolean = false, visualTransformation: VisualTransformation? = null, supportingText: String? = null, testTag: String? = null, )</ID>
-    <ID>LongParameterList:MmrIosSettingsPickers.kt$( title: String, fileLabel: String, selectedMode: BackupImportMode, onSelectMode: (BackupImportMode) -&gt; Unit, onDismiss: () -&gt; Unit, onConfirm: () -&gt; Unit, sheetState: SheetState, confirmLabel: String, confirmTestTag: String? = null, replaceModeTestTag: String? = null, mergeModeTestTag: String? = null, showReplaceOption: Boolean = true, mergeHelper: String? = null, )</ID>
+    <ID>LongParameterList:MmrIosSettingsPickers.kt$( title: String, fileLabel: String, selectedMode: BackupImportMode, onSelectMode: (BackupImportMode) -&gt; Unit, onDismiss: () -&gt; Unit, onConfirm: () -&gt; Unit, sheetState: SheetState, confirmLabel: String, confirmTestTag: String? = null, replaceModeTestTag: String? = null, mergeModeTestTag: String? = null, showReplaceOption: Boolean = true, mergeHelper: String? = null, mergeChoiceLabel: String? = null, )</ID>
     <ID>LongParameterList:MmrIosSettingsPickers.kt$( title: String, onDismiss: () -&gt; Unit, sheetState: SheetState, modifier: Modifier = Modifier, message: String? = null, confirmLabel: String? = null, onConfirm: (() -&gt; Unit)? = null, confirmEnabled: Boolean = true, confirmTestTag: String? = null, content: @Composable ColumnScope.() -&gt; Unit, )</ID>
     <ID>LongParameterList:MmrIosSettingsPickers.kt$( title: String, onDismiss: () -&gt; Unit, sheetState: SheetState, options: List&lt;T&gt;, selectedOption: T, onOptionSelected: (T) -&gt; Unit, optionLabel: (T) -&gt; String, message: String? = null, optionEquals: (T, T) -&gt; Boolean = { a, b -&gt; a == b }, )</ID>
     <ID>LongParameterList:MmrLedgerPickerSheetShell.kt$( title: String, onDismiss: () -&gt; Unit, modifier: Modifier = Modifier, subtitle: String? = null, dismissLabel: String = "Done", secondaryActionLabel: String? = null, onSecondaryAction: (() -&gt; Unit)? = null, searchQuery: String? = null, onSearchQueryChange: ((String) -&gt; Unit)? = null, searchPlaceholder: String = "Search", chipRow: @Composable (() -&gt; Unit)? = null, content: @Composable ColumnScope.() -&gt; Unit, )</ID>
@@ -658,8 +681,11 @@
     <ID>LoopWithTooManyJumpStatements:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$for</ID>
     <ID>LoopWithTooManyJumpStatements:MezoLedgerParserComparisonTest.kt$MezoLedgerParserComparisonTest$for</ID>
     <ID>LoopWithTooManyJumpStatements:MmrPeriodSwipeBox.kt$while</ID>
+    <ID>LoopWithTooManyJumpStatements:MonefyLedgerImporter.kt$MonefyLedgerImporter$for</ID>
     <ID>LoopWithTooManyJumpStatements:MoneyManagerMmbakLedgerImporter.kt$MoneyManagerMmbakLedgerImporter$for</ID>
     <ID>LoopWithTooManyJumpStatements:MoneyManagerMmbakZip.kt$MoneyManagerMmbakZip$while</ID>
+    <ID>LoopWithTooManyJumpStatements:PeriodLedgerSpreadsheetImporter.kt$PeriodLedgerSpreadsheetImporter$for</ID>
+    <ID>LoopWithTooManyJumpStatements:PeriodXmlLedgerParser.kt$PeriodXmlLedgerParser$while</ID>
     <ID>LoopWithTooManyJumpStatements:RecurringAutoPostCoordinator.kt$RecurringAutoPostCoordinator$while</ID>
     <ID>LoopWithTooManyJumpStatements:RepositoryImpls.kt$TransactionRepositoryImpl$for</ID>
     <ID>LoopWithTooManyJumpStatements:SmsTemplateMatcher.kt$SmsTemplateMatcher$for</ID>
@@ -685,12 +711,18 @@
     <ID>MaxLineLength:ApprovalLinkTransactionDialog.kt$text = "Search applies to ${prompt.monthTitle} only. Change month above to search another period."</ID>
     <ID>MaxLineLength:ApprovalRepository.kt$ApprovalRepository$/** When true, may create credit-card/wallet accounts from SMS metadata (Approval Center direct approve only). */</ID>
     <ID>MaxLineLength:AssetEntities.kt$AssetEntity$/** Days before [nextValuationDueMillis] to fire [com.rrparallelstudio.miapp.core.model.enums.NotificationRuleType.ASSET_VALUATION_REMINDER]. */</ID>
+    <ID>MaxLineLength:BackupScreen.kt$"expense, and transfers merge into your ledger. Importing the same file again skips rows already added."</ID>
     <ID>MaxLineLength:BudgetEntity.kt$BudgetEntity$/** Dedupes alert per resolved period (see [com.rrparallelstudio.miapp.core.budget.BudgetPeriodResolver.periodKey]). */</ID>
     <ID>MaxLineLength:CategoryPickerPanelContracts.kt$com.rrparallelstudio.miapp.feature.recurring.model.AddEditRecurringRuleUiEvent.OnPickerConfirmParentOnly</ID>
     <ID>MaxLineLength:CategoryPickerPanelContracts.kt$com.rrparallelstudio.miapp.feature.transaction.model.AddEditTransactionUiEvent.OnPickerConfirmParentOnly</ID>
+    <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"An ongoing notification may show while sync stays on; themes stay separate on each phone."</ID>
+    <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"Backup &amp; Restore — export or import a signed .mibxbac file, schedule automatic backups to Downloads, or merge a Money Manager or Monefy backup."</ID>
     <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"If you change the account, later SMS with the same pattern use that account (included in backup and Peer Device Sync)."</ID>
-    <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"Peer Device Sync — merge on the same Wi‑Fi or your hotspot. Auto sync when you open the app, or tap Sync now. Theme stays on each phone."</ID>
+    <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"Ledger spreadsheet — export periods from Home as Excel or XML; import via template on Backup &amp; Restore."</ID>
+    <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"On a hotspot, pick On this network or enter the other phone's address on Sync now if discovery fails."</ID>
+    <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"Pairing — the host shows a code; the other phone enters it and you tap Approve on the host. "</ID>
     <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"Refresh — import new bank SMS from your backup folder (set under Settings → Transaction scan)."</ID>
+    <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"Settings → Peer Device Sync — turn on to merge with another phone on the same Wi‑Fi or phone hotspot. "</ID>
     <ID>MaxLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$"Tap the center menu for Daily, Weekly, Monthly, or Summary. Tap Ledger again while already on Transactions to jump back to Daily and this month."</ID>
     <ID>MaxLineLength:HomePeriodUtils.kt$MmrLedgerYearBounds$/** Month/year wheel in [com.rrparallelstudio.miapp.feature.home.ui.HomeMonthPickerDialog] (Home, Trends, category detail). */</ID>
     <ID>MaxLineLength:LanSyncScreen.kt$"This replaces everything on this phone with that phone's data. Sync now merges both phones instead."</ID>
@@ -712,17 +744,23 @@
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Accounts created from SMS quick approve show Auto Created in Settings → Accounts, account edit, and account pickers; after you edit them, Auto Created - Modified."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Ad placement scaffolding (Daily banner/MREC, Stats native): debug-only labeled placeholders; release shows no slot until AdMob loads."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"AdMob (banner, MREC, native) with placement rules; Firebase Remote Config ads_enabled (default off) and Crashlytics when google-services.json is present."</ID>
+    <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Automatic local backup: daily, weekly, or monthly .mibxbac files in Downloads (six kept); same schedule options as Google Drive."</ID>
+    <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Backup &amp; Restore: download a ledger import template and merge spreadsheet imports (.xlsx / .xml)."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Backup (format v5): SMS account corrections are included in export and restore; v4 backup files still import (without override rows)."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Backups and signed archives from older app IDs will not import (no backward compatibility for this change)."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Balance carry-over is on by default; the month's opening day shows a read-only Carry-over ledger row."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"First launch shows a short Introduction (Home views, summary icons, approvals, backup). Settings → Replay introduction."</ID>
+    <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Google Drive backup: monthly schedule plus background WorkManager uploads when Drive is linked (daily / weekly / monthly)."</ID>
+    <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Home Excel export: weekly and custom period ranges; saved file dialog can share .xlsx or .xml by email."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Home ledger view modes use a centered dropdown (Daily, Weekly, Monthly, Summary) instead of four tabs."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Home period summary uses icon labels (↓ income, ↑ expense, calendar carry-over, Σ total); carry-over column and list row appear only when non-zero."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"If you correct the account on an SMS approval or later edit, the next similar SMS uses that account instead of creating the same credit card again."</ID>
+    <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Import a Monefy backup from Backup &amp; Restore: accounts, categories, income, expense, and transfers merge in; importing the same file again skips rows already added."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Introduction tour: solid readable panels, real summary/nav icons, more screens (tabs, settings, backup). Settings → Replay introduction."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Month/year picker uses shared MmrLedgerYearBounds (50 years back, 5 years ahead of current year)."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Peer Device Sync (LAN format v7): SMS account corrections (template or instrument + last 4 → account) sync between trusted phones; update both devices before pairing."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Peer Device Sync calls the other phone over the Wi‑Fi network, so pairing works when Web Manage already can."</ID>
+    <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Peer Device Sync can stay on in the background for family sync. Android 14+ uses a special-use foreground service (ongoing notification) instead of the 6-hour dataSync limit."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Peer Device Sync keeps the connection open long enough to read the other phone's pairing reply."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Peer Device Sync merges categories that share a name and type, so Sync now no longer stops with HTTP 400."</ID>
     <ID>MaxLineLength:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$"Peer Device Sync sends this phone's trust token, so Sync now is accepted after the other phone approves pairing."</ID>
@@ -785,6 +823,7 @@
     <ID>MaximumLineLength:AddEditTransactionModels.kt$AccountUi$ </ID>
     <ID>MaximumLineLength:AmountAndBalanceRules.kt$BalanceRule$ </ID>
     <ID>MaximumLineLength:ApprovalLinkTransactionDialog.kt$ </ID>
+    <ID>MaximumLineLength:BackupScreen.kt$ </ID>
     <ID>MaximumLineLength:CategoryPickerPanelContracts.kt$ </ID>
     <ID>MaximumLineLength:FtueWelcomeCatalog.kt$FtueWelcomeCatalog$ </ID>
     <ID>MaximumLineLength:LanSyncScreen.kt$ </ID>
@@ -888,6 +927,7 @@
     <ID>NestedBlockDepth:LanSyncNetworkUtils.kt$LanSyncNetworkUtils$private fun wlanInterfaceIpv4Candidates(): List&lt;String&gt;</ID>
     <ID>NestedBlockDepth:MmrReceiptImage.kt$MmrReceiptImage$private fun encodeBitmapToJpegUnderMax( initial: Bitmap, maxBytes: Int, ): ByteArray</ID>
     <ID>NestedBlockDepth:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$fun readCategoryNames(database: SQLiteDatabase): Map&lt;Long, CategoryRef&gt;</ID>
+    <ID>NestedBlockDepth:PeriodExcelSheetReader.kt$PeriodExcelSheetReader$fun readRows( data: ByteArray, zoneId: ZoneId, ): List&lt;SpreadsheetLedgerRow&gt;</ID>
     <ID>NestedBlockDepth:SmsBackupXmlImportCoordinator.kt$SmsBackupXmlImportCoordinator$private fun parseBackupFileUnchecked( fileUri: Uri, sinceTimestamp: Long, watermarkMillis: Long, ): SmsInboxScanSummary</ID>
     <ID>NoUnusedImports:AssetAttachmentStore.kt$com.rrparallelstudio.miapp.core.attachment.AssetAttachmentStore.kt</ID>
     <ID>NoUnusedImports:EmiAutoPostCoordinator.kt$com.rrparallelstudio.miapp.core.loan.EmiAutoPostCoordinator.kt</ID>
@@ -1079,6 +1119,8 @@
     <ID>ReturnCount:LoanSchedulePlanner.kt$LoanSchedulePlanner$fun applyPartPaymentAdjustment( loan: LoanEntity, adjustment: LoanPartPaymentAdjustment?, ): LoanEntity</ID>
     <ID>ReturnCount:LoanSchedulePlanner.kt$LoanSchedulePlanner$fun applyTopUpAdjustment( loan: LoanEntity, adjustment: LoanTopUpAdjustment, ): LoanEntity</ID>
     <ID>ReturnCount:LoanSchedulePlanner.kt$LoanSchedulePlanner$suspend fun regenerateFixedEmiSchedule( loan: LoanEntity, loanScheduleDao: LoanScheduleDao, scheduleAnchorMillis: Long = System.currentTimeMillis(), firstPeriodPrincipalStep: PrincipalStepAccrual? = null, )</ID>
+    <ID>ReturnCount:LocalAutoBackupExporter.kt$LocalAutoBackupExporter$suspend fun exportScheduledBackup(): Result?</ID>
+    <ID>ReturnCount:LocalAutoBackupPreferencesStore.kt$LocalAutoBackupPreferencesStore$fun shouldEnqueueAutoBackupToday(): Boolean</ID>
     <ID>ReturnCount:MezoLedgerParserComparisonTest.kt$MezoLedgerParserComparisonTest$private fun loadLedgerRows(): List&lt;Map&lt;String, String&gt;&gt;</ID>
     <ID>ReturnCount:MmrAdPlacementPolicy.kt$MmrAdPlacementPolicy$fun homeDailyBanner(context: HomeAdPlacementContext): MmrAdPlacement?</ID>
     <ID>ReturnCount:MmrAdPlacementPolicy.kt$MmrAdPlacementPolicy$fun homeDailyMrec(context: HomeAdPlacementContext): MmrAdPlacement?</ID>
@@ -1102,6 +1144,9 @@
     <ID>ReturnCount:MmrReceiptImage.kt$MmrReceiptImage$private fun encodeBitmapToJpegUnderMax( initial: Bitmap, maxBytes: Int, ): ByteArray</ID>
     <ID>ReturnCount:MmrReleaseNotesCatalog.kt$MmrReleaseNotesCatalog$private fun parseSemver(version: String): SemverTriple?</ID>
     <ID>ReturnCount:MmrWidgetActionExecutor.kt$MmrWidgetActionExecutor$suspend fun approve(approvalId: Long)</ID>
+    <ID>ReturnCount:MonefyBackupFormat.kt$MonefyBackupFormat$fun isProbablyMonefyBackup( bytes: ByteArray, displayName: String?, ): Boolean</ID>
+    <ID>ReturnCount:MonefyLedgerImporter.kt$MonefyLedgerImporter.AccountCache$suspend fun resolve(account: MonefyBackupReader.AccountRow): Boolean</ID>
+    <ID>ReturnCount:MonefyLedgerImporter.kt$MonefyLedgerImporter.CategoryCache$suspend fun ensure(category: MonefyBackupReader.CategoryRow): Boolean</ID>
     <ID>ReturnCount:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$fun openFromStream( input: InputStream, cacheDir: File, ): OpenedDatabase?</ID>
     <ID>ReturnCount:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$fun readAssetNames(database: SQLiteDatabase): Map&lt;String, String&gt;</ID>
     <ID>ReturnCount:MoneyManagerMmbakDatabaseOpener.kt$MoneyManagerMmbakDatabaseOpener$fun readCategoryNames(database: SQLiteDatabase): Map&lt;Long, CategoryRef&gt;</ID>
@@ -1114,8 +1159,14 @@
     <ID>ReturnCount:MoneyManagerMmbakLedgerImporter.kt$MoneyManagerMmbakLedgerImporter.CategoryNameResolver$suspend fun resolveSubcategory( parentCategoryId: Long?, name: String, ): Long?</ID>
     <ID>ReturnCount:MoneyManagerMmbakTransactionReader.kt$MoneyManagerMmbakTransactionReader$fun readTransactions(database: SQLiteDatabase): List&lt;MoneyManagerMmbakDatabaseOpener.MoneyManagerTransactionRow&gt;</ID>
     <ID>ReturnCount:MoneyManagerMmbakTransferPlanner.kt$MoneyManagerMmbakTransferPlanner$private fun planTransferGroup( legs: List&lt;MoneyManagerMmbakDatabaseOpener.MoneyManagerTransactionRow&gt;, ): PlannedTransfer?</ID>
+    <ID>ReturnCount:PeriodExcelSheetReader.kt$PeriodExcelSheetReader$private fun parseDateRow( row: Row, zoneId: ZoneId, ): Long?</ID>
+    <ID>ReturnCount:PeriodExcelSheetReader.kt$PeriodExcelSheetReader$private fun parseFixedRow( row: Row, zoneId: ZoneId, ): SpreadsheetLedgerRow?</ID>
     <ID>ReturnCount:PeriodExcelWriter.kt$PeriodExcelWriter$private fun noteWithTransferSuffix(item: TransactionWithDetails): String</ID>
     <ID>ReturnCount:PeriodExcelWriter.kt$PeriodExcelWriter$private fun paymentLabel( instrument: String?, channel: String?, ): String</ID>
+    <ID>ReturnCount:PeriodLedgerSpreadsheetImporter.kt$PeriodLedgerSpreadsheetImporter.AccountCache$suspend fun resolve(name: String): Long?</ID>
+    <ID>ReturnCount:PeriodLedgerSpreadsheetImporter.kt$PeriodLedgerSpreadsheetImporter.CategoryCache$suspend fun ensure( name: String, txnType: TransactionType, ): Boolean</ID>
+    <ID>ReturnCount:PeriodLedgerSpreadsheetImporter.kt$PeriodLedgerSpreadsheetImporter.CategoryCache$suspend fun idFor( name: String, txnType: TransactionType, ): Long?</ID>
+    <ID>ReturnCount:PeriodXmlWriter.kt$PeriodXmlWriter$private fun paymentLabel( instrument: String?, channel: String?, ): String</ID>
     <ID>ReturnCount:ProcessIncomingSmsWorker.kt$ProcessIncomingSmsWorker$override suspend fun doWork(): Result</ID>
     <ID>ReturnCount:RecurringAutoPostCoordinator.kt$RecurringAutoPostCoordinator$private suspend fun resolveTransferTargets(rule: RecurringRuleEntity): Pair&lt;Long?, Long?&gt;</ID>
     <ID>ReturnCount:RepositoryImpls.kt$CategoryRepositoryImpl$override suspend fun resolveCategoryWithChildren(categoryId: Long): CategoryWithChildren?</ID>
@@ -1165,6 +1216,7 @@
     <ID>ReturnCount:WebManageRequestHandler.kt$WebManageRequestHandler$private suspend fun updateTransaction( path: String, body: String, ): HttpLanResponse</ID>
     <ID>ReturnCount:WebManageSessionManager.kt$WebManageSessionManager$fun isValid( token: String?, clientAddress: String?, ): Boolean</ID>
     <ID>SwallowedException:GoogleDriveBackupWorker.kt$GoogleDriveBackupWorker$e: Exception</ID>
+    <ID>SwallowedException:LocalLanForegroundService.kt$LocalLanForegroundService$e: ForegroundServiceStartNotAllowedException</ID>
     <ID>SwallowedException:LocalSmsScannerService.kt$LocalSmsScannerService$e: Exception</ID>
     <ID>SwallowedException:LocalSmsScannerService.kt$LocalSmsScannerService$e: SecurityException</ID>
     <ID>SwallowedException:TransactionDetailViewModel.kt$TransactionDetailViewModel$e: Exception</ID>
@@ -1173,6 +1225,7 @@
     <ID>ThrowsCount:BackupSignedZipCodec.kt$BackupSignedZipCodec$fun decode(bytes: ByteArray): ParsedArchive</ID>
     <ID>ThrowsCount:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$private fun ensureSyncTargetsPresent( allTrusted: List&lt;TrustedLanDeviceEntity&gt;, targets: List&lt;TrustedLanDeviceEntity&gt;, )</ID>
     <ID>ThrowsCount:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$private suspend fun ensureReadyForSync()</ID>
+    <ID>ThrowsCount:LocalBackupDownloadsSaver.kt$LocalBackupDownloadsSaver$@RequiresApi(Build.VERSION_CODES.Q) private fun saveViaMediaStore( archiveBytes: ByteArray, displayName: String, ): String</ID>
     <ID>ThrowsCount:PeriodExcelDownloadsSaver.kt$PeriodExcelDownloadsSaver$@RequiresApi(Build.VERSION_CODES.Q) private fun saveViaMediaStore( source: File, displayName: String, ): String</ID>
     <ID>TooGenericExceptionCaught:AccountListViewModel.kt$AccountListViewModel$e: Exception</ID>
     <ID>TooGenericExceptionCaught:AddEditAccountViewModel.kt$AddEditAccountViewModel$e: Exception</ID>
@@ -1195,7 +1248,11 @@
     <ID>TooGenericExceptionCaught:LanSyncViewModel.kt$LanSyncViewModel$e: Exception</ID>
     <ID>TooGenericExceptionCaught:LoanDetailViewModel.kt$LoanDetailViewModel$e: Exception</ID>
     <ID>TooGenericExceptionCaught:LoanListViewModel.kt$LoanListViewModel$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:LocalBackupDownloadsSaver.kt$LocalBackupDownloadsSaver$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:LocalLanForegroundService.kt$LocalLanForegroundService$e: RuntimeException</ID>
+    <ID>TooGenericExceptionCaught:LocalLanServerNotifierImpl.kt$LocalLanServerNotifierImpl$e: RuntimeException</ID>
     <ID>TooGenericExceptionCaught:LocalSmsScannerService.kt$LocalSmsScannerService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:MonefyLedgerImporter.kt$MonefyLedgerImporter$e: Exception</ID>
     <ID>TooGenericExceptionCaught:MoneyManagerMmbakLedgerImporter.kt$MoneyManagerMmbakLedgerImporter$e: Exception</ID>
     <ID>TooGenericExceptionCaught:PeriodExcelDownloadsSaver.kt$PeriodExcelDownloadsSaver$e: Exception</ID>
     <ID>TooGenericExceptionCaught:RecurringDetailViewModel.kt$RecurringDetailViewModel$e: Exception</ID>
@@ -1217,7 +1274,6 @@
     <ID>TooManyFunctions:CoreDaos.kt$TransactionDao</ID>
     <ID>TooManyFunctions:DatabaseModule.kt$DatabaseModule</ID>
     <ID>TooManyFunctions:EnumConverters.kt$EnumConverters</ID>
-    <ID>TooManyFunctions:GoogleDriveBackupPreferencesStore.kt$GoogleDriveBackupPreferencesStore</ID>
     <ID>TooManyFunctions:LanSyncDao.kt$LanSyncDao</ID>
     <ID>TooManyFunctions:LanSyncExporter.kt$LanSyncExporter</ID>
     <ID>TooManyFunctions:LanSyncJsonCodec.kt$LanSyncJsonCodec</ID>
@@ -1247,7 +1303,6 @@
     <ID>UnusedParameter:HomeTotalUtils.kt$HomeTotalUtils$zoneId: ZoneId</ID>
     <ID>UnusedParameter:LoanPaymentProcessor.kt$LoanPaymentProcessor$paymentId: Long</ID>
     <ID>UnusedParameter:MmrBudgetsWidget.kt$gapSmall: Dp</ID>
-    <ID>UnusedParameter:MoneyManagerMmbakTransactionReader.kt$MoneyManagerMmbakTransactionReader$cursor: Cursor</ID>
     <ID>UnusedParameter:StatsCategoryDetailUi.kt$row: SubcategoryBreakdownUi</ID>
     <ID>UnusedParameter:TransactionReceiptSection.kt$canAddMore: Boolean = true</ID>
     <ID>UnusedParameter:TransactionReceiptSection.kt$onAddClick: () -&gt; Unit</ID>
@@ -1263,6 +1318,7 @@
     <ID>UseCheckOrError:ApprovalRepositoryImpl.kt$ApprovalRepositoryImpl$throw IllegalStateException("Use Apply refund for card refund SMS.")</ID>
     <ID>UseCheckOrError:AssetAttachmentRepositoryImpl.kt$AssetAttachmentRepositoryImpl$throw IllegalStateException("At most $MAX_ATTACHMENTS_PER_ASSET photos per asset.")</ID>
     <ID>UseCheckOrError:BackupViewModel.kt$BackupViewModel$throw IllegalStateException("Unable to read backup file.")</ID>
+    <ID>UseCheckOrError:BackupViewModel.kt$BackupViewModel$throw IllegalStateException("Unable to read spreadsheet.")</ID>
     <ID>UseCheckOrError:BackupViewModel.kt$BackupViewModel$throw IllegalStateException("Unable to write backup file.")</ID>
     <ID>UseCheckOrError:GoogleDriveAuthGateway.kt$GoogleDriveAuthGateway$throw IllegalStateException("Could not read your Google account email. Try again.")</ID>
     <ID>UseCheckOrError:GoogleDriveAuthGateway.kt$GoogleDriveAuthGateway$throw IllegalStateException("Google Drive authorization needs user interaction.")</ID>
@@ -1282,6 +1338,9 @@
     <ID>UseCheckOrError:LoanRepositoryImpl.kt$LoanRepositoryImpl$throw IllegalStateException("EMI updates apply only to fixed-EMI loans.")</ID>
     <ID>UseCheckOrError:LoanRepositoryImpl.kt$LoanRepositoryImpl$throw IllegalStateException("Fixed-EMI loan is missing EMI amount.")</ID>
     <ID>UseCheckOrError:LoanTopUpProcessor.kt$LoanTopUpProcessor$throw IllegalStateException("Closed loans cannot receive a top-up.")</ID>
+    <ID>UseCheckOrError:LocalBackupDownloadsSaver.kt$LocalBackupDownloadsSaver$throw IllegalStateException("Could not create Downloads entry.")</ID>
+    <ID>UseCheckOrError:LocalBackupDownloadsSaver.kt$LocalBackupDownloadsSaver$throw IllegalStateException("Could not open Downloads output stream.")</ID>
+    <ID>UseCheckOrError:LocalBackupDownloadsSaver.kt$LocalBackupDownloadsSaver$throw IllegalStateException("Downloads folder is not available.")</ID>
     <ID>UseCheckOrError:PeriodExcelDownloadsSaver.kt$PeriodExcelDownloadsSaver$throw IllegalStateException("Could not create Downloads entry.")</ID>
     <ID>UseCheckOrError:PeriodExcelDownloadsSaver.kt$PeriodExcelDownloadsSaver$throw IllegalStateException("Could not open Downloads output stream.")</ID>
     <ID>UseCheckOrError:PeriodExcelDownloadsSaver.kt$PeriodExcelDownloadsSaver$throw IllegalStateException("Downloads folder is not available.")</ID>
@@ -1311,12 +1370,14 @@
     <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("This backup file is not for Money Inbox.")</ID>
     <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("Unexpected backup archive entry: $name")</ID>
     <ID>UseRequire:BackupSignedZipCodec.kt$BackupSignedZipCodec$throw IllegalArgumentException("Unsupported backup archive version: $archiveVersion")</ID>
+    <ID>UseRequire:BackupViewModel.kt$BackupViewModel$throw IllegalArgumentException("File is not a supported ledger spreadsheet.")</ID>
     <ID>UseRequire:CardRefundLedgerMath.kt$CardRefundLedgerMath$throw IllegalArgumentException("Refund cannot exceed the remaining purchase amount.")</ID>
     <ID>UseRequire:LanSyncJsonCodec.kt$LanSyncJsonCodec$throw IllegalArgumentException("Unsupported LAN sync format version: $version")</ID>
     <ID>UseRequire:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$throw IllegalArgumentException("Cannot trust this device.")</ID>
     <ID>UseRequire:LanSyncRepositoryImpl.kt$LanSyncRepositoryImpl$throw IllegalArgumentException("Enter a valid pairing code from the other device.")</ID>
     <ID>UseRequire:LoanRepositoryImpl.kt$LoanRepositoryImpl$throw IllegalArgumentException("Loan id is required.")</ID>
     <ID>UseRequire:MmrReceiptImage.kt$MmrReceiptImage$throw IllegalArgumentException("Could not compress image.")</ID>
+    <ID>UseRequire:PeriodLedgerSpreadsheetImporter.kt$PeriodLedgerSpreadsheetImporter$throw IllegalArgumentException("No transactions found in spreadsheet.")</ID>
     <ID>UseRequire:RecurringRuleRepositoryImpl.kt$RecurringRuleRepositoryImpl$throw IllegalArgumentException("Rule id is required.")</ID>
     <ID>UseRequire:TransactionAttachmentRepositoryImpl.kt$TransactionAttachmentRepositoryImpl$throw IllegalArgumentException("Attachment is too large.")</ID>
     <ID>UseRequire:WebManageRepositoryImpl.kt$WebManageRepositoryImpl$throw IllegalArgumentException("Password must be at least 6 characters.")</ID>

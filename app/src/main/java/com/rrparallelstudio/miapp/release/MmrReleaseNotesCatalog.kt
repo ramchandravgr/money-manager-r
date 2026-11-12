@@ -5,6 +5,9 @@ package com.rrparallelstudio.miapp.release
  * Update [entries] with each store release; list [changesNewestFirst] with the latest change on top.
  */
 object MmrReleaseNotesCatalog {
+    /** Cap for the What's new dialog Version history section (current version is shown separately). */
+    const val MAX_PAST_VERSIONS_IN_WHATS_NEW = 5
+
     data class VersionNotes(
         val version: String,
         val changesNewestFirst: List<String>,
@@ -13,9 +16,24 @@ object MmrReleaseNotesCatalog {
     private val entries: List<VersionNotes> =
         listOf(
             VersionNotes(
+                version = "0.11.18",
+                changesNewestFirst =
+                    listOf(
+                        "Automatic local backup: daily, weekly, or monthly .mibxbac files in Downloads (six kept); same schedule options as Google Drive.",
+                        "Import and export screens show a blocking loader with status text until the job finishes.",
+                        "Google Drive backup: monthly schedule plus background WorkManager uploads when Drive is linked (daily / weekly / monthly).",
+                        "Home Excel export: weekly and custom period ranges; saved file dialog can share .xlsx or .xml by email.",
+                        "Backup & Restore: download a ledger import template and merge spreadsheet imports (.xlsx / .xml).",
+                        "Fixes launch crash on some Play installs so Firebase Remote Config and ads can load again.",
+                        "Requires Android 9 (API 28) or newer; smaller release build without JDK desugar backports.",
+                    ),
+            ),
+            VersionNotes(
                 version = "0.11.17",
                 changesNewestFirst =
                     listOf(
+                        "Peer Device Sync can stay on in the background for family sync. Android 14+ uses a special-use foreground service (ongoing notification) instead of the 6-hour dataSync limit.",
+                        "Import a Monefy backup from Backup & Restore: accounts, categories, income, expense, and transfers merge in; importing the same file again skips rows already added.",
                         "Import from Money Manager (.mmbak): income, expense, and transfers merge in; " +
                             "paired transfer legs dedupe to one row; ISO dates map to your ledger dates.",
                         "Pending SMS: if you edit and pick an account, the approved transaction uses " +
@@ -281,7 +299,7 @@ object MmrReleaseNotesCatalog {
     fun notesForVersion(versionName: String): VersionNotes? = entries.firstOrNull { it.version == versionName.trim() }
 
     /**
-     * Older major/minor milestones (newest first), excluding the current [appVersionName].
+     * Up to [MAX_PAST_VERSIONS_IN_WHATS_NEW] older releases (newest first), excluding [appVersionName].
      */
     fun priorMajorMinorHistory(appVersionName: String): List<VersionNotes> =
         entries
@@ -290,7 +308,7 @@ object MmrReleaseNotesCatalog {
                 compareByDescending<VersionNotes> { parseSemver(it.version)?.major ?: 0 }
                     .thenByDescending { parseSemver(it.version)?.minor ?: 0 }
                     .thenByDescending { parseSemver(it.version)?.patch ?: 0 },
-            )
+            ).take(MAX_PAST_VERSIONS_IN_WHATS_NEW)
 
     private data class SemverTriple(
         val major: Int,

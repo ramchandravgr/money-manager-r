@@ -67,6 +67,7 @@ data class HomeUiState(
     val showExcelExportDialog: Boolean = false,
     val excelExportOptions: List<HomeExcelExportOptionUi> = emptyList(),
     val isExcelExporting: Boolean = false,
+    val showExcelCustomRangeDialog: Boolean = false,
     val amountColorScheme: MmrAmountColorScheme = MmrAmountColorScheme.SET_B,
     val showTransactionDescription: Boolean = true,
     val showTransactionTime: Boolean = false,
@@ -159,9 +160,12 @@ enum class HomeTypeFilter {
 enum class HomeExcelExportPreset {
     CURRENT_MONTH,
     LAST_MONTH,
+    CURRENT_WEEK,
+    LAST_WEEK,
     CURRENT_YEAR,
     LAST_YEAR,
     ALL,
+    CUSTOM,
 }
 
 sealed interface HomeExcelExportRange {
@@ -267,10 +271,20 @@ sealed interface HomeUiEvent {
         val preset: HomeExcelExportPreset,
     ) : HomeUiEvent
 
+    object OnDismissExcelCustomRangeDialog : HomeUiEvent
+
+    data class OnExcelCustomRangeConfirmed(
+        val start: LocalDate,
+        val end: LocalDate,
+    ) : HomeUiEvent
+
     /** Main nav tapped Ledger while the Ledger tab was already selected. */
     object OnLedgerTabReselected : HomeUiEvent
 }
 
 data class HomePeriodExportResult(
     val savedFileName: String,
+    val cacheXlsxFileName: String,
+    val cacheXmlFileName: String,
+    val range: HomeExcelExportRange,
 )

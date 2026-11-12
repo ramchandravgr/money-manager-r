@@ -119,6 +119,8 @@ class BackupRestoreInstrumentedTest {
                 attachmentStore = TransactionAttachmentStore(context),
                 assetAttachmentStore = AssetAttachmentStore(context),
                 moneyManagerMmbakLedgerImporter = repoGraph.moneyManagerMmbakLedgerImporter,
+                monefyLedgerImporter = repoGraph.monefyLedgerImporter,
+                ledgerSpreadsheetImporter = repoGraph.periodLedgerSpreadsheetImporter,
                 ioDispatcher = Dispatchers.IO,
             )
         repoGraph.close()

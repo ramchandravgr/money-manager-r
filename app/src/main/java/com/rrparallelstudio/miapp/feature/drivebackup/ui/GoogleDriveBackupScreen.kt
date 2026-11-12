@@ -16,7 +16,6 @@ import com.rrparallelstudio.miapp.core.drive.GoogleDriveAutoSchedule
 import com.rrparallelstudio.miapp.feature.drivebackup.viewmodel.GoogleDriveBackupViewModel
 import com.rrparallelstudio.miapp.testing.MmrTestTags
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsBackupImportModeSheet
-import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsBusyIndicator
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsEmphasisTextSlot
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsNavRow
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsPrimaryActionSlot
@@ -25,6 +24,7 @@ import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSecondaryActionSlo
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSection
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSectionBodyText
 import com.rrparallelstudio.miapp.ui.components.MmrIosSettingsSwitchRow
+import com.rrparallelstudio.miapp.ui.components.MmrProcessingOverlay
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenLayout
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsScreenScaffold
 import com.rrparallelstudio.miapp.ui.components.MmrSettingsStatusBanners
@@ -74,9 +74,18 @@ fun GoogleDriveBackupScreen(
         )
     }
 
+    MmrProcessingOverlay(
+        visible = uiState.isBusy,
+        message = uiState.busyMessage ?: "Working…",
+    )
+
     MmrSettingsScreenScaffold(
         title = "Google Drive backup",
-        onNavigateBack = onNavigateBack,
+        onNavigateBack = {
+            if (!uiState.isBusy) {
+                onNavigateBack()
+            }
+        },
         layout = MmrSettingsScreenLayout.InsetGrouped,
         modifier = Modifier.testTag(MmrTestTags.googleDriveBackupScreen),
     ) {
@@ -105,10 +114,6 @@ fun GoogleDriveBackupScreen(
                 )
             }
             return@MmrSettingsScreenScaffold
-        }
-
-        if (uiState.isBusy) {
-            MmrIosSettingsBusyIndicator()
         }
 
         MmrIosSettingsSection(title = "Account") {
@@ -140,7 +145,13 @@ fun GoogleDriveBackupScreen(
         if (uiState.linkedEmail != null) {
             MmrIosSettingsSection(
                 title = "Automatic backup",
-                footer = uiState.lastBackupLabel?.let { "Last backup: $it" },
+                footer =
+                    buildString {
+                        append(
+                            "Runs in the background on a daily, weekly, or monthly schedule when Drive is linked. ",
+                        )
+                        uiState.lastBackupLabel?.let { append("Last backup: $it") }
+                    }.takeIf { it.isNotBlank() },
             ) {
                 MmrIosSettingsRadioRow(
                     label = "Off",
@@ -148,7 +159,7 @@ fun GoogleDriveBackupScreen(
                     onSelect = { viewModel.setAutoSchedule(GoogleDriveAutoSchedule.OFF) },
                 )
                 MmrIosSettingsRadioRow(
-                    label = "Daily (first app open each day)",
+                    label = "Daily",
                     selected = uiState.autoSchedule == GoogleDriveAutoSchedule.DAILY,
                     onSelect = { viewModel.setAutoSchedule(GoogleDriveAutoSchedule.DAILY) },
                 )
@@ -156,6 +167,11 @@ fun GoogleDriveBackupScreen(
                     label = "Weekly",
                     selected = uiState.autoSchedule == GoogleDriveAutoSchedule.WEEKLY,
                     onSelect = { viewModel.setAutoSchedule(GoogleDriveAutoSchedule.WEEKLY) },
+                )
+                MmrIosSettingsRadioRow(
+                    label = "Monthly",
+                    selected = uiState.autoSchedule == GoogleDriveAutoSchedule.MONTHLY,
+                    onSelect = { viewModel.setAutoSchedule(GoogleDriveAutoSchedule.MONTHLY) },
                 )
                 MmrIosSettingsSwitchRow(
                     label = "Wi‑Fi only",

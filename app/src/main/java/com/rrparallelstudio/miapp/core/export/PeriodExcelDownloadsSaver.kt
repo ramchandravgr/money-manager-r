@@ -11,6 +11,7 @@ import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** Saves period Excel files to public Downloads (legacy path on API 28; MediaStore from API 29). */
 @Singleton
 class PeriodExcelDownloadsSaver
     @Inject

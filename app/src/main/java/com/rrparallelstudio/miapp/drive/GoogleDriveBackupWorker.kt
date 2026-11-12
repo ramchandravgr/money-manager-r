@@ -8,6 +8,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.rrparallelstudio.miapp.core.data.preferences.GoogleDriveBackupPreferencesStore
 import com.rrparallelstudio.miapp.core.domain.repository.GoogleDriveBackupRepository
+import com.rrparallelstudio.miapp.core.drive.GoogleDriveAutoBackupPolicy
 import com.rrparallelstudio.miapp.core.drive.GoogleDriveBackupContracts
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -27,8 +28,16 @@ class GoogleDriveBackupWorker
             if (!authGateway.isConfigured() || !preferencesStore.isLinked()) {
                 return Result.success()
             }
-            if (preferencesStore.getAutoSchedule() ==
+            val schedule = preferencesStore.getAutoSchedule()
+            if (schedule ==
                 com.rrparallelstudio.miapp.core.drive.GoogleDriveAutoSchedule.OFF
+            ) {
+                return Result.success()
+            }
+            if (!GoogleDriveAutoBackupPolicy.isBackupDue(
+                    schedule,
+                    preferencesStore.getLastSuccessfulBackupMillis(),
+                )
             ) {
                 return Result.success()
             }

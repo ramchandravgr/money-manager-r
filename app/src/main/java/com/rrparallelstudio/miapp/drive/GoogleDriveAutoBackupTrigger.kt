@@ -10,6 +10,7 @@ class GoogleDriveAutoBackupTrigger
         private val workScheduler: GoogleDriveBackupWorkScheduler,
     ) {
         fun onAppForeground() {
+            workScheduler.syncPeriodicAutoBackupSchedule()
             workScheduler.enqueueAutoBackupIfDue()
         }
     }

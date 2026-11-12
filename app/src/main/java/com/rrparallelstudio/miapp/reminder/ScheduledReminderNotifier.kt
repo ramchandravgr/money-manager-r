@@ -4,7 +4,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.rrparallelstudio.miapp.R
 import com.rrparallelstudio.miapp.core.database.entity.NotificationRuleEntity
@@ -71,7 +70,6 @@ class ScheduledReminderNotifier
         }
 
         private fun ensureChannel() {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
             val manager = context.getSystemService(NotificationManager::class.java) ?: return
             val channel =
                 NotificationChannel(

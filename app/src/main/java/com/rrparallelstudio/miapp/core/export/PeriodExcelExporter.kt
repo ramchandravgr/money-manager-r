@@ -49,7 +49,7 @@ class PeriodExcelExporter
             zoneId: ZoneId,
             currencySymbol: String,
             currencyCode: String,
-        ): String {
+        ): PeriodExcelDownloadsExport {
             val cacheFile =
                 exportPeriod(
                     items = items,
@@ -58,6 +58,49 @@ class PeriodExcelExporter
                     currencySymbol = currencySymbol,
                     currencyCode = currencyCode,
                 )
-            return downloadsSaver.saveToDownloads(cacheFile, fileName)
+            val xmlName = fileName.replace(Regex("(?i)\\.xlsx$"), ".xml")
+            val xmlFile = File(cacheFile.parentFile, xmlName)
+            FileOutputStream(xmlFile).use { xmlOut ->
+                PeriodXmlWriter.write(
+                    items = items,
+                    zoneId = zoneId,
+                    currencyCode = currencyCode,
+                    applicationName = context.getString(com.rrparallelstudio.miapp.R.string.app_name),
+                    output = xmlOut,
+                )
+            }
+            val savedName = downloadsSaver.saveToDownloads(cacheFile, fileName)
+            return PeriodExcelDownloadsExport(
+                savedFileName = savedName,
+                cacheXlsxFile = cacheFile,
+                cacheXmlFile = xmlFile,
+            )
         }
+
+        suspend fun exportImportTemplateToDownloads(
+            currencySymbol: String,
+            currencyCode: String,
+        ): String =
+            withContext(Dispatchers.IO) {
+                val appName = context.getString(com.rrparallelstudio.miapp.R.string.app_name)
+                val fileName = "${appName}_import_template.xlsx"
+                val exportDir = File(context.cacheDir, "exports").apply { mkdirs() }
+                val file = File(exportDir, fileName)
+                FileOutputStream(file).use { output ->
+                    PeriodExcelWriter.writeImportTemplate(
+                        currencySymbol = currencySymbol,
+                        currencyCode = currencyCode,
+                        applicationName = appName,
+                        sheetName = appName,
+                        output = output,
+                    )
+                }
+                downloadsSaver.saveToDownloads(file, fileName)
+            }
     }
+
+data class PeriodExcelDownloadsExport(
+    val savedFileName: String,
+    val cacheXlsxFile: File,
+    val cacheXmlFile: File,
+)

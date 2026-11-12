@@ -84,7 +84,7 @@ GOOGLE_WEB_CLIENT_ID=<Web OAuth client ID from Google Cloud Console>
 |-------|--------|
 | Application ID | `com.rrparallelstudio.miapp` |
 | `versionCode` / `versionName` | `900` / `0.9.0` (semver; see [`docs/versioning.md`](versioning.md)) |
-| `minSdk` | 24 |
+| `minSdk` | 28 |
 | `compileSdk` / `targetSdk` | 35 |
 | Room DB version | 17 (`MmrDatabase`) |
 | Root project name | `MoneyInbox` (`settings.gradle.kts`) |

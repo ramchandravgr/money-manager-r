@@ -30,6 +30,40 @@ object PeriodExcelWriter {
             "Amount",
         )
 
+    fun writeImportTemplate(
+        currencySymbol: String,
+        currencyCode: String,
+        applicationName: String,
+        sheetName: String,
+        output: OutputStream,
+    ) {
+        Workbook(output, applicationName, "1.0").use { workbook ->
+            val sheet = workbook.newWorksheet(sanitizeSheetName(sheetName))
+            headers.forEachIndexed { col, title ->
+                val header = if (col == 5) currencySymbol else title
+                sheet.value(0, col, header)
+            }
+            columnWidths.forEachIndexed { col, width -> sheet.width(col, width) }
+            sheet.value(
+                1,
+                0,
+                "2026-01-15",
+            )
+            sheet.value(1, 1, "Cash")
+            sheet.value(1, 2, "Food")
+            sheet.value(1, 3, "")
+            sheet.value(1, 4, "Example note")
+            sheet.value(1, 5, 250.0)
+            sheet.value(1, 6, "Expense")
+            sheet.value(1, 7, "Example note")
+            sheet.value(1, 8, "")
+            sheet.value(1, 9, currencyCode)
+            sheet.value(1, 10, 250.0)
+        }
+    }
+
+    val columnHeaders: List<String> = headers
+
     fun write(
         items: List<TransactionWithDetails>,
         zoneId: ZoneId,

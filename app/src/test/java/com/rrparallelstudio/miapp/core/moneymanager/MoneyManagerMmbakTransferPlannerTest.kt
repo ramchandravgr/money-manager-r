@@ -9,9 +9,9 @@ class MoneyManagerMmbakTransferPlannerTest {
     fun plan_pairsTransferLegsByTxUidTrans() {
         val rows =
             listOf(
-                leg("a-3", "grp-1", 3, "from", "to", 1_000L),
-                leg("a-4", "grp-1", 4, "to", "from", 1_000L),
-                expense("e-1", 1_000L),
+                leg("a-3", "grp-1", 3, "from", "to", 1_000.0),
+                leg("a-4", "grp-1", 4, "to", "from", 1_000.0),
+                expense("e-1", 1_000.0),
             )
         val plan = MoneyManagerMmbakTransferPlanner.plan(rows)
         assertEquals(1, plan.incomeExpense.size)
@@ -26,7 +26,7 @@ class MoneyManagerMmbakTransferPlannerTest {
 
     @Test
     fun plan_singleTransferLegWhenOnlyOneSidePresent() {
-        val rows = listOf(leg("only-3", null, 3, "a", "b", 500L))
+        val rows = listOf(leg("only-3", null, 3, "a", "b", 500.0))
         val plan = MoneyManagerMmbakTransferPlanner.plan(rows)
         assertEquals(1, plan.transfers.size)
         assertEquals("mmbak:transfer:only-3", plan.transfers.single().sourceReferenceId)
@@ -34,7 +34,7 @@ class MoneyManagerMmbakTransferPlannerTest {
 
     @Test
     fun plan_marksUnknownDoTypeUnsupported() {
-        val rows = listOf(expense("x", 1L).copy(doType = 9))
+        val rows = listOf(expense("x", 1.0).copy(doType = 9))
         val plan = MoneyManagerMmbakTransferPlanner.plan(rows)
         assertTrue(plan.unsupportedRowKeys.contains("x"))
         assertEquals(0, plan.incomeExpense.size)

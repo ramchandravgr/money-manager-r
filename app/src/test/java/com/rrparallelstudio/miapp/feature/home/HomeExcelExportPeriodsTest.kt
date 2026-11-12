@@ -5,20 +5,28 @@ import com.rrparallelstudio.miapp.feature.home.model.HomeExcelExportRange
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.YearMonth
 
 class HomeExcelExportPeriodsTest {
     @Test
-    fun buildOptions_includesFiveMmPeriods() {
-        val options = HomeExcelExportPeriods.buildOptions(YearMonth.of(2025, 10), monthStartDay = 1)
-        assertEquals(5, options.size)
-        assertEquals(HomeExcelExportPreset.CURRENT_MONTH, options[0].preset)
-        assertEquals(HomeExcelExportPreset.LAST_MONTH, options[1].preset)
-        assertEquals(HomeExcelExportPreset.CURRENT_YEAR, options[2].preset)
-        assertEquals(HomeExcelExportPreset.LAST_YEAR, options[3].preset)
-        assertEquals(HomeExcelExportPreset.ALL, options[4].preset)
-        assertTrue(options[0].label.startsWith("Monthly ("))
-        assertEquals(HomeExcelExportRange.AllTime, options[4].range)
+    fun buildOptions_includesWeekMonthYearTotalAndCustom() {
+        val anchorDate = LocalDate.of(2025, 10, 15)
+        val options =
+            HomeExcelExportPeriods.buildOptions(
+                YearMonth.of(2025, 10),
+                monthStartDay = 1,
+                weekStart = DayOfWeek.MONDAY,
+                anchorDate = anchorDate,
+            )
+        assertEquals(8, options.size)
+        assertEquals(HomeExcelExportPreset.CURRENT_WEEK, options[0].preset)
+        assertEquals(HomeExcelExportPreset.LAST_WEEK, options[1].preset)
+        assertEquals(HomeExcelExportPreset.CURRENT_MONTH, options[2].preset)
+        assertEquals(HomeExcelExportPreset.CUSTOM, options.last().preset)
+        assertEquals(HomeExcelExportRange.AllTime, options[6].range)
+        assertTrue(options[2].label.startsWith("Monthly ("))
     }
 
     @Test

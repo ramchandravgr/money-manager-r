@@ -13,6 +13,7 @@ object GoogleDriveBackupContracts {
     const val MAX_RETAINED_FILES = 6
     const val AUTO_FAILURE_NOTIFY_THRESHOLD = 5
     const val WORK_NAME_AUTO = "mmr_google_drive_auto_backup"
+    const val WORK_NAME_PERIODIC = "mmr_google_drive_periodic_backup"
 
     fun isBackupArchiveFileName(name: String): Boolean =
         name.endsWith(FILE_EXTENSION) || name.endsWith(LEGACY_FILE_EXTENSION)
@@ -22,6 +23,7 @@ enum class GoogleDriveAutoSchedule {
     OFF,
     DAILY,
     WEEKLY,
+    MONTHLY,
     ;
 
     companion object {
@@ -29,6 +31,7 @@ enum class GoogleDriveAutoSchedule {
             when (value) {
                 DAILY.name -> DAILY
                 WEEKLY.name -> WEEKLY
+                MONTHLY.name -> MONTHLY
                 else -> OFF
             }
     }
